@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/data/server-components";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -12,6 +11,14 @@ interface OrderDetailsProps {
 }
 
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
+  const storageComponents = Object.values(selectedComponents).filter(
+    component => component.type === "Armazenamento"
+  );
+  
+  const nonStorageComponents = Object.values(selectedComponents).filter(
+    component => component.type !== "Armazenamento"
+  );
+
   const subtotal = Object.values(selectedComponents).reduce(
     (sum, component) => sum + component.price,
     0
@@ -22,7 +29,6 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Componentes Selecionados */}
       <Card className="overflow-hidden border-primary/10 shadow-md hover:shadow-lg transition-shadow">
         <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
           <CardTitle className="flex items-center justify-between text-lg">
@@ -35,14 +41,14 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.entries(selectedComponents).map(([type, component]) => (
-              <div key={type} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+            {nonStorageComponents.map((component) => (
+              <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-medium flex items-center">
                       {component.name}
                       <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                        Selecionado
+                        {component.type}
                       </span>
                     </h4>
                     <p className="text-sm text-muted-foreground">{component.description}</p>
@@ -62,11 +68,43 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                 <Separator className="mt-4" />
               </div>
             ))}
+            
+            {storageComponents.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-medium text-primary/80">Armazenamento</h3>
+                {storageComponents.map((component) => (
+                  <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium flex items-center">
+                          {component.name}
+                          <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                            {component.type}
+                          </span>
+                        </h4>
+                        <p className="text-sm text-muted-foreground">{component.description}</p>
+                      </div>
+                      <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
+                    </div>
+                    {component.specs && (
+                      <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                        {component.specs.map((spec, index) => (
+                          <li key={index} className="flex items-center">
+                            <Check className="h-4 w-4 text-primary mr-2" />
+                            <span>{spec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Resumo Financeiro */}
       <Card className="overflow-hidden border-primary/10 shadow-md hover:shadow-lg transition-shadow">
         <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
           <CardTitle className="flex items-center justify-between text-lg">

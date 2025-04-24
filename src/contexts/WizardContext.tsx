@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption, serverData } from "@/data/server-components";
 
@@ -14,7 +13,7 @@ interface WizardContextType {
   handleSelectOption: (option: ComponentOption) => void;
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
-  handleSelectStorageItem: (storageOption: ComponentOption) => void;
+  handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -36,10 +35,20 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const handleSelectStorageItem = (option: ComponentOption) => {
+  const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
     setSelectedComponents((prev) => {
       const updated = { ...prev };
-      updated["storage"] = option;
+      const storageKey = `storage_${storageType}`;
+      
+      if (option.price === 0) {
+        delete updated[storageKey];
+      } else {
+        updated[storageKey] = {
+          ...option,
+          type: `${storageType === 'internal' ? 'Disco Interno' : 'Storage Externo'}`
+        };
+      }
+      
       return updated;
     });
   };
@@ -57,7 +66,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     if (component.type === "Conectividade") {
       return Object.keys(connectivityItems).length > 0 || selectedComponents[component.id] !== undefined;
     } else if (component.type === "Armazenamento") {
-      return selectedComponents["storage"] !== undefined;
+      return selectedComponents["storage_internal"] !== undefined || 
+             selectedComponents["storage_external"] !== undefined;
     }
     
     return selectedComponents[component.id] !== undefined;

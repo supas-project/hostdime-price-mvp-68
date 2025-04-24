@@ -10,14 +10,43 @@ import { cn } from "@/lib/utils";
 import { PricedDiskOption } from "@/types/storage";
 import { TabHeader } from "./tab-header/TabHeader";
 import { HardDrive } from "lucide-react";
+import { useWizard } from "@/contexts/WizardContext";
+import { ComponentOption } from "@/data/server-components";
 
-export interface StorageSelectorProps {
-  onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
-  onSelectExternalStorage?: (type: string, capacity: number, price: number) => void;
-}
-
-export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
+export function StorageSelector() {
   const [activeTab, setActiveTab] = useState<string>("internal");
+  const { handleSelectStorageItem } = useWizard();
+
+  const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    const storageOption: ComponentOption = {
+      id: `internal-disk-${disk.id}`,
+      type: "Armazenamento",
+      name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
+      description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
+      price: disk.price * quantity,
+      specs: [
+        `Tipo: ${disk.type.toUpperCase()}`,
+        `Capacidade: ${disk.capacity}`,
+        `Quantidade: ${quantity}`
+      ]
+    };
+    handleSelectStorageItem(storageOption, 'internal');
+  };
+
+  const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
+    const storageOption: ComponentOption = {
+      id: `external-storage-${type}-${capacity}`,
+      type: "Armazenamento",
+      name: `Storage ${type} ${capacity} GB`,
+      description: `Storage externo: ${type} ${capacity} GB`,
+      price: price,
+      specs: [
+        `Tipo: Storage ${type}`,
+        `Capacidade: ${capacity} GB`
+      ]
+    };
+    handleSelectStorageItem(storageOption, 'external');
+  };
 
   return (
     <Card className={cn(
@@ -40,12 +69,12 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
         <div className="relative">
           <TabsContent value="internal" className="mt-0 relative z-10">
             <div className="animate-fade-in">
-              <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
+              <InternalStoragePanel onSelectDisk={handleSelectInternalDisk} />
             </div>
           </TabsContent>
           <TabsContent value="external" className="mt-0 relative z-10">
             <div className="animate-fade-in">
-              <ExternalStoragePanel onSelectStorage={onSelectExternalStorage} />
+              <ExternalStoragePanel onSelectStorage={handleSelectExternalStorage} />
             </div>
           </TabsContent>
         </div>
