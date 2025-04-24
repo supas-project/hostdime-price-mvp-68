@@ -26,30 +26,55 @@
     --input: 0 0% 22%;
     --ring: 29 91% 54%;
     --radius: 0.75rem;
+
+    /* Z-index System */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/10 selection:text-primary;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased overflow-x-hidden font-sans;
     font-family: 'Inter', sans-serif;
   }
 
   .component-card {
-    @apply bg-card text-card-foreground shadow-lg transition-all duration-200 hover:shadow-xl border border-border rounded-xl;
+    @apply bg-card text-card-foreground border border-border rounded-xl transition-all duration-300;
+    box-shadow: var(--shadow-lg);
   }
 
   .component-card:hover {
-    @apply border-primary/30 shadow-primary/10 -translate-y-0.5;
+    @apply border-primary/30;
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-2px);
   }
 
   .fade-in {
-    @apply animate-fade-in;
+    @apply animate-in fade-in duration-500;
   }
 
   .slide-in {
-    @apply animate-slide-in;
+    @apply animate-in slide-in-from-bottom duration-500;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-background/80 backdrop-blur-lg border border-border/50;
   }
 }

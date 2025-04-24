@@ -19,13 +19,13 @@ export default {
     },
     extend: {
       zIndex: {
-        'dropdown': '1000',
-        'modal': '1100',
-        'tooltip': '1200'
-      },
-      width: {
-        "sidebar-collapsed": "var(--sidebar-width-collapsed)",
-        "sidebar-expanded": "var(--sidebar-width-expanded)"
+        'dropdown': 'var(--z-dropdown)',
+        'sticky': 'var(--z-sticky)',
+        'fixed': 'var(--z-fixed)',
+        'modal-backdrop': 'var(--z-modal-backdrop)',
+        'modal': 'var(--z-modal)',
+        'popover': 'var(--z-popover)',
+        'tooltip': 'var(--z-tooltip)'
       },
       colors: {
         border: "hsl(var(--border))",
@@ -55,11 +55,11 @@ export default {
           foreground: "hsl(var(--accent-foreground))"
         },
         popover: {
-          DEFAULT: "#1e1e1e",
+          DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))"
         },
         card: {
-          DEFAULT: "#1e1e1e",
+          DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
         }
       },
