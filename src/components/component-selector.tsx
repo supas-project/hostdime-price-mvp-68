@@ -8,7 +8,6 @@ interface Option {
   name: string;
   price: number;
   description?: string;
-  details?: string;
 }
 
 interface ComponentSelectorProps {
@@ -17,7 +16,6 @@ interface ComponentSelectorProps {
   value: string;
   onChange: (value: string) => void;
   tooltip?: string;
-  showPrice?: boolean;
 }
 
 export function ComponentSelector({ 
@@ -25,8 +23,7 @@ export function ComponentSelector({
   options, 
   value, 
   onChange, 
-  tooltip,
-  showPrice = true 
+  tooltip
 }: ComponentSelectorProps) {
   const selectedOption = options.find(opt => opt.id === value);
 
@@ -46,16 +43,18 @@ export function ComponentSelector({
       
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full bg-[#0A0A0A] border-[#1A1A1A] text-white h-[60px]">
-          <div className="flex justify-between items-center w-full">
-            <span className="text-white font-medium">
-              {selectedOption?.name || "Escolha o processador ideal"}
-            </span>
-            {selectedOption && (
-              <span className="text-[#F58220] font-medium">
-                {formatCurrency(selectedOption.price)}
+          <SelectValue placeholder="Escolha o processador ideal">
+            <div className="flex justify-between items-center w-full">
+              <span className="text-white font-medium">
+                {selectedOption?.name}
               </span>
-            )}
-          </div>
+              {selectedOption && (
+                <span className="text-[#F58220] font-medium">
+                  {formatCurrency(selectedOption.price)}
+                </span>
+              )}
+            </div>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-[#0A0A0A] border-[#1A1A1A] w-full">
           {options.map((option) => (
