@@ -1,8 +1,7 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ArrowRight, Calendar, Settings, Server, HardDrive, Cpu, Memory } from "lucide-react";
+import { Plus, ArrowRight, Calendar, Settings, Server, HardDrive, Cpu, MemoryStick } from "lucide-react";
 
 interface QuoteSummary {
   id: string;
@@ -157,7 +156,7 @@ export default function Home() {
         
         <Card className="hover:border-primary/30 transition-colors">
           <CardHeader>
-            <Memory className="h-8 w-8 mb-2 text-primary" />
+            <MemoryStick className="h-8 w-8 mb-2 text-primary" />
             <CardTitle>Memória Escalável</CardTitle>
             <CardDescription>Opções de RAM para todos os tipos de carga</CardDescription>
           </CardHeader>

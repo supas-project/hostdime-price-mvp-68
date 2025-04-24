@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MemoryOption, ChassisOption } from "@/types/server-config";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, ArrowLeft, Plus, Minus, Memory, HelpCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Plus, Minus, MemoryStick, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/utils";
 

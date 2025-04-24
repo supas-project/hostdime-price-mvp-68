@@ -1,4 +1,3 @@
-
 import { ChassisOption, CPUOption } from "@/types/server-config";
 import { 
   Card, 
@@ -6,7 +5,7 @@ import {
   CardDescription 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, Server, HardDrive, Memory, HelpCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Server, HardDrive, MemoryStick, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/utils";
 
@@ -117,7 +116,7 @@ export function ChassisStepForm({
                   
                   <div className="mt-4 flex flex-wrap gap-4">
                     <div className="flex items-center">
-                      <Memory className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <MemoryStick className="h-4 w-4 mr-1 text-muted-foreground" />
                       <span className="text-sm">{chassis.memorySlots} slots de memória</span>
                     </div>
                     <div className="flex items-center">
