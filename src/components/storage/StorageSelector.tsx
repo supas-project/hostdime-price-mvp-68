@@ -21,7 +21,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   return (
     <Card className={cn(
       componentSpacing.card,
-      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300"
+      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300 relative"
     )}>
       <StorageHeader
         icon={HardDrive}
@@ -51,13 +51,13 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
           </TabsTrigger>
         </TabsList>
         
-        <div className="relative z-10">
-          <TabsContent value="internal" className="mt-0">
+        <div className="relative">
+          <TabsContent value="internal" className="mt-0 relative z-10">
             <div className="animate-fade-in">
               <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
             </div>
           </TabsContent>
-          <TabsContent value="external" className="mt-0">
+          <TabsContent value="external" className="mt-0 relative z-10">
             <div className="animate-fade-in">
               <ExternalStoragePanel onSelectStorage={onSelectExternalStorage} />
             </div>

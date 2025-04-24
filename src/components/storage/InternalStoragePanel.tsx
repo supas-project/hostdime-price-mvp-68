@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { diskData } from "@/data/disk-data";
-import { CircleDot } from "lucide-react";
+import { CircleDot, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PricedDiskOption } from "@/types/storage";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,6 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     const disk = diskData.find(d => d.type === selectedDiskType && d.capacity === capacity);
     if (disk) {
       setSelectedDisk(disk);
-      // Reset quantity when selecting a new disk
       setQuantity(1);
       if (onSelectDisk) {
         onSelectDisk(disk, 1);
@@ -47,6 +47,16 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     }
   };
 
+  const handleRemoveDisk = () => {
+    setSelectedDiskType("");
+    setSelectedCapacity("");
+    setSelectedDisk(null);
+    setQuantity(1);
+    if (onSelectDisk) {
+      onSelectDisk({ id: "", type: "", capacity: "", price: 0 }, 0);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-2 gap-4">
@@ -57,7 +67,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           <SelectTrigger className="bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
             <SelectValue placeholder="Tipo de disco" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+          <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">
             <SelectItem value="nvme">NVMe</SelectItem>
             <SelectItem value="ssd">SSD</SelectItem>
             <SelectItem value="hdd">HDD</SelectItem>
@@ -77,7 +87,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           >
             <SelectValue placeholder="Capacidade" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+          <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">
             {availableDisks.map((disk) => (
               <SelectItem key={disk.id} value={disk.capacity}>
                 <div className="flex justify-between items-center gap-4">
@@ -114,6 +124,14 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               <span className="text-[#f58220] font-medium">
                 {formatCurrency(selectedDisk.price * quantity)}/mês
               </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRemoveDisk}
+                className="ml-2 text-destructive hover:text-destructive/90"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
