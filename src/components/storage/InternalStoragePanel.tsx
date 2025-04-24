@@ -14,16 +14,16 @@ interface InternalStoragePanelProps {
 }
 
 export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
-  const [selectedDiskType, setSelectedDiskType] = useState("");
+  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisk, setSelectedDisk] = useState<PricedDiskOption | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  const availableDisks = diskData.filter(disk => disk.type === selectedDiskType);
+  const availableDisks = selectedDiskType ? diskData.filter(disk => disk.type === selectedDiskType) : [];
 
   const handleCapacitySelect = (capacity: string) => {
     setSelectedCapacity(capacity);
-    const disk = diskData.find(d => d.type === selectedDiskType && d.capacity === capacity);
+    const disk = selectedDiskType && diskData.find(d => d.type === selectedDiskType && d.capacity === capacity);
     if (disk) {
       setSelectedDisk(disk);
       setQuantity(1);
@@ -33,7 +33,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     }
   };
 
-  const handleTypeSelect = (type: string) => {
+  const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
     setSelectedDiskType(type);
     setSelectedCapacity("");
     setSelectedDisk(null);
@@ -48,12 +48,21 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   };
 
   const handleRemoveDisk = () => {
-    setSelectedDiskType("");
+    setSelectedDiskType(undefined); // Changed from empty string to undefined
     setSelectedCapacity("");
     setSelectedDisk(null);
     setQuantity(1);
     if (onSelectDisk) {
-      onSelectDisk({ id: "", type: "", capacity: "", price: 0 }, 0);
+      // We need to create a temporary disk with valid type for the callback
+      // since we can't use an empty string for the type
+      onSelectDisk({
+        id: "",
+        type: "ssd", // Using a default type that's valid
+        capacity: "",
+        price: 0,
+        specs: { readSpeed: "", writeSpeed: "", iops: "" },
+        recommended: []
+      }, 0);
     }
   };
 
