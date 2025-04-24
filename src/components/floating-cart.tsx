@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { SummaryCart } from "./summary-cart";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FloatingCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -16,7 +16,7 @@ interface FloatingCartProps {
 }
 
 export function FloatingCart(props: FloatingCartProps) {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   if (isMobile) {
     return (

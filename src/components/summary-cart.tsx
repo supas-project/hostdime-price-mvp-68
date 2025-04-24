@@ -1,4 +1,5 @@
-import { ComponentOption } from "@/data/server-components";
+
+import { ComponentOption, serverData } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
