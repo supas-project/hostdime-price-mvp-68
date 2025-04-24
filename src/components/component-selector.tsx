@@ -33,42 +33,40 @@ export function ComponentSelector({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <label className="text-lg font-medium">
+          <label className="text-lg font-medium text-white">
             {label}
           </label>
-          {tooltip && <HelpTooltip title="Ajuda" description={tooltip} />}
+          {tooltip && (
+            <HelpTooltip 
+              title="Ajuda"
+              description={tooltip}
+            />
+          )}
         </div>
-        {selectedOption && showPrice && (
-          <span className="text-lg font-medium text-primary">
-            {formatCurrency(selectedOption.price)}
-          </span>
-        )}
       </div>
       
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecione uma opção" />
+        <SelectTrigger className="w-full bg-background/95 border-slate-800 text-white">
+          <SelectValue placeholder="Escolha o processador ideal para você" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-background/95 border-slate-800">
           {options.map((option) => (
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="py-3"
+              className="py-3 hover:bg-slate-800 focus:bg-slate-800"
             >
-              <div className="flex justify-between items-center gap-4">
-                <div>
-                  <div className="font-medium">{option.name}</div>
-                  {option.description && (
-                    <div className="text-sm text-muted-foreground">
-                      {option.description}
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-col gap-1">
+                <div className="font-medium text-white">{option.name}</div>
+                {option.description && (
+                  <div className="text-sm text-slate-400">
+                    {option.description}
+                  </div>
+                )}
                 {showPrice && (
-                  <span className="text-sm font-medium text-primary">
+                  <div className="text-sm font-medium text-primary mt-1">
                     {formatCurrency(option.price)}
-                  </span>
+                  </div>
                 )}
               </div>
             </SelectItem>

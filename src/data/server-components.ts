@@ -1,4 +1,3 @@
-
 export interface ComponentOption {
   id: string;
   name: string;
@@ -35,23 +34,44 @@ export const serverData: ServerConfiguration = {
         {
           id: "cpu-1",
           type: "Processador",
-          name: "Intel Core i5",
-          description: "4 núcleos, 3.5 GHz - Ideal para sites e aplicações leves",
-          price: 120
+          name: "Intel Xeon E5-2620v3 6-Core 2.4 GHz (15 cores)",
+          description: "Processador ideal para cargas de trabalho moderadas",
+          price: 450.00
         },
         {
           id: "cpu-2",
           type: "Processador",
-          name: "Intel Core i7",
-          description: "8 núcleos, 4.0 GHz - Ideal para aplicações de médio porte",
-          price: 230
+          name: "Intel Xeon Silver 4210 10-Core 2.2 GHz (10 cores)",
+          description: "Excelente para aplicações empresariais",
+          price: 730.00
         },
         {
           id: "cpu-3",
           type: "Processador",
-          name: "Intel Xeon",
-          description: "16 núcleos, 4.5 GHz - Ideal para aplicações empresariais",
-          price: 450
+          name: "Intel Xeon Gold 6248R 24-Core 3.0 GHz (24 cores)",
+          description: "Alto desempenho para cargas intensivas",
+          price: 1600.00
+        },
+        {
+          id: "cpu-4",
+          type: "Processador",
+          name: "AMD EPYC 7352 24-Core 2.3 GHz (24 cores)",
+          description: "Ótima relação custo-benefício",
+          price: 1300.00
+        },
+        {
+          id: "cpu-5",
+          type: "Processador",
+          name: "AMD EPYC 7502 32-Core 2.5 GHz (32 cores)",
+          description: "Ideal para virtualização e cargas pesadas",
+          price: 2200.00
+        },
+        {
+          id: "cpu-6",
+          type: "Processador",
+          name: "AMD EPYC 7742 64-Core 2.25 GHz (64 cores)",
+          description: "Máximo desempenho para aplicações críticas",
+          price: 4300.00
         }
       ]
     },
