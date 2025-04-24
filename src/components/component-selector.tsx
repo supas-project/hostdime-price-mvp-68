@@ -24,23 +24,14 @@ export function ComponentSelector({
   label, 
   options, 
   value, 
-  onChange, 
+  onChange,
   tooltip
 }: ComponentSelectorProps) {
   const selectedOption = options.find(opt => opt.id === value);
 
-  const formatCPUDescription = (option: Option) => {
+  const formatCPUName = (option: Option) => {
     const [name, specs] = option.name.split('(');
-    return (
-      <div className="flex flex-col gap-0.5">
-        <span className="font-medium">{name}</span>
-        {specs && (
-          <span className="text-sm text-muted-foreground">
-            ({specs}
-          </span>
-        )}
-      </div>
-    );
+    return specs ? `${name.trim()} (${specs.trim()}` : name;
   };
 
   return (
@@ -69,26 +60,10 @@ export function ComponentSelector({
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="flex justify-between items-start py-3 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
+              className="flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
             >
-              <div className="flex justify-between items-start w-full gap-4">
-                <div className="flex-1">
-                  {formatCPUDescription(option)}
-                  {option.description && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <span className="text-xs text-[#f58220] hover:underline mt-1 block">
-                            Ver detalhes
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
-                          <p className="text-sm">{option.description}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
+              <div className="flex justify-between items-center w-full gap-4">
+                <span className="text-white">{formatCPUName(option)}</span>
                 <span className="text-[#f58220] font-medium whitespace-nowrap">
                   {formatCurrency(option.price)}
                 </span>
@@ -97,7 +72,12 @@ export function ComponentSelector({
           ))}
         </SelectContent>
       </Select>
+      
+      {selectedOption?.description && (
+        <p className="text-sm text-muted-foreground">
+          {selectedOption.description}
+        </p>
+      )}
     </div>
   );
 }
-
