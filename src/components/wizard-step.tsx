@@ -1,7 +1,8 @@
 
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
-import { ComponentCard, ComponentTooltip } from "./component-card";
+import { ComponentCard } from "./component-card";
+import { HelpTooltip } from "./help-tooltip";
 
 interface WizardStepProps {
   component: ServerComponent;
@@ -10,7 +11,6 @@ interface WizardStepProps {
 }
 
 export function WizardStep({ component, selectedOption, onSelectOption }: WizardStepProps) {
-  // Dynamic icon lookup
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
   
   return (
@@ -19,14 +19,17 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
         <div className="bg-primary/10 p-2 rounded-full">
           <IconComponent className="h-6 w-6 text-primary" />
         </div>
-        <div>
-          <h2 className="text-xl font-semibold">{component.friendlyName}</h2>
-          <ComponentTooltip content={component.description}>
-            <p className="text-muted-foreground flex items-center">
-              {component.description}
-              <Icons.HelpCircle className="h-4 w-4 ml-1 text-muted-foreground/50 hover:text-primary" />
-            </p>
-          </ComponentTooltip>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            {component.friendlyName}
+            <HelpTooltip 
+              title="Saiba mais"
+              description={component.description}
+            />
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Selecione a opção que melhor atende suas necessidades
+          </p>
         </div>
       </div>
 

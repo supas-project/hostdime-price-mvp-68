@@ -1,9 +1,10 @@
 
 import { ComponentOption } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
-import { Check, MousePointerClick } from "lucide-react";
+import { Check, MousePointerClick, Info } from "lucide-react";
 import { useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpTooltip } from "./help-tooltip";
+import { formatCurrency } from "@/lib/utils";
 
 interface ComponentCardProps {
   option: ComponentOption;
@@ -40,19 +41,34 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
       
       <div className="space-y-2">
         <div className="flex justify-between items-start">
-          <h3 className="font-medium text-lg">{option.name}</h3>
-          <span className="text-primary font-semibold">${option.price}</span>
+          <div>
+            <h3 className="font-medium text-lg flex items-center gap-2">
+              {option.name}
+              {option.description && (
+                <HelpTooltip
+                  title=""
+                  description={option.description}
+                  icon={true}
+                />
+              )}
+            </h3>
+          </div>
+          <span className="text-primary font-semibold">{formatCurrency(option.price)}/mês</span>
         </div>
         
         <p className="text-muted-foreground text-sm">{option.description}</p>
         
         {option.specs && (
-          <div className="mt-4 space-y-1">
-            {option.specs.map((spec, index) => (
-              <div key={index} className="flex text-xs text-muted-foreground">
-                <span>• {spec}</span>
-              </div>
-            ))}
+          <div className="mt-4 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium uppercase">Especificações</p>
+            <div className="space-y-1">
+              {option.specs.map((spec, index) => (
+                <div key={index} className="flex text-xs text-muted-foreground items-start gap-2">
+                  <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>{spec}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -70,18 +86,5 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
         </Button>
       </div>
     </div>
-  );
-}
-
-export function ComponentTooltip({ children, content }: { children: React.ReactNode; content: string }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>
-          <p>{content}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 }
