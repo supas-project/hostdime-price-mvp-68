@@ -15,7 +15,8 @@ const WizardContainer = () => {
     setCurrentStep,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete
+    isStepComplete,
+    handleRestart
   } = useWizard();
 
   return (
@@ -49,7 +50,10 @@ const WizardContainer = () => {
         </div>
 
         {showFinalSummary && (
-          <FinalSummary />
+          <FinalSummary 
+            selectedComponents={selectedComponents}
+            onRestart={handleRestart}
+          />
         )}
       </main>
     </div>
