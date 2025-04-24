@@ -7,8 +7,8 @@ import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
 import { WizardHeader } from "@/components/wizard-header";
 import { ProgressIndicator } from "@/components/progress-indicator";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 interface SelectedComponents {
   [key: string]: ComponentOption;
@@ -29,7 +29,6 @@ const Index = () => {
       [currentComponent.id]: option
     }));
     
-    // Automatically move to next step when selection is made
     if (currentStep < components.length - 1 && !showAllSteps) {
       setTimeout(() => {
         setCurrentStep((prev) => prev + 1);
@@ -51,147 +50,100 @@ const Index = () => {
     }
   };
 
-  const handleStepClick = (step: number) => {
-    setCurrentStep(step);
-  };
-
   const handleRestart = () => {
     setSelectedComponents({});
     setCurrentStep(0);
     setShowFinalSummary(false);
   };
 
-  const handleComplete = () => {
-    setShowFinalSummary(true);
-  };
-
   const isStepComplete = (stepIndex: number) => {
     return selectedComponents[components[stepIndex].id] !== undefined;
   };
 
+  if (showFinalSummary) {
+    return (
+      <div className="container py-8 animate-fade-in">
+        <FinalSummary 
+          selectedComponents={selectedComponents} 
+          onRestart={handleRestart}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-        <div className="container flex justify-between items-center py-4">
-          <h1 className="text-2xl font-bold flex items-center">
-            <span className="text-primary">Host</span>Dime
-            <span className="text-primary ml-2 text-sm bg-primary/10 px-2 py-1 rounded-md">Servidor Wizard</span>
+      <main className="container max-w-4xl mx-auto py-12 px-4 space-y-8 animate-fade-in">
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Configure seu Servidor
           </h1>
-          <ThemeSwitcher />
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Selecione as opções ideais para seu servidor dedicado em poucos passos
+          </p>
         </div>
-      </header>
 
-      <main className="container py-8">
-        {!showFinalSummary ? (
-          <div className="space-y-6">
-            <ProgressIndicator 
-              components={components} 
-              currentStep={currentStep}
-              completedSteps={components.map((_, index) => isStepComplete(index))}
-            />
-            
-            <div className="flex justify-between items-center">
-              <div className="flex-1">
-                <h2 className="text-2xl font-semibold">Configure seu Servidor</h2>
-                <p className="text-muted-foreground">
-                  Selecione as opções desejadas para cada componente
-                </p>
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAllSteps(!showAllSteps)}
-                className="flex items-center gap-1"
-              >
-                {showAllSteps ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" />
-                    Mostrar apenas ativo
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" />
-                    Mostrar todos
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <WizardHeader 
-              components={components} 
-              currentStep={currentStep} 
-              onStepClick={handleStepClick}
-              completedSteps={components.map((_, index) => isStepComplete(index))}
-            />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-4">
-                {showAllSteps ? (
-                  // Modo vertical: mostrar todas as etapas como acordeões
-                  <div className="space-y-4">
-                    {components.map((component, index) => (
-                      <AccordionStep
-                        key={component.id}
-                        component={component}
-                        selectedOption={selectedComponents[component.id] || null}
-                        onSelectOption={handleSelectOption}
-                        isActive={index === currentStep}
-                        isComplete={isStepComplete(index)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  // Modo focado: mostrar apenas a etapa atual
+        <ProgressIndicator 
+          components={components} 
+          currentStep={currentStep}
+          completedSteps={components.map((_, index) => isStepComplete(index))}
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAllSteps(!showAllSteps)}
+              className="flex items-center gap-1 mb-4"
+            >
+              {showAllSteps ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Mostrar apenas ativo
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Mostrar todos
+                </>
+              )}
+            </Button>
+
+            {showAllSteps ? (
+              <div className="space-y-4">
+                {components.map((component, index) => (
                   <AccordionStep
-                    component={currentComponent}
-                    selectedOption={selectedComponents[currentComponent.id] || null}
+                    key={component.id}
+                    component={component}
+                    selectedOption={selectedComponents[component.id] || null}
                     onSelectOption={handleSelectOption}
-                    isActive={true}
-                    isComplete={isStepComplete(currentStep)}
+                    isActive={index === currentStep}
+                    isComplete={isStepComplete(index)}
                   />
-                )}
-
-                <div className="flex justify-between mt-6">
-                  <Button 
-                    variant="outline" 
-                    onClick={handlePreviousStep} 
-                    disabled={currentStep === 0}
-                  >
-                    Anterior
-                  </Button>
-                  <Button 
-                    onClick={handleNextStep} 
-                    disabled={!selectedComponents[currentComponent.id]}
-                  >
-                    {currentStep === components.length - 1 ? "Finalizar" : "Próximo"}
-                  </Button>
-                </div>
+                ))}
               </div>
-              
-              <FloatingCart
-                selectedComponents={selectedComponents}
-                currentStep={currentStep}
-                totalSteps={components.length}
-                onPrevious={handlePreviousStep}
-                onNext={handleNextStep}
-                onComplete={handleComplete}
+            ) : (
+              <AccordionStep
+                component={currentComponent}
+                selectedOption={selectedComponents[currentComponent.id] || null}
+                onSelectOption={handleSelectOption}
+                isActive={true}
+                isComplete={isStepComplete(currentStep)}
               />
-            </div>
+            )}
           </div>
-        ) : (
-          <FinalSummary 
-            selectedComponents={selectedComponents} 
-            onRestart={handleRestart}
+          
+          <FloatingCart
+            selectedComponents={selectedComponents}
+            currentStep={currentStep}
+            totalSteps={components.length}
+            onPrevious={handlePreviousStep}
+            onNext={handleNextStep}
+            onComplete={() => setShowFinalSummary(true)}
           />
-        )}
-      </main>
-      
-      <footer className="border-t border-border py-6 mt-12">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 HostDime. Todos os direitos reservados.</p>
         </div>
-      </footer>
+      </main>
     </div>
   );
 };
