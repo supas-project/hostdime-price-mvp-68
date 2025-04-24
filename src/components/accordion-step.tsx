@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
@@ -5,6 +6,7 @@ import { ComponentCard } from "./component-card";
 import { HelpTooltip } from "./help-tooltip";
 import { ComponentSelector } from "./component-selector";
 import { StorageSelector } from "./storage/StorageSelector";
+import { PricedDiskOption } from "@/types/storage";
 import { 
   Accordion,
   AccordionContent,
@@ -23,6 +25,7 @@ interface AccordionStepProps {
   isComplete: boolean;
   connectivityItems?: { [key: string]: { option: ComponentOption, quantity: number } };
   onUpdateConnectivityItems?: (items: { [key: string]: { option: ComponentOption, quantity: number } }) => void;
+  onSelectStorageItem?: (storageOption: ComponentOption) => void;
 }
 
 export function AccordionStep({ 
@@ -32,7 +35,8 @@ export function AccordionStep({
   isActive,
   isComplete,
   connectivityItems = {},
-  onUpdateConnectivityItems
+  onUpdateConnectivityItems,
+  onSelectStorageItem
 }: AccordionStepProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
   
@@ -43,6 +47,43 @@ export function AccordionStep({
   const handleSelectOption = (option: ComponentOption | null) => {
     if (option) {
       onSelectOption(option);
+    }
+  };
+
+  // Handler for internal disk selection
+  const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    if (onSelectStorageItem) {
+      const storageOption: ComponentOption = {
+        id: `internal-disk-${disk.id}`,
+        type: "Armazenamento",
+        name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
+        description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
+        price: disk.price * quantity,
+        specs: [
+          `Tipo: ${disk.type.toUpperCase()}`,
+          `Capacidade: ${disk.capacity}`,
+          `Quantidade: ${quantity}`
+        ]
+      };
+      onSelectStorageItem(storageOption);
+    }
+  };
+
+  // Handler for external storage selection
+  const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
+    if (onSelectStorageItem) {
+      const storageOption: ComponentOption = {
+        id: `external-storage-${type}-${capacity}`,
+        type: "Armazenamento",
+        name: `Storage ${type} ${capacity} GB`,
+        description: `Storage externo: ${type} ${capacity} GB`,
+        price: price,
+        specs: [
+          `Tipo: Storage ${type}`,
+          `Capacidade: ${capacity} GB`
+        ]
+      };
+      onSelectStorageItem(storageOption);
     }
   };
   
@@ -153,7 +194,10 @@ export function AccordionStep({
                 onUpdateConnectivityItems={onUpdateConnectivityItems}
               />
             ) : component.type === "Armazenamento" ? (
-              <StorageSelector />
+              <StorageSelector
+                onSelectInternalDisk={handleSelectInternalDisk}
+                onSelectExternalStorage={handleSelectExternalStorage}
+              />
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {component.options.map((option) => (

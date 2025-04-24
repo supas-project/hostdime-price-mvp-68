@@ -6,11 +6,17 @@ import { CircleDot } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PricedDiskOption } from "@/types/storage";
 import { cn } from "@/lib/utils";
+import { QuantitySelector } from "@/components/quantity-selector";
 
-export function InternalStoragePanel() {
+interface InternalStoragePanelProps {
+  onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
+}
+
+export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
   const [selectedDiskType, setSelectedDiskType] = useState("");
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisk, setSelectedDisk] = useState<PricedDiskOption | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
   const availableDisks = diskData.filter(disk => disk.type === selectedDiskType);
 
@@ -19,6 +25,11 @@ export function InternalStoragePanel() {
     const disk = diskData.find(d => d.type === selectedDiskType && d.capacity === capacity);
     if (disk) {
       setSelectedDisk(disk);
+      // Reset quantity when selecting a new disk
+      setQuantity(1);
+      if (onSelectDisk) {
+        onSelectDisk(disk, 1);
+      }
     }
   };
 
@@ -26,6 +37,14 @@ export function InternalStoragePanel() {
     setSelectedDiskType(type);
     setSelectedCapacity("");
     setSelectedDisk(null);
+    setQuantity(1);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    setQuantity(newQuantity);
+    if (selectedDisk && onSelectDisk) {
+      onSelectDisk(selectedDisk, newQuantity);
+    }
   };
 
   return (
@@ -79,12 +98,23 @@ export function InternalStoragePanel() {
             <div className="flex items-center gap-3">
               <CircleDot className="w-4 h-4 text-[#f58220]" />
               <span className="text-white">
-                1x {selectedDisk.type.toUpperCase()} {selectedDisk.capacity}
+                {selectedDisk.type.toUpperCase()} {selectedDisk.capacity}
               </span>
             </div>
-            <span className="text-[#f58220] font-medium">
-              {formatCurrency(selectedDisk.price)}/mês
-            </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white">Quantidade:</span>
+                <QuantitySelector 
+                  value={quantity} 
+                  onChange={handleQuantityChange} 
+                  min={1} 
+                  max={10} 
+                />
+              </div>
+              <span className="text-[#f58220] font-medium">
+                {formatCurrency(selectedDisk.price * quantity)}/mês
+              </span>
+            </div>
           </div>
         </div>
       )}

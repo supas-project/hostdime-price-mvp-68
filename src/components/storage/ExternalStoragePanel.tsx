@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/utils";
@@ -38,7 +38,11 @@ const STORAGE_TYPES = {
   }
 };
 
-export function ExternalStoragePanel() {
+interface ExternalStoragePanelProps {
+  onSelectStorage?: (type: string, capacity: number, price: number) => void;
+}
+
+export function ExternalStoragePanel({ onSelectStorage }: ExternalStoragePanelProps) {
   const [storageType, setStorageType] = useState<keyof typeof STORAGE_TYPES | "">("");
   const [capacityGB, setCapacityGB] = useState(100);
 
@@ -46,6 +50,14 @@ export function ExternalStoragePanel() {
     if (!storageType) return 0;
     return capacityGB * STORAGE_TYPES[storageType].pricePerGB;
   };
+
+  // Whenever relevant state changes, notify parent component
+  useEffect(() => {
+    if (storageType && onSelectStorage) {
+      const price = calculatePrice();
+      onSelectStorage(STORAGE_TYPES[storageType].name, capacityGB, price);
+    }
+  }, [storageType, capacityGB]);
 
   return (
     <div className="space-y-6 animate-fade-in">

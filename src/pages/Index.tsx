@@ -68,6 +68,14 @@ const Index = () => {
     }
   };
 
+  const handleSelectStorageItem = (storageOption: ComponentOption) => {
+    // Para armazenamento, precisamos atualizar o componente de armazenamento no objeto selectedComponents
+    setSelectedComponents(prev => ({
+      ...prev,
+      storage: storageOption
+    }));
+  };
+
   const handlePreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
@@ -94,6 +102,8 @@ const Index = () => {
     
     if (component.type === "Conectividade") {
       return Object.keys(connectivityItems).length > 0 || selectedComponents[component.id] !== undefined;
+    } else if (component.type === "Armazenamento") {
+      return selectedComponents["storage"] !== undefined;
     }
     
     return selectedComponents[component.id] !== undefined;
@@ -155,24 +165,30 @@ const Index = () => {
                   <AccordionStep
                     key={component.id}
                     component={component}
-                    selectedOption={selectedComponents[component.id] || null}
+                    selectedOption={component.type === "Armazenamento" 
+                      ? selectedComponents["storage"] || null
+                      : selectedComponents[component.id] || null}
                     onSelectOption={handleSelectOption}
                     isActive={index === currentStep}
                     isComplete={isStepComplete(index)}
                     connectivityItems={component.type === "Conectividade" ? connectivityItems : undefined}
                     onUpdateConnectivityItems={component.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
+                    onSelectStorageItem={component.type === "Armazenamento" ? handleSelectStorageItem : undefined}
                   />
                 ))}
               </div>
             ) : (
               <AccordionStep
                 component={currentComponent}
-                selectedOption={selectedComponents[currentComponent.id] || null}
+                selectedOption={currentComponent.type === "Armazenamento"
+                  ? selectedComponents["storage"] || null
+                  : selectedComponents[currentComponent.id] || null}
                 onSelectOption={handleSelectOption}
                 isActive={true}
                 isComplete={isStepComplete(currentStep)}
                 connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
                 onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
+                onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
               />
             )}
           </div>
