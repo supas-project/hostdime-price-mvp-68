@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ComponentOption } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
@@ -32,18 +31,25 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     });
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     toast({
       title: "Exportação iniciada",
-      description: "Seu PDF está sendo gerado e será baixado em instantes."
+      description: "Seu PDF está sendo gerado..."
     });
     
-    setTimeout(() => {
+    try {
+      await generateQuotePDF(selectedComponents, profitMargin);
       toast({
         title: "PDF Gerado",
-        description: "O arquivo PDF foi baixado com sucesso."
+        description: "Seu arquivo PDF foi gerado com sucesso!"
       });
-    }, 2000);
+    } catch (error) {
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível gerar o PDF. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFinishOrder = () => {
