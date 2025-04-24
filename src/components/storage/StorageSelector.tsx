@@ -6,10 +6,14 @@ import { Card } from "@/components/ui/card";
 import { HardDrive, Database } from "lucide-react";
 import { StorageHeader } from "./storage-header";
 import { componentSpacing, animationClasses } from "../ui/shared-styles";
+import { cn } from "@/lib/utils";
 
 export function StorageSelector() {
   return (
-    <Card className={`${componentSpacing.card} bg-card border-border transition-all duration-300 hover:shadow-xl`}>
+    <Card className={cn(
+      componentSpacing.card,
+      "bg-card border-border transition-all duration-300 hover:shadow-xl animate-fade-in"
+    )}>
       <StorageHeader
         icon={HardDrive}
         title="Armazenamento"
@@ -17,28 +21,32 @@ export function StorageSelector() {
       />
       
       <Tabs defaultValue="internal" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-background/50 backdrop-blur border border-border rounded-lg overflow-hidden">
+        <TabsList className="grid w-full grid-cols-2 mb-6 bg-background/50 backdrop-blur-lg border border-border/50 rounded-lg overflow-hidden shadow-lg">
           <TabsTrigger 
             value="internal"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative py-3 transition-all duration-300"
+            className="relative py-3 transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
           >
             <HardDrive className="w-4 h-4 mr-2" />
             Discos Internos
           </TabsTrigger>
           <TabsTrigger 
             value="external"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative py-3 transition-all duration-300"
+            className="relative py-3 transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
           >
             <Database className="w-4 h-4 mr-2" />
             Storage Externo
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="internal" className="mt-0 fade-in">
-          <InternalStoragePanel />
+        <TabsContent value="internal" className="mt-0">
+          <div className="animate-fade-in">
+            <InternalStoragePanel />
+          </div>
         </TabsContent>
-        <TabsContent value="external" className="mt-0 fade-in">
-          <ExternalStoragePanel />
+        <TabsContent value="external" className="mt-0">
+          <div className="animate-fade-in">
+            <ExternalStoragePanel />
+          </div>
         </TabsContent>
       </Tabs>
     </Card>

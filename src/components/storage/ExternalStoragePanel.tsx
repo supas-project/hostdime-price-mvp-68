@@ -51,12 +51,16 @@ export function ExternalStoragePanel() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <Select onValueChange={(value: keyof typeof STORAGE_TYPES) => setStorageType(value)}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full transition-all duration-300 hover:border-primary/50 focus:ring-2 focus:ring-primary/20">
             <SelectValue placeholder="Selecione o tipo de storage" />
           </SelectTrigger>
           <SelectContent>
             {Object.entries(STORAGE_TYPES).map(([key, type]) => (
-              <SelectItem key={key} value={key}>
+              <SelectItem 
+                key={key} 
+                value={key}
+                className="transition-colors duration-200"
+              >
                 <div className="flex flex-col gap-1">
                   <span className="font-medium">{type.name}</span>
                   <span className="text-xs text-muted-foreground">{type.description}</span>
@@ -68,7 +72,7 @@ export function ExternalStoragePanel() {
       </div>
 
       {storageType && (
-        <>
+        <div className="animate-fade-in space-y-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-sm font-medium flex items-center gap-2">
@@ -78,7 +82,7 @@ export function ExternalStoragePanel() {
                   description="Ajuste a capacidade do seu storage externo conforme sua necessidade"
                 />
               </label>
-              <span className="font-medium">{capacityGB} GB</span>
+              <span className="font-medium text-primary">{capacityGB} GB</span>
             </div>
             <Slider
               value={[capacityGB]}
@@ -90,7 +94,7 @@ export function ExternalStoragePanel() {
             />
           </div>
 
-          <Card className="p-4 space-y-4 bg-muted/50">
+          <Card className="p-4 space-y-4 bg-card/50 backdrop-blur-sm border-primary/10 transition-all duration-300 hover:border-primary/30">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <span className="text-sm text-muted-foreground">IOPS</span>
@@ -101,16 +105,16 @@ export function ExternalStoragePanel() {
                 <p className="font-medium">{STORAGE_TYPES[storageType].throughput}</p>
               </div>
             </div>
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-border/50">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Preço Mensal</span>
-                <span className="text-lg font-semibold text-[#f58220]">
+                <span className="text-lg font-semibold text-primary animate-fade-in">
                   {formatCurrency(calculatePrice())}
                 </span>
               </div>
             </div>
           </Card>
-        </>
+        </div>
       )}
     </div>
   );

@@ -44,8 +44,11 @@ export function InternalStoragePanel() {
               description="NVMe oferece máximo desempenho, SSD equilibra velocidade e custo, HDD é mais econômico para grande capacidade"
             />
           </label>
-          <Select onValueChange={setSelectedDiskType} value={selectedDiskType}>
-            <SelectTrigger className="w-full bg-background">
+          <Select 
+            onValueChange={setSelectedDiskType} 
+            value={selectedDiskType}
+          >
+            <SelectTrigger className="w-full bg-background transition-all duration-300 hover:border-primary/50 focus:ring-2 focus:ring-primary/20">
               <SelectValue placeholder="Selecione o tipo de disco" />
             </SelectTrigger>
             <SelectContent>
@@ -66,7 +69,7 @@ export function InternalStoragePanel() {
               />
             </label>
             <Select onValueChange={setSelectedCapacity} value={selectedCapacity}>
-              <SelectTrigger className="w-full bg-background">
+              <SelectTrigger className="w-full bg-background transition-all duration-300 hover:border-primary/50 focus:ring-2 focus:ring-primary/20">
                 <SelectValue placeholder="Selecione a capacidade" />
               </SelectTrigger>
               <SelectContent>
@@ -74,7 +77,7 @@ export function InternalStoragePanel() {
                   <SelectItem key={disk.id} value={disk.capacity}>
                     <div className="flex justify-between items-center gap-4">
                       <span>{disk.capacity}</span>
-                      <span className="text-[#f58220] font-medium">
+                      <span className="text-primary font-medium">
                         {formatCurrency(disk.price)}/mês
                       </span>
                     </div>
@@ -88,7 +91,7 @@ export function InternalStoragePanel() {
         {selectedDiskType && selectedCapacity && (
           <Button 
             onClick={handleAddDisk} 
-            className="w-full bg-[#f58220] hover:bg-[#f58220]/90 text-white"
+            className="w-full bg-primary hover:bg-primary-hover text-primary-foreground transition-all duration-300"
           >
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Disco
@@ -97,7 +100,7 @@ export function InternalStoragePanel() {
       </div>
 
       {selectedDisks.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-base">Discos Selecionados</h4>
             <span className="text-sm text-muted-foreground">
@@ -108,10 +111,15 @@ export function InternalStoragePanel() {
             {selectedDisks.map((disk, index) => {
               const specs = disk.specs;
               return (
-                <Card key={index} className="p-4 hover:border-[#f58220]/30 transition-colors">
+                <Card 
+                  key={index} 
+                  className="p-4 transition-all duration-300 hover:border-primary/30 hover:-translate-y-0.5 animate-fade-in"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <HardDrive className="w-4 h-4 text-[#f58220]" />
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <HardDrive className="w-4 h-4 text-primary" />
+                      </div>
                       <div>
                         <p className="font-medium">
                           {disk.type.toUpperCase()} - {disk.capacity}
@@ -128,14 +136,14 @@ export function InternalStoragePanel() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-[#f58220] font-medium">
+                      <span className="text-primary font-medium">
                         {formatCurrency(disk.price)}/mês
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveDisk(index)}
-                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 transition-colors duration-200"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
