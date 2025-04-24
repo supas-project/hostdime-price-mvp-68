@@ -14,7 +14,7 @@ interface WizardContextType {
   handleSelectOption: (option: ComponentOption) => void;
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
-  handleSelectStorageItem?: (storageOption: ComponentOption) => void;
+  handleSelectStorageItem: (storageOption: ComponentOption) => void;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
