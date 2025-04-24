@@ -1,6 +1,7 @@
 
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface MemorySliderProps {
   value: number;
@@ -11,6 +12,13 @@ interface MemorySliderProps {
 export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps) {
   const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
   const currentIndex = memoryValues.indexOf(value);
+  
+  // Garante que um valor padrão seja usado se o valor atual não estiver na lista
+  useEffect(() => {
+    if (currentIndex === -1 && memoryValues.length > 0) {
+      onChange(memoryValues[0]);
+    }
+  }, []);
   
   const handleSliderChange = (newValue: number[]) => {
     onChange(memoryValues[newValue[0]]);
@@ -26,7 +34,7 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
       </div>
       
       <Slider
-        value={[currentIndex]}
+        value={[currentIndex !== -1 ? currentIndex : 0]}
         onValueChange={handleSliderChange}
         max={memoryValues.length - 1}
         step={1}

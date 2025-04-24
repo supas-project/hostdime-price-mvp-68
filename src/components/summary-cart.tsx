@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { useState } from "react";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -23,6 +24,7 @@ export function SummaryCart({
   onComplete
 }: SummaryCartProps) {
   const { toast } = useToast();
+  const [isNextAnimating, setIsNextAnimating] = useState(false);
   
   // Filtra componentes duplicados do tipo "Processador"
   const uniqueComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
@@ -65,6 +67,14 @@ export function SummaryCart({
       title: "Remover componente",
       description: `O componente ${selectedComponents[type].name} foi removido.`
     });
+  };
+  
+  const handleNextClick = () => {
+    setIsNextAnimating(true);
+    setTimeout(() => {
+      onNext();
+      setIsNextAnimating(false);
+    }, 300);
   };
 
   const itemCount = Object.keys(uniqueComponents).length;
@@ -137,7 +147,11 @@ export function SummaryCart({
               <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
                 Anterior
               </Button>
-              <Button onClick={onNext} disabled={!hasSelection}>
+              <Button 
+                onClick={handleNextClick} 
+                disabled={!hasSelection}
+                className={isNextAnimating ? "animate-scale-in" : ""}
+              >
                 Próximo
               </Button>
             </div>

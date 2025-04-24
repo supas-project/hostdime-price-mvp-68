@@ -6,7 +6,7 @@ import { MemorySlider } from "./memory-slider";
 import { DataCenterCard } from "./data-center-card";
 import { ContractDuration } from "./contract-duration";
 import { ConnectivityOptions } from "./connectivity-options";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
 
 interface ComponentCardProps {
@@ -30,8 +30,29 @@ export function ComponentCard({
 }: ComponentCardProps) {
   const [memoryGB, setMemoryGB] = useState(8);
   
+  // Inicializa o componente de memória e notifica o componente pai
+  useEffect(() => {
+    if (componentType === "Memória" && !isSelected) {
+      const updatedOption = {
+        ...option,
+        price: memoryGB * 7.5,
+        name: `${memoryGB}GB RAM`
+      };
+      onSelect(updatedOption);
+    }
+  }, []);
+  
   const handleMemoryChange = (newValue: number) => {
     setMemoryGB(newValue);
+    
+    if (componentType === "Memória") {
+      const updatedOption = {
+        ...option,
+        price: newValue * 7.5,
+        name: `${newValue}GB RAM`
+      };
+      onSelect(updatedOption);
+    }
   };
   
   // Handle specific component types
