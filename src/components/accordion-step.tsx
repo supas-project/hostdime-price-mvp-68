@@ -2,11 +2,15 @@
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
-import { ComponentCard } from "./component-card";
-import { HelpTooltip } from "./help-tooltip";
 import { ComponentSelector } from "./component-selector";
-import { StorageSelector } from "./storage/StorageSelector";
-import { PricedDiskOption } from "@/types/storage";
+import { DataCenterCard } from "./data-center-card";
+import { ContractDuration } from "./contract-duration";
+import { ConnectivityOptions } from "./connectivity-options";
+import { StorageStep } from "./wizard/steps/storage/storage-step";
+import { ComponentStep } from "./wizard/steps/component/component-step";
+import { StepHeader } from "./wizard/steps/step-header";
+import { MemorySlider } from "./memory-slider";
+import { Card } from "@/components/ui/card";
 import { 
   Accordion,
   AccordionContent,
@@ -41,49 +45,73 @@ export function AccordionStep({
   const [isExpanded, setIsExpanded] = useState(isActive);
   
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
-  
   const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade", "Armazenamento"].includes(component.type);
-  
-  const handleSelectOption = (option: ComponentOption | null) => {
-    if (option) {
-      onSelectOption(option);
-    }
-  };
 
-  // Handler for internal disk selection
-  const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    if (onSelectStorageItem) {
-      const storageOption: ComponentOption = {
-        id: `internal-disk-${disk.id}`,
-        type: "Armazenamento",
-        name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
-        description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
-        price: disk.price * quantity,
-        specs: [
-          `Tipo: ${disk.type.toUpperCase()}`,
-          `Capacidade: ${disk.capacity}`,
-          `Quantidade: ${quantity}`
-        ]
-      };
-      onSelectStorageItem(storageOption, 'internal');
-    }
-  };
+  const renderComponentContent = () => {
+    switch (component.type) {
+      case "Memória":
+        return (
+          <Card className="p-6">
+            <MemorySlider 
+              value={selectedOption?.name ? parseInt(selectedOption.name) : 8}
+              onChange={(newValue) => {
+                const updatedOption = {
+                  ...component.options[0],
+                  price: newValue * 7.5,
+                  name: `${newValue}GB RAM`
+                };
+                onSelectOption(updatedOption);
+              }}
+              pricePerGB={7.5}
+            />
+          </Card>
+        );
+      
+      case "DataCenter":
+        return (
+          <DataCenterCard
+            options={component.options}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
+        );
+      
+      case "Contrato":
+        return (
+          <ContractDuration
+            options={component.options}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
+        );
+      
+      case "Conectividade":
+        if (onUpdateConnectivityItems) {
+          return (
+            <ConnectivityOptions
+              options={component.options}
+              selectedItems={connectivityItems}
+              onUpdateItems={onUpdateConnectivityItems}
+            />
+          );
+        }
+        break;
 
-  // Handler for external storage selection
-  const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
-    if (onSelectStorageItem) {
-      const storageOption: ComponentOption = {
-        id: `external-storage-${type}-${capacity}`,
-        type: "Armazenamento",
-        name: `Storage ${type} ${capacity} GB`,
-        description: `Storage externo: ${type} ${capacity} GB`,
-        price: price,
-        specs: [
-          `Tipo: Storage ${type}`,
-          `Capacidade: ${capacity} GB`
-        ]
-      };
-      onSelectStorageItem(storageOption, 'external');
+      case "Armazenamento":
+        if (onSelectStorageItem) {
+          return <StorageStep onSelectStorageItem={onSelectStorageItem} />;
+        }
+        break;
+
+      default:
+        return (
+          <ComponentStep
+            options={component.options}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+            componentType={component.type}
+          />
+        );
     }
   };
   
@@ -145,72 +173,12 @@ export function AccordionStep({
           </AccordionTrigger>
           
           <AccordionContent className="px-4 pb-6 pt-2">
-            {!selectedOption && component.type !== "Processador" && !isSpecialComponentType && (
-              <p className="text-muted-foreground flex items-center mb-4">
-                {component.description}
-                <HelpTooltip 
-                  title="Mais detalhes" 
-                  description={component.description} 
-                />
-              </p>
-            )}
-
-            {component.type === "Processador" ? (
-              <ComponentSelector
-                label="Escolha o processador ideal para você"
-                options={component.options}
-                value={selectedOption?.id || ""}
-                onChange={(value) => {
-                  const option = component.options.find(opt => opt.id === value);
-                  if (option) handleSelectOption(option);
-                }}
-                tooltip={component.description}
-                highlightSelection={true}
-              />
-            ) : component.type === "DataCenter" ? (
-              <ComponentCard
-                option={selectedOption || component.options[0]}
-                options={component.options}
-                isSelected={!!selectedOption}
-                onSelect={handleSelectOption}
-                componentType="DataCenter"
-              />
-            ) : component.type === "Contrato" ? (
-              <ComponentCard
-                option={selectedOption || component.options[0]}
-                options={component.options}
-                isSelected={!!selectedOption}
-                onSelect={handleSelectOption}
-                componentType="Contrato"
-              />
-            ) : component.type === "Conectividade" ? (
-              <ComponentCard
-                option={selectedOption || component.options[0]}
-                options={component.options}
-                isSelected={!!selectedOption}
-                onSelect={handleSelectOption}
-                componentType="Conectividade"
-                selectedConnectivityItems={connectivityItems}
-                onUpdateConnectivityItems={onUpdateConnectivityItems}
-              />
-            ) : component.type === "Armazenamento" ? (
-              <StorageSelector
-                onSelectInternalDisk={handleSelectInternalDisk}
-                onSelectExternalStorage={handleSelectExternalStorage}
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {component.options.map((option) => (
-                  <ComponentCard
-                    key={option.id}
-                    option={option}
-                    isSelected={selectedOption?.id === option.id}
-                    onSelect={handleSelectOption}
-                    componentType={component.type}
-                  />
-                ))}
-              </div>
-            )}
+            <StepHeader 
+              description={component.description}
+              isSpecialComponent={isSpecialComponentType}
+              hasSelectedOption={!!selectedOption}
+            />
+            {renderComponentContent()}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
