@@ -22,8 +22,8 @@ export const layoutClasses = {
 };
 
 export const interactionClasses = {
-  button: "rounded-lg px-4 py-2 transition-all duration-200",
-  input: "rounded-lg border border-border bg-background px-4 py-2",
-  select: "rounded-lg border border-border bg-background",
-  card: "bg-card rounded-xl border border-border shadow-lg transition-all duration-300"
+  button: "rounded-lg px-4 py-2 transition-all duration-200 hover:bg-primary hover:text-primary-foreground",
+  input: "rounded-lg border border-border bg-background px-4 py-2 focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
+  select: "rounded-lg border border-border bg-background hover:border-primary/50 focus:border-primary/50",
+  card: "bg-card rounded-xl border border-border shadow-lg transition-all duration-300 hover:border-primary/30"
 };
