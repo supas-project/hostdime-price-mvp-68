@@ -30,9 +30,9 @@ export function ComponentCard({
 }: ComponentCardProps) {
   const [memoryGB, setMemoryGB] = useState(8);
   
-  // Inicializa o componente de memória e notifica o componente pai
+  // Inicializa o componente de memória e notifica o componente pai de forma segura
   useEffect(() => {
-    if (componentType === "Memória" && !isSelected) {
+    if (componentType === "Memória" && option) {
       const updatedOption = {
         ...option,
         price: memoryGB * 7.5,
@@ -45,7 +45,7 @@ export function ComponentCard({
   const handleMemoryChange = (newValue: number) => {
     setMemoryGB(newValue);
     
-    if (componentType === "Memória") {
+    if (componentType === "Memória" && option) {
       const updatedOption = {
         ...option,
         price: newValue * 7.5,
@@ -103,14 +103,14 @@ export function ComponentCard({
   return (
     <Card 
       className={`p-6 ${isSelected ? 'ring-1 ring-primary' : ''}`}
-      onClick={() => onSelect(option)}
+      onClick={() => option && onSelect(option)}
     >
       <ComponentSelector
-        label={option.name}
-        options={[option]}
-        value={option.id}
-        onChange={() => onSelect(option)}
-        tooltip={option.description}
+        label={option?.name || ""}
+        options={[option].filter(Boolean) as ComponentOption[]}
+        value={option?.id || ""}
+        onChange={() => option && onSelect(option)}
+        tooltip={option?.description}
       />
     </Card>
   );

@@ -15,13 +15,18 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
   
   // Garante que um valor padrão seja usado se o valor atual não estiver na lista
   useEffect(() => {
-    if (currentIndex === -1 && memoryValues.length > 0) {
+    if ((currentIndex === -1 || value === undefined) && memoryValues.length > 0) {
       onChange(memoryValues[0]);
     }
-  }, []);
+  }, [value, currentIndex, memoryValues, onChange]);
   
   const handleSliderChange = (newValue: number[]) => {
-    onChange(memoryValues[newValue[0]]);
+    if (Array.isArray(newValue) && newValue.length > 0 && Number.isInteger(newValue[0])) {
+      const index = newValue[0];
+      if (index >= 0 && index < memoryValues.length) {
+        onChange(memoryValues[index]);
+      }
+    }
   };
 
   return (

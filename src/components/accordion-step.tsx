@@ -42,6 +42,13 @@ export function AccordionStep({
   // Determine if this is a special component type
   const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade"].includes(component.type);
   
+  // Manipulador de seleção seguro
+  const handleSelectOption = (option: ComponentOption | null) => {
+    if (option) {
+      onSelectOption(option);
+    }
+  };
+  
   return (
     <div className={cn(
       "wizard-step space-y-2 border border-border rounded-xl transition-all",
@@ -117,7 +124,7 @@ export function AccordionStep({
                 value={selectedOption?.id || ""}
                 onChange={(value) => {
                   const option = component.options.find(opt => opt.id === value);
-                  if (option) onSelectOption(option);
+                  if (option) handleSelectOption(option);
                 }}
                 tooltip={component.description}
                 highlightSelection={true}
@@ -127,7 +134,7 @@ export function AccordionStep({
                 option={selectedOption || component.options[0]}
                 options={component.options}
                 isSelected={!!selectedOption}
-                onSelect={onSelectOption}
+                onSelect={handleSelectOption}
                 componentType="DataCenter"
               />
             ) : component.type === "Contrato" ? (
@@ -135,7 +142,7 @@ export function AccordionStep({
                 option={selectedOption || component.options[0]}
                 options={component.options}
                 isSelected={!!selectedOption}
-                onSelect={onSelectOption}
+                onSelect={handleSelectOption}
                 componentType="Contrato"
               />
             ) : component.type === "Conectividade" ? (
@@ -143,7 +150,7 @@ export function AccordionStep({
                 option={selectedOption || component.options[0]}
                 options={component.options}
                 isSelected={!!selectedOption}
-                onSelect={onSelectOption}
+                onSelect={handleSelectOption}
                 componentType="Conectividade"
                 selectedConnectivityItems={connectivityItems}
                 onUpdateConnectivityItems={onUpdateConnectivityItems}
@@ -155,7 +162,7 @@ export function AccordionStep({
                     key={option.id}
                     option={option}
                     isSelected={selectedOption?.id === option.id}
-                    onSelect={onSelectOption}
+                    onSelect={handleSelectOption}
                     componentType={component.type}
                   />
                 ))}
