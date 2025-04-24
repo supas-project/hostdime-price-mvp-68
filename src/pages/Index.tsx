@@ -14,9 +14,14 @@ interface SelectedComponents {
   [key: string]: ComponentOption;
 }
 
+interface ConnectivityItems {
+  [key: string]: { option: ComponentOption, quantity: number };
+}
+
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedComponents, setSelectedComponents] = useState<SelectedComponents>({});
+  const [connectivityItems, setConnectivityItems] = useState<ConnectivityItems>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   const [showAllSteps, setShowAllSteps] = useState(false);
 
@@ -36,6 +41,21 @@ const Index = () => {
     }
   };
 
+  const handleUpdateConnectivityItems = (items: ConnectivityItems) => {
+    setConnectivityItems(items);
+    
+    // If connectivity items were updated, mark connectivity as complete
+    if (Object.keys(items).length > 0) {
+      const connectivityComponent = components.find(c => c.type === "Conectividade");
+      if (connectivityComponent && !selectedComponents[connectivityComponent.id]) {
+        setSelectedComponents(prev => ({
+          ...prev,
+          [connectivityComponent.id]: connectivityComponent.options[0]
+        }));
+      }
+    }
+  };
+
   const handlePreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
@@ -52,12 +72,19 @@ const Index = () => {
 
   const handleRestart = () => {
     setSelectedComponents({});
+    setConnectivityItems({});
     setCurrentStep(0);
     setShowFinalSummary(false);
   };
 
   const isStepComplete = (stepIndex: number) => {
-    return selectedComponents[components[stepIndex].id] !== undefined;
+    const component = components[stepIndex];
+    
+    if (component.type === "Conectividade") {
+      return Object.keys(connectivityItems).length > 0 || selectedComponents[component.id] !== undefined;
+    }
+    
+    return selectedComponents[component.id] !== undefined;
   };
 
   if (showFinalSummary) {
@@ -120,6 +147,8 @@ const Index = () => {
                     onSelectOption={handleSelectOption}
                     isActive={index === currentStep}
                     isComplete={isStepComplete(index)}
+                    connectivityItems={component.type === "Conectividade" ? connectivityItems : undefined}
+                    onUpdateConnectivityItems={component.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
                   />
                 ))}
               </div>
@@ -130,6 +159,8 @@ const Index = () => {
                 onSelectOption={handleSelectOption}
                 isActive={true}
                 isComplete={isStepComplete(currentStep)}
+                connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
+                onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
               />
             )}
           </div>

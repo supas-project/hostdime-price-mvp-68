@@ -21,6 +21,8 @@ interface AccordionStepProps {
   onSelectOption: (option: ComponentOption) => void;
   isActive: boolean;
   isComplete: boolean;
+  connectivityItems?: { [key: string]: { option: ComponentOption, quantity: number } };
+  onUpdateConnectivityItems?: (items: { [key: string]: { option: ComponentOption, quantity: number } }) => void;
 }
 
 export function AccordionStep({ 
@@ -28,12 +30,17 @@ export function AccordionStep({
   selectedOption, 
   onSelectOption,
   isActive,
-  isComplete 
+  isComplete,
+  connectivityItems = {},
+  onUpdateConnectivityItems
 }: AccordionStepProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
   
   // Dynamic icon lookup
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
+  
+  // Determine if this is a special component type
+  const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade"].includes(component.type);
   
   return (
     <div className={cn(
@@ -93,7 +100,7 @@ export function AccordionStep({
           </AccordionTrigger>
           
           <AccordionContent className="px-4 pb-6 pt-2">
-            {!selectedOption && component.type !== "Processador" && (
+            {!selectedOption && component.type !== "Processador" && !isSpecialComponentType && (
               <p className="text-muted-foreground flex items-center mb-4">
                 {component.description}
                 <HelpTooltip 
@@ -114,6 +121,32 @@ export function AccordionStep({
                 }}
                 tooltip={component.description}
               />
+            ) : component.type === "DataCenter" ? (
+              <ComponentCard
+                option={selectedOption || component.options[0]}
+                options={component.options}
+                isSelected={!!selectedOption}
+                onSelect={onSelectOption}
+                componentType="DataCenter"
+              />
+            ) : component.type === "Contrato" ? (
+              <ComponentCard
+                option={selectedOption || component.options[0]}
+                options={component.options}
+                isSelected={!!selectedOption}
+                onSelect={onSelectOption}
+                componentType="Contrato"
+              />
+            ) : component.type === "Conectividade" ? (
+              <ComponentCard
+                option={selectedOption || component.options[0]}
+                options={component.options}
+                isSelected={!!selectedOption}
+                onSelect={onSelectOption}
+                componentType="Conectividade"
+                selectedConnectivityItems={connectivityItems}
+                onUpdateConnectivityItems={onUpdateConnectivityItems}
+              />
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {component.options.map((option) => (
@@ -122,6 +155,7 @@ export function AccordionStep({
                     option={option}
                     isSelected={selectedOption?.id === option.id}
                     onSelect={onSelectOption}
+                    componentType={component.type}
                   />
                 ))}
               </div>
