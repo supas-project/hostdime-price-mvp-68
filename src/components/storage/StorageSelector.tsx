@@ -5,14 +5,14 @@ import { ExternalStoragePanel } from "./ExternalStoragePanel";
 import { Card } from "@/components/ui/card";
 import { HardDrive, Database } from "lucide-react";
 import { StorageHeader } from "./storage-header";
-import { componentSpacing, animationClasses } from "../ui/shared-styles";
+import { componentSpacing } from "../ui/shared-styles";
 import { cn } from "@/lib/utils";
 
 export function StorageSelector() {
   return (
     <Card className={cn(
       componentSpacing.card,
-      "bg-card border-border transition-all duration-300 hover:shadow-xl animate-fade-in"
+      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300 hover:shadow-xl"
     )}>
       <StorageHeader
         icon={HardDrive}
@@ -21,17 +21,17 @@ export function StorageSelector() {
       />
       
       <Tabs defaultValue="internal" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-background/50 backdrop-blur-lg border border-border/50 rounded-lg overflow-hidden shadow-lg">
+        <TabsList className="grid w-full grid-cols-2 mb-6 bg-background/5 backdrop-blur-lg border border-[#2a2a2a] rounded-lg overflow-hidden">
           <TabsTrigger 
             value="internal"
-            className="relative py-3 transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+            className="relative py-3 transition-all duration-300 data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
           >
             <HardDrive className="w-4 h-4 mr-2" />
             Discos Internos
           </TabsTrigger>
           <TabsTrigger 
             value="external"
-            className="relative py-3 transition-all duration-300 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+            className="relative py-3 transition-all duration-300 data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
           >
             <Database className="w-4 h-4 mr-2" />
             Storage Externo
