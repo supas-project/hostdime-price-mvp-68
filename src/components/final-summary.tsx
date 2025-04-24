@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { ComponentOption } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
 import { FileText, Save, ArrowRight, FileDown, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderDetails } from "./order-details";
+import { generateQuotePDF } from "@/utils/quote-export"; // Added this import
 import { 
   Dialog,
   DialogContent,
