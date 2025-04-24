@@ -214,29 +214,7 @@ export const serverData: ServerConfiguration = {
       friendlyName: "Armazenamento",
       description: "Escolha o tipo e capacidade de armazenamento",
       icon: "hard-drive",
-      options: [
-        {
-          id: "storage-1",
-          type: "Armazenamento",
-          name: "SSD 500GB",
-          description: "SSD rápido e confiável",
-          price: 90
-        },
-        {
-          id: "storage-2",
-          type: "Armazenamento",
-          name: "SSD 1TB",
-          description: "Mais espaço para seus dados",
-          price: 150
-        },
-        {
-          id: "storage-3",
-          type: "Armazenamento",
-          name: "NVMe 1TB",
-          description: "Performance extrema para aplicações exigentes",
-          price: 320
-        }
-      ]
+      options: []
     },
     {
       id: "connectivity",

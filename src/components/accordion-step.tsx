@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
 import { ComponentCard } from "./component-card";
 import { HelpTooltip } from "./help-tooltip";
 import { ComponentSelector } from "./component-selector";
+import { StorageSelector } from "./storage/StorageSelector";
 import { 
   Accordion,
   AccordionContent,
@@ -36,13 +36,10 @@ export function AccordionStep({
 }: AccordionStepProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
   
-  // Dynamic icon lookup
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
   
-  // Determine if this is a special component type
-  const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade"].includes(component.type);
+  const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade", "Armazenamento"].includes(component.type);
   
-  // Manipulador de seleção seguro
   const handleSelectOption = (option: ComponentOption | null) => {
     if (option) {
       onSelectOption(option);
@@ -155,6 +152,8 @@ export function AccordionStep({
                 selectedConnectivityItems={connectivityItems}
                 onUpdateConnectivityItems={onUpdateConnectivityItems}
               />
+            ) : component.type === "Armazenamento" ? (
+              <StorageSelector />
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {component.options.map((option) => (
