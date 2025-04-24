@@ -1,16 +1,11 @@
-
 import { ComponentOption } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
-import { ClipboardCheck, Save } from "lucide-react";
+import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 
-interface SelectedComponents {
-  [key: string]: ComponentOption;
-}
-
 interface SummaryCartProps {
-  selectedComponents: SelectedComponents;
+  selectedComponents: { [key: string]: ComponentOption };
   currentStep: number;
   totalSteps: number;
   onPrevious: () => void;
@@ -40,27 +35,50 @@ export function SummaryCart({
     });
   };
 
+  const handleEdit = (type: string) => {
+    // Find the step index for this component type and navigate to it
+    // Implementation depends on your step structure
+  };
+
+  const handleRemove = (type: string) => {
+    // Remove the component from selection
+    // Implementation depends on your state management
+  };
+
   const itemCount = Object.keys(selectedComponents).length;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
+  const hasSelection = selectedComponents[Object.keys(serverData.componentes[currentStep])[0]] !== undefined;
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
       <div className="p-4 border-b border-border">
         <div className="flex justify-between items-center">
           <h3 className="font-medium">Resumo do Servidor</h3>
-          <span className="text-xs text-muted-foreground">{itemCount} {itemCount === 1 ? 'item' : 'itens'}</span>
+          <span className="text-xs text-muted-foreground">
+            {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+          </span>
         </div>
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
         {Object.entries(selectedComponents).map(([type, component]) => (
-          <div key={type} className="flex justify-between">
-            <div>
+          <div key={type} className="flex justify-between items-start group animate-fade-in">
+            <div className="flex-1">
               <p className="text-sm font-medium">{component.name}</p>
               <p className="text-xs text-muted-foreground">{component.description}</p>
             </div>
-            <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Edit className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </div>
         ))}
         

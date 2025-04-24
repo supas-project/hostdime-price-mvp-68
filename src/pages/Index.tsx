@@ -3,9 +3,10 @@ import { useState } from "react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { serverData, ComponentOption } from "@/data/server-components";
 import { WizardStep } from "@/components/wizard-step";
-import { SummaryCart } from "@/components/summary-cart";
+import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
 import { WizardHeader } from "@/components/wizard-header";
+import { ProgressIndicator } from "@/components/progress-indicator";
 
 interface SelectedComponents {
   [key: string]: ComponentOption;
@@ -68,23 +69,28 @@ const Index = () => {
 
       <main className="container py-8">
         {!showFinalSummary ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-8">
-              <WizardHeader 
-                components={components} 
-                currentStep={currentStep} 
-                onStepClick={handleStepClick} 
-              />
-              
-              <WizardStep
-                component={currentComponent}
-                selectedOption={selectedComponents[currentComponent.id] || null}
-                onSelectOption={handleSelectOption}
-              />
-            </div>
+          <div className="space-y-6">
+            <ProgressIndicator 
+              components={components} 
+              currentStep={currentStep} 
+            />
             
-            <div className="md:sticky md:top-24 h-fit">
-              <SummaryCart
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-2 space-y-8">
+                <WizardHeader 
+                  components={components} 
+                  currentStep={currentStep} 
+                  onStepClick={handleStepClick} 
+                />
+                
+                <WizardStep
+                  component={currentComponent}
+                  selectedOption={selectedComponents[currentComponent.id] || null}
+                  onSelectOption={handleSelectOption}
+                />
+              </div>
+              
+              <FloatingCart
                 selectedComponents={selectedComponents}
                 currentStep={currentStep}
                 totalSteps={components.length}
@@ -96,7 +102,7 @@ const Index = () => {
           </div>
         ) : (
           <FinalSummary 
-            selectedComponents={selectedComponents}
+            selectedComponents={selectedComponents} 
             onRestart={handleRestart}
           />
         )}

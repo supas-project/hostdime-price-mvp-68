@@ -1,7 +1,7 @@
 
 import { ComponentOption } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, MousePointerClick } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -16,16 +16,25 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
   
   return (
     <div 
-      className={`component-card p-4 cursor-pointer relative ${
-        isSelected ? "border-primary border-2" : ""
+      className={`component-card p-4 cursor-pointer relative transition-all duration-300 ${
+        isSelected 
+          ? "border-primary border-2 bg-primary/5" 
+          : "hover:border-primary/30"
       }`}
       onClick={() => onSelect(option)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {isSelected && (
-        <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1">
+      {isSelected ? (
+        <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1 animate-fade-in">
           <Check size={14} className="text-white" />
+        </div>
+      ) : (
+        <div className={`absolute -top-2 -right-2 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full border border-border transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="flex items-center gap-1">
+            <MousePointerClick size={12} />
+            <span>Selecionar</span>
+          </div>
         </div>
       )}
       
