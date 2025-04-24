@@ -1,10 +1,10 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption, serverData } from "@/data/server-components";
 
 interface WizardContextType {
   currentStep: number;
-  setCurrentStep: (step: number) => void;
+  setCurrentStep: (step: number | ((prev: number) => number)) => void;
   selectedComponents: { [key: string]: ComponentOption };
   setSelectedComponents: (components: { [key: string]: ComponentOption }) => void;
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } };
@@ -14,6 +14,7 @@ interface WizardContextType {
   handleSelectOption: (option: ComponentOption) => void;
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
+  handleSelectStorageItem?: (storageOption: ComponentOption) => void;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -31,6 +32,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         delete updated["cpu"];
       }
       updated[option.type.toLowerCase()] = option;
+      return updated;
+    });
+  };
+
+  const handleSelectStorageItem = (option: ComponentOption) => {
+    setSelectedComponents((prev) => {
+      const updated = { ...prev };
+      updated["storage"] = option;
       return updated;
     });
   };
@@ -68,6 +77,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         handleSelectOption,
         handleRestart,
         isStepComplete,
+        handleSelectStorageItem,
       }}
     >
       {children}
@@ -82,4 +92,3 @@ export const useWizard = () => {
   }
   return context;
 };
-

@@ -8,7 +8,15 @@ import { useState } from "react";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
-  const { currentStep, selectedComponents, connectivityItems, handleSelectOption } = useWizard();
+  const { 
+    currentStep, 
+    selectedComponents, 
+    connectivityItems,
+    handleSelectOption,
+    isStepComplete,
+    setConnectivityItems,
+    handleSelectStorageItem 
+  } = useWizard();
 
   const currentComponent = serverData.componentes[currentStep];
 
@@ -68,4 +76,3 @@ export function WizardContent() {
     </div>
   );
 }
-
