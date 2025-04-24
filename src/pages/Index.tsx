@@ -8,7 +8,7 @@ import { FinalSummary } from "@/components/final-summary";
 import { WizardHeader } from "@/components/wizard-header";
 import { ProgressIndicator } from "@/components/progress-indicator";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Cog } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 interface SelectedComponents {
   [key: string]: ComponentOption;
@@ -29,7 +29,7 @@ const Index = () => {
       [currentComponent.id]: option
     }));
     
-    // Automatically move to next step when selection is made (optional UX enhancement)
+    // Automatically move to next step when selection is made
     if (currentStep < components.length - 1 && !showAllSteps) {
       setTimeout(() => {
         setCurrentStep((prev) => prev + 1);
@@ -91,12 +91,12 @@ const Index = () => {
             />
             
             <div className="flex justify-between items-center">
-              <WizardHeader 
-                components={components} 
-                currentStep={currentStep} 
-                onStepClick={handleStepClick}
-                completedSteps={components.map((_, index) => isStepComplete(index))}
-              />
+              <div className="flex-1">
+                <h2 className="text-2xl font-semibold">Configure seu Servidor</h2>
+                <p className="text-muted-foreground">
+                  Selecione as opções desejadas para cada componente
+                </p>
+              </div>
               
               <Button
                 variant="outline"
@@ -118,22 +118,31 @@ const Index = () => {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-2 space-y-4">
+            <WizardHeader 
+              components={components} 
+              currentStep={currentStep} 
+              onStepClick={handleStepClick}
+              completedSteps={components.map((_, index) => isStepComplete(index))}
+            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
                 {showAllSteps ? (
-                  // Show all steps in accordion format
-                  components.map((component, index) => (
-                    <AccordionStep
-                      key={component.id}
-                      component={component}
-                      selectedOption={selectedComponents[component.id] || null}
-                      onSelectOption={handleSelectOption}
-                      isActive={index === currentStep}
-                      isComplete={isStepComplete(index)}
-                    />
-                  ))
+                  // Modo vertical: mostrar todas as etapas como acordeões
+                  <div className="space-y-4">
+                    {components.map((component, index) => (
+                      <AccordionStep
+                        key={component.id}
+                        component={component}
+                        selectedOption={selectedComponents[component.id] || null}
+                        onSelectOption={handleSelectOption}
+                        isActive={index === currentStep}
+                        isComplete={isStepComplete(index)}
+                      />
+                    ))}
+                  </div>
                 ) : (
-                  // Show only current step
+                  // Modo focado: mostrar apenas a etapa atual
                   <AccordionStep
                     component={currentComponent}
                     selectedOption={selectedComponents[currentComponent.id] || null}

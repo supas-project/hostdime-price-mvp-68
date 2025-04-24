@@ -11,6 +11,8 @@ import {
   AccordionTrigger
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Check } from "lucide-react";
 
 interface AccordionStepProps {
   component: ServerComponent;
@@ -49,51 +51,58 @@ export function AccordionStep({
           <AccordionTrigger className="p-4 hover:no-underline">
             <div className="flex flex-1 items-center space-x-3">
               <div className={cn(
-                "p-2 rounded-full",
+                "p-2.5 rounded-full",
                 isExpanded || isActive ? "bg-primary/10" : "bg-muted"
               )}>
                 <IconComponent className={cn(
-                  "h-6 w-6",
+                  "h-5 w-5",
                   isExpanded || isActive ? "text-primary" : "text-muted-foreground"
                 )} />
               </div>
               <div className="text-left">
-                <h3 className={cn(
-                  "font-medium text-lg",
-                  !isExpanded && !isActive && "text-muted-foreground"
-                )}>
-                  {component.friendlyName}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className={cn(
+                    "font-medium text-lg",
+                    !isExpanded && !isActive && "text-muted-foreground"
+                  )}>
+                    {component.friendlyName}
+                  </h3>
+                  
+                  {isComplete && (
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      <span>Concluído</span>
+                    </Badge>
+                  )}
+                </div>
+                
                 {selectedOption && !isExpanded && (
                   <p className="text-sm text-muted-foreground line-clamp-1">
-                    Selecionado: {selectedOption.name}
+                    Selecionado: <span className="font-medium text-foreground">{selectedOption.name}</span>
                   </p>
                 )}
+                
                 {!selectedOption && !isExpanded && (
                   <p className="text-sm text-muted-foreground">
-                    Selecione uma opção
+                    Clique para configurar
                   </p>
                 )}
               </div>
             </div>
-            {isComplete && !isActive && !isExpanded && (
-              <span className="text-primary flex items-center text-sm mr-2">
-                <Icons.Check className="h-4 w-4 mr-1" />
-                Completo
-              </span>
-            )}
           </AccordionTrigger>
           
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-muted-foreground flex items-center mb-4">
-              {component.description}
-              <HelpTooltip 
-                title="Mais detalhes" 
-                description={component.description} 
-              />
-            </p>
+          <AccordionContent className="px-4 pb-6 pt-2">
+            {!selectedOption && (
+              <p className="text-muted-foreground flex items-center mb-4">
+                {component.description}
+                <HelpTooltip 
+                  title="Mais detalhes" 
+                  description={component.description} 
+                />
+              </p>
+            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {component.options.map((option) => (
                 <ComponentCard
                   key={option.id}

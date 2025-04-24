@@ -39,8 +39,8 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
         </div>
       )}
       
-      <div className="space-y-4">
-        <div className="flex justify-between items-start gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="space-y-3">
           <div>
             <h3 className="font-medium text-lg flex items-center gap-2">
               {option.name}
@@ -54,40 +54,41 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
             </h3>
             <p className="text-muted-foreground text-sm mt-1">{option.description}</p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-semibold text-primary">
-              {formatCurrency(option.price)}
-              <span className="text-xs text-muted-foreground">/mês</span>
-            </p>
-          </div>
+          
+          {option.specs && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Especificações</p>
+              <div className="space-y-2">
+                {option.specs.map((spec, index) => (
+                  <div key={index} className="flex text-sm text-muted-foreground items-start gap-2 hover:text-foreground transition-colors">
+                    <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>{spec}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
-        {option.specs && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Especificações</p>
-            <div className="space-y-2">
-              {option.specs.map((spec, index) => (
-                <div key={index} className="flex text-sm text-muted-foreground items-start gap-2 hover:text-foreground transition-colors">
-                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{spec}</span>
-                </div>
-              ))}
-            </div>
+        <div className="shrink-0 flex flex-col justify-between items-end gap-4">
+          <div className="text-right">
+            <p className="text-xl font-semibold text-primary">
+              {formatCurrency(option.price)}
+              <span className="text-xs text-muted-foreground block">/mês</span>
+            </p>
           </div>
-        )}
-      </div>
-      
-      <div className={`mt-6 transition-all duration-300 ${isHovered || isSelected ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
-        <Button
-          variant={isSelected ? "secondary" : "default"}
-          className="w-full"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(option);
-          }}
-        >
-          {isSelected ? "Selecionado" : "Selecionar"}
-        </Button>
+          
+          <Button
+            variant={isSelected ? "secondary" : "default"}
+            className={`transition-all duration-300 ${isHovered || isSelected ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(option);
+            }}
+          >
+            {isSelected ? "Selecionado" : "Selecionar"}
+          </Button>
+        </div>
       </div>
     </div>
   );
