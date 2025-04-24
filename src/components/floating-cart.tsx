@@ -1,10 +1,9 @@
-
 import { ComponentOption } from "@/data/server-components";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { SummaryCart } from "./summary-cart";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 interface FloatingCartProps {
   selectedComponents: { [key: string]: ComponentOption };
