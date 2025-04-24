@@ -9,6 +9,7 @@ import { ThemeProvider } from "./components/theme-provider";
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
+import Configurator from "./pages/Configurator";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
@@ -37,6 +38,7 @@ const App = () => {
                   <Route index element={<Home />} />
                   <Route path="price-table" element={<PriceTable />} />
                   <Route path="configure" element={<Index />} />
+                  <Route path="configurator" element={<Configurator />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

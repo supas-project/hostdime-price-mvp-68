@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ArrowRight, Calendar, Settings, Server } from "lucide-react";
+import { Plus, ArrowRight, Calendar, Settings, Server, HardDrive, Cpu, Memory } from "lucide-react";
 
 interface QuoteSummary {
   id: string;
@@ -46,7 +46,7 @@ export default function Home() {
   ];
 
   const startNewConfiguration = () => {
-    navigate("/configure");
+    navigate("/configurator");
   };
 
   const viewQuoteDetails = (quoteId: string) => {
@@ -71,12 +71,12 @@ export default function Home() {
             
             <Button size="lg" className="group font-medium text-base" onClick={startNewConfiguration}>
               <Plus className="mr-2 h-5 w-5" />
-              Criar Nova Configuração
+              Montar Servidor
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
             
             <div className="flex items-center gap-4 mt-8">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate("/price-table")}>
                 Ver Tabelas de Preço
               </Button>
               <Button variant="ghost" size="sm">
@@ -139,6 +139,47 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+        <Card className="hover:border-primary/30 transition-colors">
+          <CardHeader>
+            <Cpu className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>Processadores de Alto Desempenho</CardTitle>
+            <CardDescription>CPUs Intel Xeon otimizadas para seus sistemas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Escolha entre diversos modelos de processadores para garantir desempenho adequado à sua aplicação.
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:border-primary/30 transition-colors">
+          <CardHeader>
+            <Memory className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>Memória Escalável</CardTitle>
+            <CardDescription>Opções de RAM para todos os tipos de carga</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Configure a quantidade exata de memória para seu servidor, com opções de upgrade sob demanda.
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:border-primary/30 transition-colors">
+          <CardHeader>
+            <HardDrive className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>Armazenamento Flexível</CardTitle>
+            <CardDescription>Discos SSD, NVMe e HDD de alta performance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Combine diferentes tipos de disco para otimizar custo e performance do seu ambiente.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
