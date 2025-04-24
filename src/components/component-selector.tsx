@@ -33,7 +33,7 @@ export function ComponentSelector({
         <label className="text-sm font-medium text-muted-foreground">
           {label}
         </label>
-        {tooltip && <HelpTooltip description={tooltip} />}
+        {tooltip && <HelpTooltip title="Ajuda" description={tooltip} />}
       </div>
       
       <Select value={value} onValueChange={onChange}>
