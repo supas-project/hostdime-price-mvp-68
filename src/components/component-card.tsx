@@ -17,21 +17,21 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
   
   return (
     <div 
-      className={`component-card p-4 cursor-pointer relative transition-all duration-300 ${
+      className={`relative rounded-xl border transition-all duration-300 ${
         isSelected 
-          ? "border-primary border-2 bg-primary/5" 
-          : "hover:border-primary/30"
-      }`}
+          ? "border-primary/50 bg-primary/5 shadow-lg shadow-primary/10 scale-[1.02]" 
+          : "border-border hover:border-primary/30 hover:shadow-md"
+      } p-6`}
       onClick={() => onSelect(option)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isSelected ? (
-        <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1 animate-fade-in">
-          <Check size={14} className="text-white" />
+        <div className="absolute -top-2 -right-2 bg-primary rounded-full p-1.5 shadow-lg animate-fade-in">
+          <Check size={14} className="text-primary-foreground" />
         </div>
       ) : (
-        <div className={`absolute -top-2 -right-2 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full border border-border transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute -top-2 -right-2 text-xs bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full border border-border transition-opacity duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'}`}>
           <div className="flex items-center gap-1">
             <MousePointerClick size={12} />
             <span>Selecionar</span>
@@ -39,8 +39,8 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
         </div>
       )}
       
-      <div className="space-y-2">
-        <div className="flex justify-between items-start">
+      <div className="space-y-4">
+        <div className="flex justify-between items-start gap-4">
           <div>
             <h3 className="font-medium text-lg flex items-center gap-2">
               {option.name}
@@ -52,19 +52,23 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
                 />
               )}
             </h3>
+            <p className="text-muted-foreground text-sm mt-1">{option.description}</p>
           </div>
-          <span className="text-primary font-semibold">{formatCurrency(option.price)}/mês</span>
+          <div className="text-right">
+            <p className="text-2xl font-semibold text-primary">
+              {formatCurrency(option.price)}
+              <span className="text-xs text-muted-foreground">/mês</span>
+            </p>
+          </div>
         </div>
         
-        <p className="text-muted-foreground text-sm">{option.description}</p>
-        
         {option.specs && (
-          <div className="mt-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium uppercase">Especificações</p>
-            <div className="space-y-1">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Especificações</p>
+            <div className="space-y-2">
               {option.specs.map((spec, index) => (
-                <div key={index} className="flex text-xs text-muted-foreground items-start gap-2">
-                  <Info className="h-3 w-3 mt-0.5 shrink-0" />
+                <div key={index} className="flex text-sm text-muted-foreground items-start gap-2 hover:text-foreground transition-colors">
+                  <Info className="h-4 w-4 mt-0.5 shrink-0" />
                   <span>{spec}</span>
                 </div>
               ))}
@@ -73,7 +77,7 @@ export function ComponentCard({ option, isSelected, onSelect }: ComponentCardPro
         )}
       </div>
       
-      <div className={`mt-4 transition-opacity duration-300 ${isHovered || isSelected ? "opacity-100" : "opacity-0"}`}>
+      <div className={`mt-6 transition-all duration-300 ${isHovered || isSelected ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
         <Button
           variant={isSelected ? "secondary" : "default"}
           className="w-full"
