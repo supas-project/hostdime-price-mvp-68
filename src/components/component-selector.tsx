@@ -28,7 +28,7 @@ export function ComponentSelector({
   tooltip
 }: ComponentSelectorProps) {
   const selectedOption = options.find(opt => opt.id === value);
-
+  
   // Format CPU name to display in a single line
   const formatCPUName = (option: Option) => {
     const [name, specs] = option.name.split('(');
