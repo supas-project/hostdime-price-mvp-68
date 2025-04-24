@@ -5,6 +5,11 @@ export interface ComponentOption {
   price: number;
   specs?: string[];
   type: string;
+  metadata?: {
+    discount?: number;
+    features?: string[];
+    badge?: string;
+  };
 }
 
 export interface ServerComponent {

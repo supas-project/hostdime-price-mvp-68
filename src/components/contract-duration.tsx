@@ -1,10 +1,8 @@
 
-import { useState } from "react";
 import { ComponentOption } from "@/data/server-components";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { formatCurrency } from "@/lib/utils";
 import { Check } from "lucide-react";
 
 interface ContractDurationProps {
