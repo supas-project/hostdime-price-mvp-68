@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
-import { ComponentCard, ComponentTooltip } from "./component-card";
+import { ComponentCard } from "./component-card";
+import { HelpTooltip } from "./help-tooltip";
 import { 
   Accordion,
   AccordionContent,
@@ -84,12 +85,13 @@ export function AccordionStep({
           </AccordionTrigger>
           
           <AccordionContent className="px-4 pb-4">
-            <ComponentTooltip content={component.description}>
-              <p className="text-muted-foreground flex items-center mb-4">
-                {component.description}
-                <Icons.HelpCircle className="h-4 w-4 ml-1 text-muted-foreground/50 hover:text-primary cursor-pointer" />
-              </p>
-            </ComponentTooltip>
+            <p className="text-muted-foreground flex items-center mb-4">
+              {component.description}
+              <HelpTooltip 
+                title="Mais detalhes" 
+                description={component.description} 
+              />
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {component.options.map((option) => (
