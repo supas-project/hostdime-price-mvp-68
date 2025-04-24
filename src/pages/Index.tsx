@@ -29,10 +29,22 @@ const Index = () => {
   const currentComponent = components[currentStep];
 
   const handleSelectOption = (option: ComponentOption) => {
-    setSelectedComponents((prev) => ({
-      ...prev,
-      [currentComponent.id]: option
-    }));
+    // Certifique-se que para processadores, sempre substituímos o item atual
+    // e mantemos apenas um processador no resumo
+    setSelectedComponents((prev) => {
+      // Crie uma cópia do objeto anterior
+      const updated = { ...prev };
+      
+      // Se já existe um processador e estamos selecionando um novo, remova o anterior
+      if (option.type === "Processador" && prev["cpu"] && prev["cpu"].id !== option.id) {
+        delete updated["cpu"];
+      }
+      
+      // Adicione ou atualize o componente atual
+      updated[currentComponent.id] = option;
+      
+      return updated;
+    });
     
     if (currentStep < components.length - 1 && !showAllSteps) {
       setTimeout(() => {

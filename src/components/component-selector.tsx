@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HelpTooltip } from "./help-tooltip";
 import { formatCurrency } from "@/lib/utils";
 import { Cpu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Option {
   id: string;
@@ -17,6 +18,7 @@ interface ComponentSelectorProps {
   value: string;
   onChange: (value: string) => void;
   tooltip?: string;
+  highlightSelection?: boolean;
 }
 
 export function ComponentSelector({ 
@@ -24,7 +26,8 @@ export function ComponentSelector({
   options, 
   value, 
   onChange,
-  tooltip
+  tooltip,
+  highlightSelection
 }: ComponentSelectorProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -52,7 +55,10 @@ export function ComponentSelector({
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
+              className={cn(
+                "flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white",
+                highlightSelection && option.id === value && "bg-primary/10 border-l-2 border-primary"
+              )}
             >
               <div className="flex justify-between items-center w-full gap-4">
                 <span>{option.name}</span>

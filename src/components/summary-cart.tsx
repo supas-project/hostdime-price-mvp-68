@@ -24,7 +24,18 @@ export function SummaryCart({
 }: SummaryCartProps) {
   const { toast } = useToast();
   
-  const totalPrice = Object.values(selectedComponents).reduce(
+  // Filtra componentes duplicados do tipo "Processador"
+  const uniqueComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
+    // Se já existe um processador e estamos tentando adicionar outro, substitui
+    if (component.type === "Processador" && acc["cpu"]) {
+      acc["cpu"] = component;
+    } else {
+      acc[type] = component;
+    }
+    return acc;
+  }, {} as { [key: string]: ComponentOption });
+  
+  const totalPrice = Object.values(uniqueComponents).reduce(
     (sum, component) => sum + component.price,
     0
   );
@@ -56,7 +67,7 @@ export function SummaryCart({
     });
   };
 
-  const itemCount = Object.keys(selectedComponents).length;
+  const itemCount = Object.keys(uniqueComponents).length;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   const hasSelection = selectedComponents[serverData.componentes[currentStep]?.id] !== undefined;
@@ -73,7 +84,7 @@ export function SummaryCart({
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
-        {Object.entries(selectedComponents).map(([type, component]) => (
+        {Object.entries(uniqueComponents).map(([type, component]) => (
           <div key={type} className="flex justify-between items-start group animate-fade-in">
             <div className="flex-1">
               <p className="text-sm font-medium">{component.name}</p>

@@ -120,6 +120,7 @@ export function AccordionStep({
                   if (option) onSelectOption(option);
                 }}
                 tooltip={component.description}
+                highlightSelection={true}
               />
             ) : component.type === "DataCenter" ? (
               <ComponentCard
