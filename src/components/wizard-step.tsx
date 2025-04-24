@@ -1,8 +1,8 @@
-
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
 import { ComponentSelector } from "./component-selector";
 import { HelpTooltip } from "./help-tooltip";
+import { formatCurrency } from "@/lib/utils";
 
 interface WizardStepProps {
   component: ServerComponent;
