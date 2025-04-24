@@ -4,6 +4,7 @@ import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
 import { ComponentCard } from "./component-card";
 import { HelpTooltip } from "./help-tooltip";
+import { ComponentSelector } from "./component-selector";
 import { 
   Accordion,
   AccordionContent,
@@ -92,7 +93,7 @@ export function AccordionStep({
           </AccordionTrigger>
           
           <AccordionContent className="px-4 pb-6 pt-2">
-            {!selectedOption && (
+            {!selectedOption && component.type !== "Processador" && (
               <p className="text-muted-foreground flex items-center mb-4">
                 {component.description}
                 <HelpTooltip 
@@ -102,16 +103,29 @@ export function AccordionStep({
               </p>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
-              {component.options.map((option) => (
-                <ComponentCard
-                  key={option.id}
-                  option={option}
-                  isSelected={selectedOption?.id === option.id}
-                  onSelect={onSelectOption}
-                />
-              ))}
-            </div>
+            {component.type === "Processador" ? (
+              <ComponentSelector
+                label="Escolha o processador ideal para você"
+                options={component.options}
+                value={selectedOption?.id || ""}
+                onChange={(value) => {
+                  const option = component.options.find(opt => opt.id === value);
+                  if (option) onSelectOption(option);
+                }}
+                tooltip={component.description}
+              />
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {component.options.map((option) => (
+                  <ComponentCard
+                    key={option.id}
+                    option={option}
+                    isSelected={selectedOption?.id === option.id}
+                    onSelect={onSelectOption}
+                  />
+                ))}
+              </div>
+            )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>

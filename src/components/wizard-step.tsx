@@ -1,3 +1,4 @@
+
 import { ServerComponent, ComponentOption } from "@/data/server-components";
 import * as Icons from "lucide-react";
 import { ComponentSelector } from "./component-selector";
@@ -31,7 +32,7 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
       </div>
 
       <div className="space-y-4">
-        {component.type === "Processador" ? (
+        {component.type === "Processador" && (
           <ComponentSelector
             label="Escolha o processador ideal para você"
             options={component.options}
@@ -42,7 +43,9 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
             }}
             tooltip={component.description}
           />
-        ) : (
+        )}
+        
+        {component.type !== "Processador" && (
           <div className="grid grid-cols-1 gap-4">
             {component.options.map((option) => (
               <div 
