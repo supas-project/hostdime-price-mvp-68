@@ -1,210 +1,48 @@
 
-import { useState } from "react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { serverData, ComponentOption } from "@/data/server-components";
-import { AccordionStep } from "@/components/accordion-step";
 import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
-import { WizardHeader } from "@/components/wizard-header";
 import { ProgressIndicator } from "@/components/progress-indicator";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-interface SelectedComponents {
-  [key: string]: ComponentOption;
-}
-
-interface ConnectivityItems {
-  [key: string]: { option: ComponentOption, quantity: number };
-}
+import { WizardProvider } from "@/contexts/WizardContext";
+import { WizardContent } from "@/components/wizard/WizardContent";
+import { serverData } from "@/data/server-components";
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [selectedComponents, setSelectedComponents] = useState<SelectedComponents>({});
-  const [connectivityItems, setConnectivityItems] = useState<ConnectivityItems>({});
-  const [showFinalSummary, setShowFinalSummary] = useState(false);
-  const [showAllSteps, setShowAllSteps] = useState(false);
-
-  const { componentes: components } = serverData;
-  const currentComponent = components[currentStep];
-
-  const handleSelectOption = (option: ComponentOption) => {
-    // Certifique-se que para processadores, sempre substituímos o item atual
-    // e mantemos apenas um processador no resumo
-    setSelectedComponents((prev) => {
-      // Crie uma cópia do objeto anterior
-      const updated = { ...prev };
-      
-      // Se já existe um processador e estamos selecionando um novo, remova o anterior
-      if (option.type === "Processador" && prev["cpu"] && prev["cpu"].id !== option.id) {
-        delete updated["cpu"];
-      }
-      
-      // Adicione ou atualize o componente atual
-      updated[currentComponent.id] = option;
-      
-      return updated;
-    });
-    
-    if (currentStep < components.length - 1 && !showAllSteps) {
-      setTimeout(() => {
-        setCurrentStep((prev) => prev + 1);
-      }, 300);
-    }
-  };
-
-  const handleUpdateConnectivityItems = (items: ConnectivityItems) => {
-    setConnectivityItems(items);
-    
-    // If connectivity items were updated, mark connectivity as complete
-    if (Object.keys(items).length > 0) {
-      const connectivityComponent = components.find(c => c.type === "Conectividade");
-      if (connectivityComponent && !selectedComponents[connectivityComponent.id]) {
-        setSelectedComponents(prev => ({
-          ...prev,
-          [connectivityComponent.id]: connectivityComponent.options[0]
-        }));
-      }
-    }
-  };
-
-  const handleSelectStorageItem = (storageOption: ComponentOption) => {
-    // Para armazenamento, precisamos atualizar o componente de armazenamento no objeto selectedComponents
-    setSelectedComponents(prev => ({
-      ...prev,
-      storage: storageOption
-    }));
-  };
-
-  const handlePreviousStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
-
-  const handleNextStep = () => {
-    if (currentStep < components.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      setShowFinalSummary(true);
-    }
-  };
-
-  const handleRestart = () => {
-    setSelectedComponents({});
-    setConnectivityItems({});
-    setCurrentStep(0);
-    setShowFinalSummary(false);
-  };
-
-  const isStepComplete = (stepIndex: number) => {
-    const component = components[stepIndex];
-    
-    if (component.type === "Conectividade") {
-      return Object.keys(connectivityItems).length > 0 || selectedComponents[component.id] !== undefined;
-    } else if (component.type === "Armazenamento") {
-      return selectedComponents["storage"] !== undefined;
-    }
-    
-    return selectedComponents[component.id] !== undefined;
-  };
-
-  if (showFinalSummary) {
-    return (
-      <div className="container py-8 animate-fade-in">
-        <FinalSummary 
-          selectedComponents={selectedComponents} 
-          onRestart={handleRestart}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="container max-w-4xl mx-auto py-12 px-4 space-y-8 animate-fade-in">
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Configure seu Servidor
-          </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Selecione as opções ideais para seu servidor dedicado em poucos passos
-          </p>
-        </div>
-
-        <ProgressIndicator 
-          components={components} 
-          currentStep={currentStep}
-          completedSteps={components.map((_, index) => isStepComplete(index))}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAllSteps(!showAllSteps)}
-              className="flex items-center gap-1 mb-4"
-            >
-              {showAllSteps ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  Mostrar apenas ativo
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  Mostrar todos
-                </>
-              )}
-            </Button>
-
-            {showAllSteps ? (
-              <div className="space-y-4">
-                {components.map((component, index) => (
-                  <AccordionStep
-                    key={component.id}
-                    component={component}
-                    selectedOption={component.type === "Armazenamento" 
-                      ? selectedComponents["storage"] || null
-                      : selectedComponents[component.id] || null}
-                    onSelectOption={handleSelectOption}
-                    isActive={index === currentStep}
-                    isComplete={isStepComplete(index)}
-                    connectivityItems={component.type === "Conectividade" ? connectivityItems : undefined}
-                    onUpdateConnectivityItems={component.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
-                    onSelectStorageItem={component.type === "Armazenamento" ? handleSelectStorageItem : undefined}
-                  />
-                ))}
-              </div>
-            ) : (
-              <AccordionStep
-                component={currentComponent}
-                selectedOption={currentComponent.type === "Armazenamento"
-                  ? selectedComponents["storage"] || null
-                  : selectedComponents[currentComponent.id] || null}
-                onSelectOption={handleSelectOption}
-                isActive={true}
-                isComplete={isStepComplete(currentStep)}
-                connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
-                onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? handleUpdateConnectivityItems : undefined}
-                onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
-              />
-            )}
+    <WizardProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <main className="container max-w-4xl mx-auto py-12 px-4 space-y-8 animate-fade-in">
+          <div className="text-center space-y-4 mb-12">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Configure seu Servidor
+            </h1>
+            <p className="text-muted-foreground max-w-lg mx-auto">
+              Selecione as opções ideais para seu servidor dedicado em poucos passos
+            </p>
           </div>
-          
-          <FloatingCart
-            selectedComponents={selectedComponents}
+
+          <ProgressIndicator 
+            components={serverData.componentes} 
             currentStep={currentStep}
-            totalSteps={components.length}
-            onPrevious={handlePreviousStep}
-            onNext={handleNextStep}
-            onComplete={() => setShowFinalSummary(true)}
+            completedSteps={serverData.componentes.map((_, index) => isStepComplete(index))}
           />
-        </div>
-      </main>
-    </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <WizardContent />
+            <FloatingCart
+              selectedComponents={selectedComponents}
+              currentStep={currentStep}
+              totalSteps={serverData.componentes.length}
+              onPrevious={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+              onNext={() => setCurrentStep(prev => Math.min(serverData.componentes.length - 1, prev + 1))}
+              onComplete={() => setShowFinalSummary(true)}
+            />
+          </div>
+        </main>
+      </div>
+    </WizardProvider>
   );
-};
+}
 
 export default Index;
+
