@@ -3,6 +3,7 @@ import { ComponentOption } from "@/data/server-components";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "./help-tooltip";
+import { Separator } from "@/components/ui/separator";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -17,65 +18,99 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
-  
-  const specs = Object.values(selectedComponents).flatMap(
-    component => component.specs || []
-  );
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
+      {/* Componentes Selecionados */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-lg">
-            Especificações Técnicas
+            Componentes Selecionados
             <HelpTooltip 
-              title="Detalhes"
-              description="Especificações técnicas completas do seu servidor"
-            />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm">
-            {specs.map((spec, index) => (
-              <li key={index} className="flex items-center gap-2 text-muted-foreground">
-                • {spec}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg">
-            Resumo Financeiro
-            <HelpTooltip 
-              title="Detalhes"
-              description="Detalhamento dos valores do seu servidor"
+              title="Ver detalhes"
+              description="Lista detalhada dos componentes escolhidos para seu servidor"
             />
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-muted-foreground">Subtotal</span>
+            {Object.entries(selectedComponents).map(([type, component]) => (
+              <div key={type} className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium">{component.name}</h4>
+                    <p className="text-sm text-muted-foreground">{component.description}</p>
+                  </div>
+                  <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
+                </div>
+                {component.specs && (
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4">
+                    {component.specs.map((spec, index) => (
+                      <li key={index} className="list-disc list-inside">
+                        {spec}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Separator className="mt-4" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Resumo Financeiro */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between text-lg">
+            Resumo Financeiro
+            <HelpTooltip 
+              title="Ver detalhes"
+              description="Detalhamento dos valores do seu servidor dedicado"
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center pb-2">
+              <div className="space-y-1">
+                <span className="text-muted-foreground">Subtotal</span>
+                <HelpTooltip 
+                  title="O que é isso?"
+                  description="Valor base dos componentes selecionados, sem margem adicional"
+                />
+              </div>
               <span className="font-medium">{formatCurrency(subtotal)}</span>
             </div>
             
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-muted-foreground flex items-center gap-2">
-                Margem ({margin}%)
+            <div className="flex justify-between items-center pb-2">
+              <div className="space-y-1">
+                <span className="text-muted-foreground">Margem ({margin}%)</span>
                 <HelpTooltip 
-                  title="Margem"
-                  description="Margem de lucro aplicada sobre o valor base"
+                  title="O que é isso?"
+                  description="Margem operacional aplicada sobre o valor base dos componentes"
                 />
-              </span>
+              </div>
               <span className="font-medium text-primary">{formatCurrency(profit)}</span>
             </div>
             
+            <Separator />
+            
             <div className="flex justify-between items-center pt-2">
-              <span className="text-lg font-medium">Total Mensal</span>
+              <div className="space-y-1">
+                <span className="text-lg font-medium">Total Mensal</span>
+                <HelpTooltip 
+                  title="O que é isso?"
+                  description="Valor total mensal do seu servidor, incluindo todos os componentes e margem"
+                />
+              </div>
               <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
+            </div>
+            
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                * Valores mensais, cobrados em reais (BRL). Impostos podem ser aplicados dependendo da região.
+              </p>
             </div>
           </div>
         </CardContent>
