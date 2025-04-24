@@ -30,10 +30,11 @@ export function DataCenterCard({
 }: DataCenterCardProps) {
   return (
     <div className="grid grid-cols-3 gap-2">
-      {options.map((baseOption) => {
-        const option = baseOption as DataCenterOption;
+      {options.map((option) => {
+        // Cast to DataCenterOption to access metadata properties
+        const dcOption = option as DataCenterOption;
         const isSelected = selectedOption?.id === option.id;
-        const features = option.metadata?.features || [];
+        const features = dcOption.metadata?.features || [];
         
         return (
           <div 
@@ -65,9 +66,9 @@ export function DataCenterCard({
               />
             </div>
             
-            {option.metadata?.badge && (
-              <div className={getBadgeStyles(option.metadata.badge)}>
-                {option.metadata.badge}
+            {dcOption.metadata?.badge && (
+              <div className={getBadgeStyles(dcOption.metadata.badge)}>
+                {dcOption.metadata.badge}
               </div>
             )}
           </div>
