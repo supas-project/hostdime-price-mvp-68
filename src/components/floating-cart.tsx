@@ -20,15 +20,21 @@ export function FloatingCart(props: FloatingCartProps) {
 
   if (isMobile) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
         <Sheet>
           <SheetTrigger asChild>
-            <Button size="lg" className="rounded-full shadow-lg">
+            <Button 
+              size="lg" 
+              className="rounded-full shadow-lg flex items-center gap-2"
+            >
               <ShoppingCart className="h-5 w-5" />
+              <span>Ver Resumo</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[80vh]">
-            <SummaryCart {...props} />
+            <div className="pt-4">
+              <SummaryCart {...props} />
+            </div>
           </SheetContent>
         </Sheet>
       </div>

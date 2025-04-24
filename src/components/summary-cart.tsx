@@ -37,19 +37,29 @@ export function SummaryCart({
   };
 
   const handleEdit = (type: string) => {
-    // Find the step index for this component type and navigate to it
-    // Implementation depends on your step structure
+    // Find the step index for this component type
+    const stepIndex = serverData.componentes.findIndex(comp => comp.id === type);
+    if (stepIndex >= 0) {
+      // This would be implemented by the parent component
+      toast({
+        title: "Editar componente",
+        description: `Editando o componente: ${selectedComponents[type].name}`
+      });
+    }
   };
 
   const handleRemove = (type: string) => {
-    // Remove the component from selection
-    // Implementation depends on your state management
+    // This would be implemented by the parent component
+    toast({
+      title: "Remover componente",
+      description: `O componente ${selectedComponents[type].name} foi removido.`
+    });
   };
 
   const itemCount = Object.keys(selectedComponents).length;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
-  const hasSelection = selectedComponents[Object.keys(serverData.componentes[currentStep])[0]] !== undefined;
+  const hasSelection = selectedComponents[serverData.componentes[currentStep]?.id] !== undefined;
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
@@ -72,10 +82,20 @@ export function SummaryCart({
             <div className="flex flex-col items-end gap-2">
               <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-6 w-6">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6"
+                  onClick={() => handleEdit(type)}
+                >
                   <Edit className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 text-destructive"
+                  onClick={() => handleRemove(type)}
+                >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -106,7 +126,7 @@ export function SummaryCart({
               <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
                 Anterior
               </Button>
-              <Button onClick={onNext} disabled={itemCount === 0}>
+              <Button onClick={onNext} disabled={!hasSelection}>
                 Próximo
               </Button>
             </div>
