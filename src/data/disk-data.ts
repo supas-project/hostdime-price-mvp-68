@@ -1,23 +1,12 @@
 
-export interface DiskOption {
-  id: string;
-  type: string;
-  capacity: string;
-  price: number;
-  specs: {
-    readSpeed: string;
-    writeSpeed: string;
-    iops: string;
-  };
-  recommended: string[];
-}
+import { DiskOption, PricedDiskOption } from "@/types/storage";
+import { diskPricing } from "./storage-pricing";
 
-export const diskData: DiskOption[] = [
+const baseDisks: DiskOption[] = [
   {
     id: "nvme-500",
     type: "nvme",
     capacity: "500GB",
-    price: 89.90,
     specs: {
       readSpeed: "3500 MB/s",
       writeSpeed: "3000 MB/s",
@@ -29,7 +18,6 @@ export const diskData: DiskOption[] = [
     id: "nvme-1000",
     type: "nvme",
     capacity: "1TB",
-    price: 169.90,
     specs: {
       readSpeed: "3500 MB/s",
       writeSpeed: "3000 MB/s",
@@ -41,7 +29,6 @@ export const diskData: DiskOption[] = [
     id: "ssd-500",
     type: "ssd",
     capacity: "500GB",
-    price: 49.90,
     specs: {
       readSpeed: "550 MB/s",
       writeSpeed: "520 MB/s",
@@ -53,7 +40,6 @@ export const diskData: DiskOption[] = [
     id: "ssd-1000",
     type: "ssd",
     capacity: "1TB",
-    price: 89.90,
     specs: {
       readSpeed: "550 MB/s",
       writeSpeed: "520 MB/s",
@@ -65,7 +51,6 @@ export const diskData: DiskOption[] = [
     id: "hdd-1000",
     type: "hdd",
     capacity: "1TB",
-    price: 29.90,
     specs: {
       readSpeed: "150 MB/s",
       writeSpeed: "150 MB/s",
@@ -77,7 +62,6 @@ export const diskData: DiskOption[] = [
     id: "hdd-2000",
     type: "hdd",
     capacity: "2TB",
-    price: 49.90,
     specs: {
       readSpeed: "150 MB/s",
       writeSpeed: "150 MB/s",
@@ -86,3 +70,8 @@ export const diskData: DiskOption[] = [
     recommended: ["Backups", "Arquivos", "Armazenamento geral"]
   }
 ];
+
+export const diskData: PricedDiskOption[] = baseDisks.map(disk => ({
+  ...disk,
+  price: diskPricing[disk.id]
+}));
