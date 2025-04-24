@@ -1,3 +1,4 @@
+
 export interface ComponentOption {
   id: string;
   name: string;
@@ -123,6 +124,162 @@ export const serverData: ServerConfiguration = {
           name: "NVMe 1TB",
           description: "Performance extrema para aplicações exigentes",
           price: 320
+        }
+      ]
+    },
+    {
+      id: "datacenter",
+      type: "DataCenter",
+      friendlyName: "Data Center",
+      description: "Escolha a localização do seu servidor",
+      icon: "database",
+      options: [
+        {
+          id: "dc-jp",
+          type: "DataCenter",
+          name: "João Pessoa (Nordeste)",
+          description: "Data center localizado no Nordeste do Brasil",
+          price: 0,
+          metadata: {
+            features: [
+              "Certificação Tier III",
+              "Green Data Center",
+              "Baixa latência regional"
+            ],
+            badge: "Recomendado"
+          }
+        },
+        {
+          id: "dc-sp",
+          type: "DataCenter",
+          name: "São Paulo (Sudeste)",
+          description: "Data center localizado no Sudeste do Brasil",
+          price: 0,
+          metadata: {
+            features: [
+              "Certificação Tier III",
+              "Baixa latência nacional",
+              "Alta conectividade"
+            ]
+          }
+        },
+        {
+          id: "dc-orl",
+          type: "DataCenter",
+          name: "Orlando (EUA)",
+          description: "Data center localizado na Flórida, Estados Unidos",
+          price: 20,
+          metadata: {
+            features: [
+              "Certificação Tier IV",
+              "Conexão global rápida",
+              "Tráfego internacional"
+            ],
+            badge: "Internacional"
+          }
+        }
+      ]
+    },
+    {
+      id: "contract",
+      type: "Contrato",
+      friendlyName: "Duração do Contrato",
+      description: "Escolha a duração do seu contrato para obter descontos",
+      icon: "link",
+      options: [
+        {
+          id: "contract-0",
+          type: "Contrato",
+          name: "Sem contrato",
+          description: "Pagamento mensal sem compromisso",
+          price: 0,
+          metadata: {
+            discount: 0
+          }
+        },
+        {
+          id: "contract-12",
+          type: "Contrato",
+          name: "12 meses",
+          description: "Contrato anual com desconto",
+          price: 0,
+          metadata: {
+            discount: 5
+          }
+        },
+        {
+          id: "contract-24",
+          type: "Contrato",
+          name: "24 meses",
+          description: "Contrato de dois anos com desconto",
+          price: 0,
+          metadata: {
+            discount: 10
+          }
+        },
+        {
+          id: "contract-36",
+          type: "Contrato",
+          name: "36 meses",
+          description: "Contrato de três anos com desconto",
+          price: 0,
+          metadata: {
+            discount: 15
+          }
+        },
+        {
+          id: "contract-48",
+          type: "Contrato",
+          name: "48 meses",
+          description: "Contrato de quatro anos com desconto máximo",
+          price: 0,
+          metadata: {
+            discount: 20
+          }
+        }
+      ]
+    },
+    {
+      id: "connectivity",
+      type: "Conectividade",
+      friendlyName: "Opções de Conectividade",
+      description: "Configure as opções de rede do seu servidor",
+      icon: "network",
+      options: [
+        {
+          id: "network-1gbps",
+          type: "Conectividade",
+          name: "Porta 1 Gbps",
+          description: "Porta de rede com velocidade de 1 Gbps",
+          price: 50
+        },
+        {
+          id: "network-10gbps",
+          type: "Conectividade",
+          name: "Porta 10 Gbps",
+          description: "Porta de rede de alta velocidade (10 Gbps)",
+          price: 200
+        },
+        {
+          id: "ip-4",
+          type: "Conectividade",
+          name: "Bloco /30 (4 IPs)",
+          description: "4 endereços IP (1 utilizável)",
+          price: 10
+        },
+        {
+          id: "ip-8",
+          type: "Conectividade",
+          name: "Bloco /29 (8 IPs)",
+          description: "8 endereços IP (5 utilizáveis)",
+          price: 20
+        },
+        {
+          id: "ip-16",
+          type: "Conectividade",
+          name: "Bloco /28 (16 IPs)",
+          description: "16 endereços IP (13 utilizáveis)",
+          price: 35
         }
       ]
     }

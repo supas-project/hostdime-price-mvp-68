@@ -2,7 +2,7 @@
 import { ComponentOption } from "@/data/server-components";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Server } from "lucide-react";
+import { Check, Database } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface DataCenterCardProps {
@@ -53,7 +53,7 @@ export function DataCenterCard({
                   p-2 rounded-full 
                   ${isSelected ? 'bg-primary/10' : 'bg-muted'}
                 `}>
-                  <Server className={`
+                  <Database className={`
                     h-5 w-5 
                     ${isSelected ? 'text-primary' : 'text-muted-foreground'}
                   `} />

@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { ComponentOption } from "@/data/server-components";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QuantitySelector } from "./quantity-selector";
-import { Trash2, Plus, Network } from "lucide-react";
+import { Database, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface ConnectivityOptionsProps {
@@ -65,7 +66,7 @@ export function ConnectivityOptions({
     <Card className="p-4">
       <CardHeader className="p-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <Network className="h-5 w-5 text-primary" />
+          <Database className="h-5 w-5 text-primary" />
           Opções de Conectividade
         </CardTitle>
       </CardHeader>
