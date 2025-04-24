@@ -2,7 +2,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HelpTooltip } from "./help-tooltip";
 import { formatCurrency } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Cpu } from "lucide-react";
 
 interface Option {
@@ -27,14 +26,6 @@ export function ComponentSelector({
   onChange,
   tooltip
 }: ComponentSelectorProps) {
-  const selectedOption = options.find(opt => opt.id === value);
-  
-  // Format CPU name to display in a single line
-  const formatCPUName = (option: Option) => {
-    const [name, specs] = option.name.split('(');
-    return specs ? `${name.trim()} (${specs.trim()}` : name;
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
@@ -61,10 +52,10 @@ export function ComponentSelector({
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
+              className="flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
             >
               <div className="flex justify-between items-center w-full gap-4">
-                <span className="text-white">{formatCPUName(option)}</span>
+                <span>{option.name}</span>
                 <span className="text-[#f58220] font-medium whitespace-nowrap">
                   {formatCurrency(option.price)}
                 </span>
@@ -73,12 +64,6 @@ export function ComponentSelector({
           ))}
         </SelectContent>
       </Select>
-      
-      {selectedOption?.description && (
-        <p className="text-sm text-muted-foreground">
-          {selectedOption.description}
-        </p>
-      )}
     </div>
   );
 }
