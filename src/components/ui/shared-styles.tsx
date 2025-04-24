@@ -8,8 +8,8 @@ export const componentSpacing = {
 };
 
 export const animationClasses = {
-  fadeIn: "animate-in fade-in duration-300",
-  slideIn: "animate-in slide-in-from-bottom duration-300",
+  fadeIn: "fade-in",
+  slideIn: "slide-in",
   hover: "transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
   active: "active:scale-[0.98] active:duration-200"
 };

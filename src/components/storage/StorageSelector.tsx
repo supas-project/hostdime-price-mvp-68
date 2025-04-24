@@ -34,10 +34,10 @@ export function StorageSelector() {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="internal" className={`mt-0 ${animationClasses.fadeIn}`}>
+        <TabsContent value="internal" className="mt-0 fade-in">
           <InternalStoragePanel />
         </TabsContent>
-        <TabsContent value="external" className={`mt-0 ${animationClasses.fadeIn}`}>
+        <TabsContent value="external" className="mt-0 fade-in">
           <ExternalStoragePanel />
         </TabsContent>
       </Tabs>

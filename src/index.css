@@ -63,18 +63,44 @@
     box-shadow: var(--shadow-xl);
     transform: translateY(-2px);
   }
+}
 
+@layer components {
+  /* Definindo classes de animação sem uso de @apply */
   .fade-in {
-    @apply animate-in fade-in duration-500;
+    animation: fadeIn 0.5s ease-out forwards;
   }
 
   .slide-in {
-    @apply animate-in slide-in-from-bottom duration-500;
+    animation: slideInBottom 0.5s ease-out forwards;
   }
 }
 
 @layer utilities {
   .glass-effect {
     @apply bg-background/80 backdrop-blur-lg border border-border/50;
+  }
+  
+  /* Definindo as animações para keyframes */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideInBottom {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 }
