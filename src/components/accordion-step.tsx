@@ -25,7 +25,7 @@ interface AccordionStepProps {
   isComplete: boolean;
   connectivityItems?: { [key: string]: { option: ComponentOption, quantity: number } };
   onUpdateConnectivityItems?: (items: { [key: string]: { option: ComponentOption, quantity: number } }) => void;
-  onSelectStorageItem?: (storageOption: ComponentOption) => void;
+  onSelectStorageItem?: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
 }
 
 export function AccordionStep({ 
@@ -65,7 +65,7 @@ export function AccordionStep({
           `Quantidade: ${quantity}`
         ]
       };
-      onSelectStorageItem(storageOption);
+      onSelectStorageItem(storageOption, 'internal');
     }
   };
 
@@ -83,7 +83,7 @@ export function AccordionStep({
           `Capacidade: ${capacity} GB`
         ]
       };
-      onSelectStorageItem(storageOption);
+      onSelectStorageItem(storageOption, 'external');
     }
   };
   
