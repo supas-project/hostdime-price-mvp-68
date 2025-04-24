@@ -12,7 +12,7 @@ export function StorageSelector() {
   return (
     <Card className={cn(
       componentSpacing.card,
-      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300 hover:shadow-xl"
+      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300"
     )}>
       <StorageHeader
         icon={HardDrive}
@@ -24,26 +24,26 @@ export function StorageSelector() {
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-background/5 backdrop-blur-lg border border-[#2a2a2a] rounded-lg overflow-hidden">
           <TabsTrigger 
             value="internal"
-            className="relative py-3 transition-all duration-300 data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
+            className="relative py-3 data-[state=active]:bg-[#f58220] data-[state=active]:text-white transition-all duration-300"
           >
             <HardDrive className="w-4 h-4 mr-2" />
             Discos Internos
           </TabsTrigger>
           <TabsTrigger 
             value="external"
-            className="relative py-3 transition-all duration-300 data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
+            className="relative py-3 data-[state=active]:bg-[#f58220] data-[state=active]:text-white transition-all duration-300"
           >
             <Database className="w-4 h-4 mr-2" />
             Storage Externo
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="internal" className="mt-0">
+        <TabsContent value="internal">
           <div className="animate-fade-in">
             <InternalStoragePanel />
           </div>
         </TabsContent>
-        <TabsContent value="external" className="mt-0">
+        <TabsContent value="external">
           <div className="animate-fade-in">
             <ExternalStoragePanel />
           </div>
