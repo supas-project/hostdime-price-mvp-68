@@ -28,44 +28,35 @@ export function ComponentSelector({
   const selectedOption = options.find(opt => opt.id === value);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <label className="text-lg font-medium text-white">
-          {label}
-        </label>
+    <div className="flex items-center gap-4">
+      <label className="text-sm font-medium text-white whitespace-nowrap min-w-32">
+        {label}
         {tooltip && (
-          <HelpTooltip 
-            title="Mais detalhes"
-            description={tooltip}
-          />
+          <span className="ml-1">
+            <HelpTooltip 
+              title="Mais detalhes"
+              description={tooltip}
+            />
+          </span>
         )}
-      </div>
+      </label>
       
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full bg-[#0A0A0A] border-[#1A1A1A] text-white h-[60px]">
-          <SelectValue placeholder="Escolha o processador ideal">
-            <div className="flex justify-between items-center w-full">
-              <span className="text-white font-medium">
-                {selectedOption?.name}
-              </span>
-              {selectedOption && (
-                <span className="text-[#F58220] font-medium">
-                  {formatCurrency(selectedOption.price)}
-                </span>
-              )}
-            </div>
+        <SelectTrigger className="w-full max-w-md bg-[#1e1e1e] border-[#2a2a2a] text-white h-10">
+          <SelectValue placeholder="Selecione uma opção">
+            {selectedOption ? selectedOption.name : "Selecione uma opção"}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className="bg-[#0A0A0A] border-[#1A1A1A] w-full">
+        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
           {options.map((option) => (
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="flex justify-between items-center py-3 px-4 hover:bg-[#111111] focus:bg-[#111111] cursor-pointer"
+              className="flex justify-between items-center py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer"
             >
               <div className="flex justify-between items-center w-full">
-                <span className="text-white font-medium">{option.name}</span>
-                <span className="text-[#F58220] font-medium">{formatCurrency(option.price)}</span>
+                <span className="text-white">{option.name}</span>
+                <span className="text-[#f58220] font-medium ml-4">{formatCurrency(option.price)}</span>
               </div>
             </SelectItem>
           ))}
