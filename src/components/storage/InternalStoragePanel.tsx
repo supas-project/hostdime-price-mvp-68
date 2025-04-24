@@ -8,6 +8,7 @@ import { HardDrive, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 export function InternalStoragePanel() {
   const [selectedDiskType, setSelectedDiskType] = useState("");
@@ -35,41 +36,59 @@ export function InternalStoragePanel() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid gap-4">
-        <Select onValueChange={setSelectedDiskType} value={selectedDiskType}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecione o tipo de disco" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="nvme">NVMe (Ultra Rápido)</SelectItem>
-            <SelectItem value="ssd">SSD (Rápido)</SelectItem>
-            <SelectItem value="hdd">HDD (Econômico)</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {selectedDiskType && (
-          <Select onValueChange={setSelectedCapacity} value={selectedCapacity}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione a capacidade" />
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            Tipo de Disco
+            <HelpTooltip
+              title="Tipos de Disco"
+              description="NVMe oferece máximo desempenho, SSD equilibra velocidade e custo, HDD é mais econômico para grande capacidade"
+            />
+          </label>
+          <Select onValueChange={setSelectedDiskType} value={selectedDiskType}>
+            <SelectTrigger className="w-full bg-background">
+              <SelectValue placeholder="Selecione o tipo de disco" />
             </SelectTrigger>
             <SelectContent>
-              {availableDisks.map((disk) => (
-                <SelectItem key={disk.id} value={disk.capacity}>
-                  <div className="flex justify-between items-center gap-4">
-                    <span>{disk.capacity}</span>
-                    <span className="text-[#f58220] font-medium">
-                      {formatCurrency(disk.price)}/mês
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
+              <SelectItem value="nvme">NVMe (Ultra Rápido)</SelectItem>
+              <SelectItem value="ssd">SSD (Rápido)</SelectItem>
+              <SelectItem value="hdd">HDD (Econômico)</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {selectedDiskType && (
+          <div className="space-y-2 animate-fade-in">
+            <label className="text-sm font-medium flex items-center gap-2">
+              Capacidade
+              <HelpTooltip
+                title="Capacidade do Disco"
+                description="Escolha o tamanho do disco de acordo com sua necessidade de armazenamento"
+              />
+            </label>
+            <Select onValueChange={setSelectedCapacity} value={selectedCapacity}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Selecione a capacidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDisks.map((disk) => (
+                  <SelectItem key={disk.id} value={disk.capacity}>
+                    <div className="flex justify-between items-center gap-4">
+                      <span>{disk.capacity}</span>
+                      <span className="text-[#f58220] font-medium">
+                        {formatCurrency(disk.price)}/mês
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
 
         {selectedDiskType && selectedCapacity && (
           <Button 
             onClick={handleAddDisk} 
-            className="w-full bg-[#f58220] hover:bg-[#f58220]/90"
+            className="w-full bg-[#f58220] hover:bg-[#f58220]/90 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Disco
@@ -79,12 +98,17 @@ export function InternalStoragePanel() {
 
       {selectedDisks.length > 0 && (
         <div className="space-y-4">
-          <h4 className="font-medium text-base">Discos Selecionados</h4>
-          <div className="grid gap-2">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-base">Discos Selecionados</h4>
+            <span className="text-sm text-muted-foreground">
+              {selectedDisks.length} {selectedDisks.length === 1 ? 'disco' : 'discos'}
+            </span>
+          </div>
+          <div className="grid gap-3">
             {selectedDisks.map((disk, index) => {
               const specs = disk.specs;
               return (
-                <Card key={index} className="p-4">
+                <Card key={index} className="p-4 hover:border-[#f58220]/30 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <HardDrive className="w-4 h-4 text-[#f58220]" />
@@ -92,9 +116,15 @@ export function InternalStoragePanel() {
                         <p className="font-medium">
                           {disk.type.toUpperCase()} - {disk.capacity}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {specs.readSpeed} leitura / {specs.writeSpeed} escrita
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-muted-foreground">
+                            {specs.readSpeed} leitura / {specs.writeSpeed} escrita
+                          </p>
+                          <HelpTooltip
+                            title="Velocidades"
+                            description={`Velocidade de leitura: ${specs.readSpeed}, Velocidade de escrita: ${specs.writeSpeed}, IOPS: ${specs.iops}`}
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -105,7 +135,7 @@ export function InternalStoragePanel() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveDisk(index)}
-                        className="text-destructive hover:text-destructive/90"
+                        className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
