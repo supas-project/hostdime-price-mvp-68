@@ -31,47 +31,43 @@ export function ComponentSelector({
   const selectedOption = options.find(opt => opt.id === value);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <label className="text-lg font-medium text-white">
-            {label}
-          </label>
-          {tooltip && (
-            <HelpTooltip 
-              title="Mais detalhes"
-              description={tooltip}
-            />
-          )}
-        </div>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="text-lg font-medium text-white">
+          {label}
+        </label>
+        {tooltip && (
+          <HelpTooltip 
+            title="Mais detalhes"
+            description={tooltip}
+          />
+        )}
       </div>
       
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full bg-[#0A0A0A] border-[#1A1A1A] text-white flex flex-col items-start p-3 h-auto">
-          <div className="flex justify-between w-full">
+        <SelectTrigger className="w-full bg-[#0A0A0A] border-[#1A1A1A] text-white h-[60px]">
+          <div className="flex justify-between items-center w-full">
             <span className="text-white font-medium">
               {selectedOption?.name || "Escolha o processador ideal"}
             </span>
-            <span className="text-[#F58220]">
-              {selectedOption ? formatCurrency(selectedOption.price) : ''}
-            </span>
-          </div>
-          <div className="text-sm text-slate-400 mt-1">
-            {selectedOption?.description || ''}
+            {selectedOption && (
+              <span className="text-[#F58220] font-medium">
+                {formatCurrency(selectedOption.price)}
+              </span>
+            )}
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-[#0A0A0A] border-[#1A1A1A] w-[500px]">
+        <SelectContent className="bg-[#0A0A0A] border-[#1A1A1A] w-full">
           {options.map((option) => (
             <SelectItem 
               key={option.id} 
               value={option.id}
-              className="flex flex-col items-start py-3 px-4 hover:bg-[#111111] focus:bg-[#111111]"
+              className="flex justify-between items-center py-3 px-4 hover:bg-[#111111] focus:bg-[#111111] cursor-pointer"
             >
-              <div className="flex justify-between w-full">
+              <div className="flex justify-between items-center w-full">
                 <span className="text-white font-medium">{option.name}</span>
-                <span className="text-[#F58220]">{formatCurrency(option.price)}</span>
+                <span className="text-[#F58220] font-medium">{formatCurrency(option.price)}</span>
               </div>
-              <div className="text-sm text-slate-400 mt-1">{option.description}</div>
             </SelectItem>
           ))}
         </SelectContent>
