@@ -1,4 +1,3 @@
-
 import { ServerComponent, ComponentOption } from "@/types/component";
 import { StepHeader } from "@/components/wizard/steps/step-header";
 import { ProcessorContent } from "./content/ProcessorContent";
@@ -7,6 +6,7 @@ import { DataCenterContent } from "./content/DataCenterContent";
 import { ContractContent } from "./content/ContractContent";
 import { ConnectivityContent } from "./content/ConnectivityContent";
 import { StorageContent } from "./content/StorageContent";
+import { OSContent } from "./content/OSContent";
 
 interface AccordionContentProps {
   component: ServerComponent;
@@ -25,7 +25,7 @@ export function AccordionContent({
   onUpdateConnectivityItems,
   onSelectStorageItem
 }: AccordionContentProps) {
-  const isSpecialComponentType = ["DataCenter", "Contrato", "Conectividade", "Armazenamento", "Memória"].includes(component.type);
+  const isSpecialComponentType = ["DataCenter", "Contrato", "Conectividade", "Armazenamento", "Memória", "SistemaOperacional"].includes(component.type);
 
   const renderComponentContent = () => {
     switch (component.type) {
@@ -81,6 +81,15 @@ export function AccordionContent({
           return <StorageContent onSelectStorageItem={onSelectStorageItem} />;
         }
         break;
+      
+      case "SistemaOperacional":
+        return (
+          <OSContent
+            options={component.options}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
+        );
 
       default:
         return null;
