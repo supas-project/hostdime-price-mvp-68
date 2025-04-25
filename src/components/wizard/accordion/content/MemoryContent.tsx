@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatCurrency } from "@/lib/utils";
@@ -61,10 +60,10 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     : 64;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <ToggleGroup 
         type="single" 
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+        className="w-full inline-grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
         defaultValue={currentValue.toString()}
         onValueChange={(value) => {
           if (value) {
@@ -80,11 +79,11 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
             <ToggleGroupItem
               key={size}
               value={size.toString()}
-              className="flex flex-col items-center p-4 gap-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent transition-all duration-200 relative group"
+              className="min-h-[90px] flex flex-col items-center justify-center p-3 gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent transition-all duration-200 relative group rounded-lg"
               aria-label={`${size}GB RAM`}
             >
-              <span className="text-lg font-medium">{size}GB</span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xl font-semibold">{size}GB</span>
+              <span className="text-sm font-medium">
                 {formatCurrency(size * pricePerGB)}
               </span>
               <HelpTooltip
