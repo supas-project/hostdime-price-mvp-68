@@ -1,5 +1,6 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { WizardProvider } from '@/contexts/WizardContext';
 import Index from '@/pages/Index';
 import { serverData } from '@/data/server-components';
@@ -15,7 +16,7 @@ describe('Server Configuration Wizard', () => {
 
   // Contract Selection Tests
   test('Contract Selection Flow', () => {
-    const { getByText } = renderWizard();
+    renderWizard();
     
     // Test different contract durations
     const contractOptions = [
@@ -37,7 +38,7 @@ describe('Server Configuration Wizard', () => {
 
   // Memory Slider Tests
   test('Memory Slider Functionality', () => {
-    const { getByText } = renderWizard();
+    renderWizard();
     
     const memorySlider = screen.getByRole('slider');
     const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
@@ -56,7 +57,7 @@ describe('Server Configuration Wizard', () => {
 
   // Processor Selection Tests
   test('Processor Selection', () => {
-    const { getByText } = renderWizard();
+    renderWizard();
     
     const processorOptions = serverData.componentes
       .find(c => c.type === 'Processador')?.options || [];
@@ -72,7 +73,7 @@ describe('Server Configuration Wizard', () => {
 
   // Storage Configuration Tests
   test('Storage Configuration', () => {
-    const { getByText } = renderWizard();
+    renderWizard();
     
     // Test Internal Storage
     const internalTab = screen.getByText('Discos Internos');
@@ -100,7 +101,7 @@ describe('Server Configuration Wizard', () => {
 
   // Full Wizard Flow Test
   test('Complete Wizard Flow', () => {
-    const { getByText } = renderWizard();
+    renderWizard();
     
     // Simulate full wizard flow
     const steps = serverData.componentes;
