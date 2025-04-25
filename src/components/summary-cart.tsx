@@ -1,3 +1,4 @@
+
 import { ComponentOption, serverData } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
@@ -76,13 +77,31 @@ export function SummaryCart({
   const isLastStep = currentStep === totalSteps - 1;
   
   const currentComponent = serverData.componentes[currentStep];
-  const hasSelection = currentComponent?.type === "Contrato" 
-    ? selectedComponents["contrato"] !== undefined
-    : selectedComponents[currentComponent?.type.toLowerCase()] !== undefined;
-
+  const hasSelection = (() => {
+    if (!currentComponent) return false;
+    
+    console.log('Checking selection for type:', currentComponent.type);
+    console.log('Selected components:', selectedComponents);
+    
+    if (currentComponent.type === "Memória") {
+      const hasMemory = selectedComponents["memoria"] !== undefined;
+      console.log('Memory check:', { hasMemory, memoryComponent: selectedComponents["memoria"] });
+      return hasMemory;
+    }
+    
+    if (currentComponent.type === "Contrato") {
+      return selectedComponents["contrato"] !== undefined;
+    }
+    
+    const typeKey = currentComponent.type.toLowerCase();
+    const hasComponent = selectedComponents[typeKey] !== undefined;
+    console.log(`Selection check for ${typeKey}:`, hasComponent);
+    
+    return hasComponent;
+  })();
+  
   console.log('Current step:', currentStep);
   console.log('Current component:', currentComponent?.type);
-  console.log('Selected components:', selectedComponents);
   console.log('Has selection:', hasSelection);
   
   return (
