@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatCurrency } from "@/lib/utils";
@@ -60,7 +61,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     : 64;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 relative">
       <ToggleGroup 
         type="single" 
         className="grid grid-cols-2 sm:grid-cols-3 gap-4"
@@ -79,21 +80,15 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
             <ToggleGroupItem
               key={size}
               value={size.toString()}
-              className="min-h-[80px] grid place-items-center p-3 gap-2
+              className="group relative min-h-[80px] overflow-hidden
                 bg-card hover:bg-accent/50
                 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
                 border border-border hover:border-primary/30
-                relative rounded-lg transition-all duration-200"
+                rounded-lg transition-all duration-200"
             >
-              <div className="text-center z-10">
-                <div className="text-lg font-semibold tracking-tight">{size}GB RAM</div>
-                <div className="text-sm font-medium text-muted-foreground">
-                  {formatCurrency(size * pricePerGB)}
-                </div>
-              </div>
-              <div className="absolute right-2 top-2 z-20">
+              <div className="absolute right-2 top-2">
                 <HelpTooltip
-                  title={`${size}GB RAM`}
+                  title={`${size}GB RAM Details`}
                   description={`
                     • ${specs.type}
                     • Velocidade: ${specs.speed}
@@ -101,7 +96,15 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
                     • Suporte a ${specs.ecc}
                     • Preço: ${formatCurrency(size * pricePerGB)}
                   `}
+                  iconOnly
                 />
+              </div>
+              
+              <div className="flex flex-col items-center justify-center h-full p-3 gap-1">
+                <div className="text-lg font-semibold">{size}GB RAM</div>
+                <div className="text-sm text-muted-foreground">
+                  {formatCurrency(size * pricePerGB)}
+                </div>
               </div>
             </ToggleGroupItem>
           );
