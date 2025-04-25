@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -81,8 +82,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       const updated = { ...prev };
       delete updated[type];
       
-      toast({
-        title: "Componente removido",
+      // Fix: Use toast function correctly for sonner
+      toast("Componente removido", {
         description: "O componente foi removido com sucesso"
       });
       
