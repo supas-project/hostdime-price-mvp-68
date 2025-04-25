@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/types/component";
 import * as Icons from "lucide-react";
@@ -18,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-import { ComponentSelector } from "@/components/ui/component-selector";
+import { ComponentSelector } from "@/components/component-selector"; // Corrigido: Caminho atualizado para o correto
 
 interface AccordionStepProps {
   component: ServerComponent;
@@ -43,6 +44,9 @@ export function AccordionStep({
 }: AccordionStepProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
+  
+  // Definição da variável que faltava
+  const isSpecialComponentType = ["DataCenter", "Contrato", "Conectividade", "Armazenamento", "Memória"].includes(component.type);
 
   const renderComponentContent = () => {
     switch (component.type) {
