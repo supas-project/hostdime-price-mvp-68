@@ -18,6 +18,15 @@ export function WizardContent() {
     handleSelectStorageItem 
   } = useWizard();
 
+  const getSelectedOption = (component: any) => {
+    const type = component.type;
+    if (type === "Contrato") return selectedComponents["contrato"];
+    if (type === "Armazenamento") {
+      return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
+    }
+    return selectedComponents[type.toLowerCase()];
+  };
+
   const currentComponent = serverData.componentes[currentStep];
 
   return (
@@ -47,9 +56,7 @@ export function WizardContent() {
             <AccordionStep
               key={component.id}
               component={component}
-              selectedOption={component.type === "Armazenamento" 
-                ? selectedComponents["storage"] || null
-                : selectedComponents[component.type.toLowerCase()] || null}
+              selectedOption={getSelectedOption(component)}
               onSelectOption={handleSelectOption}
               isActive={index === currentStep}
               isComplete={isStepComplete(index)}
@@ -62,9 +69,7 @@ export function WizardContent() {
       ) : (
         <AccordionStep
           component={currentComponent}
-          selectedOption={currentComponent.type === "Armazenamento"
-            ? selectedComponents["storage"] || null
-            : selectedComponents[currentComponent.type.toLowerCase()] || null}
+          selectedOption={getSelectedOption(currentComponent)}
           onSelectOption={handleSelectOption}
           isActive={true}
           isComplete={isStepComplete(currentStep)}

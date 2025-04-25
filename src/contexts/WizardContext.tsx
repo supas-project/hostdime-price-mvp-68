@@ -29,17 +29,25 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     console.log("Selecting option:", option);
     setSelectedComponents((prev) => {
       const updated = { ...prev };
-      let storeKey = option.type.toLowerCase();
       
-      if (option.type === "Contrato") {
-        storeKey = "contrato";
-      } else if (option.type === "Processador") {
-        storeKey = "processador";
-      } else if (option.type === "Memória") {
-        storeKey = "memoria";
+      switch (option.type) {
+        case "Contrato":
+          updated["contrato"] = option;
+          break;
+        case "Processador":
+          updated["processador"] = option;
+          break;
+        case "Memória":
+          updated["memoria"] = {
+            ...option,
+            name: `${option.name}`,
+            price: parseFloat(option.name.replace(/\D/g, '')) * 7.5
+          };
+          break;
+        default:
+          updated[option.type.toLowerCase()] = option;
       }
       
-      updated[storeKey] = option;
       console.log("Updated components:", updated);
       return updated;
     });
