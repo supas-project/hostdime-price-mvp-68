@@ -132,14 +132,21 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         ...prev,
         external: []
       }));
+    } else if (type.includes("network-") || type.includes("ip-")) {
+      // Handle connectivity item removal
+      setConnectivityItems(prev => {
+        const newItems = { ...prev };
+        delete newItems[type];
+        return newItems;
+      });
+      
+      toast.success("Componente removido com sucesso");
     } else {
       setSelectedComponents((prev) => {
         const updated = { ...prev };
         delete updated[type];
         
-        toast("Componente removido", {
-          description: "O componente foi removido com sucesso"
-        });
+        toast.success("Componente removido com sucesso");
         
         return updated;
       });

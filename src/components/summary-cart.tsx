@@ -218,7 +218,7 @@ export function SummaryCart({
         )}
         
         {/* Connectivity components */}
-        {hasConnectivityItems && (
+        {Object.keys(connectivityItems).length > 0 && (
           <div className="pt-2">
             <p className="text-xs font-medium text-muted-foreground mb-2">Conectividade</p>
             {Object.values(connectivityItems).map((item) => (

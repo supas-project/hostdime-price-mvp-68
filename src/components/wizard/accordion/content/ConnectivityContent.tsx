@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EthernetPort, Network } from "lucide-react";
 import { QuantitySelector } from "@/components/quantity-selector";
+import { toast } from "sonner";
 
 interface ConnectivityContentProps {
   options: ComponentOption[];
@@ -20,25 +21,32 @@ export function ConnectivityContent({
   const portOptions = options.filter((opt) => opt.subtype === "porta");
   const ipOptions = options.filter((opt) => opt.subtype === "ip");
 
-  const handlePortSelect = (portId: string) => {
+  const handlePortSelect = (portId: string | null) => {
+    if (!portId) {
+      // Handle port deselection
+      const newItems = { ...connectivityItems };
+      const portItem = Object.entries(newItems).find(([_, item]) => item.option.subtype === "porta");
+      if (portItem) {
+        delete newItems[portItem[0]];
+      }
+      onUpdateConnectivityItems(newItems);
+      return;
+    }
+
     const port = portOptions.find((opt) => opt.id === portId);
     if (!port) return;
 
     const newItems = { ...connectivityItems };
-    const currentIp = Object.values(newItems).find(
-      (item) => item.option.subtype === "ip"
-    );
+    // Keep only IP items when changing port
+    Object.keys(newItems).forEach(key => {
+      if (newItems[key].option.subtype === "porta") {
+        delete newItems[key];
+      }
+    });
 
-    // If port already exists, keep its quantity, otherwise set to 1
-    const currentQuantity = newItems[portId]?.quantity || 1;
-
-    newItems[port.id] = { option: port, quantity: currentQuantity };
-
-    if (currentIp) {
-      newItems[currentIp.option.id] = currentIp;
-    }
-
+    newItems[port.id] = { option: port, quantity: 1 };
     onUpdateConnectivityItems(newItems);
+    toast.success("Velocidade da porta atualizada");
   };
 
   const handlePortQuantityChange = (portId: string, quantity: number) => {
@@ -49,22 +57,32 @@ export function ConnectivityContent({
     }
   };
 
-  const handleIpSelect = (ipId: string) => {
+  const handleIpSelect = (ipId: string | null) => {
+    if (!ipId) {
+      // Handle IP deselection
+      const newItems = { ...connectivityItems };
+      const ipItem = Object.entries(newItems).find(([_, item]) => item.option.subtype === "ip");
+      if (ipItem) {
+        delete newItems[ipItem[0]];
+      }
+      onUpdateConnectivityItems(newItems);
+      return;
+    }
+
     const ip = ipOptions.find((opt) => opt.id === ipId);
     if (!ip) return;
 
     const newItems = { ...connectivityItems };
-    const currentPort = Object.values(newItems).find(
-      (item) => item.option.subtype === "porta"
-    );
+    // Remove any existing IP selections
+    Object.keys(newItems).forEach(key => {
+      if (newItems[key].option.subtype === "ip") {
+        delete newItems[key];
+      }
+    });
 
     newItems[ip.id] = { option: ip, quantity: 1 };
-
-    if (currentPort) {
-      newItems[currentPort.option.id] = currentPort;
-    }
-
     onUpdateConnectivityItems(newItems);
+    toast.success("Bloco de IPs atualizado");
   };
 
   const selectedPort = Object.values(connectivityItems).find(
@@ -118,7 +136,10 @@ export function ConnectivityContent({
           <Network className="h-4 w-4" />
           Bloco de IPs
         </div>
-        <Select value={selectedIp?.option.id} onValueChange={handleIpSelect}>
+        <Select 
+          value={selectedIp?.option.id || ""} 
+          onValueChange={handleIpSelect}
+        >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione um bloco de IPs" />
           </SelectTrigger>
