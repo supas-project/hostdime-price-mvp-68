@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Trash2 } from "lucide-react";
@@ -60,9 +59,15 @@ export function SummaryCart({
     (sum, storage) => sum + storage.price, 
     0
   );
+
+  // Calculate connectivity price
+  const connectivityPrice = Object.values(connectivityItems).reduce(
+    (sum, item) => sum + (item.option.price * item.quantity),
+    0
+  );
   
   // Calculate total price
-  const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice;
+  const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice + connectivityPrice;
 
   const handleSave = () => {
     toast({
@@ -85,7 +90,8 @@ export function SummaryCart({
 
   const standardComponentCount = Object.keys(standardComponents).length;
   const storageComponentCount = storageItems.internal.length + storageItems.external.length;
-  const totalItemCount = standardComponentCount + storageComponentCount;
+  const connectivityComponentCount = Object.keys(connectivityItems).length;
+  const totalItemCount = standardComponentCount + storageComponentCount + connectivityComponentCount;
   
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
@@ -117,6 +123,8 @@ export function SummaryCart({
     const typeKey = componentType.toLowerCase();
     return selectedComponents[typeKey] !== undefined;
   })();
+  
+  const hasConnectivityItems = Object.keys(connectivityItems).length > 0;
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
@@ -199,6 +207,39 @@ export function SummaryCart({
                       size="icon" 
                       className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleRemove("storage_external")}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Connectivity components */}
+        {hasConnectivityItems && (
+          <div className="pt-2">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Conectividade</p>
+            {Object.values(connectivityItems).map((item) => (
+              <div key={item.option.id} className="flex justify-between items-start group animate-fade-in mb-2">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">
+                    {item.option.name}
+                    {item.quantity > 1 && ` (${item.quantity}x)`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{item.option.description}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-sm font-medium">
+                    {formatCurrency(item.option.price * item.quantity)}
+                  </p>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemoveComponent(item.option.id)}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
