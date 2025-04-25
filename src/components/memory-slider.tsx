@@ -10,37 +10,34 @@ interface MemorySliderProps {
 }
 
 export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps) {
-  // Lista de valores de memória disponíveis
   const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
   
-  // Busca o índice do valor atual na lista
   const [currentIndex, setCurrentIndex] = useState(() => {
     const index = memoryValues.indexOf(value);
     return index !== -1 ? index : 0;
   });
   
+  // Atualiza o valor quando o índice muda
+  useEffect(() => {
+    const newValue = memoryValues[currentIndex];
+    if (newValue !== value) {
+      onChange(newValue);
+    }
+  }, [currentIndex, value, onChange]);
+  
   // Atualiza o índice quando o valor muda externamente
   useEffect(() => {
     const index = memoryValues.indexOf(value);
-    if (index !== -1) {
+    if (index !== -1 && index !== currentIndex) {
       setCurrentIndex(index);
     }
   }, [value]);
-  
-  // Garante que um valor padrão seja usado se o valor atual não estiver na lista
-  useEffect(() => {
-    if (value === undefined || memoryValues.indexOf(value) === -1) {
-      onChange(memoryValues[currentIndex]);
-    }
-  }, []);
-  
-  // Manipula a alteração do slider
+
   const handleSliderChange = (newValue: number[]) => {
     if (Array.isArray(newValue) && newValue.length > 0) {
       const index = newValue[0];
       if (index >= 0 && index < memoryValues.length) {
         setCurrentIndex(index);
-        onChange(memoryValues[index]);
       }
     }
   };

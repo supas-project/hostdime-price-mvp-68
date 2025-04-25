@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ServerComponent, ComponentOption } from "@/types/component";
 import * as Icons from "lucide-react";
@@ -19,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { ComponentSelector } from "@/components/ui/component-selector";
 
 interface AccordionStepProps {
   component: ServerComponent;
@@ -42,12 +42,25 @@ export function AccordionStep({
   onSelectStorageItem
 }: AccordionStepProps) {
   const [isExpanded, setIsExpanded] = useState(isActive);
-  
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
-  const isSpecialComponentType = ["Memória", "DataCenter", "Contrato", "Conectividade", "Armazenamento"].includes(component.type);
 
   const renderComponentContent = () => {
     switch (component.type) {
+      case "Processador":
+        return (
+          <ComponentSelector
+            label={component.friendlyName}
+            options={component.options}
+            value={selectedOption?.id || ""}
+            onChange={(value) => {
+              const option = component.options.find(opt => opt.id === value);
+              if (option) onSelectOption(option);
+            }}
+            tooltip={component.description}
+            highlightSelection={true}
+          />
+        );
+      
       case "Memória":
         return (
           <Card className="p-6">

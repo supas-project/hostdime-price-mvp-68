@@ -22,8 +22,12 @@ export function ContractDuration({
         <RadioGroup 
           value={selectedOption?.id || ""}
           onValueChange={(value) => {
+            console.log("Contract selected:", value);
             const option = options.find(opt => opt.id === value);
-            if (option) onSelectOption(option);
+            if (option) {
+              console.log("Contract option found:", option);
+              onSelectOption(option);
+            }
           }}
         >
           <div className="space-y-2">

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -26,16 +25,18 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption, quantity: number } }>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
 
-  // Função para selecionar uma opção de componente
   const handleSelectOption = (option: ComponentOption) => {
     console.log("Selecting option:", option);
     setSelectedComponents((prev) => {
       const updated = { ...prev };
-      const storeKey = option.type.toLowerCase();
+      let storeKey = option.type.toLowerCase();
       
-      // Limpar opções anteriores se necessário
-      if (option.type === "Processador" && prev["processador"] && prev["processador"].id !== option.id) {
-        delete updated["processador"];
+      if (option.type === "Contrato") {
+        storeKey = "contrato";
+      } else if (option.type === "Processador") {
+        storeKey = "processador";
+      } else if (option.type === "Memória") {
+        storeKey = "memoria";
       }
       
       updated[storeKey] = option;
@@ -74,8 +75,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const component = serverData.componentes[stepIndex];
     const componentType = component.type.toLowerCase();
     
-    if (component.type === "Conectividade") {
-      return Object.keys(connectivityItems).length > 0 || selectedComponents[componentType] !== undefined;
+    if (component.type === "Contrato") {
+      return selectedComponents["contrato"] !== undefined;
+    } else if (component.type === "Conectividade") {
+      return Object.keys(connectivityItems).length > 0;
     } else if (component.type === "Armazenamento") {
       return selectedComponents["storage_internal"] !== undefined || 
              selectedComponents["storage_external"] !== undefined;
