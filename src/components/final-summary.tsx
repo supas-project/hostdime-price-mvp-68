@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
 import { FileText, Save, ArrowRight, FileDown, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderDetails } from "./order-details";
-import { generateQuotePDF } from "@/utils/quote-export"; // Added this import
+import { generateQuotePDF } from "@/utils/quote-export";
+import { useWizard } from "@/contexts/WizardContext";
 import { 
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ interface FinalSummaryProps {
 
 export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
   const { toast } = useToast();
+  const { storageItems } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
   
   const handleSaveQuote = () => {
@@ -40,7 +42,13 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     });
     
     try {
-      await generateQuotePDF(selectedComponents, profitMargin);
+      // Convert storageItems to a format compatible with the PDF generation function
+      const allComponents = { 
+        ...selectedComponents,
+        // We'll handle the storage items separately in the OrderDetails component
+      };
+      
+      await generateQuotePDF(allComponents, profitMargin);
       toast({
         title: "PDF Gerado",
         description: "Seu arquivo PDF foi gerado com sucesso!"

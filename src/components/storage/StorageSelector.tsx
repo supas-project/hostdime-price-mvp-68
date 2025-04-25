@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { InternalStoragePanel } from "./InternalStoragePanel";
@@ -10,7 +11,7 @@ import { PricedDiskOption } from "@/types/storage";
 import { TabHeader } from "./tab-header/TabHeader";
 import { HardDrive } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 
 interface StorageSelectorProps {
   onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -23,8 +24,9 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   const handleSelectInternalDiskInternal = (disk: PricedDiskOption, quantity: number) => {
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.id}`,
+      id: `internal-disk-${disk.id}-${quantity}`, // Add quantity to make ID unique
       type: "Armazenamento",
+      subtype: "Disco Interno",
       name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
       price: disk.price * quantity,
@@ -47,6 +49,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     const storageOption: ComponentOption = {
       id: `external-storage-${type}-${capacity}`,
       type: "Armazenamento",
+      subtype: "Storage Externo",
       name: `Storage ${type} ${capacity} GB`,
       description: `Storage externo: ${type} ${capacity} GB`,
       price: price,

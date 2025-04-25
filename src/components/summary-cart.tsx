@@ -1,6 +1,7 @@
-import { ComponentOption, serverData } from "@/data/server-components";
+
+import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
+import { ClipboardCheck, Save, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
@@ -24,10 +25,16 @@ export function SummaryCart({
   onComplete
 }: SummaryCartProps) {
   const { toast } = useToast();
-  const { handleRemoveComponent } = useWizard();
+  const { handleRemoveComponent, storageItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
-  const uniqueComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
+  // Filter and handle components
+  const standardComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
+    // Skip storage components as they're handled separately
+    if (type === 'storage_internal' || type === 'storage_external') {
+      return acc;
+    }
+    
     if (component.type === "Processador" && acc["cpu"]) {
       acc["cpu"] = component;
     } else {
@@ -36,26 +43,31 @@ export function SummaryCart({
     return acc;
   }, {} as { [key: string]: ComponentOption });
   
-  const totalPrice = Object.values(uniqueComponents).reduce(
+  // Calculate standard components total price
+  const standardComponentsPrice = Object.values(standardComponents).reduce(
     (sum, component) => sum + component.price,
     0
   );
+  
+  // Calculate storage price
+  const internalStoragePrice = storageItems.internal.reduce(
+    (sum, disk) => sum + disk.price,
+    0
+  );
+  
+  const externalStoragePrice = storageItems.external.reduce(
+    (sum, storage) => sum + storage.price, 
+    0
+  );
+  
+  // Calculate total price
+  const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice;
 
   const handleSave = () => {
     toast({
       title: "Configuração salva",
       description: "Sua configuração foi salva com sucesso."
     });
-  };
-
-  const handleEdit = (type: string) => {
-    const stepIndex = serverData.componentes.findIndex(comp => comp.id === type);
-    if (stepIndex >= 0) {
-      toast({
-        title: "Editar componente",
-        description: `Editando o componente: ${selectedComponents[type].name}`
-      });
-    }
   };
 
   const handleRemove = (type: string) => {
@@ -70,37 +82,43 @@ export function SummaryCart({
     }, 300);
   };
 
-  const itemCount = Object.keys(uniqueComponents).length;
+  const standardComponentCount = Object.keys(standardComponents).length;
+  const storageComponentCount = storageItems.internal.length + storageItems.external.length;
+  const totalItemCount = standardComponentCount + storageComponentCount;
+  
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   
-  const currentComponent = serverData.componentes[currentStep];
+  // Improved selection detection logic for the Next button
   const hasSelection = (() => {
-    if (!currentComponent) return false;
+    const currentServerComponent = serverData.componentes[currentStep];
+    if (!currentServerComponent) return false;
     
-    console.log('Checking selection for type:', currentComponent.type);
-    console.log('Selected components:', selectedComponents);
+    const componentType = currentServerComponent.type;
+    console.log('Checking selection for current step:', { currentStep, componentType });
     
-    if (currentComponent.type === "Memória") {
-      const hasMemory = selectedComponents["memoria"] !== undefined;
-      console.log('Memory check:', { hasMemory, memoryComponent: selectedComponents["memoria"] });
-      return hasMemory;
+    if (componentType === "Memória") {
+      return selectedComponents["memoria"] !== undefined;
     }
     
-    if (currentComponent.type === "Contrato") {
+    if (componentType === "Contrato") {
       return selectedComponents["contrato"] !== undefined;
     }
     
-    const typeKey = currentComponent.type.toLowerCase();
-    const hasComponent = selectedComponents[typeKey] !== undefined;
-    console.log(`Selection check for ${typeKey}:`, hasComponent);
+    if (componentType === "Conectividade") {
+      return Object.keys(connectivityItems).length > 0;
+    }
     
-    return hasComponent;
+    if (componentType === "Armazenamento") {
+      return storageItems.internal.length > 0 || storageItems.external.length > 0;
+    }
+    
+    const typeKey = componentType.toLowerCase();
+    return selectedComponents[typeKey] !== undefined;
   })();
   
-  console.log('Current step:', currentStep);
-  console.log('Current component:', currentComponent?.type);
-  console.log('Has selection:', hasSelection);
+  // Import serverData and connectivityItems at the top
+  import { serverData } from "@/data/server-components";
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
@@ -108,13 +126,14 @@ export function SummaryCart({
         <div className="flex justify-between items-center">
           <h3 className="font-medium">Resumo do Servidor</h3>
           <span className="text-xs text-muted-foreground">
-            {itemCount} {itemCount === 1 ? 'item' : 'itens'}
+            {totalItemCount} {totalItemCount === 1 ? 'item' : 'itens'}
           </span>
         </div>
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
-        {Object.entries(uniqueComponents).map(([type, component]) => (
+        {/* Standard components */}
+        {Object.entries(standardComponents).map(([type, component]) => (
           <div key={type} className="flex justify-between items-start group animate-fade-in">
             <div className="flex-1">
               <p className="text-sm font-medium">{component.name}</p>
@@ -136,7 +155,63 @@ export function SummaryCart({
           </div>
         ))}
         
-        {itemCount === 0 && (
+        {/* Internal storage components */}
+        {storageItems.internal.length > 0 && (
+          <div className="pt-2">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Discos Internos</p>
+            {storageItems.internal.map((disk) => (
+              <div key={disk.id} className="flex justify-between items-start group animate-fade-in mb-2">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{disk.name}</p>
+                  <p className="text-xs text-muted-foreground">{disk.description}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemove("storage_internal")}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* External storage components */}
+        {storageItems.external.length > 0 && (
+          <div className="pt-2">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Storage Externo</p>
+            {storageItems.external.map((storage) => (
+              <div key={storage.id} className="flex justify-between items-start group animate-fade-in mb-2">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{storage.name}</p>
+                  <p className="text-xs text-muted-foreground">{storage.description}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-sm font-medium">{formatCurrency(storage.price)}</p>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemove("storage_external")}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {totalItemCount === 0 && (
           <div className="text-center py-4 text-muted-foreground">
             <p>Selecione componentes para montar seu servidor</p>
           </div>

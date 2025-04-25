@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import { ComponentOption } from "@/types/component";
+import { ComponentOption, StorageItems } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ interface WizardContextType {
   isStepComplete: (stepIndex: number) => boolean;
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
   handleRemoveComponent: (type: string) => void;
+  storageItems: StorageItems;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -27,6 +28,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [selectedComponents, setSelectedComponents] = useState<{ [key: string]: ComponentOption }>({});
   const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption, quantity: number } }>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [storageItems, setStorageItems] = useState<StorageItems>({
+    internal: [],
+    external: []
+  });
 
   const validateOption = (option: ComponentOption): boolean => {
     if (!option.type || !option.id || typeof option.price !== 'number') {
@@ -59,42 +64,96 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
     console.log("Selecting storage item:", option, storageType);
-    setSelectedComponents((prev) => {
-      const updated = { ...prev };
-      const storageKey = `storage_${storageType}`;
-      
-      if (option.price === 0) {
-        delete updated[storageKey];
+    
+    if (option.price === 0) {
+      // Remove case
+      if (storageType === 'internal') {
+        setStorageItems(prev => {
+          const updatedInternal = prev.internal.filter(item => item.id !== option.id);
+          return {
+            ...prev,
+            internal: updatedInternal
+          };
+        });
       } else {
-        updated[storageKey] = {
-          ...option,
-          type: 'Armazenamento',
-          subtype: storageType === 'internal' ? 'Disco Interno' : 'Storage Externo'
-        };
+        setStorageItems(prev => {
+          const updatedExternal = prev.external.filter(item => item.id !== option.id);
+          return {
+            ...prev,
+            external: updatedExternal
+          };
+        });
       }
-      
-      console.log("Updated storage components:", updated);
-      return updated;
-    });
+    } else {
+      // Add case - check if it already exists
+      if (storageType === 'internal') {
+        setStorageItems(prev => {
+          // Check if disk with same ID already exists
+          const existingIndex = prev.internal.findIndex(item => item.id === option.id);
+          
+          let updatedInternal;
+          if (existingIndex >= 0) {
+            // Replace the existing item
+            updatedInternal = [...prev.internal];
+            updatedInternal[existingIndex] = option;
+          } else {
+            // Add as new item
+            updatedInternal = [...prev.internal, option];
+          }
+          
+          return {
+            ...prev,
+            internal: updatedInternal
+          };
+        });
+      } else {
+        setStorageItems(prev => {
+          // For external storage, we only allow one item as it represents a storage service
+          return {
+            ...prev,
+            external: [option] // Replace any existing external storage
+          };
+        });
+      }
+    }
+    
+    console.log("Updated storage items:", storageItems);
   };
 
   const handleRemoveComponent = (type: string) => {
     console.log("Removing component:", type);
-    setSelectedComponents((prev) => {
-      const updated = { ...prev };
-      delete updated[type];
-      
-      toast("Componente removido", {
-        description: "O componente foi removido com sucesso"
+    
+    if (type === "storage_internal") {
+      setStorageItems(prev => ({
+        ...prev,
+        internal: []
+      }));
+    } else if (type === "storage_external") {
+      setStorageItems(prev => ({
+        ...prev,
+        external: []
+      }));
+    } else {
+      setSelectedComponents((prev) => {
+        const updated = { ...prev };
+        delete updated[type];
+        
+        toast("Componente removido", {
+          description: "O componente foi removido com sucesso"
+        });
+        
+        return updated;
       });
-      
-      return updated;
-    });
+    }
   };
 
   const handleRestart = () => {
     setSelectedComponents({});
     setConnectivityItems({});
+    setStorageItems({
+      internal: [],
+      external: []
+    });
     setCurrentStep(0);
     setShowFinalSummary(false);
   };
@@ -120,15 +179,15 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       hasComponent = Object.keys(connectivityItems).length > 0;
     } else if (type === "Armazenamento") {
       // Check for either internal or external storage
-      const hasInternalStorage = selectedComponents["storage_internal"] !== undefined;
-      const hasExternalStorage = selectedComponents["storage_external"] !== undefined;
+      const hasInternalStorage = storageItems.internal.length > 0;
+      const hasExternalStorage = storageItems.external.length > 0;
       hasComponent = hasInternalStorage || hasExternalStorage;
       
       console.log("Storage completion check:", {
         hasInternalStorage,
         hasExternalStorage,
-        internal: selectedComponents["storage_internal"],
-        external: selectedComponents["storage_external"],
+        internalCount: storageItems.internal.length,
+        externalCount: storageItems.external.length,
         hasComponent
       });
     } else {
@@ -162,6 +221,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         isStepComplete,
         handleSelectStorageItem,
         handleRemoveComponent,
+        storageItems,
       }}
     >
       {children}

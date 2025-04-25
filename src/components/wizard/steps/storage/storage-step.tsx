@@ -1,5 +1,5 @@
 
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
 
@@ -10,8 +10,9 @@ interface StorageStepProps {
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.id}`,
+      id: `internal-disk-${disk.id}-${quantity}`,
       type: "Armazenamento",
+      subtype: "Disco Interno",
       name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
       price: disk.price * quantity,
@@ -28,6 +29,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     const storageOption: ComponentOption = {
       id: `external-storage-${type}-${capacity}`,
       type: "Armazenamento",
+      subtype: "Storage Externo",
       name: `Storage ${type} ${capacity} GB`,
       description: `Storage externo: ${type} ${capacity} GB`,
       price: price,

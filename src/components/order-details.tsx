@@ -1,9 +1,11 @@
-import { ComponentOption } from "@/data/server-components";
+
+import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Check } from "lucide-react";
+import { useWizard } from "@/contexts/WizardContext";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -11,19 +13,30 @@ interface OrderDetailsProps {
 }
 
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
-  const storageComponents = Object.values(selectedComponents).filter(
-    component => component.type === "Armazenamento"
-  );
+  const { storageItems } = useWizard();
   
+  // Filter non-storage components
   const nonStorageComponents = Object.values(selectedComponents).filter(
     component => component.type !== "Armazenamento"
   );
 
-  const subtotal = Object.values(selectedComponents).reduce(
+  // Calculate prices
+  const nonStoragePrice = nonStorageComponents.reduce(
     (sum, component) => sum + component.price,
     0
   );
   
+  const internalStoragePrice = storageItems.internal.reduce(
+    (sum, disk) => sum + disk.price,
+    0
+  );
+  
+  const externalStoragePrice = storageItems.external.reduce(
+    (sum, storage) => sum + storage.price,
+    0
+  );
+  
+  const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
@@ -41,6 +54,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Regular components */}
             {nonStorageComponents.map((component) => (
               <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                 <div className="flex justify-between items-start">
@@ -69,36 +83,72 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
               </div>
             ))}
             
-            {storageComponents.length > 0 && (
+            {/* Storage components section */}
+            {(storageItems.internal.length > 0 || storageItems.external.length > 0) && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Armazenamento</h3>
-                {storageComponents.map((component) => (
-                  <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium flex items-center">
-                          {component.name}
-                          <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                            {component.type}
-                          </span>
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{component.description}</p>
+                
+                {/* Internal storage disks */}
+                {storageItems.internal.length > 0 && (
+                  <>
+                    <h4 className="text-sm font-medium">Discos Internos</h4>
+                    {storageItems.internal.map((disk) => (
+                      <div key={disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium flex items-center">
+                              {disk.name}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{disk.description}</p>
+                          </div>
+                          <span className="font-medium text-primary">{formatCurrency(disk.price)}</span>
+                        </div>
+                        {disk.specs && (
+                          <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                            {disk.specs.map((spec, index) => (
+                              <li key={index} className="flex items-center">
+                                <Check className="h-4 w-4 text-primary mr-2" />
+                                <span>{spec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <Separator className="mt-4" />
                       </div>
-                      <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
-                    </div>
-                    {component.specs && (
-                      <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                        {component.specs.map((spec, index) => (
-                          <li key={index} className="flex items-center">
-                            <Check className="h-4 w-4 text-primary mr-2" />
-                            <span>{spec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <Separator className="mt-4" />
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
+                
+                {/* External storage */}
+                {storageItems.external.length > 0 && (
+                  <>
+                    <h4 className="text-sm font-medium">Storage Externo</h4>
+                    {storageItems.external.map((storage) => (
+                      <div key={storage.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium flex items-center">
+                              {storage.name}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{storage.description}</p>
+                          </div>
+                          <span className="font-medium text-primary">{formatCurrency(storage.price)}</span>
+                        </div>
+                        {storage.specs && (
+                          <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                            {storage.specs.map((spec, index) => (
+                              <li key={index} className="flex items-center">
+                                <Check className="h-4 w-4 text-primary mr-2" />
+                                <span>{spec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <Separator className="mt-4" />
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>

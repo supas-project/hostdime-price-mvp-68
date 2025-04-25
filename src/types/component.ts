@@ -6,7 +6,7 @@ export interface ComponentOption {
   price: number;
   specs?: string[];
   type: string;
-  subtype?: string;  // Added subtype as optional property
+  subtype?: string;
   metadata?: {
     discount?: number;
     features?: string[];
@@ -36,3 +36,9 @@ export interface ServerConfiguration {
   categoria: string;
   componentes: ServerComponent[];
 }
+
+export interface StorageItems {
+  internal: ComponentOption[];
+  external: ComponentOption[];
+}
+
