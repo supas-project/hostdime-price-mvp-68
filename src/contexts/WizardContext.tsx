@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -111,21 +110,29 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     if (!component) return false;
 
     const type = component.type;
-    const hasComponent = type === "Contrato" 
-      ? selectedComponents["contrato"] !== undefined
-      : type === "Memória"
-      ? selectedComponents["memoria"] !== undefined
-      : type === "Conectividade"
-      ? Object.keys(connectivityItems).length > 0
-      : type === "Armazenamento"
-      ? (selectedComponents["storage_internal"] !== undefined || selectedComponents["storage_external"] !== undefined)
-      : selectedComponents[type.toLowerCase()] !== undefined;
+    console.log(`Checking completion for type: ${type}`);
 
-    console.log(`Checking step completion for ${type}:`, {
+    let hasComponent = false;
+    
+    if (type === "Contrato") {
+      hasComponent = selectedComponents["contrato"] !== undefined;
+    } else if (type === "Memória") {
+      hasComponent = selectedComponents["memoria"] !== undefined;
+    } else if (type === "Conectividade") {
+      hasComponent = Object.keys(connectivityItems).length > 0;
+    } else if (type === "Armazenamento") {
+      hasComponent = selectedComponents["storage_internal"] !== undefined || 
+                    selectedComponents["storage_external"] !== undefined;
+    } else {
+      hasComponent = selectedComponents[type.toLowerCase()] !== undefined;
+    }
+
+    console.log(`Step completion for ${type}:`, {
       step: stepIndex,
       type,
       hasComponent,
-      selectedComponents
+      selectedComponents,
+      memoryComponent: selectedComponents["memoria"]
     });
 
     return hasComponent;
