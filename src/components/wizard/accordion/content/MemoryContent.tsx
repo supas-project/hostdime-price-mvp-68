@@ -63,7 +63,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     <div className="w-full space-y-6">
       <ToggleGroup 
         type="single" 
-        className="w-full inline-grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 gap-4"
         defaultValue={currentValue.toString()}
         onValueChange={(value) => {
           if (value) {
@@ -79,19 +79,19 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
             <ToggleGroupItem
               key={size}
               value={size.toString()}
-              className="min-h-[80px] flex flex-col items-center justify-center p-3 gap-2 
+              className="min-h-[80px] grid place-items-center p-3 gap-2
                 bg-card hover:bg-accent/50
                 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
                 border border-border hover:border-primary/30
                 relative rounded-lg transition-all duration-200"
             >
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-semibold tracking-tight">{size}GB RAM</span>
-                <span className="text-sm font-medium text-muted-foreground">
+              <div className="text-center z-10">
+                <div className="text-lg font-semibold tracking-tight">{size}GB RAM</div>
+                <div className="text-sm font-medium text-muted-foreground">
                   {formatCurrency(size * pricePerGB)}
-                </span>
+                </div>
               </div>
-              <div className="absolute right-2 top-2 opacity-60 hover:opacity-100 transition-opacity">
+              <div className="absolute right-2 top-2 z-20">
                 <HelpTooltip
                   title={`${size}GB RAM`}
                   description={`
