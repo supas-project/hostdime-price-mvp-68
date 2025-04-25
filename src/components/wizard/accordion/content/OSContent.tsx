@@ -29,7 +29,10 @@ export function OSContent({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium">Windows Server</h4>
-          <HelpTooltip content="Licenças Windows são cobradas por core" />
+          <HelpTooltip 
+            title="Licenças Windows" 
+            description="Licenças Windows são cobradas por core" 
+          />
         </div>
         <RadioGroup
           value={selectedOption?.id}
@@ -135,4 +138,3 @@ export function OSContent({
     </div>
   );
 }
-

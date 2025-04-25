@@ -12,6 +12,7 @@ export interface ComponentOption {
     features?: string[];
     badge?: string;
     location?: string;
+    perCore?: boolean;
   };
 }
 
@@ -41,4 +42,3 @@ export interface StorageItems {
   internal: ComponentOption[];
   external: ComponentOption[];
 }
-
