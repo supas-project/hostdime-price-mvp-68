@@ -9,11 +9,12 @@ export const memoryComponents: ServerComponent = {
   icon: "memory-stick",
   options: [
     {
-      id: "ram-1",
-      type: "Memória",
+      id: "ram-base",
+      type: "memoria",
       name: "Memória RAM",
       description: "Selecione a quantidade de memória",
-      price: 60
+      price: 60,
+      specs: ["Memória RAM DDR4 de alta performance"]
     }
   ]
 };

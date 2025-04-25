@@ -43,35 +43,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setSelectedComponents((prev) => {
       const updated = { ...prev };
       
-      switch (option.type) {
-        case "Contrato":
-          console.log("Setting contract:", option);
-          updated["contrato"] = option;
-          break;
-        case "Processador":
-          updated["processador"] = option;
-          break;
-        case "Memória":
-          console.log("Setting memory:", option);
-          if (option.name && !isNaN(parseFloat(option.name))) {
-            const memorySize = parseFloat(option.name);
-            const memoryOption: ComponentOption = {
-              id: `ram-${memorySize}`,
-              name: `${memorySize}GB RAM`,
-              price: memorySize * 7.5,
-              type: "Memória",
-              description: `Memória RAM ${memorySize}GB DDR4`,
-              specs: [`${memorySize}GB de RAM de alta performance`]
-            };
-            updated["memoria"] = memoryOption;
-            console.log("Updated memory component:", updated["memoria"]);
-          } else {
-            toast.error('Valor de memória inválido');
-            return prev;
-          }
-          break;
-        default:
-          updated[option.type.toLowerCase()] = option;
+      if (option.type.toLowerCase() === "memoria") {
+        console.log("Setting memory component:", option);
+        updated["memoria"] = option;
+      } else {
+        updated[option.type.toLowerCase()] = option;
       }
       
       console.log("Updated components:", updated);
@@ -114,10 +90,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
     let hasComponent = false;
     
-    if (type === "Contrato") {
-      hasComponent = selectedComponents["contrato"] !== undefined;
-    } else if (type === "Memória") {
+    if (type === "Memória") {
       hasComponent = selectedComponents["memoria"] !== undefined;
+      console.log("Memory completion check:", {
+        hasComponent,
+        memoryComponent: selectedComponents["memoria"]
+      });
+    } else if (type === "Contrato") {
+      hasComponent = selectedComponents["contrato"] !== undefined;
     } else if (type === "Conectividade") {
       hasComponent = Object.keys(connectivityItems).length > 0;
     } else if (type === "Armazenamento") {
@@ -131,8 +111,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       step: stepIndex,
       type,
       hasComponent,
-      selectedComponents,
-      memoryComponent: selectedComponents["memoria"]
+      selectedComponents
     });
 
     return hasComponent;
