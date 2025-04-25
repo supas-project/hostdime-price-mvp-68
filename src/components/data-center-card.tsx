@@ -1,6 +1,4 @@
-
-import { ComponentOption } from "@/data/server-components";
-import { DataCenterOption } from "@/types/server";
+import { ComponentOption, DataCenterOption } from "@/types/component";
 import { HelpTooltip } from "./help-tooltip";
 import { Globe, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +29,6 @@ export function DataCenterCard({
   return (
     <div className="grid grid-cols-1 gap-3">
       {options.map((option) => {
-        // Cast to DataCenterOption to access metadata properties
         const dcOption = option as DataCenterOption;
         const isSelected = selectedOption?.id === option.id;
         const features = dcOption.metadata?.features || [];

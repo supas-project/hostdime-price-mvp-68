@@ -10,6 +10,15 @@ export interface ComponentOption {
     discount?: number;
     features?: string[];
     badge?: string;
+    location?: string;
+  };
+}
+
+export interface DataCenterOption extends ComponentOption {
+  metadata: {
+    features?: string[];
+    badge?: string;
+    location?: string;
   };
 }
 
