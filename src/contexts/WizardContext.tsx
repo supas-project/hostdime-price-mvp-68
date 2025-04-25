@@ -168,38 +168,25 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     
     if (type === "Memória") {
       hasComponent = selectedComponents["memoria"] !== undefined;
-      console.log("Memory completion check:", {
-        hasComponent,
-        memoryComponent: selectedComponents["memoria"]
-      });
     } else if (type === "Contrato") {
       hasComponent = selectedComponents["contrato"] !== undefined;
     } else if (type === "Conectividade") {
-      hasComponent = Object.keys(connectivityItems).length > 0;
+      // Check for both port and IP block selections
+      const hasPort = Object.values(connectivityItems).some(
+        item => item.option.subtype === "porta"
+      );
+      const hasIp = Object.values(connectivityItems).some(
+        item => item.option.subtype === "ip"
+      );
+      hasComponent = hasPort && hasIp;
     } else if (type === "Armazenamento") {
-      // Check for either internal or external storage
       const hasInternalStorage = storageItems.internal.length > 0;
       const hasExternalStorage = storageItems.external.length > 0;
       hasComponent = hasInternalStorage || hasExternalStorage;
-      
-      console.log("Storage completion check:", {
-        hasInternalStorage,
-        hasExternalStorage,
-        internalCount: storageItems.internal.length,
-        externalCount: storageItems.external.length,
-        hasComponent
-      });
     } else {
       const typeKey = type.toLowerCase();
       hasComponent = selectedComponents[typeKey] !== undefined;
     }
-
-    console.log(`Step completion for ${type}:`, {
-      step: stepIndex,
-      type,
-      hasComponent,
-      selectedComponents
-    });
 
     return hasComponent;
   };
