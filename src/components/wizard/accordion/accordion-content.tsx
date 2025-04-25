@@ -1,13 +1,12 @@
 
 import { ServerComponent, ComponentOption } from "@/types/component";
-import { ComponentSelector } from "@/components/component-selector";
-import { DataCenterCard } from "@/components/data-center-card";
-import { ContractDuration } from "@/components/contract-duration";
-import { ConnectivityOptions } from "@/components/connectivity-options";
-import { StorageStep } from "@/components/wizard/steps/storage/storage-step";
-import { MemorySlider } from "@/components/memory-slider";
 import { StepHeader } from "@/components/wizard/steps/step-header";
-import { Card } from "@/components/ui/card";
+import { ProcessorContent } from "./content/ProcessorContent";
+import { MemoryContent } from "./content/MemoryContent";
+import { DataCenterContent } from "./content/DataCenterContent";
+import { ContractContent } from "./content/ContractContent";
+import { ConnectivityContent } from "./content/ConnectivityContent";
+import { StorageContent } from "./content/StorageContent";
 
 interface AccordionContentProps {
   component: ServerComponent;
@@ -32,42 +31,24 @@ export function AccordionContent({
     switch (component.type) {
       case "Processador":
         return (
-          <ComponentSelector
-            label={component.friendlyName}
+          <ProcessorContent
             options={component.options}
-            value={selectedOption?.id || ""}
-            onChange={(value) => {
-              const option = component.options.find(opt => opt.id === value);
-              if (option) onSelectOption(option);
-            }}
-            tooltip={component.description}
-            highlightSelection={true}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
           />
         );
       
       case "Memória":
         return (
-          <Card className="p-6">
-            <MemorySlider 
-              value={selectedOption?.name 
-                ? parseInt(selectedOption.name.replace(/\D/g, '')) || 8 
-                : 8}
-              onChange={(newValue) => {
-                const updatedOption = {
-                  ...component.options[0],
-                  price: newValue * 7.5,
-                  name: `${newValue}GB RAM`
-                };
-                onSelectOption(updatedOption);
-              }}
-              pricePerGB={7.5}
-            />
-          </Card>
+          <MemoryContent
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
         );
       
       case "DataCenter":
         return (
-          <DataCenterCard
+          <DataCenterContent
             options={component.options}
             selectedOption={selectedOption}
             onSelectOption={onSelectOption}
@@ -76,7 +57,7 @@ export function AccordionContent({
       
       case "Contrato":
         return (
-          <ContractDuration
+          <ContractContent
             options={component.options}
             selectedOption={selectedOption}
             onSelectOption={onSelectOption}
@@ -86,10 +67,10 @@ export function AccordionContent({
       case "Conectividade":
         if (onUpdateConnectivityItems) {
           return (
-            <ConnectivityOptions
+            <ConnectivityContent
               options={component.options}
-              selectedItems={connectivityItems || {}}
-              onUpdateItems={onUpdateConnectivityItems}
+              connectivityItems={connectivityItems || {}}
+              onUpdateConnectivityItems={onUpdateConnectivityItems}
             />
           );
         }
@@ -97,7 +78,7 @@ export function AccordionContent({
 
       case "Armazenamento":
         if (onSelectStorageItem) {
-          return <StorageStep onSelectStorageItem={onSelectStorageItem} />;
+          return <StorageContent onSelectStorageItem={onSelectStorageItem} />;
         }
         break;
 
