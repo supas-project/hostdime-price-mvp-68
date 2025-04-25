@@ -6,6 +6,7 @@ export interface ComponentOption {
   price: number;
   specs?: string[];
   type: string;
+  subtype?: string;  // Added subtype as optional property
   metadata?: {
     discount?: number;
     features?: string[];
