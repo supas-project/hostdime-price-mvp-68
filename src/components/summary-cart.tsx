@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
 import { useWizard } from "@/contexts/WizardContext";
+import { serverData } from "@/data/server-components";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -25,7 +26,7 @@ export function SummaryCart({
   onComplete
 }: SummaryCartProps) {
   const { toast } = useToast();
-  const { handleRemoveComponent, storageItems } = useWizard();
+  const { handleRemoveComponent, storageItems, connectivityItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
   // Filter and handle components
@@ -106,7 +107,7 @@ export function SummaryCart({
     }
     
     if (componentType === "Conectividade") {
-      return Object.keys(connectivityItems).length > 0;
+      return connectivityItems && Object.keys(connectivityItems).length > 0;
     }
     
     if (componentType === "Armazenamento") {
@@ -116,9 +117,6 @@ export function SummaryCart({
     const typeKey = componentType.toLowerCase();
     return selectedComponents[typeKey] !== undefined;
   })();
-  
-  // Import serverData and connectivityItems at the top
-  import { serverData } from "@/data/server-components";
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
