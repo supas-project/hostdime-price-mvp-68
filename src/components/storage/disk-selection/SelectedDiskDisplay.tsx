@@ -21,7 +21,7 @@ export function SelectedDiskDisplay({
   onQuantityChange, 
   onRemove 
 }: SelectedDiskDisplayProps) {
-  const [raidType, setRaidType] = useState<RaidType | "">("");
+  const [raidType, setRaidType] = useState<RaidType>("none");
 
   return (
     <div className="space-y-4">

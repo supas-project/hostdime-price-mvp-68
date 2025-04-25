@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
   quantity: number;
-  onRaidTypeChange: (type: RaidType | "") => void;
+  onRaidTypeChange: (type: RaidType) => void;
 }
 
 export function SimpleRaidCalculator({ 
@@ -20,7 +20,7 @@ export function SimpleRaidCalculator({
   quantity, 
   onRaidTypeChange 
 }: SimpleRaidCalculatorProps) {
-  const [raidType, setRaidType] = useState<RaidType | "">("");
+  const [raidType, setRaidType] = useState<RaidType>("none");
   const [calculation, setCalculation] = useState<ReturnType<typeof calculateRaidCapacity> | null>(null);
 
   const isValidRaidConfiguration = (type: RaidType): boolean => {
@@ -36,7 +36,7 @@ export function SimpleRaidCalculator({
     }
   }, [raidType, quantity, selectedDisk]);
 
-  const handleRaidTypeChange = (value: RaidType | "") => {
+  const handleRaidTypeChange = (value: RaidType) => {
     setRaidType(value);
     onRaidTypeChange(value);
   };
@@ -64,16 +64,18 @@ export function SimpleRaidCalculator({
           <SelectValue placeholder="Selecione o tipo de RAID" />
         </SelectTrigger>
         <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">
-          <SelectItem value="">Sem RAID</SelectItem>
-          {availableRaidTypes.map(([type, info]) => (
-            <SelectItem key={type} value={type}>
-              RAID {type} - {info.description}
-            </SelectItem>
-          ))}
+          <SelectItem value="none">Sem RAID</SelectItem>
+          {availableRaidTypes
+            .filter(([type]) => type !== "none") // Não mostrar "none" duas vezes
+            .map(([type, info]) => (
+              <SelectItem key={type} value={type}>
+                RAID {type} - {info.description}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
 
-      {calculation && (
+      {calculation && raidType !== "none" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <Card className="p-4 bg-[#1e1e1e] border-[#2a2a2a]">
             <div className="flex items-center gap-2 mb-2">

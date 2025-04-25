@@ -3,6 +3,13 @@ import { RaidType, RaidCalculation } from "@/types/raid";
 import { PricedDiskOption } from "@/types/storage";
 
 export const RAID_INFO = {
+  "none": {
+    type: "none",
+    minDisks: 1,
+    description: "Sem configuração RAID",
+    protection: "Nenhuma",
+    usageRecommendation: "Configuração padrão sem redundância ou performance adicional"
+  },
   "0": {
     type: "0",
     minDisks: 2,
@@ -50,6 +57,7 @@ export function calculateRaidCapacity(disks: PricedDiskOption[], quantity: numbe
       readPerformance = "Boa";
       writePerformance = "Moderada";
       break;
+    case "none":
     default:
       usableCapacity = totalCapacity;
       readPerformance = "Normal";
@@ -59,7 +67,7 @@ export function calculateRaidCapacity(disks: PricedDiskOption[], quantity: numbe
   return {
     usableCapacity,
     totalCapacity,
-    protection: RAID_INFO[raidType].protection,
+    protection: RAID_INFO[raidType]?.protection || "Nenhuma",
     performance: {
       read: readPerformance,
       write: writePerformance

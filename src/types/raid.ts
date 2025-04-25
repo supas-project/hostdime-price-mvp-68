@@ -1,5 +1,5 @@
 
-export type RaidType = "0" | "1" | "5";
+export type RaidType = "0" | "1" | "5" | "none";
 
 export interface RaidInfo {
   type: RaidType;
