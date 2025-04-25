@@ -11,34 +11,60 @@ interface MemoryContentProps {
 }
 
 export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentProps) {
-  const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
+  const memoryValues = [64, 128, 256, 512, 768, 1024];
   const pricePerGB = 7.5;
   
-  const createMemoryOption = (memorySize: number): ComponentOption => ({
-    id: `memory-${memorySize}`,
-    type: "memoria",
-    name: `${memorySize}GB RAM`,
-    description: `Memória RAM DDR4 ${memorySize}GB`,
-    price: memorySize * pricePerGB,
-    specs: [`${memorySize}GB de RAM de alta performance`]
-  });
+  const getMemorySpecs = (memorySize: number) => {
+    const baseSpecs = {
+      type: "DDR4 ECC Registered",
+      speed: "3200 MHz",
+      channels: "Quad Channel",
+      ecc: "Error Correction Code (ECC)",
+    };
+
+    // Customização baseada no tamanho
+    if (memorySize >= 512) {
+      baseSpecs.type = "DDR4 ECC Load Reduced DIMM";
+      baseSpecs.speed = "3200 MHz";
+    }
+
+    return baseSpecs;
+  };
+
+  const createMemoryOption = (memorySize: number): ComponentOption => {
+    const specs = getMemorySpecs(memorySize);
+    return {
+      id: `memory-${memorySize}`,
+      type: "memoria",
+      name: `${memorySize}GB RAM`,
+      description: `Memória RAM ${specs.type} ${memorySize}GB`,
+      price: memorySize * pricePerGB,
+      specs: [
+        `${memorySize}GB Total`,
+        `Tipo: ${specs.type}`,
+        `Velocidade: ${specs.speed}`,
+        `${specs.channels}`,
+        specs.ecc
+      ]
+    };
+  };
 
   useEffect(() => {
     if (!selectedOption) {
-      const defaultOption = createMemoryOption(8);
+      const defaultOption = createMemoryOption(64);
       onSelectOption(defaultOption);
     }
   }, []);
 
   const currentValue = selectedOption?.name 
     ? parseInt(selectedOption.name.replace(/\D/g, ''))
-    : 8;
+    : 64;
 
   return (
     <div className="space-y-6">
       <ToggleGroup 
         type="single" 
-        className="flex flex-wrap justify-center gap-2"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
         defaultValue={currentValue.toString()}
         onValueChange={(value) => {
           if (value) {
@@ -48,29 +74,33 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
           }
         }}
       >
-        {memoryValues.map((size) => (
-          <ToggleGroupItem
-            key={size}
-            value={size.toString()}
-            className="px-6 py-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground relative group"
-            aria-label={`${size}GB RAM`}
-          >
-            <span>{size}GB</span>
-            <HelpTooltip
-              title={`${size}GB RAM`}
-              description={`Memória RAM DDR4 de alta performance - ${formatCurrency(size * pricePerGB)}`}
-            />
-          </ToggleGroupItem>
-        ))}
+        {memoryValues.map((size) => {
+          const specs = getMemorySpecs(size);
+          return (
+            <ToggleGroupItem
+              key={size}
+              value={size.toString()}
+              className="flex flex-col items-center p-4 gap-1 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-accent transition-all duration-200 relative group"
+              aria-label={`${size}GB RAM`}
+            >
+              <span className="text-lg font-medium">{size}GB</span>
+              <span className="text-sm text-muted-foreground">
+                {formatCurrency(size * pricePerGB)}
+              </span>
+              <HelpTooltip
+                title={`${size}GB RAM`}
+                description={`
+                  • ${specs.type}
+                  • Velocidade: ${specs.speed}
+                  • ${specs.channels}
+                  • Suporte a ${specs.ecc}
+                  • Preço: ${formatCurrency(size * pricePerGB)}
+                `}
+              />
+            </ToggleGroupItem>
+          );
+        })}
       </ToggleGroup>
-
-      {selectedOption && (
-        <div className="text-center">
-          <span className="text-lg font-medium text-primary">
-            {formatCurrency(selectedOption.price)}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
