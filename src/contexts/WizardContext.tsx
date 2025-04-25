@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -46,6 +45,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       
       switch (option.type) {
         case "Contrato":
+          console.log("Setting contract:", option);
           updated["contrato"] = option;
           break;
         case "Processador":
@@ -100,7 +100,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const isStepComplete = (stepIndex: number) => {
     const component = serverData.componentes[stepIndex];
+    if (!component) return false;
+
     const componentType = component.type.toLowerCase();
+    console.log(`Checking step completion for ${componentType}:`, {
+      step: stepIndex,
+      selectedComponents,
+      hasComponent: component.type === "Contrato" 
+        ? selectedComponents["contrato"] !== undefined
+        : selectedComponents[componentType] !== undefined
+    });
     
     if (component.type === "Contrato") {
       return selectedComponents["contrato"] !== undefined;

@@ -1,4 +1,3 @@
-
 import { ComponentOption, serverData } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
@@ -26,9 +25,7 @@ export function SummaryCart({
   const { toast } = useToast();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
-  // Filtra componentes duplicados do tipo "Processador"
   const uniqueComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
-    // Se já existe um processador e estamos tentando adicionar outro, substitui
     if (component.type === "Processador" && acc["cpu"]) {
       acc["cpu"] = component;
     } else {
@@ -50,10 +47,8 @@ export function SummaryCart({
   };
 
   const handleEdit = (type: string) => {
-    // Find the step index for this component type
     const stepIndex = serverData.componentes.findIndex(comp => comp.id === type);
     if (stepIndex >= 0) {
-      // This would be implemented by the parent component
       toast({
         title: "Editar componente",
         description: `Editando o componente: ${selectedComponents[type].name}`
@@ -62,7 +57,6 @@ export function SummaryCart({
   };
 
   const handleRemove = (type: string) => {
-    // This would be implemented by the parent component
     toast({
       title: "Remover componente",
       description: `O componente ${selectedComponents[type].name} foi removido.`
@@ -80,7 +74,16 @@ export function SummaryCart({
   const itemCount = Object.keys(uniqueComponents).length;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
-  const hasSelection = selectedComponents[serverData.componentes[currentStep]?.id] !== undefined;
+  
+  const currentComponent = serverData.componentes[currentStep];
+  const hasSelection = currentComponent?.type === "Contrato" 
+    ? selectedComponents["contrato"] !== undefined
+    : selectedComponents[currentComponent?.type.toLowerCase()] !== undefined;
+
+  console.log('Current step:', currentStep);
+  console.log('Current component:', currentComponent?.type);
+  console.log('Selected components:', selectedComponents);
+  console.log('Has selection:', hasSelection);
   
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
