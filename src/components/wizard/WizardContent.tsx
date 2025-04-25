@@ -5,7 +5,6 @@ import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { ComponentOption } from "@/data/server-components";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -20,12 +19,6 @@ export function WizardContent() {
   } = useWizard();
 
   const currentComponent = serverData.componentes[currentStep];
-
-  // Adaptador para a função handleSelectStorageItem
-  const storageItemAdapter = (storageOption: ComponentOption) => {
-    // Por padrão, consideramos como storage interno se não for especificado
-    handleSelectStorageItem(storageOption, 'internal');
-  };
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -56,7 +49,7 @@ export function WizardContent() {
               component={component}
               selectedOption={component.type === "Armazenamento" 
                 ? selectedComponents["storage"] || null
-                : selectedComponents[component.id] || null}
+                : selectedComponents[component.type.toLowerCase()] || null}
               onSelectOption={handleSelectOption}
               isActive={index === currentStep}
               isComplete={isStepComplete(index)}
@@ -71,7 +64,7 @@ export function WizardContent() {
           component={currentComponent}
           selectedOption={currentComponent.type === "Armazenamento"
             ? selectedComponents["storage"] || null
-            : selectedComponents[currentComponent.id] || null}
+            : selectedComponents[currentComponent.type.toLowerCase()] || null}
           onSelectOption={handleSelectOption}
           isActive={true}
           isComplete={isStepComplete(currentStep)}

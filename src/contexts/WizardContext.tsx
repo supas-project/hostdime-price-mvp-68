@@ -1,5 +1,7 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
-import { ComponentOption, serverData } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
+import { serverData } from "@/data/server-components";
 
 interface WizardContextType {
   currentStep: number;
@@ -24,18 +26,26 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption, quantity: number } }>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
 
+  // Função para selecionar uma opção de componente
   const handleSelectOption = (option: ComponentOption) => {
+    console.log("Selecting option:", option);
     setSelectedComponents((prev) => {
       const updated = { ...prev };
-      if (option.type === "Processador" && prev["cpu"] && prev["cpu"].id !== option.id) {
-        delete updated["cpu"];
+      const storeKey = option.type.toLowerCase();
+      
+      // Limpar opções anteriores se necessário
+      if (option.type === "Processador" && prev["processador"] && prev["processador"].id !== option.id) {
+        delete updated["processador"];
       }
-      updated[option.type.toLowerCase()] = option;
+      
+      updated[storeKey] = option;
+      console.log("Updated components:", updated);
       return updated;
     });
   };
 
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
+    console.log("Selecting storage item:", option, storageType);
     setSelectedComponents((prev) => {
       const updated = { ...prev };
       const storageKey = `storage_${storageType}`;
@@ -62,15 +72,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const isStepComplete = (stepIndex: number) => {
     const component = serverData.componentes[stepIndex];
+    const componentType = component.type.toLowerCase();
     
     if (component.type === "Conectividade") {
-      return Object.keys(connectivityItems).length > 0 || selectedComponents[component.id] !== undefined;
+      return Object.keys(connectivityItems).length > 0 || selectedComponents[componentType] !== undefined;
     } else if (component.type === "Armazenamento") {
       return selectedComponents["storage_internal"] !== undefined || 
              selectedComponents["storage_external"] !== undefined;
     }
     
-    return selectedComponents[component.id] !== undefined;
+    return selectedComponents[componentType] !== undefined;
   };
 
   return (

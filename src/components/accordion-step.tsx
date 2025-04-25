@@ -1,8 +1,7 @@
 
 import { useState } from "react";
-import { ServerComponent, ComponentOption } from "@/data/server-components";
+import { ServerComponent, ComponentOption } from "@/types/component";
 import * as Icons from "lucide-react";
-import { ComponentSelector } from "./component-selector";
 import { DataCenterCard } from "./data-center-card";
 import { ContractDuration } from "./contract-duration";
 import { ConnectivityOptions } from "./connectivity-options";
@@ -53,7 +52,9 @@ export function AccordionStep({
         return (
           <Card className="p-6">
             <MemorySlider 
-              value={selectedOption?.name ? parseInt(selectedOption.name) : 8}
+              value={selectedOption?.name 
+                ? parseInt(selectedOption.name.replace(/\D/g, '')) || 8 
+                : 8}
               onChange={(newValue) => {
                 const updatedOption = {
                   ...component.options[0],
