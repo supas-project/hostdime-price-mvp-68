@@ -2,12 +2,9 @@
 import { ComponentOption } from "@/data/server-components";
 import { Card } from "@/components/ui/card";
 import { ComponentSelector } from "./component-selector";
-import { MemorySlider } from "./memory-slider";
 import { DataCenterCard } from "./data-center-card";
 import { ContractDuration } from "./contract-duration";
 import { ConnectivityOptions } from "./connectivity-options";
-import { useState, useEffect } from "react";
-import { formatCurrency } from "@/lib/utils";
 
 interface ComponentCardProps {
   option: ComponentOption;
@@ -28,46 +25,8 @@ export function ComponentCard({
   selectedConnectivityItems = {},
   onUpdateConnectivityItems
 }: ComponentCardProps) {
-  const [memoryGB, setMemoryGB] = useState(8);
-  
-  // Inicializa o componente de memória e notifica o componente pai de forma segura
-  useEffect(() => {
-    if (componentType === "Memória" && option) {
-      const updatedOption = {
-        ...option,
-        price: memoryGB * 7.5,
-        name: `${memoryGB}GB RAM`
-      };
-      onSelect(updatedOption);
-    }
-  }, []);
-  
-  const handleMemoryChange = (newValue: number) => {
-    setMemoryGB(newValue);
-    
-    if (componentType === "Memória" && option) {
-      const updatedOption = {
-        ...option,
-        price: newValue * 7.5,
-        name: `${newValue}GB RAM`
-      };
-      onSelect(updatedOption);
-    }
-  };
-  
   // Handle specific component types
   switch (componentType) {
-    case "Memória":
-      return (
-        <Card className="p-6">
-          <MemorySlider 
-            value={memoryGB}
-            onChange={handleMemoryChange}
-            pricePerGB={7.5}
-          />
-        </Card>
-      );
-      
     case "DataCenter":
       return (
         <DataCenterCard
