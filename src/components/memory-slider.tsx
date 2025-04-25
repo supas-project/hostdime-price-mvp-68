@@ -1,7 +1,8 @@
 
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface MemorySliderProps {
   value: number;
@@ -11,14 +12,33 @@ interface MemorySliderProps {
 
 export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps) {
   const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
+  const [currentValue, setCurrentValue] = useState(value);
   
-  const currentIndex = memoryValues.indexOf(value);
+  useEffect(() => {
+    // Validate initial value
+    if (!memoryValues.includes(value)) {
+      const closest = memoryValues.reduce((prev, curr) => {
+        return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
+      });
+      setCurrentValue(closest);
+      onChange(closest);
+      toast.error(`Valor de memória inválido. Ajustado para ${closest}GB`);
+    } else {
+      setCurrentValue(value);
+    }
+  }, [value]);
+
+  const currentIndex = memoryValues.indexOf(currentValue);
+  const calculatedPrice = currentValue * pricePerGB;
   
   const handleSliderChange = (newValue: number[]) => {
     if (Array.isArray(newValue) && newValue.length > 0) {
       const index = newValue[0];
       if (index >= 0 && index < memoryValues.length) {
-        onChange(memoryValues[index]);
+        const newMemoryValue = memoryValues[index];
+        setCurrentValue(newMemoryValue);
+        onChange(newMemoryValue);
+        toast.success(`Memória ajustada para ${newMemoryValue}GB`);
       }
     }
   };
@@ -26,9 +46,9 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-lg font-medium">{value}GB RAM</span>
+        <span className="text-lg font-medium">{currentValue}GB RAM</span>
         <span className="text-lg font-medium text-primary">
-          {formatCurrency(value * pricePerGB)}
+          {formatCurrency(calculatedPrice)}
         </span>
       </div>
       

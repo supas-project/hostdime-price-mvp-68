@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface ContractDurationProps {
   options: ComponentOption[];
@@ -16,19 +17,20 @@ export function ContractDuration({
   selectedOption, 
   onSelectOption 
 }: ContractDurationProps) {
+  const handleContractSelection = (value: string) => {
+    const option = options.find(opt => opt.id === value);
+    if (option) {
+      onSelectOption(option);
+      toast.success(`Contrato de ${option.name} selecionado`);
+    }
+  };
+
   return (
     <Card className="p-6">
       <CardContent className="p-0 space-y-4">
         <RadioGroup 
           value={selectedOption?.id || ""}
-          onValueChange={(value) => {
-            console.log("Contract selected:", value);
-            const option = options.find(opt => opt.id === value);
-            if (option) {
-              console.log("Contract option found:", option);
-              onSelectOption(option);
-            }
-          }}
+          onValueChange={handleContractSelection}
         >
           <div className="space-y-2">
             {options.map((option) => {
@@ -39,13 +41,11 @@ export function ContractDuration({
                 <div
                   key={option.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border 
+                    flex items-center justify-between p-3 rounded-lg border transition-colors
                     ${isSelected 
                       ? 'border-primary bg-primary/10' 
                       : 'border-border hover:border-primary/50'}
-                    cursor-pointer transition-colors
                   `}
-                  onClick={() => onSelectOption(option)}
                 >
                   <div className="flex items-center gap-3">
                     <RadioGroupItem value={option.id} id={option.id} />

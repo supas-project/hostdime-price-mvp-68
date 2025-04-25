@@ -1,6 +1,8 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
+import { toast } from "sonner";
 
 interface WizardContextType {
   currentStep: number;
@@ -25,8 +27,20 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption, quantity: number } }>({});
   const [showFinalSummary, setShowFinalSummary] = useState(false);
 
+  const validateOption = (option: ComponentOption): boolean => {
+    if (!option.type || !option.id || typeof option.price !== 'number') {
+      console.error('Invalid option format:', option);
+      toast.error('Erro na seleção do componente');
+      return false;
+    }
+    return true;
+  };
+
   const handleSelectOption = (option: ComponentOption) => {
     console.log("Selecting option:", option);
+    
+    if (!validateOption(option)) return;
+
     setSelectedComponents((prev) => {
       const updated = { ...prev };
       
@@ -38,11 +52,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           updated["processador"] = option;
           break;
         case "Memória":
-          updated["memoria"] = {
-            ...option,
-            name: `${option.name}`,
-            price: parseFloat(option.name.replace(/\D/g, '')) * 7.5
-          };
+          if (option.name && !isNaN(parseFloat(option.name))) {
+            updated["memoria"] = {
+              ...option,
+              name: `${option.name}`,
+              price: parseFloat(option.name) * 7.5
+            };
+          } else {
+            toast.error('Valor de memória inválido');
+            return prev;
+          }
           break;
         default:
           updated[option.type.toLowerCase()] = option;
