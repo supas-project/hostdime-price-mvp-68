@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -118,10 +117,17 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     } else if (type === "Conectividade") {
       hasComponent = Object.keys(connectivityItems).length > 0;
     } else if (type === "Armazenamento") {
+      // Verificar se há disco interno ou storage externo selecionado
       hasComponent = selectedComponents["storage_internal"] !== undefined || 
                     selectedComponents["storage_external"] !== undefined;
+      console.log("Storage completion check:", {
+        internal: selectedComponents["storage_internal"],
+        external: selectedComponents["storage_external"],
+        hasComponent
+      });
     } else {
-      hasComponent = selectedComponents[type.toLowerCase()] !== undefined;
+      const typeKey = type.toLowerCase();
+      hasComponent = selectedComponents[typeKey] !== undefined;
     }
 
     console.log(`Step completion for ${type}:`, {
