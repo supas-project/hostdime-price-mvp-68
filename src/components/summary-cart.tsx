@@ -1,10 +1,10 @@
-
 import { ComponentOption, serverData } from "@/data/server-components";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
+import { useWizard } from "@/contexts/WizardContext";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -24,6 +24,7 @@ export function SummaryCart({
   onComplete
 }: SummaryCartProps) {
   const { toast } = useToast();
+  const { handleRemoveComponent } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
   const uniqueComponents = Object.entries(selectedComponents).reduce((acc, [type, component]) => {
@@ -58,10 +59,7 @@ export function SummaryCart({
   };
 
   const handleRemove = (type: string) => {
-    toast({
-      title: "Remover componente",
-      description: `O componente ${selectedComponents[type].name} foi removido.`
-    });
+    handleRemoveComponent(type);
   };
   
   const handleNextClick = () => {
@@ -128,15 +126,7 @@ export function SummaryCart({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-6 w-6"
-                  onClick={() => handleEdit(type)}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6 text-destructive"
+                  className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleRemove(type)}
                 >
                   <Trash2 className="h-3 w-3" />

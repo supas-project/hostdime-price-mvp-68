@@ -1,8 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { StorageTypeSelector } from "./external/StorageTypeSelector";
 import { CapacitySlider } from "./external/CapacitySlider";
 import { StorageSpecs } from "./external/StorageSpecs";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useWizard } from "@/contexts/WizardContext";
 
 const STORAGE_TYPES = {
   standard: { 
@@ -42,6 +44,7 @@ interface ExternalStoragePanelProps {
 export function ExternalStoragePanel({ onSelectStorage }: ExternalStoragePanelProps) {
   const [storageType, setStorageType] = useState<keyof typeof STORAGE_TYPES | "">("");
   const [capacityGB, setCapacityGB] = useState(100);
+  const { handleRemoveComponent } = useWizard();
 
   const calculatePrice = () => {
     if (!storageType) return 0;
@@ -55,14 +58,30 @@ export function ExternalStoragePanel({ onSelectStorage }: ExternalStoragePanelPr
     }
   }, [storageType, capacityGB]);
 
+  const handleRemove = () => {
+    handleRemoveComponent("storage_external");
+    setStorageType("");
+    setCapacityGB(100);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
+      <div className="flex justify-between items-start">
         <StorageTypeSelector
           storageTypes={STORAGE_TYPES}
           selectedType={storageType}
           onTypeChange={(value: keyof typeof STORAGE_TYPES) => setStorageType(value)}
         />
+        {storageType && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemove}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {storageType && (

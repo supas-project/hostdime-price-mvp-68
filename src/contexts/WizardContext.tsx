@@ -16,6 +16,7 @@ interface WizardContextType {
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
+  handleRemoveComponent: (type: string) => void;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -69,6 +70,21 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           type: `${storageType === 'internal' ? 'Disco Interno' : 'Storage Externo'}`
         };
       }
+      
+      return updated;
+    });
+  };
+
+  const handleRemoveComponent = (type: string) => {
+    console.log("Removing component:", type);
+    setSelectedComponents((prev) => {
+      const updated = { ...prev };
+      delete updated[type];
+      
+      toast({
+        title: "Componente removido",
+        description: "O componente foi removido com sucesso"
+      });
       
       return updated;
     });
@@ -132,6 +148,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         handleRestart,
         isStepComplete,
         handleSelectStorageItem,
+        handleRemoveComponent,
       }}
     >
       {children}
