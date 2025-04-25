@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -52,12 +53,17 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           updated["processador"] = option;
           break;
         case "Memória":
+          console.log("Setting memory:", option);
           if (option.name && !isNaN(parseFloat(option.name))) {
+            const memorySize = parseFloat(option.name);
             updated["memoria"] = {
               ...option,
-              name: `${option.name}`,
-              price: parseFloat(option.name) * 7.5
+              id: `ram-${memorySize}`,
+              name: `${memorySize}GB RAM`,
+              price: memorySize * 7.5,
+              type: "Memória"
             };
+            console.log("Updated memory component:", updated["memoria"]);
           } else {
             toast.error('Valor de memória inválido');
             return prev;
@@ -102,25 +108,30 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const component = serverData.componentes[stepIndex];
     if (!component) return false;
 
-    const componentType = component.type.toLowerCase();
-    console.log(`Checking step completion for ${componentType}:`, {
+    const type = component.type;
+    console.log(`Checking step completion for ${type}:`, {
       step: stepIndex,
       selectedComponents,
-      hasComponent: component.type === "Contrato" 
+      type: type,
+      hasComponent: type === "Contrato" 
         ? selectedComponents["contrato"] !== undefined
-        : selectedComponents[componentType] !== undefined
+        : type === "Memória"
+        ? selectedComponents["memoria"] !== undefined
+        : selectedComponents[type.toLowerCase()] !== undefined
     });
     
-    if (component.type === "Contrato") {
+    if (type === "Contrato") {
       return selectedComponents["contrato"] !== undefined;
-    } else if (component.type === "Conectividade") {
+    } else if (type === "Conectividade") {
       return Object.keys(connectivityItems).length > 0;
-    } else if (component.type === "Armazenamento") {
+    } else if (type === "Armazenamento") {
       return selectedComponents["storage_internal"] !== undefined || 
              selectedComponents["storage_external"] !== undefined;
+    } else if (type === "Memória") {
+      return selectedComponents["memoria"] !== undefined;
     }
     
-    return selectedComponents[componentType] !== undefined;
+    return selectedComponents[type.toLowerCase()] !== undefined;
   };
 
   return (

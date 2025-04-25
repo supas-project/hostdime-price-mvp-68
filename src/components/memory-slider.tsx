@@ -15,7 +15,6 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
   const [currentValue, setCurrentValue] = useState(value);
   
   useEffect(() => {
-    // Validate initial value
     if (!memoryValues.includes(value)) {
       const closest = memoryValues.reduce((prev, curr) => {
         return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
@@ -36,6 +35,7 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
       const index = newValue[0];
       if (index >= 0 && index < memoryValues.length) {
         const newMemoryValue = memoryValues[index];
+        console.log("Setting new memory value:", newMemoryValue);
         setCurrentValue(newMemoryValue);
         onChange(newMemoryValue);
         toast.success(`Memória ajustada para ${newMemoryValue}GB`);
