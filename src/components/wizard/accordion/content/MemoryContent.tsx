@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatCurrency } from "@/lib/utils";
@@ -81,17 +80,17 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
               key={size}
               value={size.toString()}
               className="min-h-[80px] flex flex-col items-center justify-center p-3 gap-2 
-                rounded-lg transition-all duration-200
                 bg-card hover:bg-accent/50
                 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
                 border border-border hover:border-primary/30
-                relative group"
-              aria-label={`${size}GB RAM`}
+                relative rounded-lg transition-all duration-200"
             >
-              <span className="text-lg font-semibold tracking-tight">{size}GB RAM</span>
-              <span className="text-sm font-medium text-muted-foreground">
-                {formatCurrency(size * pricePerGB)}
-              </span>
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-semibold tracking-tight">{size}GB RAM</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {formatCurrency(size * pricePerGB)}
+                </span>
+              </div>
               <div className="absolute right-2 top-2 opacity-60 hover:opacity-100 transition-opacity">
                 <HelpTooltip
                   title={`${size}GB RAM`}
