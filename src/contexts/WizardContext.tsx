@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -67,10 +68,12 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       } else {
         updated[storageKey] = {
           ...option,
-          type: `${storageType === 'internal' ? 'Disco Interno' : 'Storage Externo'}`
+          type: 'Armazenamento',
+          subtype: storageType === 'internal' ? 'Disco Interno' : 'Storage Externo'
         };
       }
       
+      console.log("Updated storage components:", updated);
       return updated;
     });
   };
@@ -81,7 +84,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       const updated = { ...prev };
       delete updated[type];
       
-      // Fix: Use toast function correctly for sonner
       toast("Componente removido", {
         description: "O componente foi removido com sucesso"
       });
@@ -117,10 +119,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     } else if (type === "Conectividade") {
       hasComponent = Object.keys(connectivityItems).length > 0;
     } else if (type === "Armazenamento") {
-      // Verificar se há disco interno ou storage externo selecionado
-      hasComponent = selectedComponents["storage_internal"] !== undefined || 
-                    selectedComponents["storage_external"] !== undefined;
+      // Check for either internal or external storage
+      const hasInternalStorage = selectedComponents["storage_internal"] !== undefined;
+      const hasExternalStorage = selectedComponents["storage_external"] !== undefined;
+      hasComponent = hasInternalStorage || hasExternalStorage;
+      
       console.log("Storage completion check:", {
+        hasInternalStorage,
+        hasExternalStorage,
         internal: selectedComponents["storage_internal"],
         external: selectedComponents["storage_external"],
         hasComponent
