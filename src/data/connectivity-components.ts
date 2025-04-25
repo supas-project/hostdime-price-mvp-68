@@ -6,13 +6,13 @@ export const connectivityComponents: ServerComponent = {
   type: "Conectividade",
   friendlyName: "Opções de Conectividade",
   description: "Configure a porta de rede e bloco IP do seu servidor",
-  icon: "ethernet-port",
+  icon: "Network",
   options: [
     {
       id: "network-1gbps",
       type: "Conectividade",
       subtype: "porta",
-      name: "Porta 1 Gbps",
+      name: "1 Gbps",
       description: "Porta de rede com velocidade de 1 Gbps",
       price: 50
     },
@@ -20,7 +20,7 @@ export const connectivityComponents: ServerComponent = {
       id: "network-10gbps",
       type: "Conectividade",
       subtype: "porta",
-      name: "Porta 10 Gbps",
+      name: "10 Gbps",
       description: "Porta de rede de alta velocidade (10 Gbps)",
       price: 200
     },
@@ -28,7 +28,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-30",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /30 (4 IPs)",
+      name: "Bloco /30",
       description: "4 endereços IP (1 utilizável)",
       price: 140
     },
@@ -36,7 +36,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-29",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /29 (8 IPs)",
+      name: "Bloco /29",
       description: "8 endereços IP (5 utilizáveis)",
       price: 280
     },
@@ -44,7 +44,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-28",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /28 (16 IPs)",
+      name: "Bloco /28",
       description: "16 endereços IP (13 utilizáveis)",
       price: 640
     },
@@ -52,7 +52,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-27",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /27 (32 IPs)",
+      name: "Bloco /27",
       description: "32 endereços IP (29 utilizáveis)",
       price: 1440
     },
@@ -60,7 +60,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-26",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /26 (64 IPs)",
+      name: "Bloco /26",
       description: "64 endereços IP (61 utilizáveis)",
       price: 3200
     },
@@ -68,7 +68,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-25",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /25 (128 IPs)",
+      name: "Bloco /25",
       description: "128 endereços IP (125 utilizáveis)",
       price: 7680
     },
@@ -76,7 +76,7 @@ export const connectivityComponents: ServerComponent = {
       id: "ip-24",
       type: "Conectividade",
       subtype: "ip",
-      name: "Bloco /24 (256 IPs)",
+      name: "Bloco /24",
       description: "256 endereços IP (253 utilizáveis)",
       price: 17920
     }

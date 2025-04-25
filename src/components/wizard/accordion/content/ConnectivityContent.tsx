@@ -1,11 +1,10 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
-import { EthernetPort, Wifi } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EthernetPort, Network } from "lucide-react";
 
 interface ConnectivityContentProps {
   options: ComponentOption[];
@@ -67,67 +66,61 @@ export function ConnectivityContent({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <EthernetPort className="h-5 w-5 text-primary" />
-            Velocidade da Porta
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            value={selectedPort?.id}
-            onValueChange={handlePortSelect}
-            className="grid grid-cols-2 gap-4"
-          >
-            {portOptions.map((port) => (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-primary text-sm font-medium">
+          <EthernetPort className="h-4 w-4" />
+          Velocidade da Porta
+        </div>
+        <RadioGroup
+          value={selectedPort?.id}
+          onValueChange={handlePortSelect}
+          className="flex gap-4"
+        >
+          {portOptions.map((port) => (
+            <div key={port.id} className="flex items-center space-x-2">
+              <RadioGroupItem value={port.id} id={port.id} />
               <Label
-                key={port.id}
-                className="flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-transparent p-4 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary cursor-pointer"
+                htmlFor={port.id}
+                className="text-sm flex items-center gap-4"
               >
-                <RadioGroupItem value={port.id} id={port.id} className="sr-only" />
-                <span className="text-base font-medium">{port.name}</span>
-                <span className="text-sm text-muted-foreground">
+                <span>{port.name}</span>
+                <span className="text-primary font-medium">
                   {formatCurrency(port.price)}
                 </span>
               </Label>
-            ))}
-          </RadioGroup>
-        </CardContent>
-      </Card>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Wifi className="h-5 w-5 text-primary" />
-            Bloco de IPs
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedIp?.id} onValueChange={handleIpSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um bloco de IPs" />
-            </SelectTrigger>
-            <SelectContent>
-              {ipOptions.map((ip) => (
-                <SelectItem key={ip.id} value={ip.id}>
-                  <div className="flex justify-between items-center w-full">
-                    <span>{ip.name}</span>
-                    <span className="text-primary ml-2">
-                      {formatCurrency(ip.price)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedIp && (
-            <p className="text-sm text-muted-foreground mt-2">
-              {selectedIp.description}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-primary text-sm font-medium">
+          <Network className="h-4 w-4" />
+          Bloco de IPs
+        </div>
+        <Select value={selectedIp?.id} onValueChange={handleIpSelect}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecione um bloco de IPs" />
+          </SelectTrigger>
+          <SelectContent>
+            {ipOptions.map((ip) => (
+              <SelectItem key={ip.id} value={ip.id}>
+                <div className="flex justify-between items-center w-full gap-4">
+                  <span>{ip.name}</span>
+                  <span className="text-primary font-medium">
+                    {formatCurrency(ip.price)}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedIp && (
+          <p className="text-sm text-muted-foreground">
+            {selectedIp.description}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
