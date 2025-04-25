@@ -19,6 +19,7 @@ export function MemorySlider({ value, onChange, pricePerGB }: MemorySliderProps)
       const closest = memoryValues.reduce((prev, curr) => {
         return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
       });
+      console.log("Adjusting invalid memory value:", value, "to:", closest);
       setCurrentValue(closest);
       onChange(closest);
       toast.error(`Valor de memória inválido. Ajustado para ${closest}GB`);
