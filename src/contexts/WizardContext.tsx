@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -55,11 +56,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           console.log("Setting memory:", option);
           if (option.name && !isNaN(parseFloat(option.name))) {
             const memorySize = parseFloat(option.name);
-            const memoryOption = {
+            const memoryOption: ComponentOption = {
               id: `ram-${memorySize}`,
               name: `${memorySize}GB RAM`,
               price: memorySize * 7.5,
-              type: "Memória"
+              type: "Memória",
+              description: `Memória RAM ${memorySize}GB DDR4`,
+              specs: [`${memorySize}GB de RAM de alta performance`]
             };
             updated["memoria"] = memoryOption;
             console.log("Updated memory component:", updated["memoria"]);
