@@ -1,4 +1,3 @@
-
 export interface ComponentOption {
   id: string;
   name: string;
@@ -13,6 +12,7 @@ export interface ComponentOption {
     badge?: string;
     location?: string;
     perCore?: boolean;
+    cores?: number;
   };
 }
 
