@@ -52,6 +52,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       if (option.type.toLowerCase() === "memoria") {
         console.log("Setting memory component:", option);
         updated["memoria"] = option;
+      } else if (option.type === "SistemaOperacional") {
+        updated["sistemaoperacional"] = option;
       } else {
         updated[option.type.toLowerCase()] = option;
       }
@@ -178,7 +180,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     } else if (type === "Contrato") {
       hasComponent = selectedComponents["contrato"] !== undefined;
     } else if (type === "Conectividade") {
-      // Check for both port and IP block selections
       const hasPort = Object.values(connectivityItems).some(
         item => item.option.subtype === "porta"
       );
@@ -190,6 +191,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       const hasInternalStorage = storageItems.internal.length > 0;
       const hasExternalStorage = storageItems.external.length > 0;
       hasComponent = hasInternalStorage || hasExternalStorage;
+    } else if (type === "SistemaOperacional") {
+      hasComponent = selectedComponents["sistemaoperacional"] !== undefined;
     } else {
       const typeKey = type.toLowerCase();
       hasComponent = selectedComponents[typeKey] !== undefined;

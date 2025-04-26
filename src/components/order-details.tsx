@@ -15,9 +15,21 @@ interface OrderDetailsProps {
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
   const { storageItems } = useWizard();
   
-  // Filter non-storage components
+  // Filter non-storage components and handle OS price calculation
   const nonStorageComponents = Object.values(selectedComponents).filter(
-    component => component.type !== "Armazenamento"
+    component => {
+      if (component.type === "Armazenamento") return false;
+      
+      // Special handling for OS price calculation
+      if (component.type === "SistemaOperacional" && component.metadata?.perCore) {
+        const processorInfo = selectedComponents["processador"];
+        const coreCount = processorInfo?.metadata?.cores || 1;
+        const pairCount = Math.ceil(coreCount / 2);
+        component.price = component.price * pairCount;
+      }
+      
+      return true;
+    }
   );
 
   // Calculate prices
