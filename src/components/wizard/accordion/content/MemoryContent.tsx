@@ -1,8 +1,8 @@
 
 import { ComponentOption } from "@/types/component";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 
 interface MemoryContentProps {
@@ -22,32 +22,27 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
       ecc: "Error Correction Code (ECC)",
     };
 
-    // Customização baseada no tamanho
     if (memorySize >= 512) {
       baseSpecs.type = "DDR4 ECC Load Reduced DIMM";
-      baseSpecs.speed = "3200 MHz";
     }
 
     return baseSpecs;
   };
 
-  const createMemoryOption = (memorySize: number): ComponentOption => {
-    const specs = getMemorySpecs(memorySize);
-    return {
-      id: `memory-${memorySize}`,
-      type: "memoria",
-      name: `${memorySize}GB RAM`,
-      description: `Memória RAM ${specs.type} ${memorySize}GB`,
-      price: memorySize * pricePerGB,
-      specs: [
-        `${memorySize}GB Total`,
-        `Tipo: ${specs.type}`,
-        `Velocidade: ${specs.speed}`,
-        `${specs.channels}`,
-        specs.ecc
-      ]
-    };
-  };
+  const createMemoryOption = (memorySize: number): ComponentOption => ({
+    id: `memory-${memorySize}`,
+    type: "memoria",
+    name: `${memorySize}GB RAM`,
+    description: `Memória RAM ${getMemorySpecs(memorySize).type} ${memorySize}GB`,
+    price: memorySize * pricePerGB,
+    specs: [
+      `${memorySize}GB Total`,
+      `Tipo: ${getMemorySpecs(memorySize).type}`,
+      `Velocidade: ${getMemorySpecs(memorySize).speed}`,
+      `${getMemorySpecs(memorySize).channels}`,
+      getMemorySpecs(memorySize).ecc
+    ]
+  });
 
   useEffect(() => {
     if (!selectedOption) {
@@ -56,60 +51,50 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     }
   }, []);
 
-  const currentValue = selectedOption?.name 
-    ? parseInt(selectedOption.name.replace(/\D/g, ''))
-    : 64;
-
   return (
-    <div className="w-full space-y-6 relative">
-      <ToggleGroup 
-        type="single" 
-        className="grid grid-cols-2 sm:grid-cols-3 gap-4"
-        defaultValue={currentValue.toString()}
+    <div className="w-full space-y-4 animate-fade-in">
+      <Select
+        value={selectedOption?.id || ""}
         onValueChange={(value) => {
-          if (value) {
-            const memorySize = parseInt(value);
-            const option = createMemoryOption(memorySize);
-            onSelectOption(option);
-          }
+          const memorySize = parseInt(value.replace('memory-', ''));
+          const option = createMemoryOption(memorySize);
+          onSelectOption(option);
         }}
       >
-        {memoryValues.map((size) => {
-          const specs = getMemorySpecs(size);
-          return (
-            <ToggleGroupItem
-              key={size}
-              value={size.toString()}
-              className="group relative min-h-[80px] overflow-hidden
-                bg-card hover:bg-accent/50
-                data-[state=on]:bg-primary data-[state=on]:text-primary-foreground
-                border border-border hover:border-primary/30
-                rounded-lg transition-all duration-200"
-            >
-              <div className="absolute right-2 top-2">
-                <HelpTooltip
-                  title={`${size}GB RAM Details`}
-                  description={`
-                    • ${specs.type}
-                    • Velocidade: ${specs.speed}
-                    • ${specs.channels}
-                    • Suporte a ${specs.ecc}
-                    • Preço: ${formatCurrency(size * pricePerGB)}
-                  `}
-                  iconOnly
-                />
-              </div>
-              
-              <div className="flex flex-col items-center justify-center h-full p-3 gap-1">
-                <div className="text-lg font-semibold">{size}GB RAM</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatCurrency(size * pricePerGB)}
+        <SelectTrigger className="w-full bg-background border-border/50 hover:border-primary/50 transition-colors">
+          <SelectValue placeholder="Selecione a quantidade de memória RAM" />
+        </SelectTrigger>
+        <SelectContent className="bg-background border-border/50">
+          {memoryValues.map((size) => {
+            const specs = getMemorySpecs(size);
+            return (
+              <SelectItem
+                key={size}
+                value={`memory-${size}`}
+                className="flex items-center justify-between group py-3 px-3"
+              >
+                <div className="flex items-center justify-between w-full gap-4">
+                  <span className="flex items-center gap-2">
+                    {size}GB RAM
+                    <HelpTooltip
+                      title={`${size}GB RAM Specifications`}
+                      description={`
+                        • Tipo: ${specs.type}
+                        • Velocidade: ${specs.speed}
+                        • ${specs.channels}
+                        • ${specs.ecc}
+                      `}
+                    />
+                  </span>
+                  <span className="text-primary font-medium">
+                    {formatCurrency(size * pricePerGB)}
+                  </span>
                 </div>
-              </div>
-            </ToggleGroupItem>
-          );
-        })}
-      </ToggleGroup>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
