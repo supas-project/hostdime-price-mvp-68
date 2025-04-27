@@ -1,3 +1,4 @@
+
 export interface ComponentOption {
   id: string;
   name: string;
@@ -13,6 +14,14 @@ export interface ComponentOption {
     location?: string;
     perCore?: boolean;
     cores?: number;
+    raid?: {
+      type: string;
+      description: string;
+      protection: string;
+      isHardware: boolean;
+    };
+    quantity?: number;
+    unitPrice?: number;
   };
 }
 
