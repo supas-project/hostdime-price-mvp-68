@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Server } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
+import { Card } from "@/components/ui/card";
 
 interface OSContentProps {
   options: ComponentOption[];
@@ -22,7 +23,7 @@ export function OSContent({
   selectedOption,
   onSelectOption
 }: OSContentProps) {
-  const [openCategories, setOpenCategories] = useState<string[]>([]);
+  const [openCategories, setOpenCategories] = useState<string[]>(["windows"]);
   const { selectedComponents } = useWizard();
   const processorInfo = selectedComponents["processador"];
   const coreCount = processorInfo?.metadata?.cores || 1;
@@ -43,6 +44,28 @@ export function OSContent({
   const calculateWindowsPrice = (basePrice: number) => {
     const pairCount = Math.ceil(coreCount / 2);
     return basePrice * pairCount;
+  };
+
+  const renderOSOption = (os: ComponentOption) => {
+    const isSelected = selectedOption?.id === os.id;
+    const price = os.metadata?.perCore ? calculateWindowsPrice(os.price) : os.price;
+
+    return (
+      <div key={os.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value={os.id} id={os.id} />
+          <Label htmlFor={os.id} className="flex flex-col cursor-pointer">
+            <span className="font-medium">{os.name}</span>
+            {os.description && (
+              <span className="text-xs text-muted-foreground">{os.description}</span>
+            )}
+          </Label>
+        </div>
+        <Badge variant={price > 0 ? "secondary" : "outline"}>
+          {price > 0 ? formatCurrency(price) : "Grátis"}
+        </Badge>
+      </div>
+    );
   };
 
   const renderOSCategory = (title: string, options: ComponentOption[], category: string) => {
@@ -77,25 +100,7 @@ export function OSContent({
             }}
             className="grid gap-2"
           >
-            {options.map((os) => (
-              <div key={os.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={os.id} id={os.id} />
-                  <Label htmlFor={os.id} className="flex flex-col">
-                    <span>{os.name}</span>
-                    {os.description && (
-                      <span className="text-xs text-muted-foreground">{os.description}</span>
-                    )}
-                  </Label>
-                </div>
-                <Badge variant="secondary">
-                  {os.metadata?.perCore 
-                    ? `${formatCurrency(calculateWindowsPrice(os.price))} (${coreCount} cores)`
-                    : os.price > 0 ? formatCurrency(os.price) : "Grátis"
-                  }
-                </Badge>
-              </div>
-            ))}
+            {options.map(renderOSOption)}
           </RadioGroup>
         </CollapsibleContent>
       </Collapsible>
@@ -103,71 +108,60 @@ export function OSContent({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Server className="h-5 w-5 text-primary" />
-        <h3 className="text-base font-medium">Sistema Operacional</h3>
-        <HelpTooltip
-          title="Sistema Operacional"
-          description="Escolha o sistema operacional ideal para seu servidor"
-          iconOnly
-        />
-      </div>
-      
-      {/* Windows sempre visível */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium">Windows Server</h4>
-          <HelpTooltip 
-            title="Licenças Windows" 
-            description={`Licenças Windows são cobradas a cada 2 cores. Seu processador tem ${coreCount} cores.`}
+    <Card className="p-4">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Server className="h-5 w-5 text-primary" />
+          <h3 className="text-base font-medium">Sistema Operacional</h3>
+          <HelpTooltip
+            title="Sistema Operacional"
+            description="Escolha o sistema operacional ideal para seu servidor. O Windows Server possui licenciamento por core, enquanto as outras opções são gratuitas."
+            iconOnly
           />
         </div>
-        <RadioGroup
-          value={selectedOption?.id}
-          onValueChange={(value) => {
-            const option = options.find(opt => opt.id === value);
-            if (option) onSelectOption(option);
-          }}
-          className="grid gap-2"
-        >
-          {windowsOptions.map((os) => (
-            <div key={os.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={os.id} id={os.id} />
-                <Label htmlFor={os.id} className="flex flex-col">
-                  <span>{os.name}</span>
-                  <span className="text-xs text-muted-foreground">{os.description}</span>
-                </Label>
-              </div>
-              <Badge variant="secondary">
-                {formatCurrency(calculateWindowsPrice(os.price))}
-              </Badge>
-            </div>
-          ))}
-        </RadioGroup>
+        
+        {/* Windows sempre visível */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">Windows Server</h4>
+            <HelpTooltip 
+              title="Licenças Windows" 
+              description={`Licenças Windows são cobradas a cada 2 cores. Seu processador tem ${coreCount} cores.`}
+            />
+          </div>
+          <RadioGroup
+            value={selectedOption?.id}
+            onValueChange={(value) => {
+              const option = options.find(opt => opt.id === value);
+              if (option) onSelectOption(option);
+            }}
+            className="grid gap-2"
+          >
+            {windowsOptions.map(renderOSOption)}
+          </RadioGroup>
+        </div>
+
+        <Separator className="my-4" />
+
+        {/* Linux em Collapsible */}
+        {linuxOptions.length > 0 && (
+          <>
+            {renderOSCategory("Linux", linuxOptions, "linux")}
+            <Separator className="my-4" />
+          </>
+        )}
+
+        {/* Virtualização em Collapsible */}
+        {virtualizationOptions.length > 0 && (
+          <>
+            {renderOSCategory("Plataformas de Virtualização", virtualizationOptions, "virtualization")}
+            <Separator className="my-4" />
+          </>
+        )}
+
+        {/* Unix em Collapsible */}
+        {unixOptions.length > 0 && renderOSCategory("Unix e Outros", unixOptions, "unix")}
       </div>
-
-      <Separator className="my-4" />
-
-      {/* Linux em Collapsible */}
-      {linuxOptions.length > 0 && (
-        <>
-          {renderOSCategory("Linux", linuxOptions, "linux")}
-          <Separator className="my-4" />
-        </>
-      )}
-
-      {/* Virtualização em Collapsible */}
-      {virtualizationOptions.length > 0 && (
-        <>
-          {renderOSCategory("Plataformas de Virtualização", virtualizationOptions, "virtualization")}
-          <Separator className="my-4" />
-        </>
-      )}
-
-      {/* Unix em Collapsible */}
-      {unixOptions.length > 0 && renderOSCategory("Unix e Outros", unixOptions, "unix")}
-    </div>
+    </Card>
   );
 }
