@@ -48,9 +48,25 @@ export function SimpleRaidCalculator({
     onRaidTypeChange(raidType, isHardware);
   };
 
-  const availableRaidTypes = Object.entries(RAID_INFO).filter(
-    ([type]) => isValidRaidConfiguration(type as RaidType)
-  );
+  const getPerformanceColor = (level: string) => {
+    switch (level) {
+      case "excelente": return "text-green-500";
+      case "boa": return "text-blue-500";
+      case "moderada": return "text-yellow-500";
+      case "baixa": return "text-red-500";
+      default: return "text-muted-foreground";
+    }
+  };
+
+  const getProtectionColor = (level: string) => {
+    switch (level) {
+      case "excelente": return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "boa": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "básica": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+      case "nenhuma": return "bg-red-500/10 text-red-500 border-red-500/20";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
 
   if (quantity < 2) return null;
 
@@ -59,36 +75,30 @@ export function SimpleRaidCalculator({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">RAID</span>
+          <span className="text-sm font-medium">Configuração RAID</span>
           <HelpTooltip
-            title="Configuração RAID"
-            description="RAID permite combinar múltiplos discos para melhor performance e/ou proteção de dados. Cada tipo oferece diferentes benefícios."
+            title="O que é RAID?"
+            description="RAID permite combinar múltiplos discos para melhorar a proteção dos dados e/ou a performance do sistema."
             iconOnly
           />
         </div>
         
         <div className="flex items-center gap-3">
-          <span className={cn(
-            "text-xs", 
-            !isHardwareRaid ? "text-primary" : "text-muted-foreground"
-          )}>
-            Software
-          </span>
           <Toggle 
             pressed={isHardwareRaid} 
             onPressedChange={handleRaidImplementationChange}
             className="relative px-3 py-1"
             aria-label="Hardware RAID"
           >
-            <HardDrive className={cn(
-              "h-4 w-4 mr-2", 
+            <Server className={cn(
+              "h-4 w-4 mr-2",
               isHardwareRaid ? "text-primary" : "text-muted-foreground"
             )} />
-            <span>Hardware</span>
+            <span>Hardware RAID</span>
           </Toggle>
           <HelpTooltip
-            title="Tipo de RAID"
-            description="Hardware RAID utiliza um controlador dedicado para melhor performance, enquanto Software RAID usa recursos do sistema."
+            title="Hardware vs Software RAID"
+            description="Hardware RAID usa um controlador dedicado para melhor performance, enquanto Software RAID usa os recursos do sistema."
             iconOnly
           />
         </div>
@@ -96,59 +106,101 @@ export function SimpleRaidCalculator({
 
       <Select value={raidType} onValueChange={handleRaidTypeChange}>
         <SelectTrigger className="bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
-          <SelectValue placeholder="Selecione o tipo de RAID" />
+          <SelectValue placeholder="Escolha o tipo de RAID" />
         </SelectTrigger>
         <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">
-          <SelectItem value="none">Sem RAID</SelectItem>
-          {availableRaidTypes
-            .filter(([type]) => type !== "none") // Não mostrar "none" duas vezes
+          {Object.entries(RAID_INFO)
+            .filter(([type, info]) => quantity >= info.minDisks)
             .map(([type, info]) => (
               <SelectItem key={type} value={type}>
-                RAID {type} - {info.description}
+                {type === "none" ? "Sem RAID" : `RAID ${type} - ${info.description}`}
               </SelectItem>
             ))}
         </SelectContent>
       </Select>
 
-      {calculation && raidType !== "none" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      {calculation && calculation.raidInfo && (
+        <div className="space-y-4">
           <Card className="p-4 bg-[#1e1e1e] border-[#2a2a2a]">
-            <div className="flex items-center gap-2 mb-2">
-              <HardDrive className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Capacidade</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total: {calculation.totalCapacity}GB
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Utilizável: {calculation.usableCapacity}GB
-            </p>
-          </Card>
+            <div className="flex flex-col gap-4">
+              {/* Status Summary */}
+              <div className={cn(
+                "p-3 rounded-lg border",
+                getProtectionColor(calculation.raidInfo.dataProtectionLevel)
+              )}>
+                <h4 className="font-medium mb-2">Nível de Proteção: {calculation.raidInfo.protection}</h4>
+                <p className="text-sm">{calculation.raidInfo.description}</p>
+              </div>
 
-          <Card className="p-4 bg-[#1e1e1e] border-[#2a2a2a]">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Proteção</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {calculation.protection}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {isHardwareRaid ? 'Hardware RAID' : 'Software RAID'}
-            </p>
-          </Card>
+              {/* Key Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <HardDrive className="w-4 h-4 text-primary" />
+                    <span className="font-medium">Capacidade</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Total: {calculation.totalCapacity}GB
+                    <br />
+                    Utilizável: {calculation.usableCapacity}GB
+                    <br />
+                    <span className="text-xs">
+                      ({calculation.raidInfo.capacityEfficiency}% de eficiência)
+                    </span>
+                  </p>
+                </div>
 
-          <Card className="p-4 bg-[#1e1e1e] border-[#2a2a2a]">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Performance</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="font-medium">Performance</span>
+                  </div>
+                  <p className="text-sm">
+                    <span className={cn("font-medium", getPerformanceColor(calculation.performance.read))}>
+                      Leitura: {calculation.performance.read}
+                    </span>
+                    <br />
+                    <span className={cn("font-medium", getPerformanceColor(calculation.performance.write))}>
+                      Gravação: {calculation.performance.write}
+                    </span>
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Server className="w-4 h-4 text-primary" />
+                    <span className="font-medium">Recomendado para:</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {calculation.raidInfo.usageRecommendation}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pros and Cons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div>
+                  <h5 className="text-sm font-medium text-green-500 mb-2">Vantagens</h5>
+                  <ul className="text-sm space-y-1">
+                    {calculation.raidInfo.advantages.map((adv, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-green-500">✓</span> {adv}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h5 className="text-sm font-medium text-red-500 mb-2">Desvantagens</h5>
+                  <ul className="text-sm space-y-1">
+                    {calculation.raidInfo.disadvantages.map((disadv, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-red-500">✗</span> {disadv}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Leitura: {calculation.performance.read}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Escrita: {calculation.performance.write}
-            </p>
           </Card>
         </div>
       )}

@@ -8,6 +8,14 @@ export interface RaidInfo {
   protection: string;
   usageRecommendation: string;
   isHardware: boolean;
+  advantages: string[];
+  disadvantages: string[];
+  performanceLevel: {
+    read: "baixa" | "moderada" | "boa" | "excelente";
+    write: "baixa" | "moderada" | "boa" | "excelente";
+  };
+  dataProtectionLevel: "nenhuma" | "básica" | "boa" | "excelente";
+  capacityEfficiency: number; // Percentage of total capacity that is usable
 }
 
 export interface RaidCalculation {
