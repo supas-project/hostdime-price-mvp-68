@@ -1,3 +1,15 @@
+export interface RaidMetadata {
+  type: string;
+  description: string;
+  protection: string;
+  isHardware: boolean;
+  usableCapacity: number;
+  totalCapacity: number;
+  performance: {
+    read: string;
+    write: string;
+  };
+}
 
 export interface ComponentOption {
   id: string;
@@ -14,18 +26,7 @@ export interface ComponentOption {
     location?: string;
     perCore?: boolean;
     cores?: number;
-    raid?: {
-      type: string;
-      description: string;
-      protection: string;
-      isHardware: boolean;
-      usableCapacity: number;
-      totalCapacity: number;
-      performance: {
-        read: string;
-        write: string;
-      };
-    };
+    raid?: RaidMetadata;
     quantity?: number;
     unitPrice?: number;
   };

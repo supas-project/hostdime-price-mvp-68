@@ -22,9 +22,18 @@ export function SelectedDiskDisplay({
   onRemove 
 }: SelectedDiskDisplayProps) {
   const [raidType, setRaidType] = useState<RaidType>("none");
+  const [showRaidConfig, setShowRaidConfig] = useState(quantity >= 2);
+
+  useEffect(() => {
+    setShowRaidConfig(quantity >= 2);
+  }, [quantity]);
+
+  const handleRaidTypeChange = (type: RaidType, isHardware: boolean) => {
+    setRaidType(type);
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a] transition-all duration-300">
         <div className="flex items-center gap-3">
           <CircleDot className="w-4 h-4 text-[#f58220]" />
@@ -37,7 +46,10 @@ export function SelectedDiskDisplay({
             <span className="text-sm text-white">Quantidade:</span>
             <QuantitySelector 
               value={quantity} 
-              onChange={onQuantityChange} 
+              onChange={(newQuantity) => {
+                onQuantityChange(newQuantity);
+                setShowRaidConfig(newQuantity >= 2);
+              }} 
               min={1} 
               max={10} 
             />
@@ -56,11 +68,15 @@ export function SelectedDiskDisplay({
         </div>
       </div>
 
-      <SimpleRaidCalculator
-        selectedDisk={disk}
-        quantity={quantity}
-        onRaidTypeChange={setRaidType}
-      />
+      {showRaidConfig && (
+        <div className="animate-fade-in">
+          <SimpleRaidCalculator
+            selectedDisk={disk}
+            quantity={quantity}
+            onRaidTypeChange={handleRaidTypeChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Shield, Cpu, Server, HardDrive, Zap, CircleCheck, CircleX } from "lucide-react";
@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useWizard } from "@/contexts/WizardContext";
+import { toast } from "sonner";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -24,9 +25,13 @@ export function SimpleRaidCalculator({
 }: SimpleRaidCalculatorProps) {
   const [raidType, setRaidType] = useState<RaidType>("none");
   const [isHardwareRaid, setIsHardwareRaid] = useState(false);
-  const [calculation, setCalculation] = useState<ReturnType<typeof calculateRaidCapacity> | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const { handleSelectStorageItem } = useWizard();
+
+  const calculation = useMemo(() => {
+    if (!selectedDisk || quantity < 2) return null;
+    return calculateRaidCapacity([selectedDisk], quantity, raidType, isHardwareRaid);
+  }, [selectedDisk, quantity, raidType, isHardwareRaid]);
 
   const isValidRaidConfiguration = (type: RaidType): boolean => {
     if (!selectedDisk || quantity < 2) return false;
@@ -34,54 +39,55 @@ export function SimpleRaidCalculator({
   };
 
   useEffect(() => {
-    if (raidType && isValidRaidConfiguration(raidType)) {
-      const result = calculateRaidCapacity([selectedDisk], quantity, raidType, isHardwareRaid);
-      setCalculation(result);
-      
-      // Update storage item with RAID information
+    if (calculation && isValidRaidConfiguration(raidType)) {
       const storageOption = {
         id: `internal-disk-${selectedDisk.type}-${selectedDisk.capacity}`,
         type: "Armazenamento",
         subtype: "Disco Interno",
         name: `${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
-        description: `Disco interno: ${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
+        description: `${quantity}x ${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
         price: selectedDisk.price * quantity,
         metadata: {
-          quantity: quantity,
+          quantity,
           features: [`Tipo: ${selectedDisk.type}`],
           raid: {
             type: raidType,
             description: RAID_INFO[raidType].description,
             protection: RAID_INFO[raidType].protection,
             isHardware: isHardwareRaid,
-            usableCapacity: result.usableCapacity,
-            totalCapacity: result.totalCapacity,
-            performance: result.performance
+            usableCapacity: calculation.usableCapacity,
+            totalCapacity: calculation.totalCapacity,
+            performance: calculation.performance
           }
         },
         specs: [
           `Tipo: ${selectedDisk.type.toUpperCase()}`,
-          `Capacidade: ${selectedDisk.capacity}`,
-          `Quantidade: ${quantity}`,
+          `Capacidade Total: ${calculation.totalCapacity}GB`,
+          `Capacidade Útil: ${calculation.usableCapacity}GB`,
           `RAID: ${raidType === 'none' ? 'Sem RAID' : `RAID ${raidType}`}`,
+          `Tipo RAID: ${isHardwareRaid ? 'Hardware' : 'Software'}`,
           `Proteção: ${RAID_INFO[raidType].protection}`
         ]
       };
       
       handleSelectStorageItem(storageOption, 'internal');
+      onRaidTypeChange(raidType, isHardwareRaid);
     }
-  }, [raidType, quantity, selectedDisk, isHardwareRaid]);
+  }, [calculation, raidType, isHardwareRaid]);
 
   const handleRaidTypeChange = (value: RaidType) => {
-    if (value === raidType) return; // Evita re-renders desnecessários
+    if (!isValidRaidConfiguration(value)) {
+      toast.error(`RAID ${value} requer no mínimo ${RAID_INFO[value].minDisks} discos`);
+      return;
+    }
     setRaidType(value);
-    onRaidTypeChange(value, isHardwareRaid);
+    toast.success(`Configuração RAID ${value} aplicada com sucesso`);
   };
   
   const handleRaidImplementationChange = (value: string) => {
     const isHardware = value === "hardware";
     setIsHardwareRaid(isHardware);
-    onRaidTypeChange(raidType, isHardware);
+    toast.success(`RAID ${isHardware ? 'Hardware' : 'Software'} selecionado`);
   };
 
   if (quantity < 2) return null;
