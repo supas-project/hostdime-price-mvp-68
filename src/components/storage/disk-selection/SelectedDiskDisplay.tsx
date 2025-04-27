@@ -6,7 +6,7 @@ import { PricedDiskOption } from "@/types/storage";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { SimpleRaidCalculator } from "@/components/storage/raid/SimpleRaidCalculator";
 import { RaidType } from "@/types/raid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SelectedDiskDisplayProps {
   disk: PricedDiskOption;
