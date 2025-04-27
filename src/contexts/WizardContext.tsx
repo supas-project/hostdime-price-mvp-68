@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption, StorageItems } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -71,59 +70,44 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
     console.log("Selecting storage item:", option, storageType);
     
-    if (option.price === 0) {
-      // Remove case
-      if (storageType === 'internal') {
-        setStorageItems(prev => {
-          const updatedInternal = prev.internal.filter(item => item.id !== option.id);
-          return {
-            ...prev,
-            internal: updatedInternal
+    if (storageType === 'internal') {
+      setStorageItems(prev => {
+        const diskId = option.id;
+        const quantity = option.metadata?.quantity || 1;
+        
+        // Check if we already have this disk type
+        const existingDiskIndex = prev.internal.findIndex(
+          disk => disk.id === diskId
+        );
+
+        let updatedInternal;
+        if (existingDiskIndex >= 0) {
+          // Update existing disk entry
+          updatedInternal = [...prev.internal];
+          updatedInternal[existingDiskIndex] = {
+            ...option,
+            price: option.price * quantity
           };
-        });
-      } else {
-        setStorageItems(prev => {
-          const updatedExternal = prev.external.filter(item => item.id !== option.id);
-          return {
-            ...prev,
-            external: updatedExternal
-          };
-        });
-      }
+        } else {
+          // Add new disk entry
+          updatedInternal = [...prev.internal, {
+            ...option,
+            price: option.price * quantity
+          }];
+        }
+        
+        return {
+          ...prev,
+          internal: updatedInternal
+        };
+      });
     } else {
-      // Add case - check if it already exists
-      if (storageType === 'internal') {
-        setStorageItems(prev => {
-          // Check if disk with same ID already exists
-          const existingIndex = prev.internal.findIndex(item => item.id === option.id);
-          
-          let updatedInternal;
-          if (existingIndex >= 0) {
-            // Replace the existing item
-            updatedInternal = [...prev.internal];
-            updatedInternal[existingIndex] = option;
-          } else {
-            // Add as new item
-            updatedInternal = [...prev.internal, option];
-          }
-          
-          return {
-            ...prev,
-            internal: updatedInternal
-          };
-        });
-      } else {
-        setStorageItems(prev => {
-          // For external storage, we only allow one item as it represents a storage service
-          return {
-            ...prev,
-            external: [option] // Replace any existing external storage
-          };
-        });
-      }
+      // For external storage, we replace any existing storage
+      setStorageItems(prev => ({
+        ...prev,
+        external: [option]
+      }));
     }
-    
-    console.log("Updated storage items:", storageItems);
   };
 
   const addCustomService = (service: ComponentOption) => {

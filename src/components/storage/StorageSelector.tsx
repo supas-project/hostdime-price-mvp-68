@@ -24,12 +24,17 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   const handleSelectInternalDiskInternal = (disk: PricedDiskOption, quantity: number) => {
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.id}-${quantity}`, // Add quantity to make ID unique
+      id: `internal-disk-${disk.type}-${disk.capacity}`, // Changed to make ID consistent
       type: "Armazenamento",
       subtype: "Disco Interno",
-      name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
+      name: `${disk.type.toUpperCase()} ${disk.capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
-      price: disk.price * quantity,
+      price: disk.price,
+      metadata: {
+        quantity: quantity,
+        diskType: disk.type,
+        capacity: disk.capacity
+      },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
         `Capacidade: ${disk.capacity}`,
@@ -37,7 +42,6 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       ]
     };
     
-    // Use the passed prop if available, otherwise use context function
     if (onSelectInternalDisk) {
       onSelectInternalDisk(disk, quantity);
     } else {

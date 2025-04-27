@@ -168,7 +168,12 @@ export function SummaryCart({
             {storageItems.internal.map((disk) => (
               <div key={disk.id} className="flex justify-between items-start group animate-fade-in mb-2">
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{disk.name}</p>
+                  <p className="text-sm font-medium">
+                    {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
+                      `${disk.metadata.quantity}x ${disk.name}` : 
+                      disk.name
+                    }
+                  </p>
                   <p className="text-xs text-muted-foreground">{disk.description}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
