@@ -74,10 +74,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       setStorageItems(prev => {
         const diskId = option.id;
         const quantity = option.metadata?.quantity || 1;
+        const diskType = option.specs?.find(spec => spec.startsWith("Tipo:"))?.split(": ")[1]?.toLowerCase() || "";
+        const capacity = option.specs?.find(spec => spec.startsWith("Capacidade:"))?.split(": ")[1] || "";
         
-        // Check if we already have this disk type
+        // Check if we already have this disk type and capacity
         const existingDiskIndex = prev.internal.findIndex(
-          disk => disk.id === diskId
+          disk => disk.specs?.includes(`Tipo: ${diskType?.toUpperCase()}`) && 
+                  disk.specs?.includes(`Capacidade: ${capacity}`)
         );
 
         let updatedInternal;

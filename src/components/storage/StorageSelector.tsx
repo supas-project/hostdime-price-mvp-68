@@ -32,8 +32,10 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       price: disk.price,
       metadata: {
         quantity: quantity,
-        diskType: disk.type,
-        capacity: disk.capacity
+        // Store disk type as a feature instead of as 'diskType' property
+        features: [`Tipo: ${disk.type}`],
+        // Store capacity information in features as well
+        // This ensures we're using properties that exist in the ComponentOption interface
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
