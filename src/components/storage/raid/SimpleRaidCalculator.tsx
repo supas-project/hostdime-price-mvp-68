@@ -58,12 +58,12 @@ export function SimpleRaidCalculator({
     <div className="space-y-4 mt-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium">Configuração RAID</span>
+          <Shield className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">RAID</span>
           <HelpTooltip
-            title="RAID"
-            description="RAID permite combinar múltiplos discos para melhor performance ou proteção de dados"
-            icon
+            title="Configuração RAID"
+            description="RAID permite combinar múltiplos discos para melhor performance e/ou proteção de dados. Cada tipo oferece diferentes benefícios."
+            iconOnly
           />
         </div>
         
@@ -86,6 +86,11 @@ export function SimpleRaidCalculator({
             )} />
             <span>Hardware</span>
           </Toggle>
+          <HelpTooltip
+            title="Tipo de RAID"
+            description="Hardware RAID utiliza um controlador dedicado para melhor performance, enquanto Software RAID usa recursos do sistema."
+            iconOnly
+          />
         </div>
       </div>
 

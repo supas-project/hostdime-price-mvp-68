@@ -2,7 +2,6 @@
 import { ComponentOption } from "@/types/component";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { HelpTooltip } from "@/components/help-tooltip";
@@ -27,52 +26,58 @@ export function ContractDuration({
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-4">
       <CardContent className="p-0 space-y-4">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2">
           <h3 className="text-base font-medium">Duração do Contrato</h3>
           <HelpTooltip 
             title="Duração do Contrato"
-            description="Quanto maior o tempo de contrato, maior o desconto aplicado ao valor mensal do servidor."
+            description="A duração do contrato afeta diretamente o valor mensal do servidor. Contratos mais longos oferecem descontos progressivos."
+            iconOnly
           />
         </div>
         <RadioGroup 
           value={selectedOption?.id || ""}
           onValueChange={handleContractSelection}
+          className="grid gap-2"
         >
-          <div className="space-y-2">
-            {options.map((option) => {
-              const isSelected = selectedOption?.id === option.id;
-              const discount = option.metadata?.discount || 0;
-              
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={option.id}
-                  className={`
-                    flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer
-                    ${isSelected 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:border-primary/50'}
-                  `}
-                  onClick={() => handleContractSelection(option.id)}
-                >
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value={option.id} id={option.id} />
-                    <span className="font-medium">
-                      {option.name}
-                    </span>
+          {options.map((option) => {
+            const isSelected = selectedOption?.id === option.id;
+            const discount = option.metadata?.discount || 0;
+            
+            return (
+              <label
+                key={option.id}
+                className={`
+                  flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all
+                  ${isSelected 
+                    ? 'border-primary bg-primary/10 ring-1 ring-primary' 
+                    : 'border-border hover:border-primary/50'}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <div className="flex flex-col">
+                    <span className="font-medium">{option.name}</span>
+                    {option.description && (
+                      <span className="text-xs text-muted-foreground">{option.description}</span>
+                    )}
                   </div>
-                  
-                  {discount > 0 && (
-                    <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">
+                </div>
+                
+                {discount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
                       {discount}% OFF
                     </span>
-                  )}
-                </label>
-              );
-            })}
-          </div>
+                    {isSelected && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                )}
+              </label>
+            );
+          })}
         </RadioGroup>
       </CardContent>
     </Card>
