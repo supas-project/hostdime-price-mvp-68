@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -72,15 +71,15 @@ export function SimpleRaidCalculator({
   if (quantity < 2) return null;
 
   return (
-    <div className="space-y-3 mt-4 animate-fade-in">
-      {/* Header Section - More compact */}
-      <div className="flex items-center justify-between bg-background/50 rounded-lg p-2">
+    <div className="space-y-2 mt-3">
+      {/* Compact Header Section */}
+      <div className="flex items-center justify-between bg-[#1e1e1e] rounded-lg p-2 border border-[#2a2a2a]">
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-primary" />
+          <Shield className="h-4 w-4 text-[#f58220]" />
           <span className="text-sm font-medium">Configuração RAID</span>
           <HelpTooltip
             title="O que é RAID?"
-            description="RAID combina múltiplos discos para: 1) Proteger seus dados contra falhas 2) Melhorar a velocidade de leitura/gravação 3) Equilibrar capacidade e segurança. Escolha com base na sua necessidade principal."
+            description="RAID combina múltiplos discos para: 1) Proteger seus dados contra falhas 2) Melhorar a velocidade de leitura/gravação 3) Equilibrar capacidade e segurança."
             iconOnly
           />
         </div>
@@ -91,26 +90,16 @@ export function SimpleRaidCalculator({
           onValueChange={handleRaidImplementationChange}
           className="bg-background border rounded-md"
         >
-          <ToggleGroupItem value="software" size="sm" className="px-2 py-1.5">
+          <ToggleGroupItem value="software" size="sm" className="px-2 py-1">
             <Cpu className="h-3.5 w-3.5" />
-            <HelpTooltip
-              title="RAID via Software"
-              description="Implementado pelo sistema operacional. Mais flexível, mas usa recursos do processador."
-              iconOnly
-            />
           </ToggleGroupItem>
-          <ToggleGroupItem value="hardware" size="sm" className="px-2 py-1.5">
+          <ToggleGroupItem value="hardware" size="sm" className="px-2 py-1">
             <Server className="h-3.5 w-3.5" />
-            <HelpTooltip
-              title="RAID via Hardware"
-              description="Controladora dedicada. Melhor performance, menor uso do processador."
-              iconOnly
-            />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
-      {/* RAID Selection - More descriptive */}
+      {/* Compact RAID Selection */}
       <Select value={raidType} onValueChange={handleRaidTypeChange}>
         <SelectTrigger className="bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
           <SelectValue placeholder="Escolha o tipo de proteção RAID" />
@@ -119,13 +108,11 @@ export function SimpleRaidCalculator({
           {Object.entries(RAID_INFO)
             .filter(([type, info]) => quantity >= info.minDisks)
             .map(([type, info]) => (
-              <SelectItem key={type} value={type}>
-                <div className="flex flex-col gap-0.5">
+              <SelectItem key={type} value={type} className="py-1.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-3.5 w-3.5" />
                   <span className="font-medium">
                     {type === "none" ? "Sem RAID" : `RAID ${type}`}
-                  </span>
-                  <span className="text-xs text-muted-foreground line-clamp-1">
-                    {info.description}
                   </span>
                 </div>
               </SelectItem>
@@ -134,82 +121,78 @@ export function SimpleRaidCalculator({
       </Select>
 
       {calculation && calculation.raidInfo && (
-        <Card className="p-3 bg-[#1e1e1e] border-[#2a2a2a]">
-          <div className="flex flex-col gap-3">
-            {/* Status Summary - More compact */}
+        <Card className="p-2.5 bg-[#1e1e1e] border-[#2a2a2a]">
+          <div className="space-y-2.5">
+            {/* Compact Status Summary */}
             <div className={cn(
               "p-2 rounded-lg border text-sm",
               getProtectionColor(calculation.raidInfo.dataProtectionLevel)
             )}>
-              <h4 className="font-medium mb-1 flex items-center gap-1">
+              <h4 className="font-medium flex items-center gap-1.5 text-sm">
                 <Shield className="h-3.5 w-3.5" />
-                Nível de Proteção: {calculation.raidInfo.protection}
+                Proteção: {calculation.raidInfo.protection}
               </h4>
-              <p className="text-xs leading-relaxed">{calculation.raidInfo.description}</p>
             </div>
 
-            {/* Key Information - Grid layout */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-              <div className="space-y-1">
+            {/* Compact Information Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-sm">
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
-                  <HardDrive className="w-3.5 h-3.5 text-primary" />
+                  <HardDrive className="w-3.5 h-3.5 text-[#f58220]" />
                   <span className="font-medium">Capacidade</span>
                 </div>
                 <div className="text-xs text-muted-foreground pl-5">
                   <div>Total: {calculation.totalCapacity}GB</div>
                   <div>Utilizável: {calculation.usableCapacity}GB</div>
-                  <div className="text-[11px]">
-                    ({calculation.raidInfo.capacityEfficiency}% de eficiência)
-                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-primary" />
+                  <Zap className="w-3.5 h-3.5 text-[#f58220]" />
                   <span className="font-medium">Performance</span>
                 </div>
                 <div className="text-xs pl-5">
-                  <div className={cn("", getPerformanceColor(calculation.performance.read))}>
+                  <div className={getPerformanceColor(calculation.performance.read)}>
                     Leitura: {calculation.performance.read}
                   </div>
-                  <div className={cn("", getPerformanceColor(calculation.performance.write))}>
+                  <div className={getPerformanceColor(calculation.performance.write)}>
                     Gravação: {calculation.performance.write}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
-                  <Server className="w-3.5 h-3.5 text-primary" />
+                  <Server className="w-3.5 h-3.5 text-[#f58220]" />
                   <span className="font-medium">Recomendado para:</span>
                 </div>
-                <p className="text-xs text-muted-foreground pl-5 leading-relaxed">
+                <p className="text-xs text-muted-foreground pl-5 line-clamp-2">
                   {calculation.raidInfo.usageRecommendation}
                 </p>
               </div>
             </div>
 
-            {/* Pros and Cons - More compact */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+            {/* Compact Pros and Cons */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-0.5">
-                <h5 className="text-xs font-medium text-green-500 mb-1">Vantagens</h5>
+                <h5 className="text-xs font-medium text-green-500">Vantagens</h5>
                 <ul className="text-xs space-y-0.5">
-                  {calculation.raidInfo.advantages.map((adv, index) => (
+                  {calculation.raidInfo.advantages.slice(0, 2).map((adv, index) => (
                     <li key={index} className="flex items-start gap-1">
                       <span className="text-green-500 mt-0.5">✓</span>
-                      <span className="flex-1">{adv}</span>
+                      <span className="flex-1 line-clamp-1">{adv}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               <div className="space-y-0.5">
-                <h5 className="text-xs font-medium text-red-500 mb-1">Desvantagens</h5>
+                <h5 className="text-xs font-medium text-red-500">Desvantagens</h5>
                 <ul className="text-xs space-y-0.5">
-                  {calculation.raidInfo.disadvantages.map((disadv, index) => (
+                  {calculation.raidInfo.disadvantages.slice(0, 2).map((disadv, index) => (
                     <li key={index} className="flex items-start gap-1">
                       <span className="text-red-500 mt-0.5">✗</span>
-                      <span className="flex-1">{disadv}</span>
+                      <span className="flex-1 line-clamp-1">{disadv}</span>
                     </li>
                   ))}
                 </ul>
