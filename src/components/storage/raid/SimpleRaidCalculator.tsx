@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useWizard } from "@/contexts/WizardContext";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -25,6 +26,7 @@ export function SimpleRaidCalculator({
   const [isHardwareRaid, setIsHardwareRaid] = useState(false);
   const [calculation, setCalculation] = useState<ReturnType<typeof calculateRaidCapacity> | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const { handleSelectStorageItem } = useWizard();
 
   const isValidRaidConfiguration = (type: RaidType): boolean => {
     if (!selectedDisk || quantity < 2) return false;
@@ -35,8 +37,38 @@ export function SimpleRaidCalculator({
     if (raidType && isValidRaidConfiguration(raidType)) {
       const result = calculateRaidCapacity([selectedDisk], quantity, raidType, isHardwareRaid);
       setCalculation(result);
-    } else {
-      setCalculation(null);
+      
+      // Update storage item with RAID information
+      const storageOption = {
+        id: `internal-disk-${selectedDisk.type}-${selectedDisk.capacity}`,
+        type: "Armazenamento",
+        subtype: "Disco Interno",
+        name: `${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
+        description: `Disco interno: ${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
+        price: selectedDisk.price * quantity,
+        metadata: {
+          quantity: quantity,
+          features: [`Tipo: ${selectedDisk.type}`],
+          raid: {
+            type: raidType,
+            description: RAID_INFO[raidType].description,
+            protection: RAID_INFO[raidType].protection,
+            isHardware: isHardwareRaid,
+            usableCapacity: result.usableCapacity,
+            totalCapacity: result.totalCapacity,
+            performance: result.performance
+          }
+        },
+        specs: [
+          `Tipo: ${selectedDisk.type.toUpperCase()}`,
+          `Capacidade: ${selectedDisk.capacity}`,
+          `Quantidade: ${quantity}`,
+          `RAID: ${raidType === 'none' ? 'Sem RAID' : `RAID ${raidType}`}`,
+          `Proteção: ${RAID_INFO[raidType].protection}`
+        ]
+      };
+      
+      handleSelectStorageItem(storageOption, 'internal');
     }
   }, [raidType, quantity, selectedDisk, isHardwareRaid]);
 

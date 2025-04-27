@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -6,6 +5,17 @@ import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Check, Shield } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -99,11 +109,9 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // Extract RAID info from storage if available
-  const raidInfo = storageItems.internal.length > 0 && 
-                  storageItems.internal[0].metadata?.raid ? 
-                  storageItems.internal[0].metadata.raid : null;
-
+  // Extract RAID info for internal disks
+  const hasRaidConfiguration = storageItems.internal.some(disk => disk.metadata?.raid?.type !== 'none');
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <Card className="overflow-hidden border-primary/10 shadow-md hover:shadow-lg transition-shadow">
@@ -179,27 +187,35 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                             ))}
                           </ul>
                         )}
+                        
+                        {/* RAID Configuration */}
+                        {groupedDisk.disk.metadata?.raid && groupedDisk.disk.metadata.raid.type !== 'none' && (
+                          <div className="mt-2 p-2 bg-muted/30 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-primary" />
+                              <h4 className="text-sm font-medium">Configuração RAID</h4>
+                            </div>
+                            <div className="mt-2 text-sm space-y-1">
+                              <p className="text-muted-foreground">
+                                RAID {groupedDisk.disk.metadata.raid.type} - {groupedDisk.disk.metadata.raid.description}
+                              </p>
+                              <p className={cn(
+                                "text-xs",
+                                groupedDisk.disk.metadata.raid.type === 'none' ? "text-destructive" : "text-green-500"
+                              )}>
+                                {groupedDisk.disk.metadata.raid.protection}
+                              </p>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                <p>Capacidade útil: {groupedDisk.disk.metadata.raid.usableCapacity}GB</p>
+                                <p>Tipo: {groupedDisk.disk.metadata.raid.isHardware ? 'Hardware RAID' : 'Software RAID'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         <Separator className="mt-4" />
                       </div>
                     ))}
-                    
-                    {/* RAID Configuration (if exists) */}
-                    {raidInfo && (
-                      <div className="p-2 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-5 w-5 text-primary" />
-                          <h4 className="font-medium">Configuração RAID</h4>
-                        </div>
-                        <div className="mt-2 pl-7">
-                          <p className="text-sm">RAID {raidInfo.type} - {raidInfo.description}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Proteção: {raidInfo.protection}, 
-                            Tipo: {raidInfo.isHardware ? 'Hardware RAID' : 'Software RAID'}
-                          </p>
-                        </div>
-                        <Separator className="mt-4" />
-                      </div>
-                    )}
                   </>
                 )}
                 

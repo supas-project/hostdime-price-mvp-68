@@ -19,6 +19,12 @@ export interface ComponentOption {
       description: string;
       protection: string;
       isHardware: boolean;
+      usableCapacity: number;
+      totalCapacity: number;
+      performance: {
+        read: string;
+        write: string;
+      };
     };
     quantity?: number;
     unitPrice?: number;
