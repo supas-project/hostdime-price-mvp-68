@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/help-tooltip";
-import { Shield, Cpu, Server } from "lucide-react";
+import { Shield, Cpu, Server, HardDrive, Zap } from "lucide-react";
 import { RaidType } from "@/types/raid";
 import { PricedDiskOption } from "@/types/storage";
 import { RAID_INFO, calculateRaidCapacity } from "@/utils/raid-calculator";
@@ -90,28 +90,24 @@ export function SimpleRaidCalculator({
           className="bg-background border rounded-md"
         >
           <ToggleGroupItem value="software" className="px-3 py-2" aria-label="Software RAID">
+            <div className="flex items-center gap-2">
+              <Cpu className="h-4 w-4" />
+            </div>
             <HelpTooltip
               title="Software RAID"
               description="RAID implementado pelo sistema operacional, mais flexível mas pode usar recursos do processador."
-              icon={false}
               iconOnly
-            >
-              <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4" />
-              </div>
-            </HelpTooltip>
+            />
           </ToggleGroupItem>
           <ToggleGroupItem value="hardware" className="px-3 py-2" aria-label="Hardware RAID">
+            <div className="flex items-center gap-2">
+              <Server className="h-4 w-4" />
+            </div>
             <HelpTooltip
               title="Hardware RAID"
               description="RAID gerenciado por controladora dedicada, melhor performance mas menos flexível."
-              icon={false}
               iconOnly
-            >
-              <div className="flex items-center gap-2">
-                <Server className="h-4 w-4" />
-              </div>
-            </HelpTooltip>
+            />
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
