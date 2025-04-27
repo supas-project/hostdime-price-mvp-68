@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/help-tooltip";
-import { Shield, HardDrive, Zap, Server } from "lucide-react";
+import { Shield, Cpu, Server } from "lucide-react";
 import { RaidType } from "@/types/raid";
 import { PricedDiskOption } from "@/types/storage";
 import { RAID_INFO, calculateRaidCapacity } from "@/utils/raid-calculator";
 import { cn } from "@/lib/utils";
-import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -43,7 +42,8 @@ export function SimpleRaidCalculator({
     onRaidTypeChange(value, isHardwareRaid);
   };
   
-  const handleRaidImplementationChange = (isHardware: boolean) => {
+  const handleRaidImplementationChange = (value: string) => {
+    const isHardware = value === "hardware";
     setIsHardwareRaid(isHardware);
     onRaidTypeChange(raidType, isHardware);
   };
@@ -83,25 +83,37 @@ export function SimpleRaidCalculator({
           />
         </div>
         
-        <div className="flex items-center gap-3">
-          <Toggle 
-            pressed={isHardwareRaid} 
-            onPressedChange={handleRaidImplementationChange}
-            className="relative px-3 py-1"
-            aria-label="Hardware RAID"
-          >
-            <Server className={cn(
-              "h-4 w-4 mr-2",
-              isHardwareRaid ? "text-primary" : "text-muted-foreground"
-            )} />
-            <span>Hardware RAID</span>
-          </Toggle>
-          <HelpTooltip
-            title="Hardware vs Software RAID"
-            description="Hardware RAID usa um controlador dedicado para melhor performance, enquanto Software RAID usa os recursos do sistema."
-            iconOnly
-          />
-        </div>
+        <ToggleGroup
+          type="single"
+          value={isHardwareRaid ? "hardware" : "software"}
+          onValueChange={handleRaidImplementationChange}
+          className="bg-background border rounded-md"
+        >
+          <ToggleGroupItem value="software" className="px-3 py-2" aria-label="Software RAID">
+            <HelpTooltip
+              title="Software RAID"
+              description="RAID implementado pelo sistema operacional, mais flexível mas pode usar recursos do processador."
+              icon={false}
+              iconOnly
+            >
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+              </div>
+            </HelpTooltip>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="hardware" className="px-3 py-2" aria-label="Hardware RAID">
+            <HelpTooltip
+              title="Hardware RAID"
+              description="RAID gerenciado por controladora dedicada, melhor performance mas menos flexível."
+              icon={false}
+              iconOnly
+            >
+              <div className="flex items-center gap-2">
+                <Server className="h-4 w-4" />
+              </div>
+            </HelpTooltip>
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <Select value={raidType} onValueChange={handleRaidTypeChange}>
