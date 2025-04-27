@@ -1,6 +1,6 @@
+
 import { ComponentOption, DataCenterOption } from "@/types/component";
-import { HelpTooltip } from "./help-tooltip";
-import { Globe, Info } from "lucide-react";
+import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DataCenterCardProps {
@@ -73,11 +73,6 @@ export function DataCenterCard({
                   {option.description}
                 </p>
               </div>
-              <HelpTooltip
-                title="Detalhes do Data Center"
-                description={`${option.description}\n\nCaracterísticas:\n• ${features.join('\n• ')}`}
-                icon={true}
-              />
             </div>
           </div>
         );
