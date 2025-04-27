@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface ContractDurationProps {
   options: ComponentOption[];
@@ -28,6 +29,13 @@ export function ContractDuration({
   return (
     <Card className="p-6">
       <CardContent className="p-0 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-base font-medium">Duração do Contrato</h3>
+          <HelpTooltip 
+            title="Duração do Contrato"
+            description="Quanto maior o tempo de contrato, maior o desconto aplicado ao valor mensal do servidor."
+          />
+        </div>
         <RadioGroup 
           value={selectedOption?.id || ""}
           onValueChange={handleContractSelection}
@@ -38,20 +46,22 @@ export function ContractDuration({
               const discount = option.metadata?.discount || 0;
               
               return (
-                <div
+                <label
                   key={option.id}
+                  htmlFor={option.id}
                   className={`
-                    flex items-center justify-between p-3 rounded-lg border transition-colors
+                    flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer
                     ${isSelected 
                       ? 'border-primary bg-primary/10' 
                       : 'border-border hover:border-primary/50'}
                   `}
+                  onClick={() => handleContractSelection(option.id)}
                 >
                   <div className="flex items-center gap-3">
                     <RadioGroupItem value={option.id} id={option.id} />
-                    <Label htmlFor={option.id} className="cursor-pointer font-medium">
+                    <span className="font-medium">
                       {option.name}
-                    </Label>
+                    </span>
                   </div>
                   
                   {discount > 0 && (
@@ -59,7 +69,7 @@ export function ContractDuration({
                       {discount}% OFF
                     </span>
                   )}
-                </div>
+                </label>
               );
             })}
           </div>

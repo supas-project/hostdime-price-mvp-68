@@ -1,12 +1,13 @@
 
-export type RaidType = "0" | "1" | "5" | "none";
+export type RaidType = "0" | "1" | "5" | "6" | "10" | "none";
 
 export interface RaidInfo {
   type: RaidType;
   minDisks: number;
   description: string;
-  protection: "Nenhuma" | "Espelhamento" | "Paridade";
+  protection: string;
   usageRecommendation: string;
+  isHardware: boolean;
 }
 
 export interface RaidCalculation {
@@ -17,4 +18,5 @@ export interface RaidCalculation {
     read: string;
     write: string;
   };
+  raidInfo?: RaidInfo;
 }

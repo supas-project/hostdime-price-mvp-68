@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 import { ComponentOption, StorageItems } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -18,6 +19,9 @@ interface WizardContextType {
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
   handleRemoveComponent: (type: string) => void;
   storageItems: StorageItems;
+  customServices: ComponentOption[];
+  addCustomService: (service: ComponentOption) => void;
+  removeCustomService: (serviceId: string) => void;
 }
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -31,6 +35,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     internal: [],
     external: []
   });
+  const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
 
   const validateOption = (option: ComponentOption): boolean => {
     if (!option.type || !option.id || typeof option.price !== 'number') {
@@ -121,6 +126,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     console.log("Updated storage items:", storageItems);
   };
 
+  const addCustomService = (service: ComponentOption) => {
+    setCustomServices(prev => [...prev, service]);
+  };
+
+  const removeCustomService = (serviceId: string) => {
+    setCustomServices(prev => prev.filter(service => service.id !== serviceId));
+  };
+
   const handleRemoveComponent = (type: string) => {
     console.log("Removing component:", type);
     
@@ -143,6 +156,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       });
       
       toast.success("Componente removido com sucesso");
+    } else if (type.includes("custom-service-")) {
+      // Handle custom service removal
+      removeCustomService(type);
     } else {
       setSelectedComponents((prev) => {
         const updated = { ...prev };
@@ -162,6 +178,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       internal: [],
       external: []
     });
+    setCustomServices([]);
     setCurrentStep(0);
     setShowFinalSummary(false);
   };
@@ -193,6 +210,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       hasComponent = hasInternalStorage || hasExternalStorage;
     } else if (type === "SistemaOperacional") {
       hasComponent = selectedComponents["sistemaoperacional"] !== undefined;
+    } else if (type === "ServiçosPersonalizados") {
+      // Custom services are optional
+      hasComponent = true;
     } else {
       const typeKey = type.toLowerCase();
       hasComponent = selectedComponents[typeKey] !== undefined;
@@ -218,6 +238,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         handleSelectStorageItem,
         handleRemoveComponent,
         storageItems,
+        customServices,
+        addCustomService,
+        removeCustomService
       }}
     >
       {children}

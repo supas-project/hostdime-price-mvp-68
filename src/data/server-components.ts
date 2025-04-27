@@ -7,6 +7,7 @@ import { memoryComponents } from "./memory-components";
 import { storageComponents } from "./storage-components";
 import { connectivityComponents } from "./connectivity-components";
 import { osComponents } from "./os-components";
+import { customServicesComponent } from "./custom-services-component";
 
 export * from "@/types/component";
 
@@ -19,7 +20,7 @@ export const serverData: ServerConfiguration = {
     memoryComponents,
     storageComponents,
     connectivityComponents,
-    osComponents
+    osComponents,
+    customServicesComponent
   ]
 };
-

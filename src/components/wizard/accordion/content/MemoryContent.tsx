@@ -29,14 +29,18 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     return baseSpecs;
   };
 
+  const formatMemorySize = (size: number): string => {
+    return size >= 1024 ? `${size / 1024}TB` : `${size}GB`;
+  };
+
   const createMemoryOption = (memorySize: number): ComponentOption => ({
     id: `memory-${memorySize}`,
     type: "memoria",
-    name: `${memorySize}GB RAM`,
-    description: `Memória RAM ${getMemorySpecs(memorySize).type} ${memorySize}GB`,
+    name: `${formatMemorySize(memorySize)} RAM`,
+    description: `Memória RAM ${getMemorySpecs(memorySize).type} ${formatMemorySize(memorySize)}`,
     price: memorySize * pricePerGB,
     specs: [
-      `${memorySize}GB Total`,
+      `${formatMemorySize(memorySize)} Total`,
       `Tipo: ${getMemorySpecs(memorySize).type}`,
       `Velocidade: ${getMemorySpecs(memorySize).speed}`,
       `${getMemorySpecs(memorySize).channels}`,
@@ -64,9 +68,10 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
         <SelectTrigger className="w-full bg-background border-border/50 hover:border-primary/50 transition-colors">
           <SelectValue placeholder="Selecione a quantidade de memória RAM" />
         </SelectTrigger>
-        <SelectContent className="bg-background border-border/50">
+        <SelectContent className="bg-background border-border/50 z-50">
           {memoryValues.map((size) => {
             const specs = getMemorySpecs(size);
+            const formattedSize = formatMemorySize(size);
             return (
               <SelectItem
                 key={size}
@@ -75,15 +80,16 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
               >
                 <div className="flex items-center justify-between w-full gap-4">
                   <span className="flex items-center gap-2">
-                    {size}GB RAM
+                    {formattedSize} RAM
                     <HelpTooltip
-                      title={`${size}GB RAM Specifications`}
+                      title={`${formattedSize} RAM Specifications`}
                       description={`
                         • Tipo: ${specs.type}
                         • Velocidade: ${specs.speed}
                         • ${specs.channels}
                         • ${specs.ecc}
                       `}
+                      iconOnly
                     />
                   </span>
                   <span className="text-primary font-medium">

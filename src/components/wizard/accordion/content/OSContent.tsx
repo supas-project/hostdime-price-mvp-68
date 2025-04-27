@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Server } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 
 interface OSContentProps {
@@ -104,6 +104,16 @@ export function OSContent({
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <Server className="h-5 w-5 text-primary" />
+        <h3 className="text-base font-medium">Sistema Operacional</h3>
+        <HelpTooltip
+          title="Sistema Operacional"
+          description="Escolha o sistema operacional ideal para seu servidor"
+          iconOnly
+        />
+      </div>
+      
       {/* Windows sempre visível */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">

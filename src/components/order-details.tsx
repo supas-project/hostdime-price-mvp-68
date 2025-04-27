@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Check } from "lucide-react";
+import { Check, Shield } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 
 interface OrderDetailsProps {
@@ -12,8 +12,47 @@ interface OrderDetailsProps {
   margin?: number;
 }
 
+// Helper function to group internal disks by type and capacity
+type GroupedDisk = {
+  disk: ComponentOption;
+  quantity: number;
+};
+
+const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] => {
+  const diskGroups: { [key: string]: GroupedDisk } = {};
+  
+  disks.forEach(disk => {
+    // Create a unique key based on disk type and capacity
+    const typeMatch = disk.description?.match(/Disco interno: (\w+)/);
+    const capacityMatch = disk.description?.match(/(\d+(?:\.\d+)?[GT]B)/);
+    
+    if (typeMatch && capacityMatch) {
+      const diskType = typeMatch[1];
+      const diskCapacity = capacityMatch[1];
+      const key = `${diskType}-${diskCapacity}`;
+      
+      if (diskGroups[key]) {
+        // Increment quantity for existing disk type
+        diskGroups[key].quantity += 1;
+      } else {
+        // Create new group for this disk type
+        diskGroups[key] = {
+          disk: { ...disk },
+          quantity: 1
+        };
+      }
+    } else {
+      // Fallback for disks that don't match the expected pattern
+      const key = `disk-${disk.id}`;
+      diskGroups[key] = { disk, quantity: 1 };
+    }
+  });
+  
+  return Object.values(diskGroups);
+};
+
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
-  const { storageItems } = useWizard();
+  const { storageItems, customServices } = useWizard();
   
   // Filter non-storage components and handle OS price calculation
   const nonStorageComponents = Object.values(selectedComponents).filter(
@@ -32,6 +71,9 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
     }
   );
 
+  // Group storage disks
+  const groupedInternalDisks = groupDisksByTypeAndCapacity(storageItems.internal);
+  
   // Calculate prices
   const nonStoragePrice = nonStorageComponents.reduce(
     (sum, component) => sum + component.price,
@@ -48,9 +90,19 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
     0
   );
   
-  const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice;
+  const customServicesPrice = customServices.reduce(
+    (sum, service) => sum + service.price,
+    0
+  );
+  
+  const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
+
+  // Extract RAID info from storage if available
+  const raidInfo = storageItems.internal.length > 0 && 
+                  storageItems.internal[0].metadata?.raid ? 
+                  storageItems.internal[0].metadata.raid : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -96,28 +148,30 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
             ))}
             
             {/* Storage components section */}
-            {(storageItems.internal.length > 0 || storageItems.external.length > 0) && (
+            {(groupedInternalDisks.length > 0 || storageItems.external.length > 0) && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Armazenamento</h3>
                 
-                {/* Internal storage disks */}
-                {storageItems.internal.length > 0 && (
+                {/* Internal storage disks - grouped */}
+                {groupedInternalDisks.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
-                    {storageItems.internal.map((disk) => (
-                      <div key={disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                    {groupedInternalDisks.map((groupedDisk) => (
+                      <div key={groupedDisk.disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium flex items-center">
-                              {disk.name}
+                            <h4 className="font-medium flex items-center gap-2">
+                              {groupedDisk.quantity > 1 ? `${groupedDisk.quantity}x ` : ''}{groupedDisk.disk.name}
                             </h4>
-                            <p className="text-sm text-muted-foreground">{disk.description}</p>
+                            <p className="text-sm text-muted-foreground">{groupedDisk.disk.description}</p>
                           </div>
-                          <span className="font-medium text-primary">{formatCurrency(disk.price)}</span>
+                          <span className="font-medium text-primary">
+                            {formatCurrency(groupedDisk.disk.price * groupedDisk.quantity)}
+                          </span>
                         </div>
-                        {disk.specs && (
+                        {groupedDisk.disk.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                            {disk.specs.map((spec, index) => (
+                            {groupedDisk.disk.specs.map((spec, index) => (
                               <li key={index} className="flex items-center">
                                 <Check className="h-4 w-4 text-primary mr-2" />
                                 <span>{spec}</span>
@@ -128,6 +182,24 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                         <Separator className="mt-4" />
                       </div>
                     ))}
+                    
+                    {/* RAID Configuration (if exists) */}
+                    {raidInfo && (
+                      <div className="p-2 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-5 w-5 text-primary" />
+                          <h4 className="font-medium">Configuração RAID</h4>
+                        </div>
+                        <div className="mt-2 pl-7">
+                          <p className="text-sm">RAID {raidInfo.type} - {raidInfo.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Proteção: {raidInfo.protection}, 
+                            Tipo: {raidInfo.isHardware ? 'Hardware RAID' : 'Software RAID'}
+                          </p>
+                        </div>
+                        <Separator className="mt-4" />
+                      </div>
+                    )}
                   </>
                 )}
                 
@@ -161,6 +233,38 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                     ))}
                   </>
                 )}
+              </div>
+            )}
+            
+            {/* Custom Services */}
+            {customServices.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-medium text-primary/80">Serviços Personalizados</h3>
+                {customServices.map(service => (
+                  <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium flex items-center gap-2">
+                          {service.name}
+                          {service.metadata?.quantity > 1 && <span>({service.metadata.quantity}x)</span>}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">{service.description}</p>
+                      </div>
+                      <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
+                    </div>
+                    {service.specs && (
+                      <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                        {service.specs.map((spec, index) => (
+                          <li key={index} className="flex items-center">
+                            <Check className="h-4 w-4 text-primary mr-2" />
+                            <span>{spec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
               </div>
             )}
           </div>

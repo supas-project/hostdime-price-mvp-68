@@ -3,16 +3,17 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { HelpTooltip } from "@/components/help-tooltip";
-import { Shield, HardDrive, Zap } from "lucide-react";
+import { Shield, HardDrive, Zap, Server } from "lucide-react";
 import { RaidType } from "@/types/raid";
 import { PricedDiskOption } from "@/types/storage";
 import { RAID_INFO, calculateRaidCapacity } from "@/utils/raid-calculator";
 import { cn } from "@/lib/utils";
+import { Toggle } from "@/components/ui/toggle";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
   quantity: number;
-  onRaidTypeChange: (type: RaidType) => void;
+  onRaidTypeChange: (type: RaidType, isHardware: boolean) => void;
 }
 
 export function SimpleRaidCalculator({ 
@@ -21,6 +22,7 @@ export function SimpleRaidCalculator({
   onRaidTypeChange 
 }: SimpleRaidCalculatorProps) {
   const [raidType, setRaidType] = useState<RaidType>("none");
+  const [isHardwareRaid, setIsHardwareRaid] = useState(false);
   const [calculation, setCalculation] = useState<ReturnType<typeof calculateRaidCapacity> | null>(null);
 
   const isValidRaidConfiguration = (type: RaidType): boolean => {
@@ -29,16 +31,21 @@ export function SimpleRaidCalculator({
 
   useEffect(() => {
     if (raidType && isValidRaidConfiguration(raidType)) {
-      const result = calculateRaidCapacity([selectedDisk], quantity, raidType);
+      const result = calculateRaidCapacity([selectedDisk], quantity, raidType, isHardwareRaid);
       setCalculation(result);
     } else {
       setCalculation(null);
     }
-  }, [raidType, quantity, selectedDisk]);
+  }, [raidType, quantity, selectedDisk, isHardwareRaid]);
 
   const handleRaidTypeChange = (value: RaidType) => {
     setRaidType(value);
-    onRaidTypeChange(value);
+    onRaidTypeChange(value, isHardwareRaid);
+  };
+  
+  const handleRaidImplementationChange = (isHardware: boolean) => {
+    setIsHardwareRaid(isHardware);
+    onRaidTypeChange(raidType, isHardware);
   };
 
   const availableRaidTypes = Object.entries(RAID_INFO).filter(
@@ -49,14 +56,37 @@ export function SimpleRaidCalculator({
 
   return (
     <div className="space-y-4 mt-6 animate-fade-in">
-      <div className="flex items-center gap-2">
-        <Shield className="w-4 h-4 text-primary" />
-        <span className="text-sm font-medium">Configuração RAID</span>
-        <HelpTooltip
-          title="RAID"
-          description="RAID permite combinar múltiplos discos para melhor performance ou proteção de dados"
-          icon
-        />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Configuração RAID</span>
+          <HelpTooltip
+            title="RAID"
+            description="RAID permite combinar múltiplos discos para melhor performance ou proteção de dados"
+            icon
+          />
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className={cn(
+            "text-xs", 
+            !isHardwareRaid ? "text-primary" : "text-muted-foreground"
+          )}>
+            Software
+          </span>
+          <Toggle 
+            pressed={isHardwareRaid} 
+            onPressedChange={handleRaidImplementationChange}
+            className="relative px-3 py-1"
+            aria-label="Hardware RAID"
+          >
+            <HardDrive className={cn(
+              "h-4 w-4 mr-2", 
+              isHardwareRaid ? "text-primary" : "text-muted-foreground"
+            )} />
+            <span>Hardware</span>
+          </Toggle>
+        </div>
       </div>
 
       <Select value={raidType} onValueChange={handleRaidTypeChange}>
@@ -97,6 +127,9 @@ export function SimpleRaidCalculator({
             </div>
             <p className="text-xs text-muted-foreground">
               {calculation.protection}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isHardwareRaid ? 'Hardware RAID' : 'Software RAID'}
             </p>
           </Card>
 
