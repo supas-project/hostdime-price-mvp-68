@@ -54,7 +54,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
         <h3 className="text-base font-medium">Memória RAM</h3>
         <HelpTooltip
           title="Memória RAM"
-          description="A quantidade de memória RAM afeta diretamente o desempenho do servidor para executar múltiplas tarefas e aplicações simultaneamente."
+          description="A quantidade de memória RAM determina quantos programas e dados podem ser processados simultaneamente. Mais memória significa melhor performance em cargas de trabalho intensivas."
           iconOnly
         />
       </div>
@@ -82,7 +82,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
               >
                 <div className="flex items-center justify-between w-full gap-4">
                   <div className="flex items-center gap-2">
-                    <span>{formattedSize} RAM</span>
+                    <span className="font-medium">{formattedSize} RAM</span>
                     <HelpTooltip
                       title={`${formattedSize} RAM`}
                       description={`
