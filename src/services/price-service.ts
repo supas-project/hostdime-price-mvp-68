@@ -2,7 +2,10 @@
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 
-// Initial data loaded from server components data
+// Chave para armazenamento local
+const PRICE_DATA_KEY = 'priceData';
+
+// Dados iniciais carregados dos componentes do servidor
 const initialPriceData: PriceData = {
   cpu: { 
     id: 'cpu', 
@@ -33,16 +36,20 @@ const initialPriceData: PriceData = {
     })) || []
   },
   disk: { id: 'disk', name: 'Discos', items: [] },
+  storage: { id: 'storage', name: 'Storage', items: [] },
+  network: { id: 'network', name: 'Interface de Rede', items: [] },
+  ip: { id: 'ip', name: 'Bloco de IPs', items: [] },
+  os: { id: 'os', name: 'Sistemas Operacionais', items: [] },
   chassis: { id: 'chassis', name: 'Chassi', items: [] },
   contract: { id: 'contract', name: 'Contratos', items: [] },
-  os: { id: 'os', name: 'Sistemas Operacionais', items: [] },
   connectivity: { id: 'connectivity', name: 'Conectividade', items: [] }
 };
 
-// Storage keys
-const PRICE_DATA_KEY = 'priceData';
+// Tipo para listeners (observadores)
+type DataChangeListener = (data: PriceData) => void;
+let dataChangeListeners: DataChangeListener[] = [];
 
-// Load data from localStorage or use initial data
+// Carrega dados do localStorage ou usa dados iniciais
 const loadDataFromStorage = (): PriceData => {
   try {
     const storedData = localStorage.getItem(PRICE_DATA_KEY);
@@ -50,45 +57,72 @@ const loadDataFromStorage = (): PriceData => {
       return JSON.parse(storedData);
     }
   } catch (error) {
-    console.error('Error loading price data from storage:', error);
+    console.error('Erro ao carregar dados da tabela de preços:', error);
   }
   
-  // Save initial data to localStorage if nothing exists
+  // Salva dados iniciais no localStorage se não existirem
   localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(initialPriceData));
   return initialPriceData;
 };
 
-// Save data to localStorage
+// Salva dados no localStorage e notifica observadores
 const saveDataToStorage = (data: PriceData): void => {
   try {
     localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(data));
+    notifyDataChangeListeners(data);
   } catch (error) {
-    console.error('Error saving price data to storage:', error);
+    console.error('Erro ao salvar dados da tabela de preços:', error);
   }
 };
 
-// Generate a unique ID
+// Notifica observadores sobre mudanças nos dados
+const notifyDataChangeListeners = (data: PriceData): void => {
+  dataChangeListeners.forEach(listener => {
+    try {
+      listener(data);
+    } catch (error) {
+      console.error('Erro ao notificar listener sobre mudança de dados:', error);
+    }
+  });
+};
+
+// Gera um ID único
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 };
 
-// Functions to manipulate price data
+// Funções para manipular dados de preços
 export const PriceService = {
-  // Get all price data
+  // Adiciona um listener para mudanças de dados
+  addDataChangeListener: (listener: DataChangeListener): void => {
+    dataChangeListeners.push(listener);
+  },
+  
+  // Remove um listener
+  removeDataChangeListener: (listener: DataChangeListener): void => {
+    dataChangeListeners = dataChangeListeners.filter(l => l !== listener);
+  },
+  
+  // Obtém todos os dados
   getAllData: (): PriceData => {
     return loadDataFromStorage();
   },
   
-  // Get a specific category
+  // Obtém uma categoria específica
   getCategory: (categoryId: string): PriceCategory | null => {
     const data = loadDataFromStorage();
     return data[categoryId] || null;
   },
   
-  // Add a new category
+  // Adiciona uma nova categoria
   addCategory: (category: Omit<PriceCategory, 'id'>): PriceCategory => {
     const data = loadDataFromStorage();
     const id = category.name.toLowerCase().replace(/\s+/g, '-');
+    
+    // Verifica se a categoria já existe
+    if (data[id]) {
+      throw new Error(`Categoria com ID ${id} já existe`);
+    }
     
     const newCategory: PriceCategory = {
       id,
@@ -101,12 +135,12 @@ export const PriceService = {
     return newCategory;
   },
   
-  // Update a category
+  // Atualiza uma categoria
   updateCategory: (categoryId: string, updates: Partial<PriceCategory>): PriceCategory => {
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Category with id ${categoryId} not found`);
+      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
     }
     
     data[categoryId] = {
@@ -118,24 +152,33 @@ export const PriceService = {
     return data[categoryId];
   },
   
-  // Delete a category
+  // Remove uma categoria
   deleteCategory: (categoryId: string): void => {
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Category with id ${categoryId} not found`);
+      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
     }
     
     delete data[categoryId];
     saveDataToStorage(data);
   },
   
-  // Add an item to a category
+  // Adiciona um item a uma categoria
   addItem: (categoryId: string, item: Omit<PriceItem, 'id'>): PriceItem => {
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Category with id ${categoryId} not found`);
+      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+    }
+    
+    // Verifica se já existe um item com o mesmo nome
+    const existingItem = data[categoryId].items.find(i => 
+      i.name.toLowerCase() === item.name?.toLowerCase()
+    );
+    
+    if (existingItem) {
+      throw new Error(`Já existe um item com o nome "${item.name}" nesta categoria`);
     }
     
     const newItem: PriceItem = {
@@ -148,18 +191,29 @@ export const PriceService = {
     return newItem;
   },
   
-  // Update an item
+  // Atualiza um item
   updateItem: (categoryId: string, itemId: string, updates: Partial<PriceItem>): PriceItem => {
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Category with id ${categoryId} not found`);
+      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
     }
     
     const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
-      throw new Error(`Item with id ${itemId} not found in category ${categoryId}`);
+      throw new Error(`Item com ID ${itemId} não encontrado na categoria ${categoryId}`);
+    }
+    
+    // Verificar se estamos alterando o nome para um nome já existente
+    if (updates.name) {
+      const duplicateName = data[categoryId].items.find(i => 
+        i.name.toLowerCase() === updates.name?.toLowerCase() && i.id !== itemId
+      );
+      
+      if (duplicateName) {
+        throw new Error(`Já existe um item com o nome "${updates.name}" nesta categoria`);
+      }
     }
     
     data[categoryId].items[itemIndex] = {
@@ -171,45 +225,45 @@ export const PriceService = {
     return data[categoryId].items[itemIndex];
   },
   
-  // Delete an item
+  // Remove um item
   deleteItem: (categoryId: string, itemId: string): void => {
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Category with id ${categoryId} not found`);
+      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
     }
     
     const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
-      throw new Error(`Item with id ${itemId} not found in category ${categoryId}`);
+      throw new Error(`Item com ID ${itemId} não encontrado na categoria ${categoryId}`);
     }
     
     data[categoryId].items.splice(itemIndex, 1);
     saveDataToStorage(data);
   },
   
-  // Import data from JSON
+  // Importa dados de JSON
   importFromJSON: (jsonData: string): PriceData => {
     try {
       const parsedData = JSON.parse(jsonData);
       
-      // Validate the structure
+      // Valida a estrutura
       if (typeof parsedData !== 'object' || parsedData === null) {
-        throw new Error('Invalid JSON structure. Expected an object.');
+        throw new Error('Estrutura JSON inválida. Esperado um objeto.');
       }
       
-      // Merge with existing data
+      // Mescla com dados existentes
       const existingData = loadDataFromStorage();
       const mergedData = { ...existingData };
       
       Object.entries(parsedData).forEach(([categoryId, category]) => {
-        // Validate category structure
+        // Valida a estrutura da categoria
         if (typeof category !== 'object' || !('items' in category) || !Array.isArray(category.items)) {
-          throw new Error(`Invalid category structure for ${categoryId}`);
+          throw new Error(`Estrutura de categoria inválida para ${categoryId}`);
         }
         
-        // Create or update the category
+        // Cria ou atualiza a categoria
         mergedData[categoryId] = {
           id: categoryId,
           name: (category as PriceCategory).name || categoryId,
@@ -229,35 +283,35 @@ export const PriceService = {
       saveDataToStorage(mergedData);
       return mergedData;
     } catch (error) {
-      console.error('Error importing JSON data:', error);
+      console.error('Erro ao importar dados JSON:', error);
       throw error;
     }
   },
   
-  // Parse and import CSV data
+  // Analisa e importa dados CSV
   importFromCSV: (csvData: string): PriceData => {
     try {
       const lines = csvData.split('\n');
       
-      // Extract header
+      // Extrai o cabeçalho
       const header = lines[0].split(',').map(h => h.trim());
       
-      // Check required columns
+      // Verifica colunas obrigatórias
       const categoryIndex = header.findIndex(h => h.toLowerCase() === 'category');
       const nameIndex = header.findIndex(h => h.toLowerCase() === 'name');
       const descriptionIndex = header.findIndex(h => h.toLowerCase() === 'description');
       const priceIndex = header.findIndex(h => h.toLowerCase() === 'price');
       
       if (categoryIndex === -1 || nameIndex === -1 || priceIndex === -1) {
-        throw new Error('CSV must contain at least category, name, and price columns');
+        throw new Error('O CSV deve conter pelo menos as colunas category, name e price');
       }
       
-      // Process data rows
+      // Processa linhas de dados
       const existingData = loadDataFromStorage();
       const mergedData: PriceData = { ...existingData };
       
       for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue; // Skip empty lines
+        if (!lines[i].trim()) continue; // Ignora linhas vazias
         
         const values = lines[i].split(',').map(v => v.trim());
         
@@ -267,20 +321,20 @@ export const PriceService = {
         const price = parseFloat(values[priceIndex]);
         
         if (isNaN(price)) {
-          console.warn(`Skipping line ${i+1} due to invalid price: ${values[priceIndex]}`);
+          console.warn(`Ignorando linha ${i+1} devido a preço inválido: ${values[priceIndex]}`);
           continue;
         }
         
-        // Create category if it doesn't exist
+        // Cria a categoria se não existir
         if (!mergedData[categoryId]) {
           mergedData[categoryId] = {
             id: categoryId,
-            name: values[categoryIndex], // Use original category name with proper casing
+            name: values[categoryIndex], // Usa o nome original da categoria com capitalização apropriada
             items: [],
           };
         }
         
-        // Add item to category
+        // Adiciona o item à categoria
         mergedData[categoryId].items.push({
           id: generateUniqueId(),
           name,
@@ -294,14 +348,31 @@ export const PriceService = {
       saveDataToStorage(mergedData);
       return mergedData;
     } catch (error) {
-      console.error('Error importing CSV data:', error);
+      console.error('Erro ao importar dados CSV:', error);
       throw error;
     }
   },
   
-  // Reset data to initial state
+  // Reinicia dados para o estado inicial
   resetData: (): PriceData => {
     saveDataToStorage(initialPriceData);
     return initialPriceData;
+  },
+  
+  // Inicialização do serviço
+  initialize: () => {
+    // Verificar se existem dados armazenados
+    try {
+      const storedData = localStorage.getItem(PRICE_DATA_KEY);
+      if (!storedData) {
+        console.log('Inicializando dados da tabela de preços...');
+        saveDataToStorage(initialPriceData);
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar serviço de preços:', error);
+    }
   }
 };
+
+// Inicializa serviço quando o arquivo é importado
+PriceService.initialize();
