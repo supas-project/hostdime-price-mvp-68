@@ -25,7 +25,7 @@ interface FinalSummaryProps {
 
 export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
   const { toast } = useToast();
-  const { storageItems } = useWizard();
+  const { storageItems, customServices } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
   
   const handleSaveQuote = () => {
@@ -42,13 +42,14 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     });
     
     try {
-      // Convert storageItems to a format compatible with the PDF generation function
-      const allComponents = { 
-        ...selectedComponents,
-        // We'll handle the storage items separately in the OrderDetails component
-      };
+      // Corrigindo a chamada para passar todos os 4 argumentos necessários
+      await generateQuotePDF(
+        selectedComponents,
+        storageItems,
+        customServices,
+        profitMargin
+      );
       
-      await generateQuotePDF(allComponents, profitMargin);
       toast({
         title: "PDF Gerado",
         description: "Seu arquivo PDF foi gerado com sucesso!"
