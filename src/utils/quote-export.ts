@@ -89,7 +89,7 @@ const drawHighlightBox = (
     height,
     color: COLOR.HIGHLIGHT,
     borderWidth: 1,
-    borderColor: rgb(COLOR.PRIMARY.r, COLOR.PRIMARY.g, COLOR.PRIMARY.b, 0.3),
+    borderColor: rgb(0.96, 0.51, 0.13, 0.3),
     opacity: 0.7
   });
 };
@@ -105,7 +105,7 @@ const drawSeparator = (
     start: { x, y },
     end: { x: x + width, y },
     thickness: 0.5,
-    color: rgb(COLOR.SECONDARY.r, COLOR.SECONDARY.g, COLOR.SECONDARY.b, 0.2),
+    color: rgb(0.10, 0.12, 0.17, 0.2),
     opacity: 0.8
   });
 };
@@ -216,7 +216,7 @@ export const generateQuotePDF = async (
       y: 40,
       width: width - (marginX * 2) + 20,
       height: height - 80,
-      borderColor: rgb(COLOR.PRIMARY.r, COLOR.PRIMARY.g, COLOR.PRIMARY.b, 0.15),
+      borderColor: rgb(0.96, 0.51, 0.13, 0.15),
       borderWidth: 1,
       color: COLOR.WHITE
     });
@@ -914,7 +914,7 @@ export const generateQuotePDF = async (
         y: footerY,
         size: 8,
         font: helveticaOblique,
-        color: rgb(COLOR.TEXT_LIGHT.r, COLOR.TEXT_LIGHT.g, COLOR.TEXT_LIGHT.b, 0.6)
+        color: rgb(0.4, 0.4, 0.4, 0.6)
       });
       
       // Add page number
