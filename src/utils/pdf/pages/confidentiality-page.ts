@@ -1,8 +1,9 @@
-import { PDFPage, PDFFont } from 'pdf-lib';
+
+import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
 import { drawFooter, wrapText } from '../utils';
 
-export function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: PDFFont) {
+export function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   const margin = PDFConfig.margins.default;
   let currentY = height - margin;
@@ -66,4 +67,6 @@ export function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: P
   
   // Rodapé
   drawFooter(page, width, font);
+  
+  return page;
 }

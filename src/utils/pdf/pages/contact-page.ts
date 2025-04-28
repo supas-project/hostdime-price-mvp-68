@@ -1,8 +1,9 @@
-import { PDFPage, PDFFont } from 'pdf-lib';
+
+import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
 import { drawFooter, wrapText } from '../utils';
 
-export function addContactPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, italicFont: PDFFont) {
+export function addContactPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, italicFont: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   const margin = PDFConfig.margins.default;
   let currentY = height - margin;
@@ -96,4 +97,6 @@ export function addContactPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, 
   
   // Rodapé
   drawFooter(page, width, font);
+  
+  return page;
 }

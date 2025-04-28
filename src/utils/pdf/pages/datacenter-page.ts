@@ -1,8 +1,9 @@
-import { PDFPage, PDFFont } from 'pdf-lib';
+
+import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
 import { drawFooter } from '../utils';
 
-export function addDataCenterPage(page: PDFPage, boldFont: PDFFont, font: PDFFont) {
+export function addDataCenterPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   const margin = PDFConfig.margins.default;
   let currentY = height - margin;
@@ -117,4 +118,6 @@ export function addDataCenterPage(page: PDFPage, boldFont: PDFFont, font: PDFFon
   
   // Rodapé
   drawFooter(page, width, font);
+  
+  return page;
 }

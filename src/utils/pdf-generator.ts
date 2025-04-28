@@ -23,24 +23,23 @@ export async function generateQuoteFromTemplate(
   
   // Add pages
   let page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addCoverPage(page, boldFont, font);
+  addCoverPage(page, boldFont, font, pdfDoc);
   
   page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addInstitutionalPage(page, boldFont, font);
+  addInstitutionalPage(page, boldFont, font, pdfDoc);
   
   page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addConfidentialityPage(page, boldFont, font);
+  addConfidentialityPage(page, boldFont, font, pdfDoc);
   
   page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addQuotePage(page, selectedComponents, margin, boldFont, font, italicFont);
+  page = addQuotePage(page, selectedComponents, margin, boldFont, font, italicFont, pdfDoc);
   
   page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addDataCenterPage(page, boldFont, font);
+  addDataCenterPage(page, boldFont, font, pdfDoc);
   
   page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addContactPage(page, boldFont, font, italicFont);
+  addContactPage(page, boldFont, font, italicFont, pdfDoc);
   
   // Return the finalized PDF
   return pdfDoc.save();
 }
-

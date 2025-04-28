@@ -1,4 +1,5 @@
-import { PDFPage, PDFFont } from 'pdf-lib';
+
+import { PDFPage, PDFFont, PDFDocument, rgb } from 'pdf-lib';
 import { ComponentOption } from '@/types/component';
 import { formatCurrency } from '@/lib/utils';
 import { PDFColors, PDFConfig } from '../constants';
@@ -10,7 +11,8 @@ export function addQuotePage(
   margin: number,
   boldFont: PDFFont,
   font: PDFFont,
-  italicFont: PDFFont
+  italicFont: PDFFont,
+  pdfDoc: PDFDocument
 ) {
   const { width, height } = page.getSize();
   const margin_x = PDFConfig.margins.default;
@@ -137,12 +139,12 @@ export function addQuotePage(
       drawFooter(page, width, font);
       
       // Criar nova página
-      page = pdfDoc.addPage([595.276, 841.890]);
-      const newPageSize = page.getSize();
+      const newPage = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+      const newPageSize = newPage.getSize();
       currentY = newPageSize.height - 80;
       
       // Continuar cabeçalho na nova página
-      page.drawText("Especificações Técnicas (continuação)", {
+      newPage.drawText("Especificações Técnicas (continuação)", {
         x: margin_x,
         y: currentY,
         size: 16,
@@ -151,6 +153,9 @@ export function addQuotePage(
       });
       
       currentY -= 30;
+      
+      // Atualizar a referência da página atual
+      page = newPage;
     }
   }
   
@@ -330,4 +335,7 @@ export function addQuotePage(
   }
   
   drawFooter(page, width, font);
+  
+  // Return the page in case we created a new one
+  return page;
 }

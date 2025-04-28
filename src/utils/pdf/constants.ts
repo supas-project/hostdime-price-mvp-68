@@ -7,6 +7,7 @@ export const PDFColors = {
   muted: rgb(0.4, 0.4, 0.4),      // text-muted
   white: rgb(1, 1, 1),            // #ffffff
   blue: rgb(0.2, 0.6, 0.9),       // azul institucional
+  lightGray: rgb(0.97, 0.97, 0.97), // #f8f8f8 - fundo claro para linhas alternadas
 };
 
 export const PDFConfig = {
@@ -30,4 +31,3 @@ export const PDFConfig = {
     small: 9
   }
 };
-

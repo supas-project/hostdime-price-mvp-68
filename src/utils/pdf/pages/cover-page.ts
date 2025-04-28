@@ -1,9 +1,9 @@
 
-import { PDFPage, PDFFont } from 'pdf-lib';
+import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
 import { drawFooter } from '../utils';
 
-export function addCoverPage(page: PDFPage, boldFont: PDFFont, font: PDFFont) {
+export function addCoverPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   
   // Fundo laranja gradiente
@@ -60,5 +60,6 @@ export function addCoverPage(page: PDFPage, boldFont: PDFFont, font: PDFFont) {
   });
 
   drawFooter(page, width, font);
+  
+  return page;
 }
-
