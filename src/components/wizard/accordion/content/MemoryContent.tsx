@@ -1,9 +1,8 @@
-
 import { ComponentOption } from "@/types/component";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 
 interface MemoryContentProps {
@@ -14,6 +13,9 @@ interface MemoryContentProps {
 export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentProps) {
   const memoryValues = [64, 128, 256, 512, 768, 1024];
   const pricePerGB = 7.5;
+
+  // Keep track of the current selection for controlled select
+  const [currentValue, setCurrentValue] = useState<string>(selectedOption?.id || '64');
 
   const getMemorySpecs = (memorySize: number) => ({
     type: memorySize >= 512 ? "DDR4 ECC Load Reduced DIMM" : "DDR4 ECC Registered",
@@ -28,7 +30,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
   };
 
   const createMemoryOption = (memorySize: number): ComponentOption => ({
-    id: `memory-${memorySize}`,
+    id: `${memorySize}`,
     type: "memoria",
     name: `${formatMemorySize(memorySize)} RAM`,
     description: `Memória RAM ${getMemorySpecs(memorySize).type}`,
@@ -42,11 +44,24 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
     ]
   });
 
+  // Set initial selection if none exists
   useEffect(() => {
     if (!selectedOption) {
-      onSelectOption(createMemoryOption(64));
+      const defaultOption = createMemoryOption(64);
+      onSelectOption(defaultOption);
+      setCurrentValue('64');
+    } else {
+      // Sync current value with selected option
+      setCurrentValue(selectedOption.id);
     }
-  }, []);
+  }, [selectedOption]);
+
+  const handleMemoryChange = (value: string) => {
+    const memorySize = parseInt(value);
+    const newOption = createMemoryOption(memorySize);
+    setCurrentValue(value);
+    onSelectOption(newOption);
+  };
 
   return (
     <Card className="p-4">
@@ -60,11 +75,8 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
       </div>
 
       <Select
-        value={selectedOption?.id || ""}
-        onValueChange={(value) => {
-          const memorySize = parseInt(value.replace('memory-', ''));
-          onSelectOption(createMemoryOption(memorySize));
-        }}
+        value={currentValue}
+        onValueChange={handleMemoryChange}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Selecione a quantidade de memória RAM" />
@@ -77,7 +89,7 @@ export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentP
             return (
               <SelectItem
                 key={size}
-                value={`memory-${size}`}
+                value={size.toString()}
                 className="flex items-center justify-between group py-3"
               >
                 <div className="flex items-center justify-between w-full gap-4">

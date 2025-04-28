@@ -1,3 +1,4 @@
+
 import { ServerComponent } from "@/types/component";
 
 export const memoryComponents: ServerComponent = {
@@ -8,13 +9,12 @@ export const memoryComponents: ServerComponent = {
   icon: "memory",
   options: [
     {
-      id: "ram-base",
+      id: "64",
       type: "memoria",
-      name: "Memória RAM",
-      description: "Selecione a quantidade de memória",
-      price: 60,
+      name: "64GB RAM",
+      description: "Memória RAM DDR4 ECC Registered",
+      price: 480,
       specs: ["Memória RAM DDR4 de alta performance"]
     }
   ]
 };
-
