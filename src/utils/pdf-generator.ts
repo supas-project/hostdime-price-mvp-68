@@ -1,13 +1,14 @@
 
 import { ComponentOption } from "@/types/component";
 import { generateQuotePDF } from "./quote-export";
+import { toast } from "sonner"; // Add this import for toast notifications
 
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number
 ): Promise<Uint8Array> {
   try {
-    // Passando objetos vazios para os parâmetros adicionais requeridos
+    // Passing objects vazios para os parâmetros adicionais requeridos
     await generateQuotePDF(
       selectedComponents, 
       { internal: [], external: [] }, 
