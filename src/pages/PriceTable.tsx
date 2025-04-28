@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Table, TableBody, TableCaption } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileUp, Save, Plus, Download, UploadCloud, 
-  Trash2, FileJson, FileCsv, RefreshCw 
+  Trash2, FileJson, Files, RefreshCw 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PriceTableHeader } from "@/components/price-table/TableHeader";
@@ -169,7 +168,10 @@ export default function PriceTable() {
   // Add new category
   const handleAddCategory = (values: z.infer<typeof categoryFormSchema>) => {
     try {
-      const newCategory = PriceService.addCategory(values);
+      const newCategory = PriceService.addCategory({
+        name: values.name,
+        items: [] // Adicionando o campo items que faltava
+      });
       
       setPriceData(prev => ({
         ...prev,
@@ -205,10 +207,18 @@ export default function PriceTable() {
     }
     
     try {
-      // If no type is specified, use the category ID as the type
-      const itemData = {
-        ...values,
-        type: values.type || activeTab
+      // Se specs vier como string, converta para array
+      const specs = typeof values.specs === 'string' ? [values.specs] : values.specs || [];
+      
+      // Garanta que todos os campos obrigatórios estejam presentes
+      const itemData: Omit<PriceItem, 'id'> = {
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        type: values.type || activeTab,
+        specs: specs,
+        subtype: values.subtype,
+        metadata: {}
       };
       
       const newItem = PriceService.addItem(activeTab, itemData);
