@@ -1,0 +1,33 @@
+
+import { rgb } from 'pdf-lib';
+
+export const PDFColors = {
+  primary: rgb(0.96, 0.51, 0.13), // #f58220
+  text: rgb(0.12, 0.12, 0.12),    // #1e1e1e
+  muted: rgb(0.4, 0.4, 0.4),      // text-muted
+  white: rgb(1, 1, 1),            // #ffffff
+  blue: rgb(0.2, 0.6, 0.9),       // azul institucional
+};
+
+export const PDFConfig = {
+  pageSize: {
+    width: 595.276,
+    height: 841.890
+  },
+  margins: {
+    default: 50
+  },
+  spacing: {
+    section: 30,
+    paragraph: 20,
+    lineHeight: 1.5
+  },
+  fontSize: {
+    title: 24,
+    subtitle: 18,
+    heading: 16,
+    body: 11,
+    small: 9
+  }
+};
+
