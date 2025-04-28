@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
@@ -146,7 +147,7 @@ export const generateQuotePDF = async (
       logoImage = await pdfDoc.embedPng(new Uint8Array(logoArrayBuffer));
     } catch (error) {
       console.error("Failed to load logo:", error);
-      // Continue without logo
+      // Continue without logo - will use text fallback
     }
     
     // Draw the logo at the top of the document if available
@@ -187,7 +188,7 @@ export const generateQuotePDF = async (
       
       // Add quote number
       const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-      page.drawText(`Cotação: ${quoteNumber}`, {
+      page.drawText(`Cotacao: ${quoteNumber}`, {
         x: marginRight - 220,
         y: currentY - 60,
         size: 10,
@@ -235,7 +236,7 @@ export const generateQuotePDF = async (
     
     currentY -= 25;
     
-    const summaryText = "Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades específicas. Nossa equipe está à disposição para quaisquer esclarecimentos adicionais.";
+    const summaryText = "Agradecemos seu interesse nos servicos da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades especificas. Nossa equipe esta a disposicao para quaisquer esclarecimentos adicionais.";
     
     // Break summary into lines
     const maxWidth = width - (marginX * 2);
@@ -281,7 +282,7 @@ export const generateQuotePDF = async (
     // Hardware Configuration Section
     currentY = drawSectionHeader(
       page, 
-      "1. Configuração de Hardware", 
+      "1. Configuracao de Hardware", 
       marginX, 
       currentY, 
       300,
@@ -342,7 +343,7 @@ export const generateQuotePDF = async (
       if (component.metadata?.features && component.metadata.features.length > 0) {
         currentY -= 5;
         component.metadata.features.forEach(feature => {
-          page.drawText(`✓ ${feature}`, {
+          page.drawText(`> ${feature}`, {  // Changed from ✓ to > for better compatibility
             x: marginX + 20,
             y: currentY,
             size: 10,
@@ -364,7 +365,7 @@ export const generateQuotePDF = async (
         currentY = height - marginX;
         
         // Add page number at the bottom
-        page.drawText(`Página 2`, {
+        page.drawText(`Pagina 2`, {
           x: width / 2 - 20,
           y: 30,
           size: 10,
@@ -375,7 +376,7 @@ export const generateQuotePDF = async (
       
       currentY = drawSectionHeader(
         page, 
-        "2. Soluções de Armazenamento", 
+        "2. Solucoes de Armazenamento", 
         marginX, 
         currentY, 
         300,
@@ -453,7 +454,7 @@ export const generateQuotePDF = async (
             );
             
             currentY -= 15;
-            page.drawText("Configuração RAID:", {
+            page.drawText("Configuracao RAID:", {
               x: marginX + 30,
               y: currentY,
               size: 11,
@@ -465,8 +466,8 @@ export const generateQuotePDF = async (
             const raidInfo = [
               `Tipo: RAID ${group.disk.metadata.raid.type}`,
               group.disk.metadata.raid.description,
-              `Proteção: ${group.disk.metadata.raid.protection}`,
-              `Capacidade útil: ${group.disk.metadata.raid.usableCapacity}GB`
+              `Protecao: ${group.disk.metadata.raid.protection}`,
+              `Capacidade util: ${group.disk.metadata.raid.usableCapacity}GB`
             ];
             
             raidInfo.forEach(info => {
@@ -495,7 +496,7 @@ export const generateQuotePDF = async (
           currentY = height - marginX;
           
           // Add page number at the bottom
-          page.drawText(`Página 3`, {
+          page.drawText(`Pagina 3`, {
             x: width / 2 - 20,
             y: 30,
             size: 10,
@@ -571,7 +572,7 @@ export const generateQuotePDF = async (
         
         // Add page number at the bottom
         const pageNumber = pdfDoc.getPageCount();
-        page.drawText(`Página ${pageNumber}`, {
+        page.drawText(`Pagina ${pageNumber}`, {
           x: width / 2 - 20,
           y: 30,
           size: 10,
@@ -582,7 +583,7 @@ export const generateQuotePDF = async (
       
       currentY = drawSectionHeader(
         page, 
-        "3. Serviços Adicionais", 
+        "3. Servicos Adicionais", 
         marginX, 
         currentY, 
         300,
@@ -647,7 +648,7 @@ export const generateQuotePDF = async (
       
       // Add page number at the bottom
       const pageNumber = pdfDoc.getPageCount();
-      page.drawText(`Página ${pageNumber}`, {
+      page.drawText(`Pagina ${pageNumber}`, {
         x: width / 2 - 20,
         y: 30,
         size: 10,
@@ -737,7 +738,7 @@ export const generateQuotePDF = async (
     currentY -= 18;
     
     // Services subtotal
-    page.drawText("Subtotal de Serviços:", {
+    page.drawText("Subtotal de Servicos:", {
       x: marginX + 15,
       y: currentY,
       size: 11,
@@ -824,7 +825,7 @@ export const generateQuotePDF = async (
       
       // Add page number
       const pageNumber = pdfDoc.getPageCount();
-      page.drawText(`Página ${pageNumber}`, {
+      page.drawText(`Pagina ${pageNumber}`, {
         x: width / 2 - 20,
         y: 30,
         size: 10,
@@ -843,16 +844,16 @@ export const generateQuotePDF = async (
     );
     
     const benefits = [
-      "Suporte Técnico 24x7x365 por telefone, chat e ticket",
-      "Data Centers com certificação Tier III e Tier IV",
-      "Infraestrutura de rede redundante com múltiplos carriers",
+      "Suporte Tecnico 24x7x365 por telefone, chat e ticket",
+      "Data Centers com certificacao Tier III e Tier IV",
+      "Infraestrutura de rede redundante com multiplos carriers",
       "Monitoramento proativo em tempo real",
       "SLA de 99.999% de uptime",
-      "Mais de 20 anos de experiência em hospedagem"
+      "Mais de 20 anos de experiencia em hospedagem"
     ];
     
     benefits.forEach(benefit => {
-      page.drawText(`✓ ${benefit}`, {
+      page.drawText(`> ${benefit}`, { // Changed from ✓ to > for better compatibility
         x: marginX + 15,
         y: currentY,
         size: 11,
@@ -867,7 +868,7 @@ export const generateQuotePDF = async (
     // Terms and Conditions
     currentY = drawSectionHeader(
       page, 
-      "Termos e Condições", 
+      "Termos e Condicoes", 
       marginX, 
       currentY, 
       300,
@@ -876,10 +877,10 @@ export const generateQuotePDF = async (
     
     const terms = [
       "• Valores em reais (BRL), cobrados mensalmente.",
-      "• Esta proposta é válida por 15 dias a partir da data de emissão.",
-      "• Prazo de ativação: até 48 horas após confirmação do pagamento.",
-      "• O pagamento pode ser realizado via boleto bancário, cartão de crédito ou transferência.",
-      "• Impostos podem ser aplicáveis dependendo da região e modalidade de contratação."
+      "• Esta proposta e valida por 15 dias a partir da data de emissao.",
+      "• Prazo de ativacao: ate 48 horas apos confirmacao do pagamento.",
+      "• O pagamento pode ser realizado via boleto bancario, cartao de credito ou transferencia.",
+      "• Impostos podem ser aplicaveis dependendo da regiao e modalidade de contratacao."
     ];
     
     terms.forEach(term => {
@@ -919,7 +920,7 @@ export const generateQuotePDF = async (
       });
       
       // Add page number
-      footerPage.drawText(`Página ${i + 1} de ${pdfDoc.getPageCount()}`, {
+      footerPage.drawText(`Pagina ${i + 1} de ${pdfDoc.getPageCount()}`, {
         x: marginRight - 80,
         y: footerY,
         size: 8,
@@ -928,22 +929,30 @@ export const generateQuotePDF = async (
       });
     }
     
-    // Save and download
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `HostDime-Proposta-${new Date().toISOString().split('T')[0]}.pdf`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success("PDF gerado com sucesso!", {
-      description: "Seu documento foi baixado automaticamente"
-    });
+    // Improved error handling for PDF generation
+    try {
+      // Save and download
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `HostDime-Proposta-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("PDF gerado com sucesso!", {
+        description: "Seu documento foi baixado automaticamente"
+      });
+    } catch (pdfError) {
+      console.error('Erro ao finalizar o PDF:', pdfError);
+      toast.error("Erro ao finalizar o PDF", {
+        description: "Tente novamente ou entre em contato com o suporte."
+      });
+    }
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
     toast.error("Erro ao gerar o PDF", {

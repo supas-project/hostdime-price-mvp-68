@@ -18,6 +18,9 @@ export async function generateQuoteFromTemplate(
     return new Uint8Array(); // Return empty array as the file is downloaded directly
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
+    toast.error("Falha na geração do PDF", {
+      description: (error as Error).message
+    });
     throw new Error("Falha na geração do PDF: " + (error as Error).message);
   }
 }
