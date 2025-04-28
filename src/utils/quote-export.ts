@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
@@ -89,7 +88,7 @@ const drawHighlightBox = (
     height,
     color: COLOR.HIGHLIGHT,
     borderWidth: 1,
-    borderColor: rgb(0.96, 0.51, 0.13, 0.3),
+    borderColor: rgb(0.96, 0.51, 0.13),
     opacity: 0.7
   });
 };
@@ -105,8 +104,8 @@ const drawSeparator = (
     start: { x, y },
     end: { x: x + width, y },
     thickness: 0.5,
-    color: rgb(0.10, 0.12, 0.17, 0.2),
-    opacity: 0.8
+    color: rgb(0.10, 0.12, 0.17),
+    opacity: 0.2
   });
 };
 
@@ -216,8 +215,9 @@ export const generateQuotePDF = async (
       y: 40,
       width: width - (marginX * 2) + 20,
       height: height - 80,
-      borderColor: rgb(0.96, 0.51, 0.13, 0.15),
+      borderColor: rgb(0.96, 0.51, 0.13),
       borderWidth: 1,
+      opacity: 0.15,
       color: COLOR.WHITE
     });
     
@@ -914,7 +914,8 @@ export const generateQuotePDF = async (
         y: footerY,
         size: 8,
         font: helveticaOblique,
-        color: rgb(0.4, 0.4, 0.4, 0.6)
+        color: rgb(0.4, 0.4, 0.4),
+        opacity: 0.6
       });
       
       // Add page number
