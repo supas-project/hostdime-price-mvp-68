@@ -9,19 +9,28 @@ interface StorageStepProps {
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    // Create consistent ID without quantity to prevent duplicates
+    const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
+    
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.id}-${quantity}`,
+      id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
-      name: `${quantity}x ${disk.type.toUpperCase()} ${disk.capacity}`,
+      name: `${disk.type.toUpperCase()} ${disk.capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
-      price: disk.price * quantity,
+      price: disk.price,
+      metadata: {
+        quantity: quantity,
+        features: [`Tipo: ${disk.type}`],
+        unitPrice: disk.price // Store original unit price
+      },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
         `Capacidade: ${disk.capacity}`,
         `Quantidade: ${quantity}`
       ]
     };
+    
     onSelectStorageItem(storageOption, 'internal');
   };
 
@@ -38,6 +47,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
         `Capacidade: ${capacity} GB`
       ]
     };
+    
     onSelectStorageItem(storageOption, 'external');
   };
 

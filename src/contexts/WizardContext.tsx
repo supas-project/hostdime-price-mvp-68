@@ -72,36 +72,32 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     
     if (storageType === 'internal') {
       setStorageItems(prev => {
-        const diskId = option.id;
-        const quantity = option.metadata?.quantity || 1;
-        const diskType = option.specs?.find(spec => spec.startsWith("Tipo:"))?.split(": ")[1]?.toLowerCase() || "";
-        const capacity = option.specs?.find(spec => spec.startsWith("Capacidade:"))?.split(": ")[1] || "";
+        const existingItems = [...prev.internal];
+        const existingIndex = existingItems.findIndex(item => item.id === option.id);
         
-        // Check if we already have this disk type and capacity
-        const existingDiskIndex = prev.internal.findIndex(
-          disk => disk.specs?.includes(`Tipo: ${diskType?.toUpperCase()}`) && 
-                  disk.specs?.includes(`Capacidade: ${capacity}`)
-        );
-
-        let updatedInternal;
-        if (existingDiskIndex >= 0) {
-          // Update existing disk entry
-          updatedInternal = [...prev.internal];
-          updatedInternal[existingDiskIndex] = {
+        if (existingIndex >= 0) {
+          // Update existing item while preserving RAID config
+          const existingItem = existingItems[existingIndex];
+          const updatedItem = {
             ...option,
-            price: option.price * quantity
+            price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1),
+            metadata: {
+              ...option.metadata,
+              raid: existingItem.metadata?.raid // Preserve RAID configuration
+            }
           };
+          existingItems[existingIndex] = updatedItem;
         } else {
-          // Add new disk entry
-          updatedInternal = [...prev.internal, {
+          // Add new item
+          existingItems.push({
             ...option,
-            price: option.price * quantity
-          }];
+            price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
+          });
         }
         
         return {
           ...prev,
-          internal: updatedInternal
+          internal: existingItems
         };
       });
     } else {

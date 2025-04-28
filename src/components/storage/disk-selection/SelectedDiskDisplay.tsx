@@ -7,6 +7,7 @@ import { QuantitySelector } from "@/components/quantity-selector";
 import { SimpleRaidCalculator } from "@/components/storage/raid/SimpleRaidCalculator";
 import { RaidType } from "@/types/raid";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface SelectedDiskDisplayProps {
   disk: PricedDiskOption;
@@ -26,10 +27,21 @@ export function SelectedDiskDisplay({
 
   useEffect(() => {
     setShowRaidConfig(quantity >= 2);
-  }, [quantity]);
+    if (quantity < 2 && raidType !== "none") {
+      setRaidType("none");
+      toast.warning("RAID desativado: quantidade insuficiente de discos");
+    }
+  }, [quantity, raidType]);
 
   const handleRaidTypeChange = (type: RaidType, isHardware: boolean) => {
     setRaidType(type);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (raidType !== "none" && newQuantity < 2) {
+      toast.warning("RAID será desativado ao reduzir a quantidade de discos");
+    }
+    onQuantityChange(newQuantity);
   };
 
   return (
@@ -46,10 +58,7 @@ export function SelectedDiskDisplay({
             <span className="text-sm text-white">Quantidade:</span>
             <QuantitySelector 
               value={quantity} 
-              onChange={(newQuantity) => {
-                onQuantityChange(newQuantity);
-                setShowRaidConfig(newQuantity >= 2);
-              }} 
+              onChange={handleQuantityChange} 
               min={1} 
               max={10} 
             />
