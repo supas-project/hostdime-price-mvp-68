@@ -1,7 +1,9 @@
+
 import { PriceService } from "./price-service";
 import { diskData } from "@/data/disk-data";
 import { cpuComponents } from "@/data/cpu-components";
 import { memoryComponents } from "@/data/memory-components";
+import { toast } from "sonner";
 
 /**
  * Serviço responsável por sincronizar dados entre componentes e a tabela de preços
@@ -25,10 +27,15 @@ const ComponentSyncService = {
       
       // Adicionar dados de storage usando o método próprio do serviço
       ComponentSyncService.syncStorageData();
+
+      // Adicionar dados de sistema operacional
+      ComponentSyncService.syncOSData();
       
       console.log("Dados da tabela de preços inicializados com sucesso!");
+      toast.success("Dados da tabela de preços inicializados com sucesso");
     } catch (error) {
       console.error("Erro ao inicializar dados da tabela de preços:", error);
+      toast.error("Erro ao inicializar dados da tabela de preços");
     }
   },
   
@@ -53,7 +60,7 @@ const ComponentSyncService = {
         try {
           // Verificar se o item já existe
           const existingItems = cpuCategory?.items.filter(item => 
-            item.id === cpu.id
+            item.name.toLowerCase() === cpu.name.toLowerCase()
           ) || [];
           
           if (existingItems.length === 0 && cpuCategory) {
@@ -67,7 +74,7 @@ const ComponentSyncService = {
             });
           }
         } catch (err) {
-          console.warn(`Erro ao adicionar CPU ${cpu.id}:`, err);
+          console.warn(`Erro ao adicionar CPU ${cpu.name}:`, err);
         }
       });
       
@@ -98,7 +105,7 @@ const ComponentSyncService = {
         try {
           // Verificar se o item já existe
           const existingItems = memoryCategory?.items.filter(item => 
-            item.id === memory.id
+            item.name.toLowerCase() === memory.name.toLowerCase()
           ) || [];
           
           if (existingItems.length === 0 && memoryCategory) {
@@ -112,7 +119,7 @@ const ComponentSyncService = {
             });
           }
         } catch (err) {
-          console.warn(`Erro ao adicionar memória ${memory.id}:`, err);
+          console.warn(`Erro ao adicionar memória ${memory.name}:`, err);
         }
       });
       
@@ -272,6 +279,95 @@ const ComponentSyncService = {
       console.log("Dados de storage sincronizados com sucesso!");
     } catch (error) {
       console.error("Erro ao sincronizar dados de storage:", error);
+    }
+  },
+
+  /**
+   * Sincroniza dados de sistemas operacionais com a tabela de preços
+   */
+  syncOSData: () => {
+    try {
+      // Verificar se a categoria já existe
+      let osCategory = PriceService.getCategory('os');
+      
+      if (!osCategory) {
+        // Criar categoria se não existir
+        osCategory = PriceService.addCategory({
+          name: 'Sistemas Operacionais',
+          items: []
+        });
+      }
+      
+      // Dados de sistemas operacionais padrão
+      const osList = [
+        {
+          name: "Windows Server 2022 Standard",
+          price: 140.00,
+          specs: [
+            "Licença mensal",
+            "Suporte incluído",
+            "Atualizações automáticas"
+          ],
+          description: "Sistema operacional Windows Server 2022 com suporte completo"
+        },
+        {
+          name: "Ubuntu Server 22.04 LTS",
+          price: 0,
+          specs: [
+            "Licença gratuita",
+            "Suporte comunitário",
+            "Atualizações por 5 anos"
+          ],
+          description: "Sistema operacional Linux Ubuntu Server LTS"
+        },
+        {
+          name: "CentOS Stream 9",
+          price: 0,
+          specs: [
+            "Licença gratuita",
+            "Ciclo contínuo de atualizações",
+            "Compatível com RHEL"
+          ],
+          description: "Sistema operacional Linux CentOS Stream"
+        },
+        {
+          name: "Windows Server 2019 Standard",
+          price: 120.00,
+          specs: [
+            "Licença mensal",
+            "Suporte incluído",
+            "Atualizações de segurança"
+          ],
+          description: "Sistema operacional Windows Server 2019 com suporte completo"
+        }
+      ];
+      
+      // Adicionar sistemas operacionais
+      osList.forEach(os => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = osCategory?.items.filter(item => 
+            item.name.toLowerCase() === os.name.toLowerCase()
+          ) || [];
+          
+          if (existingItems.length === 0 && osCategory) {
+            // Adicionar novo item
+            PriceService.addItem('os', {
+              name: os.name,
+              description: os.description,
+              price: os.price,
+              specs: os.specs,
+              type: 'SistemaOperacional'
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar sistema operacional ${os.name}:`, err);
+        }
+      });
+      
+      console.log("Dados de sistemas operacionais sincronizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados de sistemas operacionais:", error);
     }
   }
 };

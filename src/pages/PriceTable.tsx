@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCaption } from "@/components/ui/table";
@@ -9,6 +8,7 @@ import { PriceTableHeader } from "@/components/price-table/TableHeader";
 import { TableContent } from "@/components/price-table/TableContent";
 import { TableActions } from "@/components/price-table/TableActions";
 import { CategoryTabs } from "@/components/price-table/CategoryTabs";
+import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 import { PriceData, PriceCategory } from "@/types/pricing";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriceService } from "@/services/price-service";
@@ -20,12 +20,25 @@ export default function PriceTable() {
   const [isLoading, setIsLoading] = useState(false);
   const [openAddItem, setOpenAddItem] = useState(false);
   const [openAddCategory, setOpenAddCategory] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, isAdmin } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadPriceData();
+    
+    // Adicionar listener para mudanças de dados
+    const handleDataChange = (data: PriceData) => {
+      setPriceData(data);
+      setLastSyncTime(new Date());
+    };
+    
+    PriceService.addDataChangeListener(handleDataChange);
+    
+    return () => {
+      PriceService.removeDataChangeListener(handleDataChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -39,6 +52,7 @@ export default function PriceTable() {
       setIsLoading(true);
       const data = PriceService.getAllData();
       setPriceData(data);
+      setLastSyncTime(new Date());
       
       if (!activeTab && Object.keys(data).length > 0) {
         setActiveTab(Object.keys(data)[0]);
@@ -53,7 +67,7 @@ export default function PriceTable() {
       setIsLoading(false);
     }
   };
-
+  
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -273,6 +287,7 @@ export default function PriceTable() {
         </div>
         
         <div className="flex items-center gap-2">
+          <SyncIndicator lastSyncTime={lastSyncTime} />
           <LoginDialog />
         </div>
       </div>

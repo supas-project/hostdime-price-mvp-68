@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
 
@@ -16,8 +16,12 @@ export function useComponentOptions(categoryId: string): {
   const [options, setOptions] = useState<ComponentOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  
+  // Usar useRef para armazenar a função de callback para evitar recriação
+  const fetchOptionsRef = useRef<() => void>();
 
   useEffect(() => {
+    // Definir a função de busca de opções
     const fetchOptions = () => {
       try {
         setIsLoading(true);
@@ -51,14 +55,21 @@ export function useComponentOptions(categoryId: string): {
       }
     };
 
+    // Armazenar referência da função para remover listener depois
+    fetchOptionsRef.current = fetchOptions;
+    
+    // Executar busca inicial
     fetchOptions();
 
     // Registrar listener para mudanças na tabela de preços
-    PriceService.addDataChangeListener(() => fetchOptions());
+    PriceService.addDataChangeListener(fetchOptions);
     
+    // Cleanup: remover listener quando componente for desmontado
     return () => {
-      // Remover listener quando componente for desmontado
-      PriceService.removeDataChangeListener(() => fetchOptions());
+      // Usar a referência armazenada para remover o listener específico
+      if (fetchOptionsRef.current) {
+        PriceService.removeDataChangeListener(fetchOptionsRef.current);
+      }
     };
   }, [categoryId]);
 
