@@ -29,9 +29,9 @@ export async function generateQuoteFromTemplate(
   await addCoverPage(pdfDoc, boldFont, font);
   await addInstitutionalPage(pdfDoc, boldFont, font);
   await addConfidentialityPage(pdfDoc, boldFont, font);
-  await addQuotePage(pdfDoc, selectedComponents, margin, boldFont, font);
+  await addQuotePage(pdfDoc, selectedComponents, margin, boldFont, font, italicFont);
   await addDataCenterPage(pdfDoc, boldFont, font);
-  await addContactPage(pdfDoc, boldFont, font);
+  await addContactPage(pdfDoc, boldFont, font, italicFont);
   
   // Retornar o PDF finalizado
   return pdfDoc.save();
@@ -274,9 +274,10 @@ async function addQuotePage(
   selectedComponents: { [key: string]: ComponentOption }, 
   margin: number,
   boldFont: any,
-  font: any
+  font: any,
+  italicFont: any
 ) {
-  const page = pdfDoc.addPage([595.276, 841.890]);
+  let page = pdfDoc.addPage([595.276, 841.890]);
   const { width, height } = page.getSize();
   const margin_x = 50;
   let currentY = height - 80;
@@ -402,9 +403,9 @@ async function addQuotePage(
       drawFooter(page, width, font);
       
       // Criar nova página
-      const newPage = pdfDoc.addPage([595.276, 841.890]);
-      page = newPage;
-      currentY = height - 80;
+      page = pdfDoc.addPage([595.276, 841.890]);
+      const newPageSize = page.getSize();
+      currentY = newPageSize.height - 80;
       
       // Continuar cabeçalho na nova página
       page.drawText("Especificações Técnicas (continuação)", {
@@ -722,7 +723,7 @@ async function addDataCenterPage(pdfDoc: PDFDocument, boldFont: any, font: any) 
 /**
  * Adiciona a página de contato e encerramento
  */
-async function addContactPage(pdfDoc: PDFDocument, boldFont: any, font: any) {
+async function addContactPage(pdfDoc: PDFDocument, boldFont: any, font: any, italicFont: any) {
   const page = pdfDoc.addPage([595.276, 841.890]);
   const { width, height } = page.getSize();
   const margin = 50;
