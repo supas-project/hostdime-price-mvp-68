@@ -135,6 +135,23 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     // Criar ID consistente sem quantidade para evitar duplicatas
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
     
+    // Fix the issue with specs potentially being an object instead of an array
+    let diskSpecs: string[] = [];
+    
+    if (disk.specs) {
+      if (Array.isArray(disk.specs)) {
+        diskSpecs = disk.specs;
+      } else {
+        // Convert the object properties to an array of strings
+        if (disk.specs.readSpeed) diskSpecs.push(`Leitura: ${disk.specs.readSpeed}`);
+        if (disk.specs.writeSpeed) diskSpecs.push(`Escrita: ${disk.specs.writeSpeed}`);
+        if (disk.specs.iops) diskSpecs.push(`IOPS: ${disk.specs.iops}`);
+        if (disk.specs.recommended && Array.isArray(disk.specs.recommended)) {
+          diskSpecs.push(`Recomendado para: ${disk.specs.recommended.join(', ')}`);
+        }
+      }
+    }
+    
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
@@ -151,7 +168,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
         `Tipo: ${disk.type.toUpperCase()}`,
         `Capacidade: ${disk.capacity}`,
         `Quantidade: ${quantity}`,
-        ...(disk.specs || [])
+        ...diskSpecs // Use the processed specs array that is always an array
       ]
     };
     

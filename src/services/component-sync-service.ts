@@ -13,11 +13,11 @@ const ComponentSyncService = {
     console.log("Inicializando dados da tabela de preços...");
     
     try {
-      // Adicionar dados de discos
-      this.syncDiskData();
+      // Adicionar dados de discos usando o método próprio do serviço
+      ComponentSyncService.syncDiskData();
       
-      // Adicionar dados de storage
-      this.syncStorageData();
+      // Adicionar dados de storage usando o método próprio do serviço
+      ComponentSyncService.syncStorageData();
       
       console.log("Dados da tabela de preços inicializados com sucesso!");
     } catch (error) {
@@ -54,19 +54,19 @@ const ComponentSyncService = {
               if (disk.specs.readSpeed) specs.push(`Leitura: ${disk.specs.readSpeed}`);
               if (disk.specs.writeSpeed) specs.push(`Escrita: ${disk.specs.writeSpeed}`);
               if (disk.specs.iops) specs.push(`IOPS: ${disk.specs.iops}`);
-              if (disk.specs.recommended) {
+              if (disk.specs.recommended && Array.isArray(disk.specs.recommended)) {
                 specs.push(`Recomendado para: ${disk.specs.recommended.join(', ')}`);
               }
             }
           }
           
           // Verificar se o item já existe
-          const existingItems = diskCategory.items.filter(item => 
+          const existingItems = diskCategory?.items.filter(item => 
             item.name.toLowerCase().includes(disk.type) && 
             item.name.toLowerCase().includes(disk.capacity.toLowerCase())
-          );
+          ) || [];
           
-          if (existingItems.length === 0) {
+          if (existingItems.length === 0 && diskCategory) {
             // Adicionar novo item
             PriceService.addItem('disk', {
               name: `${disk.type.toUpperCase()} ${disk.capacity}`,
@@ -153,11 +153,11 @@ const ComponentSyncService = {
       storageTypes.forEach(storage => {
         try {
           // Verificar se o item já existe
-          const existingItems = storageCategory.items.filter(item => 
+          const existingItems = storageCategory?.items.filter(item => 
             item.name.toLowerCase() === storage.name.toLowerCase()
-          );
+          ) || [];
           
-          if (existingItems.length === 0) {
+          if (existingItems.length === 0 && storageCategory) {
             // Adicionar novo item
             PriceService.addItem('storage', {
               name: storage.name,
