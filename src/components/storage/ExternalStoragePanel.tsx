@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,14 +7,32 @@ import { StorageTier } from "@/types/storage";
 import { formatCurrency } from "@/lib/utils";
 
 interface ExternalStoragePanelProps {
-  onSelect: (option: StorageTier) => void;
+  onSelect?: (option: StorageTier) => void;
   selectedTier?: string;
+  onSelectStorage?: (type: string, capacity: number, price: number) => void;
+  storageTypes?: {
+    [key: string]: { 
+      name: string;
+      pricePerGB: number;
+      iops: string;
+      throughput: string;
+      description: string;
+      throughputAdd?: number;
+      maxThroughput?: string;
+    }
+  };
 }
 
-export function ExternalStoragePanel({ onSelect, selectedTier }: ExternalStoragePanelProps) {
+export function ExternalStoragePanel({ 
+  onSelect, 
+  selectedTier,
+  onSelectStorage,
+  storageTypes = {}
+}: ExternalStoragePanelProps) {
   const [activeTab, setActiveTab] = useState<string>("standard");
   
-  const storageTiers: Record<string, StorageTier[]> = {
+  // Default storage tiers if none provided through props
+  const defaultStorageTiers: Record<string, StorageTier[]> = {
     standard: [
       {
         name: "Standard 100GB",
@@ -85,8 +104,68 @@ export function ExternalStoragePanel({ onSelect, selectedTier }: ExternalStorage
     ]
   };
 
+  // Process storage types from props to create tiers
+  const processedStorageTiers: Record<string, StorageTier[]> = {};
+  if (Object.keys(storageTypes).length > 0) {
+    // Convert from storageTypes format to tiers format
+    Object.entries(storageTypes).forEach(([key, type]) => {
+      processedStorageTiers[key] = [
+        {
+          name: `${type.name} 100GB`,
+          price: type.pricePerGB * 100,
+          iops: type.iops,
+          throughput: type.throughput,
+          description: type.description
+        },
+        {
+          name: `${type.name} 500GB`,
+          price: type.pricePerGB * 500,
+          iops: type.iops,
+          throughput: type.throughput,
+          description: type.description
+        },
+        {
+          name: `${type.name} 1TB`,
+          price: type.pricePerGB * 1000,
+          iops: type.iops,
+          throughput: type.throughput,
+          description: type.description
+        }
+      ];
+    });
+  }
+  
+  // Use processed tiers if available, otherwise default
+  const storageTiers = Object.keys(processedStorageTiers).length > 0 
+    ? processedStorageTiers 
+    : defaultStorageTiers;
+
   const handleTierSelect = (tier: StorageTier) => {
-    onSelect(tier);
+    if (onSelect) {
+      onSelect(tier);
+    }
+    
+    // Also support the onSelectStorage prop for backward compatibility
+    if (onSelectStorage) {
+      // Extract capacity from name (e.g., "Standard 100GB" -> 100)
+      const capacityMatch = tier.name.match(/(\d+)GB|(\d+)TB/i);
+      let capacity = 0;
+      
+      if (capacityMatch) {
+        if (capacityMatch[1]) {
+          capacity = parseInt(capacityMatch[1]);
+        } else if (capacityMatch[2]) {
+          // Convert TB to GB
+          capacity = parseInt(capacityMatch[2]) * 1000;
+        }
+      }
+      
+      // Extract type from name (e.g., "Standard 100GB" -> "Standard")
+      const typeMatch = tier.name.match(/^(\w+)/);
+      const type = typeMatch ? typeMatch[1] : "Standard";
+      
+      onSelectStorage(type, capacity, tier.price);
+    }
   };
 
   return (
@@ -100,9 +179,11 @@ export function ExternalStoragePanel({ onSelect, selectedTier }: ExternalStorage
       <CardContent>
         <Tabs defaultValue="standard" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="standard">Standard</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="premium">Premium</TabsTrigger>
+            {Object.keys(storageTiers).map(key => (
+              <TabsTrigger key={key} value={key}>
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </TabsTrigger>
+            ))}
           </TabsList>
           
           {Object.entries(storageTiers).map(([key, tiers]) => (

@@ -16,14 +16,24 @@ export interface PricedDiskOption {
   type: "nvme" | "ssd" | "hdd";
   capacity: string;
   price: number;
-  specs?: string[];
+  specs?: string[] | {
+    readSpeed?: string;
+    writeSpeed?: string;
+    iops?: string;
+    recommended?: string[];
+  };
 }
 
 export interface DiskOption {
   id: string;
   type: string;
   capacity: string;
-  specs?: string[];
+  specs?: string[] | {
+    readSpeed?: string;
+    writeSpeed?: string;
+    iops?: string;
+    recommended?: string[];
+  };
 }
 
 export interface RaidOption {

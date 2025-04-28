@@ -11,8 +11,8 @@ const baseDisks: DiskOption[] = [
       readSpeed: "3500 MB/s",
       writeSpeed: "3000 MB/s",
       iops: "500K",
-    },
-    recommended: ["Bancos de dados", "Cache", "Alta performance"]
+      recommended: ["Bancos de dados", "Cache", "Alta performance"]
+    }
   },
   {
     id: "nvme-1000",
@@ -22,8 +22,8 @@ const baseDisks: DiskOption[] = [
       readSpeed: "3500 MB/s",
       writeSpeed: "3000 MB/s",
       iops: "500K",
-    },
-    recommended: ["Bancos de dados", "Cache", "Alta performance"]
+      recommended: ["Bancos de dados", "Cache", "Alta performance"]
+    }
   },
   {
     id: "ssd-500",
@@ -33,8 +33,8 @@ const baseDisks: DiskOption[] = [
       readSpeed: "550 MB/s",
       writeSpeed: "520 MB/s",
       iops: "98K",
-    },
-    recommended: ["Sistema operacional", "Aplicações", "Websites"]
+      recommended: ["Sistema operacional", "Aplicações", "Websites"]
+    }
   },
   {
     id: "ssd-1000",
@@ -44,8 +44,8 @@ const baseDisks: DiskOption[] = [
       readSpeed: "550 MB/s",
       writeSpeed: "520 MB/s",
       iops: "98K",
-    },
-    recommended: ["Sistema operacional", "Aplicações", "Websites"]
+      recommended: ["Sistema operacional", "Aplicações", "Websites"]
+    }
   },
   {
     id: "hdd-1000",
@@ -55,8 +55,8 @@ const baseDisks: DiskOption[] = [
       readSpeed: "150 MB/s",
       writeSpeed: "150 MB/s",
       iops: "150",
-    },
-    recommended: ["Backups", "Arquivos", "Armazenamento geral"]
+      recommended: ["Backups", "Arquivos", "Armazenamento geral"]
+    }
   },
   {
     id: "hdd-2000",
@@ -66,12 +66,13 @@ const baseDisks: DiskOption[] = [
       readSpeed: "150 MB/s",
       writeSpeed: "150 MB/s",
       iops: "150",
-    },
-    recommended: ["Backups", "Arquivos", "Armazenamento geral"]
+      recommended: ["Backups", "Arquivos", "Armazenamento geral"]
+    }
   }
 ];
 
 export const diskData: PricedDiskOption[] = baseDisks.map(disk => ({
   ...disk,
+  type: disk.type as "nvme" | "ssd" | "hdd",  // Type assertion to ensure strict typing
   price: diskPricing[disk.id]
 }));
