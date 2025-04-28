@@ -1,6 +1,7 @@
 
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { LoginDialog } from "@/components/login-dialog";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, Server, Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -45,7 +46,8 @@ export default function MainLayout() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <LoginDialog />
             <ThemeSwitcher />
             
             <Button
