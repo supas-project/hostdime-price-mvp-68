@@ -47,7 +47,7 @@ const itemFormSchema = z.object({
   price: z.coerce.number().min(0, { message: "Preço deve ser maior ou igual a zero" }),
   type: z.string().min(1, { message: "Tipo é obrigatório" }),
   subtype: z.string().optional(),
-  specs: z.string().optional().transform(val => val ? val.split('\n') : []),  // Fix: Ensure this returns an array
+  specs: z.string().optional().transform(val => val ? val.split('\n').filter(Boolean) : []),
 });
 
 const importFormSchema = z.object({
