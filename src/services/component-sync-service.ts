@@ -1,4 +1,3 @@
-
 import { PriceService } from "./price-service";
 import { diskData } from "@/data/disk-data";
 import { cpuComponents } from "@/data/cpu-components";
@@ -58,9 +57,8 @@ const ComponentSyncService = {
           ) || [];
           
           if (existingItems.length === 0 && cpuCategory) {
-            // Adicionar novo item
+            // Adicionar novo item - Remover id do objeto
             PriceService.addItem('cpu', {
-              id: cpu.id,
               name: cpu.name,
               description: cpu.description || `Processador ${cpu.name}`,
               price: cpu.price,
@@ -104,9 +102,8 @@ const ComponentSyncService = {
           ) || [];
           
           if (existingItems.length === 0 && memoryCategory) {
-            // Adicionar novo item
+            // Adicionar novo item - Remover id do objeto
             PriceService.addItem('memory', {
-              id: memory.id,
               name: memory.name,
               description: memory.description || `Memória ${memory.name}`,
               price: memory.price,
