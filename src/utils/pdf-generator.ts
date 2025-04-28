@@ -3,6 +3,10 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
 
+const PRIMARY_COLOR = rgb(0.96, 0.51, 0.13); // #f58220
+const TEXT_COLOR = rgb(0.12, 0.12, 0.12); // #1e1e1e
+const MUTED_COLOR = rgb(0.4, 0.4, 0.4); // text-muted
+
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number
@@ -13,15 +17,10 @@ export async function generateQuoteFromTemplate(
   // Adicionar uma nova página
   const page = pdfDoc.addPage([595.276, 841.890]); // Tamanho A4
   
-  // Carregar a fonte
+  // Carregar fontes
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   
-  // Cores
-  const primaryColor = rgb(0.96, 0.51, 0.13); // #f58220
-  const textColor = rgb(0.12, 0.12, 0.12); // #1e1e1e
-  const mutedColor = rgb(0.4, 0.4, 0.4); // text-muted
-
   // Configurações de página
   const { width, height } = page.getSize();
   const margin_x = 50;
@@ -34,7 +33,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 24,
     font: boldFont,
-    color: primaryColor,
+    color: PRIMARY_COLOR,
   });
   
   currentY -= 30;
@@ -44,7 +43,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 12,
     font,
-    color: mutedColor,
+    color: MUTED_COLOR,
   });
   
   currentY -= 50;
@@ -55,7 +54,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 16,
     font: boldFont,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   currentY -= 20;
@@ -69,18 +68,21 @@ export async function generateQuoteFromTemplate(
       y: currentY,
       size: 12,
       font: boldFont,
-      color: textColor,
+      color: TEXT_COLOR,
     });
     
     currentY -= 20;
     
-    page.drawText(component.description || '', {
-      x: margin_x + 10,
-      y: currentY,
-      size: 10,
-      font,
-      color: textColor,
-    });
+    if (component.description) {
+      page.drawText(component.description, {
+        x: margin_x + 10,
+        y: currentY,
+        size: 10,
+        font,
+        color: TEXT_COLOR,
+      });
+      currentY -= 15;
+    }
     
     if (component.specs) {
       for (const spec of component.specs) {
@@ -90,7 +92,7 @@ export async function generateQuoteFromTemplate(
           y: currentY,
           size: 10,
           font,
-          color: mutedColor,
+          color: MUTED_COLOR,
         });
       }
     }
@@ -106,14 +108,14 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 16,
     font: boldFont,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   currentY -= 30;
   
   // Cálculos financeiros
   const subtotal = Object.values(selectedComponents).reduce(
-    (sum, component) => sum + component.price,
+    (sum, component) => sum + (component.price || 0),
     0
   );
   const profit = (subtotal * margin) / 100;
@@ -125,7 +127,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 12,
     font,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   page.drawText(formatCurrency(subtotal), {
@@ -133,7 +135,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 12,
     font: boldFont,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   currentY -= 20;
@@ -144,7 +146,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 12,
     font,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   page.drawText(formatCurrency(profit), {
@@ -152,7 +154,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 12,
     font: boldFont,
-    color: primaryColor,
+    color: PRIMARY_COLOR,
   });
   
   currentY -= 30;
@@ -163,7 +165,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 14,
     font: boldFont,
-    color: textColor,
+    color: TEXT_COLOR,
   });
   
   page.drawText(formatCurrency(total), {
@@ -171,7 +173,7 @@ export async function generateQuoteFromTemplate(
     y: currentY,
     size: 14,
     font: boldFont,
-    color: primaryColor,
+    color: PRIMARY_COLOR,
   });
   
   // Rodapé
@@ -188,11 +190,10 @@ export async function generateQuoteFromTemplate(
       y: currentY,
       size: 10,
       font,
-      color: mutedColor,
+      color: MUTED_COLOR,
     });
     currentY -= 20;
   }
   
-  // Gerar o PDF
   return pdfDoc.save();
 }
