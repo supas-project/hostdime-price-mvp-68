@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -90,4 +89,3 @@ export function ContractDuration({
     </Card>
   );
 }
-
