@@ -67,7 +67,9 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   // Filter non-storage components and handle OS price calculation
   const nonStorageComponents = Object.values(selectedComponents).filter(
     component => {
+      // Skip storage components and components without prices
       if (component.type === "Armazenamento") return false;
+      if (component.type === "DataCenter" || component.type === "Contrato") return false;
       
       // Special handling for OS price calculation
       if (component.type === "SistemaOperacional" && component.metadata?.perCore) {
@@ -127,7 +129,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
         <CardContent>
           <div className="space-y-4">
             {/* Regular components */}
-            {nonStorageComponents.map((component) => (
+            {Object.values(selectedComponents).map((component) => (
               <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
@@ -139,7 +141,9 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                     </h4>
                     <p className="text-sm text-muted-foreground">{component.description}</p>
                   </div>
-                  <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
+                  {component.type !== "DataCenter" && component.type !== "Contrato" && (
+                    <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
+                  )}
                 </div>
                 {component.specs && (
                   <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">

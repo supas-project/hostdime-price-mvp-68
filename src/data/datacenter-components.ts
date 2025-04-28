@@ -42,7 +42,7 @@ export const dataCenterComponents: ServerComponent = {
       type: "DataCenter",
       name: "Orlando (EUA)",
       description: "Data center localizado na Flórida, Estados Unidos",
-      price: 20,
+      price: 0,
       metadata: {
         features: [
           "Certificação Tier IV",

@@ -28,9 +28,12 @@ export function SummaryCart({
   const { storageItems, connectivityItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
-  // Calculate prices
+  // Calculate prices excluding DataCenter and Contract
   const standardComponentsPrice = Object.values(selectedComponents).reduce(
-    (sum, component) => sum + component.price,
+    (sum, component) => {
+      if (component.type === "DataCenter" || component.type === "Contrato") return sum;
+      return sum + component.price;
+    },
     0
   );
   
@@ -71,11 +74,12 @@ export function SummaryCart({
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
-        {/* Standard components - simplified */}
         {Object.values(selectedComponents).map((component) => (
           <div key={component.id} className="flex justify-between items-center group animate-fade-in">
             <p className="text-sm font-medium">{component.name}</p>
-            <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+            {component.type !== "DataCenter" && component.type !== "Contrato" && (
+              <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+            )}
           </div>
         ))}
         
