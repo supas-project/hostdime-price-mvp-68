@@ -103,7 +103,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
           </TabsContent>
           <TabsContent value="external" className="mt-0 relative z-10">
             <div className="animate-fade-in">
-              <ExternalStoragePanel onSelectStorage={onSelectExternalStorageInternal} />
+              <ExternalStoragePanel onSelectStorage={handleSelectExternalStorageInternal} />
             </div>
           </TabsContent>
         </div>
