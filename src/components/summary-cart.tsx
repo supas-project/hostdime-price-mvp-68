@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save } from "lucide-react";
@@ -5,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useWizard } from "@/contexts/WizardContext";
 import { useState } from 'react';
+import { Check } from "lucide-react";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -27,24 +29,31 @@ export function SummaryCart({
   const { toast } = useToast();
   const { storageItems, connectivityItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
+
+  // Separate components by type
+  const dataCenterComponent = selectedComponents["datacenter"];
+  const contractComponent = selectedComponents["contrato"];
   
-  // Calcula preços excluindo DataCenter e Contract, e filtrando itens inválidos
-  const standardComponentsPrice = Object.values(selectedComponents).reduce(
-    (sum, component) => {
-      if (!component || component.type === "DataCenter" || component.type === "Contrato" || !component.price) {
-        return sum;
+  // Filter other components (excluding DataCenter and Contract)
+  const standardComponents = Object.values(selectedComponents).filter(
+    component => {
+      if (!component || component.type === "DataCenter" || component.type === "Contrato" || component.type === "Armazenamento") {
+        return false;
       }
-      return sum + component.price;
-    },
+      return true;
+    }
+  );
+  
+  // Calcula preços excluindo DataCenter e Contract
+  const standardComponentsPrice = standardComponents.reduce(
+    (sum, component) => sum + (component.price || 0),
     0
   );
   
-  // Calcula preço do armazenamento interno, filtrando itens inválidos
   const internalStoragePrice = storageItems.internal
     .filter(disk => disk && disk.price > 0)
     .reduce((sum, disk) => sum + disk.price, 0);
   
-  // Calcula preço do armazenamento externo, filtrando itens inválidos
   const externalStoragePrice = storageItems.external
     .filter(storage => storage && storage.price > 0)
     .reduce((sum, storage) => sum + storage.price, 0);
@@ -76,19 +85,60 @@ export function SummaryCart({
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
-        {/* Componentes padrão */}
-        {Object.values(selectedComponents)
-          .filter(component => component && component.price > 0)
-          .map((component) => (
-            <div key={component.id} className="flex justify-between items-center group animate-fade-in">
-              <p className="text-sm font-medium">{component.name}</p>
-              {component.type !== "DataCenter" && component.type !== "Contrato" && (
-                <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+        {/* Data Center */}
+        {dataCenterComponent && (
+          <div className="flex justify-between items-center group animate-fade-in">
+            <div>
+              <p className="text-sm font-medium flex items-center gap-2">
+                {dataCenterComponent.name}
+                <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                  Data Center
+                </span>
+              </p>
+              {dataCenterComponent.metadata?.features && (
+                <div className="mt-1">
+                  {dataCenterComponent.metadata.features.map((feature, index) => (
+                    <p key={index} className="text-xs text-muted-foreground flex items-center">
+                      <Check className="h-3 w-3 text-primary mr-1" />
+                      {feature}
+                    </p>
+                  ))}
+                </div>
               )}
             </div>
-          ))}
+            <span className="text-sm text-muted-foreground">Incluído</span>
+          </div>
+        )}
+
+        {/* Contract */}
+        {contractComponent && (
+          <div className="flex justify-between items-center group animate-fade-in">
+            <div>
+              <p className="text-sm font-medium flex items-center gap-2">
+                {contractComponent.name}
+                <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                  Contrato
+                </span>
+              </p>
+              {contractComponent.metadata?.discount && (
+                <p className="text-xs text-green-500">
+                  Desconto de {contractComponent.metadata.discount}% incluído
+                </p>
+              )}
+            </div>
+            <span className="text-sm text-muted-foreground">Incluído</span>
+          </div>
+        )}
+
+        {/* Standard components with prices */}
+        {standardComponents.map((component) => (
+          <div key={component.id} className="flex justify-between items-center group animate-fade-in">
+            <p className="text-sm font-medium">{component.name}</p>
+            <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+          </div>
+        ))}
         
-        {/* Armazenamento interno */}
+        {/* Storage components */}
         {storageItems.internal
           .filter(disk => disk && disk.price > 0)
           .map((disk) => (
@@ -103,7 +153,6 @@ export function SummaryCart({
             </div>
           ))}
         
-        {/* Armazenamento externo */}
         {storageItems.external
           .filter(storage => storage && storage.price > 0)
           .map((storage) => (
@@ -113,9 +162,9 @@ export function SummaryCart({
             </div>
           ))}
         
-        {/* Itens de conectividade */}
+        {/* Connectivity items */}
         {Object.values(connectivityItems)
-          .filter(item => item && item.option && item.option.price > 0)
+          .filter(item => item && item.option)
           .map((item) => (
             <div key={item.option.id} className="flex justify-between items-center group animate-fade-in">
               <p className="text-sm font-medium">
