@@ -19,6 +19,13 @@ export interface PricedDiskOption {
   specs?: string[];
 }
 
+export interface DiskOption {
+  id: string;
+  type: string;
+  capacity: string;
+  specs?: string[];
+}
+
 export interface RaidOption {
   id: string;
   name: string;

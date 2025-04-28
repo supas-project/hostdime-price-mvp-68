@@ -1,136 +1,134 @@
-
-import { useState, useEffect } from "react";
-import { StorageTypeSelector } from "./external/StorageTypeSelector";
-import { CapacitySlider } from "./external/CapacitySlider";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StorageSpecs } from "./external/StorageSpecs";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useWizard } from "@/contexts/WizardContext";
-
-interface StorageType {
-  name: string;
-  pricePerGB: number;
-  iops: string;
-  throughput: string;
-  description: string;
-  throughputAdd?: number;
-  maxThroughput?: string;
-}
-
-interface StorageTypes {
-  [key: string]: StorageType;
-}
-
-// Tipos de storage padrão caso não venham da tabela de preços
-const DEFAULT_STORAGE_TYPES: StorageTypes = {
-  standard: { 
-    name: "Standard", 
-    pricePerGB: 0.35, 
-    iops: "Até 3000", 
-    throughput: "Até 125 MB/s",
-    description: "Ideal para backups e arquivos raramente acessados"
-  },
-  performance: { 
-    name: "Performance", 
-    pricePerGB: 0.60, 
-    iops: "Até 6000", 
-    throughput: "Até 250 MB/s",
-    description: "Bom para bancos de dados pequenos e médios"
-  },
-  premium: { 
-    name: "Premium", 
-    pricePerGB: 0.80, 
-    iops: "Até 12000", 
-    throughput: "Até 500 MB/s",
-    description: "Ótimo para aplicações de alto desempenho"
-  },
-  ultra: { 
-    name: "Ultra", 
-    pricePerGB: 1.10, 
-    iops: "Até 16000", 
-    throughput: "Até 600 MB/s",
-    description: "Máximo desempenho para cargas críticas",
-    throughputAdd: 1.80,
-    maxThroughput: "1000 MB/s"
-  },
-  edge: { 
-    name: "Edge", 
-    pricePerGB: 1.30, 
-    iops: "Até 32000", 
-    throughput: "Até 1000 MB/s",
-    description: "Performance extrema para cargas de trabalho intensivas",
-    throughputAdd: 1.80,
-    maxThroughput: "1800 MB/s"
-  }
-};
+import { StorageTier } from "@/types/storage";
+import { formatCurrency } from "@/lib/utils";
 
 interface ExternalStoragePanelProps {
-  onSelectStorage?: (type: string, capacity: number, price: number) => void;
-  storageTypes?: StorageTypes;
+  onSelect: (option: StorageTier) => void;
+  selectedTier?: string;
 }
 
-export function ExternalStoragePanel({ 
-  onSelectStorage, 
-  storageTypes = DEFAULT_STORAGE_TYPES 
-}: ExternalStoragePanelProps) {
-  const [storageType, setStorageType] = useState<keyof typeof storageTypes | "">("");
-  const [capacityGB, setCapacityGB] = useState(100);
-  const { handleRemoveComponent } = useWizard();
-
-  const calculatePrice = () => {
-    if (!storageType) return 0;
-    const pricePerGB = storageTypes[storageType]?.pricePerGB || 0;
-    return capacityGB * pricePerGB;
+export function ExternalStoragePanel({ onSelect, selectedTier }: ExternalStoragePanelProps) {
+  const [activeTab, setActiveTab] = useState<string>("standard");
+  
+  const storageTiers: Record<string, StorageTier[]> = {
+    standard: [
+      {
+        name: "Standard 100GB",
+        price: 29.90,
+        iops: "Até 3.000 IOPS",
+        throughput: "125 MB/s",
+        description: "Ideal para armazenamento geral e backups"
+      },
+      {
+        name: "Standard 500GB",
+        price: 99.90,
+        iops: "Até 3.000 IOPS",
+        throughput: "125 MB/s",
+        description: "Ideal para armazenamento geral e backups"
+      },
+      {
+        name: "Standard 1TB",
+        price: 189.90,
+        iops: "Até 3.000 IOPS",
+        throughput: "125 MB/s",
+        description: "Ideal para armazenamento geral e backups"
+      }
+    ],
+    performance: [
+      {
+        name: "Performance 100GB",
+        price: 49.90,
+        iops: "Até 6.000 IOPS",
+        throughput: "250 MB/s",
+        description: "Recomendado para bancos de dados e aplicações de média demanda"
+      },
+      {
+        name: "Performance 500GB",
+        price: 159.90,
+        iops: "Até 6.000 IOPS",
+        throughput: "250 MB/s",
+        description: "Recomendado para bancos de dados e aplicações de média demanda"
+      },
+      {
+        name: "Performance 1TB",
+        price: 299.90,
+        iops: "Até 6.000 IOPS",
+        throughput: "250 MB/s",
+        description: "Recomendado para bancos de dados e aplicações de média demanda"
+      }
+    ],
+    premium: [
+      {
+        name: "Premium 100GB",
+        price: 79.90,
+        iops: "Até 16.000 IOPS",
+        throughput: "500 MB/s",
+        description: "Para cargas de trabalho intensivas e aplicações críticas"
+      },
+      {
+        name: "Premium 500GB",
+        price: 259.90,
+        iops: "Até 16.000 IOPS",
+        throughput: "500 MB/s",
+        description: "Para cargas de trabalho intensivas e aplicações críticas"
+      },
+      {
+        name: "Premium 1TB",
+        price: 499.90,
+        iops: "Até 16.000 IOPS",
+        throughput: "500 MB/s",
+        description: "Para cargas de trabalho intensivas e aplicações críticas"
+      }
+    ]
   };
 
-  useEffect(() => {
-    if (storageType && onSelectStorage) {
-      const price = calculatePrice();
-      onSelectStorage(storageTypes[storageType].name, capacityGB, price);
-    }
-  }, [storageType, capacityGB]);
-
-  const handleRemove = () => {
-    handleRemoveComponent("storage_external");
-    setStorageType("");
-    setCapacityGB(100);
+  const handleTierSelect = (tier: StorageTier) => {
+    onSelect(tier);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-start">
-        <StorageTypeSelector
-          storageTypes={storageTypes}
-          selectedType={storageType}
-          onTypeChange={(value) => setStorageType(value as keyof typeof storageTypes)}
-        />
-        {storageType && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRemove}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      {storageType && (
-        <div className="animate-fade-in space-y-6">
-          <CapacitySlider
-            capacity={capacityGB}
-            onCapacityChange={setCapacityGB}
-          />
-
-          <StorageSpecs
-            iops={storageTypes[storageType].iops}
-            throughput={storageTypes[storageType].throughput}
-            price={calculatePrice()}
-            description={storageTypes[storageType].description}
-          />
-        </div>
-      )}
-    </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Armazenamento Externo</CardTitle>
+        <CardDescription>
+          Adicione volumes de armazenamento externo para seus dados
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="standard" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="standard">Standard</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="premium">Premium</TabsTrigger>
+          </TabsList>
+          
+          {Object.entries(storageTiers).map(([key, tiers]) => (
+            <TabsContent key={key} value={key} className="space-y-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {tiers.map((tier) => (
+                  <div 
+                    key={tier.name}
+                    className={`cursor-pointer transition-all ${
+                      selectedTier === tier.name ? 'ring-2 ring-primary rounded-xl' : ''
+                    }`}
+                    onClick={() => handleTierSelect(tier)}
+                  >
+                    <StorageSpecs
+                      iops={tier.iops}
+                      throughput={tier.throughput}
+                      price={tier.price}
+                      description={tier.description}
+                    />
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }
