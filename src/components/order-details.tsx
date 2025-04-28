@@ -63,9 +63,13 @@ const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] =>
 
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
   const { storageItems, customServices } = useWizard();
+
+  // Separate DataCenter and Contract components
+  const dataCenterComponent = selectedComponents["datacenter"];
+  const contractComponent = selectedComponents["contrato"];
   
   // Filter non-storage components and handle OS price calculation
-  const nonStorageComponents = Object.values(selectedComponents).filter(
+  const otherComponents = Object.values(selectedComponents).filter(
     component => {
       // Skip storage components and components without prices
       if (component.type === "Armazenamento") return false;
@@ -86,8 +90,8 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   // Group storage disks
   const groupedInternalDisks = groupDisksByTypeAndCapacity(storageItems.internal);
   
-  // Calculate prices
-  const nonStoragePrice = nonStorageComponents.reduce(
+  // Calculate prices (excluding DataCenter and Contract)
+  const nonStoragePrice = otherComponents.reduce(
     (sum, component) => sum + component.price,
     0
   );
@@ -111,9 +115,6 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // Extract RAID info for internal disks
-  const hasRaidConfiguration = storageItems.internal.some(disk => disk.metadata?.raid?.type !== 'none');
-  
   return (
     <div className="space-y-6 animate-fade-in">
       <Card className="overflow-hidden border-primary/10 shadow-md hover:shadow-lg transition-shadow">
@@ -128,8 +129,61 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Regular components */}
-            {Object.values(selectedComponents).map((component) => (
+            {/* Data Center and Contract first */}
+            {dataCenterComponent && (
+              <div className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium flex items-center">
+                      {dataCenterComponent.name}
+                      <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                        {dataCenterComponent.type}
+                      </span>
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{dataCenterComponent.description}</p>
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">Incluído</span>
+                </div>
+                {dataCenterComponent.metadata?.features && (
+                  <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                    {dataCenterComponent.metadata.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <Check className="h-4 w-4 text-primary mr-2" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Separator className="mt-4" />
+              </div>
+            )}
+
+            {contractComponent && (
+              <div className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium flex items-center">
+                      {contractComponent.name}
+                      <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                        {contractComponent.type}
+                      </span>
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{contractComponent.description}</p>
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">Incluído</span>
+                </div>
+                {contractComponent.metadata?.discount && (
+                  <div className="mt-2 text-sm text-green-500 flex items-center">
+                    <Check className="h-4 w-4 mr-2" />
+                    Desconto de {contractComponent.metadata.discount}% incluído
+                  </div>
+                )}
+                <Separator className="mt-4" />
+              </div>
+            )}
+
+            {/* Other regular components */}
+            {otherComponents.map((component) => (
               <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
