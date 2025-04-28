@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { InternalStoragePanel } from "./InternalStoragePanel";
@@ -22,19 +21,17 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   const [activeTab, setActiveTab] = useState<string>("internal");
   const { handleSelectStorageItem, storageItems } = useWizard();
 
-  // Sync with global state on mount
-  useEffect(() => {
-    // No need to do anything on mount, just let the components handle their own state
-  }, []);
-
   const handleSelectInternalDiskInternal = (disk: PricedDiskOption, quantity: number) => {
+    // Create consistent ID without quantity to prevent duplicates
+    const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
+    
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.type}-${disk.capacity}`,
+      id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
       name: `${disk.type.toUpperCase()} ${disk.capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
-      price: disk.price,
+      price: disk.price * quantity,
       metadata: {
         quantity: quantity,
         features: [`Tipo: ${disk.type}`],
@@ -84,7 +81,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       <StorageHeader
         icon={HardDrive}
         title="Armazenamento"
-        tooltip="Escolha o tipo e capacidade de armazenamento ideal para seu servidor"
+        tooltip="Escolha o tipo e capacidade de armazenamento ideal para seu servidor. Você pode adicionar múltiplos discos internos de diferentes tipos."
       />
       
       <Tabs 

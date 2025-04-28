@@ -13,8 +13,7 @@ interface InternalStoragePanelProps {
 export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
   const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
   const [selectedCapacity, setSelectedCapacity] = useState("");
-  const [selectedDisk, setSelectedDisk] = useState<PricedDiskOption | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [selectedDisks, setSelectedDisks] = useState<Array<{disk: PricedDiskOption, quantity: number}>>([]);
 
   const availableDisks = selectedDiskType ? diskData.filter(disk => disk.type === selectedDiskType) : [];
 
@@ -22,45 +21,58 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     setSelectedCapacity(capacity);
     const disk = selectedDiskType && diskData.find(d => d.type === selectedDiskType && d.capacity === capacity);
     if (disk) {
-      setSelectedDisk(disk);
-      setQuantity(1);
+      // Check if this disk type and capacity combination already exists
+      const existingDisk = selectedDisks.find(
+        item => item.disk.type === disk.type && item.disk.capacity === capacity
+      );
+
+      if (existingDisk) {
+        toast.error("Este tipo e capacidade de disco já está selecionado");
+        return;
+      }
+
+      const newDisk = { disk, quantity: 1 };
+      setSelectedDisks(prev => [...prev, newDisk]);
+      
       if (onSelectDisk) {
         onSelectDisk(disk, 1);
       }
+
+      // Reset capacity but keep disk type for additional selections
+      setSelectedCapacity("");
+      toast.success("Disco adicionado com sucesso");
     }
   };
 
   const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
     setSelectedDiskType(type);
-    // Only reset capacity, keep the disk type selected
     setSelectedCapacity("");
-    if (selectedDisk) {
-      handleRemoveDisk(); // Clean up previous selection
-    }
   };
 
-  const handleQuantityChange = (newQuantity: number) => {
-    setQuantity(newQuantity);
-    if (selectedDisk && onSelectDisk) {
-      onSelectDisk(selectedDisk, newQuantity);
-    }
+  const handleQuantityChange = (diskId: string, newQuantity: number) => {
+    setSelectedDisks(prev => prev.map(item => {
+      if (item.disk.id === diskId) {
+        if (onSelectDisk) {
+          onSelectDisk(item.disk, newQuantity);
+        }
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }));
   };
 
-  const handleRemoveDisk = () => {
-    if (selectedDisk && onSelectDisk) {
-      // Envia um disco com preço 0 para sinalizar remoção
-      onSelectDisk({
-        ...selectedDisk,
-        price: 0
-      }, 0);
-
-      // Limpa apenas o disco selecionado e capacidade, mantém o tipo
-      setSelectedCapacity("");
-      setSelectedDisk(null);
-      setQuantity(1);
-
-      toast.success("Disco removido com sucesso");
+  const handleRemoveDisk = (diskId: string) => {
+    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+    if (onSelectDisk) {
+      const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
+      if (diskToRemove) {
+        onSelectDisk({
+          ...diskToRemove.disk,
+          price: 0
+        }, 0);
+      }
     }
+    toast.success("Disco removido com sucesso");
   };
 
   return (
@@ -78,14 +90,18 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         />
       </div>
 
-      {selectedDisk && (
-        <div className="animate-fade-in">
-          <SelectedDiskDisplay
-            disk={selectedDisk}
-            quantity={quantity}
-            onQuantityChange={handleQuantityChange}
-            onRemove={handleRemoveDisk}
-          />
+      {selectedDisks.length > 0 && (
+        <div className="space-y-4">
+          {selectedDisks.map((item) => (
+            <div key={item.disk.id} className="animate-fade-in">
+              <SelectedDiskDisplay
+                disk={item.disk}
+                quantity={item.quantity}
+                onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
+                onRemove={() => handleRemoveDisk(item.disk.id)}
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>
