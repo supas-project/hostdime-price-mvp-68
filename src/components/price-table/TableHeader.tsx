@@ -2,7 +2,11 @@
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { HelpTooltip } from "@/components/help-tooltip";
 
-export function PriceTableHeader() {
+interface PriceTableHeaderProps {
+  showActions?: boolean;
+}
+
+export function PriceTableHeader({ showActions = false }: PriceTableHeaderProps) {
   return (
     <TableHeader>
       <TableRow>
@@ -27,6 +31,11 @@ export function PriceTableHeader() {
             description="Valor base do componente sem descontos"
           />
         </TableHead>
+        {showActions && (
+          <TableHead className="w-[100px] text-right">
+            Ações
+          </TableHead>
+        )}
       </TableRow>
     </TableHeader>
   );
