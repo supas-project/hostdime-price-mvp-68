@@ -1,10 +1,10 @@
-
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useWizard } from "@/contexts/WizardContext";
+import { useState } from 'react';
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -23,6 +23,7 @@ export function SummaryCart({
   onNext,
   onComplete
 }: SummaryCartProps) {
+  
   const { toast } = useToast();
   const { storageItems, connectivityItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
