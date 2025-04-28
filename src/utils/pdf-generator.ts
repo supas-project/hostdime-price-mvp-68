@@ -1,7 +1,7 @@
-
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
+import { PDFStyles } from './pdf-styles';
 
 // Definição de cores da marca HostDime
 const PRIMARY_COLOR = rgb(0.96, 0.51, 0.13); // #f58220
@@ -41,55 +41,62 @@ export async function generateQuoteFromTemplate(
  * Adiciona a página de capa com logo da HostDime
  */
 async function addCoverPage(pdfDoc: PDFDocument, boldFont: any, font: any) {
-  const page = pdfDoc.addPage([595.276, 841.890]); // Tamanho A4
+  let page = pdfDoc.addPage([595.276, 841.890]); // A4
   const { width, height } = page.getSize();
   
-  // Fundo colorido na parte superior
+  // Fundo laranja gradiente
   page.drawRectangle({
     x: 0,
     y: height * 0.5,
     width: width,
     height: height * 0.5,
-    color: PRIMARY_COLOR,
+    color: PDFStyles.colors.primary
   });
-  
-  // Logo HostDime (posicionado como texto por enquanto)
+
+  // Logo e título
   page.drawText("HostDime", {
-    x: width / 2 - 80,
+    x: width / 2 - 100,
     y: height * 0.7,
-    size: 36,
+    size: PDFStyles.fontSize.title,
     font: boldFont,
-    color: WHITE
+    color: PDFStyles.colors.white
   });
-  
+
   page.drawText("PROPOSTA COMERCIAL", {
     x: width / 2 - 120,
     y: height * 0.6,
-    size: 24,
+    size: PDFStyles.fontSize.subtitle,
     font: boldFont,
-    color: WHITE
+    color: PDFStyles.colors.white
   });
-  
-  // Data do documento
+
+  // Data com estilo melhorado
   const today = new Date().toLocaleDateString('pt-BR');
   page.drawText(`Data: ${today}`, {
-    x: 50,
+    x: PDFStyles.spacing.pagePadding,
     y: height * 0.45,
-    size: 12,
+    size: PDFStyles.fontSize.body,
     font,
-    color: TEXT_COLOR
+    color: PDFStyles.colors.text
   });
-  
-  // Slogan
+
+  // Slogan com destaque
   page.drawText("ABRA ESPAÇO PARA A INOVAÇÃO", {
     x: width / 2 - 150,
     y: height * 0.2,
-    size: 20,
+    size: PDFStyles.fontSize.subtitle,
     font: boldFont,
-    color: PRIMARY_COLOR
+    color: PDFStyles.colors.primary
   });
-  
-  // Rodapé
+
+  // Linha decorativa
+  page.drawLine({
+    start: { x: PDFStyles.spacing.pagePadding, y: height * 0.15 },
+    end: { x: width - PDFStyles.spacing.pagePadding, y: height * 0.15 },
+    thickness: 2,
+    color: PDFStyles.colors.primary
+  });
+
   drawFooter(page, width, font);
 }
 
@@ -279,18 +286,18 @@ async function addQuotePage(
 ) {
   let page = pdfDoc.addPage([595.276, 841.890]);
   const { width, height } = page.getSize();
-  const margin_x = 50;
+  const margin_x = PDFStyles.spacing.pagePadding;
   let currentY = height - 80;
-  
-  // Cabeçalho da cotação
+
+  // Cabeçalho com estilo melhorado
   page.drawText("Proposta Comercial - Servidor Dedicado", {
     x: margin_x,
     y: currentY,
-    size: 24,
+    size: PDFStyles.fontSize.title,
     font: boldFont,
-    color: PRIMARY_COLOR,
+    color: PDFStyles.colors.primary
   });
-  
+
   currentY -= 30;
   
   page.drawText(`Data: ${new Date().toLocaleDateString('pt-BR')}`, {
@@ -318,15 +325,15 @@ async function addQuotePage(
   const tableTop = currentY;
   const tableWidth = width - 2 * margin_x;
   const colWidths = [0.35 * tableWidth, 0.5 * tableWidth, 0.15 * tableWidth];
-  const rowHeight = 25;
-  
-  // Cabeçalho da tabela
+  const rowHeight = 30; // Aumentado para melhor espaçamento
+
+  // Cabeçalho da tabela com fundo colorido
   page.drawRectangle({
     x: margin_x,
     y: currentY - rowHeight,
     width: tableWidth,
     height: rowHeight,
-    color: PRIMARY_COLOR,
+    color: PDFStyles.colors.primary
   });
   
   page.drawText("Componente", {
@@ -354,17 +361,17 @@ async function addQuotePage(
   });
   
   currentY -= rowHeight;
-  
-  // Corpo da tabela com os componentes
+
+  // Corpo da tabela com cores alternadas
   let rowColor = true;
   for (const [key, component] of Object.entries(selectedComponents)) {
-    // Desenhar fundo alternado das linhas
+    // Fundo alternado das linhas
     page.drawRectangle({
       x: margin_x,
       y: currentY - rowHeight,
       width: tableWidth,
       height: rowHeight,
-      color: rowColor ? rgb(0.95, 0.95, 0.95) : rgb(1, 1, 1),
+      color: rowColor ? PDFStyles.colors.lightGray : PDFStyles.colors.white
     });
     
     // Nome do componente
