@@ -11,6 +11,7 @@ interface Option {
   price: number;
   description?: string;
   specs?: string[];
+  type?: string;
 }
 
 interface OptionGroup {
@@ -38,6 +39,10 @@ export function ComponentSelector({
   highlightSelection,
   groupedOptions
 }: ComponentSelectorProps) {
+  const shouldShowPrice = (option: Option) => {
+    return option.type !== "DataCenter" && option.type !== "Contrato";
+  };
+
   const renderOption = (option: Option) => (
     <SelectItem
       key={option.id}
@@ -58,9 +63,11 @@ export function ComponentSelector({
             />
           )}
         </div>
-        <span className="text-[#f58220] font-medium whitespace-nowrap">
-          {formatCurrency(option.price)}
-        </span>
+        {shouldShowPrice(option) && (
+          <span className="text-[#f58220] font-medium whitespace-nowrap">
+            {formatCurrency(option.price)}
+          </span>
+        )}
       </div>
     </SelectItem>
   );

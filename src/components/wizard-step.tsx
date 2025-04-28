@@ -13,6 +13,9 @@ interface WizardStepProps {
 
 export function WizardStep({ component, selectedOption, onSelectOption }: WizardStepProps) {
   const IconComponent = (Icons as any)[component.icon] || Icons.HelpCircle;
+  const shouldShowPrice = (option: ComponentOption) => {
+    return option.type !== "DataCenter" && option.type !== "Contrato";
+  };
   
   return (
     <div className="wizard-step space-y-6">
@@ -65,7 +68,11 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
                 
                 <div className="flex items-center justify-between bg-black/30 p-2 rounded">
                   <span className="text-sm text-white truncate">{option.name}</span>
-                  <span className="text-[#f58220] font-medium whitespace-nowrap">{formatCurrency(option.price)}</span>
+                  {shouldShowPrice(option) && (
+                    <span className="text-[#f58220] font-medium whitespace-nowrap">
+                      {formatCurrency(option.price)}
+                    </span>
+                  )}
                 </div>
                 
                 {option.description && (

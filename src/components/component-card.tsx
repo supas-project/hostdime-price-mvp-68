@@ -1,10 +1,10 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { ComponentSelector } from "./component-selector";
 import { DataCenterContent } from "./wizard/accordion/content/DataCenterContent";
 import { ContractContent } from "./wizard/accordion/content/ContractContent";
 import { ConnectivityOptions } from "./connectivity-options";
+import { formatCurrency } from "@/lib/utils";
 
 interface ComponentCardProps {
   option: ComponentOption;
@@ -25,6 +25,10 @@ export function ComponentCard({
   selectedConnectivityItems = {},
   onUpdateConnectivityItems
 }: ComponentCardProps) {
+  const shouldShowPrice = (type?: string) => {
+    return type !== "DataCenter" && type !== "Contrato";
+  };
+
   // Handle specific component types
   switch (componentType) {
     case "DataCenter":
@@ -64,13 +68,19 @@ export function ComponentCard({
       className={`p-6 ${isSelected ? 'ring-1 ring-primary' : ''}`}
       onClick={() => option && onSelect(option)}
     >
-      <ComponentSelector
-        label={option?.name || ""}
-        options={[option].filter(Boolean) as ComponentOption[]}
-        value={option?.id || ""}
-        onChange={() => option && onSelect(option)}
-        tooltip={option?.description}
-      />
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <h3 className="font-medium">{option?.name}</h3>
+          {option?.description && (
+            <p className="text-sm text-muted-foreground">{option.description}</p>
+          )}
+        </div>
+        {shouldShowPrice(option?.type) && option?.price !== undefined && (
+          <span className="font-medium text-primary">
+            {formatCurrency(option.price)}
+          </span>
+        )}
+      </div>
     </Card>
   );
 }
