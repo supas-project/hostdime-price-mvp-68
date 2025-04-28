@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { diskData } from "@/data/disk-data";
 import { PricedDiskOption } from "@/types/storage";
@@ -33,9 +32,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
     setSelectedDiskType(type);
+    // Only reset capacity, keep the disk type selected
     setSelectedCapacity("");
-    setSelectedDisk(null);
-    setQuantity(1);
+    if (selectedDisk) {
+      handleRemoveDisk(); // Clean up previous selection
+    }
   };
 
   const handleQuantityChange = (newQuantity: number) => {
@@ -53,13 +54,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         price: 0
       }, 0);
 
-      // Limpa o estado local
-      setSelectedDiskType(undefined);
+      // Limpa apenas o disco selecionado e capacidade, mantém o tipo
       setSelectedCapacity("");
       setSelectedDisk(null);
       setQuantity(1);
 
-      // Notifica o usuário
       toast.success("Disco removido com sucesso");
     }
   };

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { InternalStoragePanel } from "./InternalStoragePanel";
 import { ExternalStoragePanel } from "./ExternalStoragePanel";
@@ -20,11 +20,16 @@ interface StorageSelectorProps {
 
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const [activeTab, setActiveTab] = useState<string>("internal");
-  const { handleSelectStorageItem } = useWizard();
+  const { handleSelectStorageItem, storageItems } = useWizard();
+
+  // Sync with global state on mount
+  useEffect(() => {
+    // No need to do anything on mount, just let the components handle their own state
+  }, []);
 
   const handleSelectInternalDiskInternal = (disk: PricedDiskOption, quantity: number) => {
     const storageOption: ComponentOption = {
-      id: `internal-disk-${disk.type}-${disk.capacity}`, // Changed to make ID consistent
+      id: `internal-disk-${disk.type}-${disk.capacity}`,
       type: "Armazenamento",
       subtype: "Disco Interno",
       name: `${disk.type.toUpperCase()} ${disk.capacity}`,
@@ -32,10 +37,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       price: disk.price,
       metadata: {
         quantity: quantity,
-        // Store disk type as a feature instead of as 'diskType' property
         features: [`Tipo: ${disk.type}`],
-        // Store capacity information in features as well
-        // This ensures we're using properties that exist in the ComponentOption interface
+        unitPrice: disk.price
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
@@ -87,7 +90,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       <Tabs 
         defaultValue="internal" 
         className="w-full"
-        onValueChange={(value) => setActiveTab(value)}
+        value={activeTab}
+        onValueChange={setActiveTab}
       >
         <TabHeader activeTab={activeTab} onTabChange={setActiveTab} />
         
@@ -99,7 +103,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
           </TabsContent>
           <TabsContent value="external" className="mt-0 relative z-10">
             <div className="animate-fade-in">
-              <ExternalStoragePanel onSelectStorage={handleSelectExternalStorageInternal} />
+              <ExternalStoragePanel onSelectStorage={onSelectExternalStorageInternal} />
             </div>
           </TabsContent>
         </div>
