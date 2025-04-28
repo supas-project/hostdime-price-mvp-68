@@ -44,8 +44,7 @@ const createMockClient = () => {
 // Inicializa o cliente Supabase ou um mock se as variáveis não estiverem disponíveis
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : createMockClient() as ReturnType<typeof createClient>;
+  : createMockClient() as unknown as ReturnType<typeof createClient>;
 
 // Função helper para verificar se o Supabase está corretamente configurado
 export const isSupabaseConfigured = () => !!(supabaseUrl && supabaseAnonKey);
-
