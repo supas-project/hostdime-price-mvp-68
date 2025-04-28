@@ -47,7 +47,7 @@ const itemFormSchema = z.object({
   price: z.coerce.number().min(0, { message: "Preço deve ser maior ou igual a zero" }),
   type: z.string().min(1, { message: "Tipo é obrigatório" }),
   subtype: z.string().optional(),
-  specs: z.string().optional().transform(val => val ? val.split('\n') : []),
+  specs: z.string().optional().transform(val => val ? val.split('\n') : []),  // Fix: Ensure this returns an array
 });
 
 const importFormSchema = z.object({
@@ -207,9 +207,11 @@ export default function PriceTable() {
     }
     
     try {
-      // Se specs vier como string, converta para array
-      const specs = typeof values.specs === 'string' ? [values.specs] : values.specs || [];
-      
+    // Fix: Ensure specs is always an array
+    // The type system expects an array, but our form returns either undefined or string[]
+    // This ensures we always provide a string[] even if the input is empty
+      const specs = Array.isArray(values.specs) ? values.specs : [];
+    
       // Garanta que todos os campos obrigatórios estejam presentes
       const itemData: Omit<PriceItem, 'id'> = {
         name: values.name,

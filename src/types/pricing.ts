@@ -36,5 +36,5 @@ export interface PriceItemFormData {
   price: number;
   type: string;
   subtype?: string;
-  specs?: string[];
+  specs?: string[];  // Updated to match PriceItem interface
 }
