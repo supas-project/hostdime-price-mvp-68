@@ -52,6 +52,7 @@ export function AccordionStep({
             <AccordionHeader
               icon={component.icon}
               title={component.friendlyName}
+              description={component.description}
               isExpanded={isExpanded}
               isActive={isActive}
               isComplete={isComplete}
