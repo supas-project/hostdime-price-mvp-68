@@ -1,9 +1,9 @@
 
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { ComponentSelector } from "./component-selector";
-import { DataCenterCard } from "./data-center-card";
-import { ContractDuration } from "./contract-duration";
+import { DataCenterContent } from "./wizard/accordion/content/DataCenterContent";
+import { ContractContent } from "./wizard/accordion/content/ContractContent";
 import { ConnectivityOptions } from "./connectivity-options";
 
 interface ComponentCardProps {
@@ -29,7 +29,7 @@ export function ComponentCard({
   switch (componentType) {
     case "DataCenter":
       return (
-        <DataCenterCard
+        <DataCenterContent
           options={options}
           selectedOption={isSelected ? option : null}
           onSelectOption={onSelect}
@@ -38,7 +38,7 @@ export function ComponentCard({
       
     case "Contrato":
       return (
-        <ContractDuration
+        <ContractContent
           options={options}
           selectedOption={isSelected ? option : null}
           onSelectOption={onSelect}
