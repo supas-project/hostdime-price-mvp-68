@@ -5,6 +5,7 @@ import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
 import { DiskCapacitySelector } from "./disk-selection/DiskCapacitySelector";
 import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
+import { toast } from "sonner";
 
 interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -45,19 +46,21 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   };
 
   const handleRemoveDisk = () => {
-    setSelectedDiskType(undefined);
-    setSelectedCapacity("");
-    setSelectedDisk(null);
-    setQuantity(1);
-    if (onSelectDisk) {
+    if (selectedDisk && onSelectDisk) {
+      // Envia um disco com preço 0 para sinalizar remoção
       onSelectDisk({
-        id: "",
-        type: "ssd",
-        capacity: "",
-        price: 0,
-        specs: { readSpeed: "", writeSpeed: "", iops: "" },
-        recommended: []
+        ...selectedDisk,
+        price: 0
       }, 0);
+
+      // Limpa o estado local
+      setSelectedDiskType(undefined);
+      setSelectedCapacity("");
+      setSelectedDisk(null);
+      setQuantity(1);
+
+      // Notifica o usuário
+      toast.success("Disco removido com sucesso");
     }
   };
 

@@ -28,24 +28,26 @@ export function SummaryCart({
   const { storageItems, connectivityItems } = useWizard();
   const [isNextAnimating, setIsNextAnimating] = useState(false);
   
-  // Calculate prices excluding DataCenter and Contract
+  // Calcula preços excluindo DataCenter e Contract, e filtrando itens inválidos
   const standardComponentsPrice = Object.values(selectedComponents).reduce(
     (sum, component) => {
-      if (component.type === "DataCenter" || component.type === "Contrato") return sum;
+      if (!component || component.type === "DataCenter" || component.type === "Contrato" || !component.price) {
+        return sum;
+      }
       return sum + component.price;
     },
     0
   );
   
-  const internalStoragePrice = storageItems.internal.reduce(
-    (sum, disk) => sum + disk.price,
-    0
-  );
+  // Calcula preço do armazenamento interno, filtrando itens inválidos
+  const internalStoragePrice = storageItems.internal
+    .filter(disk => disk && disk.price > 0)
+    .reduce((sum, disk) => sum + disk.price, 0);
   
-  const externalStoragePrice = storageItems.external.reduce(
-    (sum, storage) => sum + storage.price,
-    0
-  );
+  // Calcula preço do armazenamento externo, filtrando itens inválidos
+  const externalStoragePrice = storageItems.external
+    .filter(storage => storage && storage.price > 0)
+    .reduce((sum, storage) => sum + storage.price, 0);
 
   const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice;
 
@@ -74,44 +76,54 @@ export function SummaryCart({
       </div>
       
       <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
-        {Object.values(selectedComponents).map((component) => (
-          <div key={component.id} className="flex justify-between items-center group animate-fade-in">
-            <p className="text-sm font-medium">{component.name}</p>
-            {component.type !== "DataCenter" && component.type !== "Contrato" && (
-              <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
-            )}
-          </div>
-        ))}
+        {/* Componentes padrão */}
+        {Object.values(selectedComponents)
+          .filter(component => component && component.price > 0)
+          .map((component) => (
+            <div key={component.id} className="flex justify-between items-center group animate-fade-in">
+              <p className="text-sm font-medium">{component.name}</p>
+              {component.type !== "DataCenter" && component.type !== "Contrato" && (
+                <p className="text-sm font-medium">{formatCurrency(component.price)}</p>
+              )}
+            </div>
+          ))}
         
-        {/* Storage components - simplified */}
-        {storageItems.internal.map((disk) => (
-          <div key={disk.id} className="flex justify-between items-center group animate-fade-in">
-            <p className="text-sm font-medium">
-              {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                `${disk.metadata.quantity}x ${disk.name}` : 
-                disk.name
-              }
-            </p>
-            <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
-          </div>
-        ))}
+        {/* Armazenamento interno */}
+        {storageItems.internal
+          .filter(disk => disk && disk.price > 0)
+          .map((disk) => (
+            <div key={disk.id} className="flex justify-between items-center group animate-fade-in">
+              <p className="text-sm font-medium">
+                {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
+                  `${disk.metadata.quantity}x ${disk.name}` : 
+                  disk.name
+                }
+              </p>
+              <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+            </div>
+          ))}
         
-        {storageItems.external.map((storage) => (
-          <div key={storage.id} className="flex justify-between items-center group animate-fade-in">
-            <p className="text-sm font-medium">{storage.name}</p>
-            <p className="text-sm font-medium">{formatCurrency(storage.price)}</p>
-          </div>
-        ))}
+        {/* Armazenamento externo */}
+        {storageItems.external
+          .filter(storage => storage && storage.price > 0)
+          .map((storage) => (
+            <div key={storage.id} className="flex justify-between items-center group animate-fade-in">
+              <p className="text-sm font-medium">{storage.name}</p>
+              <p className="text-sm font-medium">{formatCurrency(storage.price)}</p>
+            </div>
+          ))}
         
-        {/* Connectivity items - simplified */}
-        {Object.values(connectivityItems).map((item) => (
-          <div key={item.option.id} className="flex justify-between items-center group animate-fade-in">
-            <p className="text-sm font-medium">
-              {item.quantity > 1 ? `${item.quantity}x ${item.option.name}` : item.option.name}
-            </p>
-            <p className="text-sm font-medium">{formatCurrency(item.option.price * item.quantity)}</p>
-          </div>
-        ))}
+        {/* Itens de conectividade */}
+        {Object.values(connectivityItems)
+          .filter(item => item && item.option && item.option.price > 0)
+          .map((item) => (
+            <div key={item.option.id} className="flex justify-between items-center group animate-fade-in">
+              <p className="text-sm font-medium">
+                {item.quantity > 1 ? `${item.quantity}x ${item.option.name}` : item.option.name}
+              </p>
+              <p className="text-sm font-medium">{formatCurrency(item.option.price * item.quantity)}</p>
+            </div>
+          ))}
       </div>
       
       <div className="p-4 border-t border-border">

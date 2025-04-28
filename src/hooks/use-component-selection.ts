@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ComponentOption, StorageItems } from "@/types/component";
 import { toast } from "sonner";
+import { PricedDiskOption } from "@/types/storage";
 
 export function useComponentSelection() {
   const [selectedComponents, setSelectedComponents] = useState<{ [key: string]: ComponentOption }>({});
@@ -44,42 +45,48 @@ export function useComponentSelection() {
   };
 
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
-    console.log("Selecting storage item:", option, storageType);
-    
-    if (storageType === 'internal') {
-      setStorageItems(prev => {
-        const existingItems = [...prev.internal];
-        const existingIndex = existingItems.findIndex(item => item.id === option.id);
-        
-        if (existingIndex >= 0) {
-          const existingItem = existingItems[existingIndex];
-          const updatedItem = {
-            ...option,
-            price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1),
-            metadata: {
-              ...option.metadata,
-              raid: existingItem.metadata?.raid
-            }
+    if (!option || !option.id) {
+      console.error("Invalid storage option:", option);
+      return;
+    }
+
+    setStorageItems(prev => {
+      if (storageType === 'internal') {
+        // Se o preço for 0, significa que estamos removendo o disco
+        if (option.price === 0) {
+          return {
+            ...prev,
+            internal: prev.internal.filter(disk => disk.id !== option.id)
           };
-          existingItems[existingIndex] = updatedItem;
+        }
+
+        const existingIndex = prev.internal.findIndex(item => item.id === option.id);
+        const updatedItems = [...prev.internal];
+
+        if (existingIndex >= 0) {
+          updatedItems[existingIndex] = {
+            ...option,
+            price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
+          };
         } else {
-          existingItems.push({
+          updatedItems.push({
             ...option,
             price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
           });
         }
-        
+
         return {
           ...prev,
-          internal: existingItems
+          internal: updatedItems
         };
-      });
-    } else {
-      setStorageItems(prev => ({
-        ...prev,
-        external: [option]
-      }));
-    }
+      } else {
+        // Para storage externo, mantemos apenas um item
+        return {
+          ...prev,
+          external: option.price === 0 ? [] : [option]
+        };
+      }
+    });
   };
 
   const handleRemoveComponent = (type: string) => {
@@ -90,18 +97,19 @@ export function useComponentSelection() {
         ...prev,
         internal: []
       }));
+      toast.success("Armazenamento interno removido");
     } else if (type === "storage_external") {
       setStorageItems(prev => ({
         ...prev,
         external: []
       }));
+      toast.success("Storage externo removido");
     } else if (type.includes("network-") || type.includes("ip-")) {
       setConnectivityItems(prev => {
         const newItems = { ...prev };
         delete newItems[type];
         return newItems;
       });
-      
       toast.success("Componente removido com sucesso");
     } else if (type.includes("custom-service-")) {
       removeCustomService(type);
@@ -109,9 +117,7 @@ export function useComponentSelection() {
       setSelectedComponents((prev) => {
         const updated = { ...prev };
         delete updated[type];
-        
         toast.success("Componente removido com sucesso");
-        
         return updated;
       });
     }
