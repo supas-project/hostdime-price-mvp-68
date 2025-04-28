@@ -1,6 +1,8 @@
 
 import { PriceService } from "./price-service";
 import { diskData } from "@/data/disk-data";
+import { cpuComponents } from "@/data/cpu-components";
+import { memoryComponents } from "@/data/memory-components";
 
 /**
  * Serviço responsável por sincronizar dados entre componentes e a tabela de preços
@@ -13,6 +15,12 @@ const ComponentSyncService = {
     console.log("Inicializando dados da tabela de preços...");
     
     try {
+      // Adicionar dados de CPUs
+      ComponentSyncService.syncCpuData();
+      
+      // Adicionar dados de memória
+      ComponentSyncService.syncMemoryData();
+      
       // Adicionar dados de discos usando o método próprio do serviço
       ComponentSyncService.syncDiskData();
       
@@ -22,6 +30,98 @@ const ComponentSyncService = {
       console.log("Dados da tabela de preços inicializados com sucesso!");
     } catch (error) {
       console.error("Erro ao inicializar dados da tabela de preços:", error);
+    }
+  },
+  
+  /**
+   * Sincroniza dados de CPUs com a tabela de preços
+   */
+  syncCpuData: () => {
+    try {
+      // Verificar se a categoria já existe
+      let cpuCategory = PriceService.getCategory('cpu');
+      
+      if (!cpuCategory) {
+        // Criar categoria se não existir
+        cpuCategory = PriceService.addCategory({
+          name: 'Processadores',
+          items: []
+        });
+      }
+      
+      // Adicionar itens de CPU à categoria
+      cpuComponents.options.forEach(cpu => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = cpuCategory?.items.filter(item => 
+            item.id === cpu.id
+          ) || [];
+          
+          if (existingItems.length === 0 && cpuCategory) {
+            // Adicionar novo item
+            PriceService.addItem('cpu', {
+              id: cpu.id,
+              name: cpu.name,
+              description: cpu.description || `Processador ${cpu.name}`,
+              price: cpu.price,
+              specs: cpu.specs || [],
+              type: cpu.type || 'Processador'
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar CPU ${cpu.id}:`, err);
+        }
+      });
+      
+      console.log("Dados de CPUs sincronizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados de CPUs:", error);
+    }
+  },
+  
+  /**
+   * Sincroniza dados de memória com a tabela de preços
+   */
+  syncMemoryData: () => {
+    try {
+      // Verificar se a categoria já existe
+      let memoryCategory = PriceService.getCategory('memory');
+      
+      if (!memoryCategory) {
+        // Criar categoria se não existir
+        memoryCategory = PriceService.addCategory({
+          name: 'Memória',
+          items: []
+        });
+      }
+      
+      // Adicionar itens de memória à categoria
+      memoryComponents.options.forEach(memory => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = memoryCategory?.items.filter(item => 
+            item.id === memory.id
+          ) || [];
+          
+          if (existingItems.length === 0 && memoryCategory) {
+            // Adicionar novo item
+            PriceService.addItem('memory', {
+              id: memory.id,
+              name: memory.name,
+              description: memory.description || `Memória ${memory.name}`,
+              price: memory.price,
+              specs: memory.specs || [],
+              type: "Memória"
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar memória ${memory.id}:`, err);
+        }
+      });
+      
+      console.log("Dados de memória sincronizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados de memória:", error);
     }
   },
   

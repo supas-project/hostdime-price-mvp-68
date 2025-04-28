@@ -24,6 +24,9 @@ export const initializeServices = () => {
       ComponentSyncService.initializePriceData();
     } else {
       console.log("Dados da tabela de preços já existem. Sincronizando...");
+      // Verificar se precisa atualizar CPUs e memória também durante a sincronização
+      if (!hasCpuData) ComponentSyncService.syncCpuData();
+      if (!hasMemoryData) ComponentSyncService.syncMemoryData();
     }
   } catch (error) {
     console.error("Erro durante inicialização de serviços:", error);

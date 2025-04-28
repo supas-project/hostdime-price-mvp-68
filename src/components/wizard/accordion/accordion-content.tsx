@@ -34,7 +34,6 @@ export function AccordionContent({
       case "Processador":
         return (
           <ProcessorContent
-            options={component.options}
             selectedOption={selectedOption}
             onSelectOption={onSelectOption}
           />

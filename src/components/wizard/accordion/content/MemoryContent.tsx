@@ -1,9 +1,14 @@
-import { ComponentOption } from "@/types/component";
-import { HelpTooltip } from "@/components/help-tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
-import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
+import { ComponentOption } from "@/types/component";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MemoryStick } from "lucide-react";
+import { HelpTooltip } from "@/components/help-tooltip";
+import { formatCurrency } from "@/lib/utils";
+import { useComponentOptions } from "@/hooks/use-component-options";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -11,111 +16,85 @@ interface MemoryContentProps {
 }
 
 export function MemoryContent({ selectedOption, onSelectOption }: MemoryContentProps) {
-  const memoryValues = [64, 128, 256, 512, 768, 1024];
-  const pricePerGB = 7.5;
+  const { options, isLoading, error } = useComponentOptions('memory');
 
-  // Keep track of the current selection for controlled select
-  const [currentValue, setCurrentValue] = useState<string>(selectedOption?.id || '64');
-
-  const getMemorySpecs = (memorySize: number) => ({
-    type: memorySize >= 512 ? "DDR4 ECC Load Reduced DIMM" : "DDR4 ECC Registered",
-    speed: "3200 MHz",
-    channels: "Quad Channel",
-    ecc: "Error Correction Code (ECC)",
-    bandwidth: memorySize >= 512 ? "Alta performance com otimização para grandes volumes" : "Performance ideal para cargas de trabalho padrão"
-  });
-
-  const formatMemorySize = (size: number): string => {
-    return size >= 1024 ? `${size / 1024}TB` : `${size}GB`;
-  };
-
-  const createMemoryOption = (memorySize: number): ComponentOption => ({
-    id: `${memorySize}`,
-    type: "memoria",
-    name: `${formatMemorySize(memorySize)} RAM`,
-    description: `Memória RAM ${getMemorySpecs(memorySize).type}`,
-    price: memorySize * pricePerGB,
-    specs: [
-      `${formatMemorySize(memorySize)} Total`,
-      `Tipo: ${getMemorySpecs(memorySize).type}`,
-      `Velocidade: ${getMemorySpecs(memorySize).speed}`,
-      getMemorySpecs(memorySize).channels,
-      getMemorySpecs(memorySize).ecc
-    ]
-  });
-
-  // Set initial selection if none exists
+  // Notify about errors
   useEffect(() => {
-    if (!selectedOption) {
-      const defaultOption = createMemoryOption(64);
-      onSelectOption(defaultOption);
-      setCurrentValue('64');
-    } else {
-      // Sync current value with selected option
-      setCurrentValue(selectedOption.id);
+    if (error) {
+      toast.error("Erro ao carregar opções de memória", {
+        description: "Não foi possível carregar a lista de memória disponível."
+      });
     }
-  }, [selectedOption]);
-
-  const handleMemoryChange = (value: string) => {
-    const memorySize = parseInt(value);
-    const newOption = createMemoryOption(memorySize);
-    setCurrentValue(value);
-    onSelectOption(newOption);
-  };
+  }, [error]);
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <MemoryStick className="h-5 w-5 text-[#f58220]" />
+            <div className="text-base font-medium text-white">Memória</div>
+          </div>
+          <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
+          <Skeleton className="h-4 w-2/3 bg-[#2a2a2a]" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-base font-medium">Memória RAM</h3>
-        <HelpTooltip
-          title="Memória RAM"
-          description="A quantidade de memória RAM determina quantos programas e dados podem ser processados simultaneamente. Mais memória significa melhor performance em cargas de trabalho intensivas."
-          iconOnly
-        />
-      </div>
+    <Card className="p-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <MemoryStick className="h-5 w-5 text-[#f58220]" />
+          <label className="text-base font-medium text-white flex items-center gap-2">
+            Memória
+            <HelpTooltip
+              title="Sobre: Memória"
+              description="Escolha a quantidade de memória RAM para seu servidor. Mais memória permite executar mais aplicações simultâneas ou processar volumes maiores de dados."
+              iconOnly
+            />
+          </label>
+        </div>
 
-      <Select
-        value={currentValue}
-        onValueChange={handleMemoryChange}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecione a quantidade de memória RAM" />
-        </SelectTrigger>
-        <SelectContent>
-          {memoryValues.map((size) => {
-            const specs = getMemorySpecs(size);
-            const formattedSize = formatMemorySize(size);
-            
-            return (
+        <Select 
+          value={selectedOption?.id || ""}
+          onValueChange={(value) => {
+            const option = options.find(opt => opt.id === value);
+            if (option) onSelectOption(option);
+          }}
+        >
+          <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
+            <SelectValue placeholder="Escolha a memória ideal para você" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+            {options.map((option) => (
               <SelectItem
-                key={size}
-                value={size.toString()}
-                className="flex items-center justify-between group py-3"
+                key={option.id}
+                value={option.id}
+                className="flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
               >
-                <div className="flex items-center justify-between w-full gap-4">
+                <div className="flex justify-between items-center w-full gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{formattedSize} RAM</span>
-                    <HelpTooltip
-                      title={`${formattedSize} RAM`}
-                      description={`
-                        • Tipo: ${specs.type}
-                        • Velocidade: ${specs.speed}
-                        • ${specs.channels}
-                        • ${specs.ecc}
-                        • ${specs.bandwidth}
-                      `}
-                      iconOnly
-                    />
+                    <span>{option.name}</span>
+                    {option.specs && option.specs.length > 0 && (
+                      <HelpTooltip
+                        title={option.name}
+                        description={option.specs.join('\n')}
+                        iconOnly
+                      />
+                    )}
                   </div>
-                  <span className="text-primary font-medium">
-                    {formatCurrency(size * pricePerGB)}
+                  <span className="text-[#f58220] font-medium whitespace-nowrap">
+                    {formatCurrency(option.price)}
                   </span>
                 </div>
               </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </Card>
   );
 }
