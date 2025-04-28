@@ -1,4 +1,3 @@
-
 import { ServerComponent } from "@/types/component";
 
 export const connectivityComponents: ServerComponent = {
@@ -6,7 +5,7 @@ export const connectivityComponents: ServerComponent = {
   type: "Conectividade",
   friendlyName: "Opções de Conectividade",
   description: "Configure a porta de rede e bloco IP do seu servidor",
-  icon: "Network",
+  icon: "network",
   options: [
     {
       id: "network-1gbps",

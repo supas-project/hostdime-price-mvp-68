@@ -1,4 +1,3 @@
-
 import { ServerComponent } from "@/types/component";
 
 export const memoryComponents: ServerComponent = {
@@ -6,7 +5,7 @@ export const memoryComponents: ServerComponent = {
   type: "Memória",
   friendlyName: "Memória RAM",
   description: "Escolha a quantidade de memória RAM",
-  icon: "memory-stick",
+  icon: "memory",
   options: [
     {
       id: "ram-base",
@@ -18,3 +17,4 @@ export const memoryComponents: ServerComponent = {
     }
   ]
 };
+

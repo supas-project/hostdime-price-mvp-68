@@ -6,6 +6,6 @@ export const customServicesComponent: ServerComponent = {
   type: "ServiçosPersonalizados",
   friendlyName: "Serviços Adicionais",
   description: "Adicione serviços personalizados ao seu servidor",
-  icon: "plus",
+  icon: "database",
   options: [] // As opções são dinâmicas
 };

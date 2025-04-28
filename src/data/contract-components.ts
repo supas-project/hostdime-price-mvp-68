@@ -1,4 +1,3 @@
-
 import { ServerComponent } from "@/types/component";
 
 export const contractComponents: ServerComponent = {
@@ -6,7 +5,7 @@ export const contractComponents: ServerComponent = {
   type: "Contrato",
   friendlyName: "Duração do Contrato",
   description: "Escolha a duração do seu contrato para obter descontos",
-  icon: "file-text",
+  icon: "clock",
   options: [
     {
       id: "contract-0",
