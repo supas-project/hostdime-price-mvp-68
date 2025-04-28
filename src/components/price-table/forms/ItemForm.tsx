@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,24 +14,34 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+// Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
   name: z.string().min(3, { message: "Nome do item deve ter pelo menos 3 caracteres" }),
   description: z.string().min(3, { message: "Descrição deve ter pelo menos 3 caracteres" }),
   price: z.coerce.number().min(0, { message: "Preço deve ser maior ou igual a zero" }),
   type: z.string().min(1, { message: "Tipo é obrigatório" }),
   subtype: z.string().optional(),
-  specs: z.string()
-    .optional()
-    .transform(val => val ? val.split('\n').filter(Boolean) : []),
+  specs: z.preprocess(
+    // Garantir que a entrada seja transformada em array
+    (val): string[] => {
+      if (typeof val === 'string') {
+        return val.split('\n').filter(Boolean);
+      }
+      return [];
+    },
+    z.array(z.string())
+  ),
 });
 
+type FormValues = z.infer<typeof itemFormSchema>;
+
 type ItemFormProps = {
-  onSubmit: (values: z.infer<typeof itemFormSchema>) => void;
+  onSubmit: (values: FormValues) => void;
   defaultType?: string;
 };
 
 export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
-  const form = useForm<z.infer<typeof itemFormSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
       name: "",
@@ -40,7 +49,7 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
       price: 0,
       type: defaultType || "",
       subtype: "",
-      specs: "",
+      specs: [], // Inicializa specs como array vazio
     },
   });
 
@@ -121,6 +130,7 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="specs"
@@ -131,7 +141,8 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
                 <Textarea 
                   placeholder="Adicione especificações técnicas (uma por linha)" 
                   className="min-h-[100px]"
-                  {...field} 
+                  value={Array.isArray(field.value) ? field.value.join('\n') : ''}
+                  onChange={e => field.onChange(e.target.value)}
                 />
               </FormControl>
               <FormDescription>
@@ -141,6 +152,7 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
             </FormItem>
           )}
         />
+
         <div className="flex justify-end pt-2">
           <Button type="submit">Adicionar Item</Button>
         </div>
