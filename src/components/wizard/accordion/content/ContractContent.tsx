@@ -1,6 +1,7 @@
 
-import { ContractDuration } from "@/components/contract-duration";
+import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
+import { Card } from "@/components/ui/card";
 
 interface ContractContentProps {
   options: ComponentOption[];
@@ -14,10 +15,18 @@ export function ContractContent({
   onSelectOption 
 }: ContractContentProps) {
   return (
-    <ContractDuration
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={onSelectOption}
-    />
+    <Card className="p-6">
+      <ComponentSelector
+        label="Duração do Contrato"
+        options={options}
+        value={selectedOption?.id || ""}
+        onChange={(value) => {
+          const option = options.find(opt => opt.id === value);
+          if (option) onSelectOption(option);
+        }}
+        tooltip="Escolha o período do seu contrato"
+        highlightSelection={true}
+      />
+    </Card>
   );
 }

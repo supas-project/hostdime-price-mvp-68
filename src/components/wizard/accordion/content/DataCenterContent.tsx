@@ -1,6 +1,7 @@
 
-import { DataCenterCard } from "@/components/data-center-card";
+import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
+import { Card } from "@/components/ui/card";
 
 interface DataCenterContentProps {
   options: ComponentOption[];
@@ -14,10 +15,18 @@ export function DataCenterContent({
   onSelectOption 
 }: DataCenterContentProps) {
   return (
-    <DataCenterCard
-      options={options}
-      selectedOption={selectedOption}
-      onSelectOption={onSelectOption}
-    />
+    <Card className="p-6">
+      <ComponentSelector
+        label="Data Center"
+        options={options}
+        value={selectedOption?.id || ""}
+        onChange={(value) => {
+          const option = options.find(opt => opt.id === value);
+          if (option) onSelectOption(option);
+        }}
+        tooltip="Escolha a localização ideal para seu servidor"
+        highlightSelection={true}
+      />
+    </Card>
   );
 }
