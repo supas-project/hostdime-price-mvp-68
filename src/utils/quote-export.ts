@@ -18,7 +18,7 @@ export const generateQuotePDF = async (
     // Criar link para download
     const link = document.createElement('a');
     link.href = url;
-    link.download = `cotacao-servidor-${new Date().toISOString().split('T')[0]}.pdf`;
+    link.download = `HostDime-Proposta-${new Date().toISOString().split('T')[0]}.pdf`;
     
     // Simular clique para download
     document.body.appendChild(link);
