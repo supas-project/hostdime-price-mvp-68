@@ -1,6 +1,6 @@
 
 import { ComponentOption } from "@/types/component";
-import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -59,8 +59,7 @@ const drawSectionHeader = (
     height: size + 10,
     color: COLOR.PRIMARY,
     borderWidth: 0,
-    opacity: 0.1,
-    borderRadius: 4
+    opacity: 0.1
   });
   
   // Draw the actual text
@@ -90,9 +89,8 @@ const drawHighlightBox = (
     height,
     color: COLOR.HIGHLIGHT,
     borderWidth: 1,
-    borderColor: COLOR.PRIMARY.clone({ a: 0.3 }),
-    opacity: 0.7,
-    borderRadius: 4
+    borderColor: rgb(COLOR.PRIMARY.r, COLOR.PRIMARY.g, COLOR.PRIMARY.b, 0.3),
+    opacity: 0.7
   });
 };
 
@@ -107,7 +105,7 @@ const drawSeparator = (
     start: { x, y },
     end: { x: x + width, y },
     thickness: 0.5,
-    color: COLOR.SECONDARY.clone({ a: 0.2 }),
+    color: rgb(COLOR.SECONDARY.r, COLOR.SECONDARY.g, COLOR.SECONDARY.b, 0.2),
     opacity: 0.8
   });
 };
@@ -129,10 +127,10 @@ export const generateQuotePDF = async (
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesBold);
+    const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     
     // Set up the first page of the PDF
-    const page = pdfDoc.addPage([595.276, 841.890]); // A4 dimensions
+    let page = pdfDoc.addPage([595.276, 841.890]); // A4 dimensions
     const { width, height } = page.getSize();
     
     // Page margins
@@ -169,7 +167,7 @@ export const generateQuotePDF = async (
         x: marginRight - 220,
         y: currentY - 20,
         size: 20,
-        font: timesBold,
+        font: timesRomanBold,
         color: COLOR.SECONDARY
       });
       
@@ -218,7 +216,7 @@ export const generateQuotePDF = async (
       y: 40,
       width: width - (marginX * 2) + 20,
       height: height - 80,
-      borderColor: COLOR.PRIMARY.clone({ a: 0.15 }),
+      borderColor: rgb(COLOR.PRIMARY.r, COLOR.PRIMARY.g, COLOR.PRIMARY.b, 0.15),
       borderWidth: 1,
       color: COLOR.WHITE
     });
@@ -916,7 +914,7 @@ export const generateQuotePDF = async (
         y: footerY,
         size: 8,
         font: helveticaOblique,
-        color: COLOR.TEXT_LIGHT.clone({ a: 0.6 })
+        color: rgb(COLOR.TEXT_LIGHT.r, COLOR.TEXT_LIGHT.g, COLOR.TEXT_LIGHT.b, 0.6)
       });
       
       // Add page number
