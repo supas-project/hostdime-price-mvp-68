@@ -1,28 +1,16 @@
-
 import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileUp, FileText, Save, HelpCircle } from "lucide-react";
+import { FileUp, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface PriceData {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  specs?: string[];
-}
-
-interface PriceCategoryData {
-  id: string;
-  name: string;
-  items: PriceData[];
-}
+import { PriceTableHeader } from "@/components/price-table/TableHeader";
+import { TableContent } from "@/components/price-table/TableContent";
+import { PriceData } from "@/types/pricing";
+import { serverData } from "@/data/server-components";
 
 export default function PriceTable() {
-  const [priceData, setPriceData] = useState<{[key: string]: PriceCategoryData}>({
+  const [priceData, setPriceData] = useState<PriceData>({
     cpu: { id: 'cpu', name: 'Processadores', items: [] },
     disk: { id: 'disk', name: 'Discos', items: [] },
     memory: { id: 'memory', name: 'Memória', items: [] },
@@ -33,76 +21,92 @@ export default function PriceTable() {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const validatePriceData = (data: PriceData): boolean => {
+    try {
+      // Basic validation rules
+      for (const category of Object.values(data)) {
+        if (!category.id || !category.name) return false;
+        
+        for (const item of category.items) {
+          if (!item.id || !item.name || typeof item.price !== 'number') {
+            return false;
+          }
+        }
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     
-    // Mock file upload and parse - in a real app, this would parse actual XLSX data
-    setTimeout(() => {
-      // Mockup data that would come from XLSX parsing
-      const mockupData = {
+    try {
+      const mockupData: PriceData = {
         cpu: {
           id: 'cpu',
           name: 'Processadores',
-          items: [
-            { id: 'cpu1', name: 'Intel Core i5', description: '4 núcleos, 3.5GHz', price: 120 },
-            { id: 'cpu2', name: 'Intel Core i7', description: '8 núcleos, 4.0GHz', price: 230 },
-            { id: 'cpu3', name: 'Intel Xeon', description: '16 núcleos, 4.5GHz', price: 450 }
-          ]
-        },
-        disk: {
-          id: 'disk',
-          name: 'Discos',
-          items: [
-            { id: 'disk1', name: 'SSD 500GB', description: 'Leitura: 550MB/s', price: 90 },
-            { id: 'disk2', name: 'SSD 1TB', description: 'Leitura: 550MB/s', price: 150 },
-            { id: 'disk3', name: 'NVMe 500GB', description: 'Leitura: 3500MB/s', price: 180 }
-          ]
+          items: serverData.componentes.find(c => c.type === "Processador")?.options || []
         },
         memory: {
           id: 'memory',
           name: 'Memória',
-          items: [
-            { id: 'ram1', name: '8GB DDR4', description: '2666MHz', price: 60 },
-            { id: 'ram2', name: '16GB DDR4', description: '3200MHz', price: 120 },
-            { id: 'ram3', name: '32GB DDR4', description: '3600MHz', price: 240 }
-          ]
+          items: serverData.componentes.find(c => c.type === "Memória")?.options || []
+        },
+        disk: {
+          id: 'disk',
+          name: 'Discos',
+          items: []
         },
         chassis: {
           id: 'chassis',
           name: 'Chassi',
-          items: [
-            { id: 'case1', name: 'Rack 1U', description: '4 slots, até 64GB RAM', price: 200 },
-            { id: 'case2', name: 'Rack 2U', description: '8 slots, até 128GB RAM', price: 350 }
-          ]
+          items: []
         },
         contract: {
           id: 'contract',
           name: 'Contratos',
-          items: [
-            { id: 'cont1', name: '12 meses', description: 'Payback: 9 meses', price: 0 },
-            { id: 'cont2', name: '24 meses', description: 'Payback: 7 meses', price: 0 }
-          ]
+          items: []
         }
       };
-      
+
+      if (!validatePriceData(mockupData)) {
+        throw new Error("Dados inválidos no arquivo");
+      }
+
       setPriceData(mockupData);
-      setIsUploading(false);
-      
       toast({
         title: "Tabela importada com sucesso",
-        description: "Os dados da planilha foram carregados."
+        description: "Os dados da planilha foram validados e carregados."
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Erro ao importar",
+        description: "Verifique se o arquivo está no formato correto.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSaveTable = () => {
-    // Mock save operation - in a real app, this would save data to backend
+    if (!validatePriceData(priceData)) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Dados inválidos na tabela. Verifique os valores.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
       title: "Tabela salva com sucesso",
-      description: "Os dados foram salvos e estão disponíveis para uso."
+      description: "Os dados foram validados e salvos."
     });
   };
 
@@ -119,11 +123,11 @@ export default function PriceTable() {
             <input 
               type="file" 
               className="absolute inset-0 opacity-0 cursor-pointer"
-              accept=".xlsx,.xls"
+              accept=".xlsx,.xls,.json"
               onChange={handleFileUpload}
             />
             <FileUp className="mr-2 h-4 w-4" />
-            {isUploading ? 'Importando...' : 'Importar Tabela (.xlsx)'}
+            {isUploading ? 'Importando...' : 'Importar Tabela'}
           </Button>
           
           <Button 
@@ -137,65 +141,25 @@ export default function PriceTable() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-4 shadow-lg">
-        <Tabs defaultValue="cpu" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4 flex overflow-auto">
-            {Object.entries(priceData).map(([key, category]) => (
-              <TabsTrigger key={key} value={key} className="flex items-center">
+        <Tabs defaultValue="cpu" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            {Object.values(priceData).map((category) => (
+              <TabsTrigger key={category.id} value={category.id}>
                 {category.name}
-                <div className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
                   {category.items.length}
-                </div>
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {Object.entries(priceData).map(([key, category]) => (
-            <TabsContent key={key} value={key} className="pt-2">
+          {Object.values(priceData).map((category) => (
+            <TabsContent key={category.id} value={category.id}>
               <div className="rounded-xl overflow-hidden border border-border">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[250px]">Nome</TableHead>
-                      <TableHead className="w-[400px]">Descrição</TableHead>
-                      <TableHead>Preço</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <PriceTableHeader />
                   <TableBody>
-                    {category.items.length > 0 ? (
-                      category.items.map(item => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {item.description}
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full">
-                                      <HelpCircle className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Especificações detalhadas</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.price.toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          })}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
-                          <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                          <p>Importe uma tabela para visualizar os dados</p>
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    <TableContent category={category} />
                   </TableBody>
                 </Table>
               </div>
