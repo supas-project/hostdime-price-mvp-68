@@ -3,7 +3,6 @@ import * as Icons from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { HelpTooltip } from "@/components/help-tooltip";
 
 interface AccordionHeaderProps {
   icon: string;
@@ -45,15 +44,6 @@ export function AccordionHeader({
           )}>
             {title}
           </h3>
-          
-          {!isExpanded && (
-            <HelpTooltip
-              title={title}
-              description={description}
-              icon={true}
-              iconOnly={true}
-            />
-          )}
           
           {isComplete && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">

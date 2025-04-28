@@ -14,13 +14,34 @@ export * from "@/types/component";
 export const serverData: ServerConfiguration = {
   categoria: "Servidor Dedicado",
   componentes: [
-    dataCenterComponents,
-    contractComponents,
-    cpuComponents,
-    memoryComponents,
-    storageComponents,
-    connectivityComponents,
-    osComponents,
+    {
+      ...dataCenterComponents,
+      icon: "Database"
+    },
+    {
+      ...contractComponents,
+      icon: "Clock"
+    },
+    {
+      ...cpuComponents,
+      icon: "Cpu"
+    },
+    {
+      ...memoryComponents,
+      icon: "MemoryStick"
+    },
+    {
+      ...storageComponents,
+      icon: "HardDrive"
+    },
+    {
+      ...connectivityComponents,
+      icon: "Network"
+    },
+    {
+      ...osComponents,
+      icon: "Server"
+    },
     customServicesComponent
   ]
 };
