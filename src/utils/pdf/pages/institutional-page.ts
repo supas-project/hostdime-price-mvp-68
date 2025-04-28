@@ -1,100 +1,50 @@
 
 import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
-import { drawFooter, wrapText } from '../utils';
+import { drawFooter, wrapText, embedPageBackground, drawPositionedText } from '../utils';
 
-export function addInstitutionalPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
+export async function addInstitutionalPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   const margin = PDFConfig.margins.default;
-  let currentY = height - margin;
   
-  // Título da página
-  page.drawText("Quem Somos", {
-    x: margin,
-    y: currentY,
-    size: 24,
-    font: boldFont,
-    color: PDFColors.primary
+  // Adicionar imagem de fundo institucional
+  await embedPageBackground(pdfDoc, page, PDFConfig.templates.pages.institutional, {
+    stretch: true,
+    opacity: 1
   });
   
-  currentY -= 40;
+  // Título da página - posicionado especificamente para o template
+  drawPositionedText(
+    page,
+    "Quem Somos",
+    margin,
+    height - margin,
+    boldFont,
+    PDFConfig.fontSize.title,
+    {
+      color: PDFColors.primary
+    }
+  );
   
   // Texto institucional
   const institutionalText = "A HostDime é uma empresa global de data center e infraestrutura de nuvem com mais de 20 anos de experiência. Nossa missão é fornecer serviços de hospedagem e colocation de classe mundial com suporte técnico 24/7 em nossos data centers certificados.";
   
+  // Posicionar abaixo do título, com largura controlada para caber no template
   const lines = wrapText(institutionalText, font, 11, width - 2 * margin);
+  let currentY = height - margin - 40;
+  
   for (const line of lines) {
-    page.drawText(line, {
-      x: margin,
-      y: currentY,
-      size: 11,
+    drawPositionedText(
+      page,
+      line,
+      margin,
+      currentY,
       font,
-      color: PDFColors.text
-    });
-    currentY -= 20;
-  }
-  
-  currentY -= 20;
-  
-  // Seção de presença global
-  page.drawText("Presença Global", {
-    x: margin,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.primary
-  });
-  
-  currentY -= 30;
-  
-  // Lista de países (simulando o mapa)
-  const countries = [
-    "Brasil - Data Centers em São Paulo e João Pessoa",
-    "Estados Unidos - Data Center em Orlando, Flórida",
-    "Colômbia - Data Center em Bogotá",
-    "México - Data Center na Cidade do México",
-    "Holanda - Data Center em Amsterdam"
-  ];
-  
-  for (const country of countries) {
-    page.drawText(`• ${country}`, {
-      x: margin + 10,
-      y: currentY,
-      size: 11,
-      font,
-      color: PDFColors.text
-    });
-    currentY -= 20;
-  }
-  
-  currentY -= 30;
-  
-  // Certificações
-  page.drawText("Certificações", {
-    x: margin,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.primary
-  });
-  
-  currentY -= 30;
-  
-  const certifications = [
-    "ISO 27001 - Segurança da Informação",
-    "PCI DSS - Segurança de Dados do Cartão de Pagamento",
-    "ISAE 3402/SOC 1 Type II",
-    "Uptime Institute Tier III"
-  ];
-  
-  for (const cert of certifications) {
-    page.drawText(`• ${cert}`, {
-      x: margin + 10,
-      y: currentY,
-      size: 11,
-      font,
-      color: PDFColors.text
-    });
+      11,
+      {
+        color: PDFColors.text
+      }
+    );
     currentY -= 20;
   }
   

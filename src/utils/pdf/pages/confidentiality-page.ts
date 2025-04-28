@@ -1,49 +1,59 @@
 
 import { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 import { PDFColors, PDFConfig } from '../constants';
-import { drawFooter, wrapText } from '../utils';
+import { drawFooter, wrapText, embedPageBackground, drawPositionedText } from '../utils';
 
-export function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
+export async function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: PDFFont, pdfDoc: PDFDocument) {
   const { width, height } = page.getSize();
   const margin = PDFConfig.margins.default;
-  let currentY = height - margin;
   
-  // Título da página
-  page.drawText("Acordo de Confidencialidade", {
-    x: margin,
-    y: currentY,
-    size: 24,
-    font: boldFont,
-    color: PDFColors.primary
+  // Adicionar imagem de fundo
+  await embedPageBackground(pdfDoc, page, PDFConfig.templates.pages.confidentiality, {
+    stretch: true
   });
   
-  currentY -= 40;
+  // Título da página
+  drawPositionedText(
+    page,
+    "Acordo de Confidencialidade",
+    margin,
+    height - margin,
+    boldFont,
+    24,
+    { color: PDFColors.primary }
+  );
+  
+  let currentY = height - margin - 40;
   
   // Texto do acordo
   const confidentialityText = "Este documento contém informações confidenciais e proprietárias da HostDime Brasil. A divulgação, distribuição ou cópia deste documento sem autorização prévia é estritamente proibida. Este material destina-se apenas ao destinatário especificado. Se você recebeu este documento por engano, notifique-nos imediatamente.";
   
   const lines = wrapText(confidentialityText, font, 11, width - 2 * margin);
   for (const line of lines) {
-    page.drawText(line, {
-      x: margin,
-      y: currentY,
-      size: 11,
+    drawPositionedText(
+      page,
+      line,
+      margin,
+      currentY,
       font,
-      color: PDFColors.text
-    });
+      11,
+      { color: PDFColors.text }
+    );
     currentY -= 20;
   }
   
   currentY -= 40;
   
   // Informações adicionais
-  page.drawText("Informações Importantes", {
-    x: margin,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.primary
-  });
+  drawPositionedText(
+    page,
+    "Informações Importantes",
+    margin,
+    currentY,
+    boldFont,
+    16,
+    { color: PDFColors.primary }
+  );
   
   currentY -= 30;
   
@@ -55,13 +65,15 @@ export function addConfidentialityPage(page: PDFPage, boldFont: PDFFont, font: P
   ];
   
   for (const info of additionalInfo) {
-    page.drawText(`• ${info}`, {
-      x: margin + 10,
-      y: currentY,
-      size: 11,
+    drawPositionedText(
+      page,
+      `• ${info}`,
+      margin + 10,
+      currentY,
       font,
-      color: PDFColors.text
-    });
+      11,
+      { color: PDFColors.text }
+    );
     currentY -= 20;
   }
   

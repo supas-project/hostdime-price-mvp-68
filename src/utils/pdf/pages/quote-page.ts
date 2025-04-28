@@ -3,9 +3,9 @@ import { PDFPage, PDFFont, PDFDocument, rgb } from 'pdf-lib';
 import { ComponentOption } from '@/types/component';
 import { formatCurrency } from '@/lib/utils';
 import { PDFColors, PDFConfig } from '../constants';
-import { drawFooter } from '../utils';
+import { drawFooter, embedPageBackground, drawPositionedText } from '../utils';
 
-export function addQuotePage(
+export async function addQuotePage(
   page: PDFPage,
   selectedComponents: { [key: string]: ComponentOption },
   margin: number,
@@ -16,37 +16,50 @@ export function addQuotePage(
 ) {
   const { width, height } = page.getSize();
   const margin_x = PDFConfig.margins.default;
-  let currentY = height - 80;
+  
+  // Adicionar imagem de fundo da página de cotação
+  await embedPageBackground(pdfDoc, page, PDFConfig.templates.pages.quote, {
+    stretch: true
+  });
+  
+  let currentY = height - margin_x - 20;
 
   // Cabeçalho
-  page.drawText("Proposta Comercial - Servidor Dedicado", {
-    x: margin_x,
-    y: currentY,
-    size: PDFConfig.fontSize.title,
-    font: boldFont,
-    color: PDFColors.primary
-  });
+  drawPositionedText(
+    page,
+    "Proposta Comercial - Servidor Dedicado",
+    margin_x,
+    currentY,
+    boldFont,
+    PDFConfig.fontSize.title,
+    { color: PDFColors.primary }
+  );
 
   currentY -= 30;
   
-  page.drawText(`Data: ${new Date().toLocaleDateString('pt-BR')}`, {
-    x: margin_x,
-    y: currentY,
-    size: 12,
+  // Data atual
+  drawPositionedText(
+    page,
+    `Data: ${new Date().toLocaleDateString('pt-BR')}`,
+    margin_x,
+    currentY,
     font,
-    color: PDFColors.muted,
-  });
+    12,
+    { color: PDFColors.muted }
+  );
   
   currentY -= 50;
   
   // Especificações Técnicas
-  page.drawText("Especificações Técnicas", {
-    x: margin_x,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.text,
-  });
+  drawPositionedText(
+    page,
+    "Especificações Técnicas",
+    margin_x,
+    currentY,
+    boldFont,
+    16,
+    { color: PDFColors.text }
+  );
   
   currentY -= 20;
   
@@ -54,7 +67,7 @@ export function addQuotePage(
   const tableTop = currentY;
   const tableWidth = width - 2 * margin_x;
   const colWidths = [0.35 * tableWidth, 0.5 * tableWidth, 0.15 * tableWidth];
-  const rowHeight = 30; // Aumentado para melhor espaçamento
+  const rowHeight = 30; 
 
   // Cabeçalho da tabela com fundo colorido
   page.drawRectangle({
@@ -65,29 +78,36 @@ export function addQuotePage(
     color: PDFColors.primary
   });
   
-  page.drawText("Componente", {
-    x: margin_x + 5,
-    y: currentY - rowHeight/2 - 5,
-    size: 12,
-    font: boldFont,
-    color: PDFColors.white,
-  });
+  // Cabeçalhos da tabela
+  drawPositionedText(
+    page,
+    "Componente",
+    margin_x + 5,
+    currentY - rowHeight/2,
+    boldFont,
+    12,
+    { color: PDFColors.white }
+  );
   
-  page.drawText("Especificação", {
-    x: margin_x + colWidths[0] + 5,
-    y: currentY - rowHeight/2 - 5,
-    size: 12,
-    font: boldFont,
-    color: PDFColors.white,
-  });
+  drawPositionedText(
+    page,
+    "Especificação",
+    margin_x + colWidths[0] + 5,
+    currentY - rowHeight/2,
+    boldFont,
+    12,
+    { color: PDFColors.white }
+  );
   
-  page.drawText("Valor Mensal", {
-    x: margin_x + colWidths[0] + colWidths[1] + 5,
-    y: currentY - rowHeight/2 - 5,
-    size: 12,
-    font: boldFont,
-    color: PDFColors.white,
-  });
+  drawPositionedText(
+    page,
+    "Valor Mensal",
+    margin_x + colWidths[0] + colWidths[1] + 5,
+    currentY - rowHeight/2,
+    boldFont,
+    12,
+    { color: PDFColors.white }
+  );
   
   currentY -= rowHeight;
 
@@ -104,31 +124,37 @@ export function addQuotePage(
     });
     
     // Nome do componente
-    page.drawText(component.name, {
-      x: margin_x + 5,
-      y: currentY - rowHeight/2 - 5,
-      size: 10,
-      font: boldFont,
-      color: PDFColors.text,
-    });
+    drawPositionedText(
+      page,
+      component.name,
+      margin_x + 5,
+      currentY - rowHeight/2,
+      boldFont,
+      10,
+      { color: PDFColors.text }
+    );
     
     // Descrição/especificação
-    page.drawText(component.description || "", {
-      x: margin_x + colWidths[0] + 5,
-      y: currentY - rowHeight/2 - 5,
-      size: 10,
+    drawPositionedText(
+      page,
+      component.description || "",
+      margin_x + colWidths[0] + 5,
+      currentY - rowHeight/2,
       font,
-      color: PDFColors.text,
-    });
+      10,
+      { color: PDFColors.text }
+    );
     
     // Preço
-    page.drawText(formatCurrency(component.price || 0), {
-      x: margin_x + colWidths[0] + colWidths[1] + 5,
-      y: currentY - rowHeight/2 - 5,
-      size: 10,
+    drawPositionedText(
+      page,
+      formatCurrency(component.price || 0),
+      margin_x + colWidths[0] + colWidths[1] + 5,
+      currentY - rowHeight/2,
       font,
-      color: PDFColors.text,
-    });
+      10,
+      { color: PDFColors.text }
+    );
     
     currentY -= rowHeight;
     rowColor = !rowColor;
@@ -140,17 +166,25 @@ export function addQuotePage(
       
       // Criar nova página
       const newPage = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+      
+      // Adicionar template de fundo na nova página
+      await embedPageBackground(pdfDoc, newPage, PDFConfig.templates.pages.quote, {
+        stretch: true
+      });
+      
       const newPageSize = newPage.getSize();
       currentY = newPageSize.height - 80;
       
       // Continuar cabeçalho na nova página
-      newPage.drawText("Especificações Técnicas (continuação)", {
-        x: margin_x,
-        y: currentY,
-        size: 16,
-        font: boldFont,
-        color: PDFColors.text,
-      });
+      drawPositionedText(
+        newPage,
+        "Especificações Técnicas (continuação)",
+        margin_x,
+        currentY,
+        boldFont,
+        16,
+        { color: PDFColors.text }
+      );
       
       currentY -= 30;
       
@@ -206,13 +240,15 @@ export function addQuotePage(
   currentY -= 40;
   
   // Resumo Financeiro
-  page.drawText("Resumo Financeiro", {
-    x: margin_x,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.text,
-  });
+  drawPositionedText(
+    page,
+    "Resumo Financeiro",
+    margin_x,
+    currentY,
+    boldFont,
+    16,
+    { color: PDFColors.text }
+  );
   
   currentY -= 30;
   
@@ -236,38 +272,46 @@ export function addQuotePage(
   });
   
   // Subtotal
-  page.drawText("Subtotal:", {
-    x: width - margin_x - 240,
-    y: currentY - 25,
-    size: 12,
+  drawPositionedText(
+    page,
+    "Subtotal:",
+    width - margin_x - 240,
+    currentY - 25,
     font,
-    color: PDFColors.text,
-  });
+    12,
+    { color: PDFColors.text }
+  );
   
-  page.drawText(formatCurrency(subtotal), {
-    x: width - margin_x - 80,
-    y: currentY - 25,
-    size: 12,
-    font: boldFont,
-    color: PDFColors.text,
-  });
+  drawPositionedText(
+    page,
+    formatCurrency(subtotal),
+    width - margin_x - 80,
+    currentY - 25,
+    boldFont,
+    12,
+    { color: PDFColors.text }
+  );
   
   // Margem
-  page.drawText(`Margem (${margin}%):`, {
-    x: width - margin_x - 240,
-    y: currentY - 50,
-    size: 12,
+  drawPositionedText(
+    page,
+    `Margem (${margin}%):`,
+    width - margin_x - 240,
+    currentY - 50,
     font,
-    color: PDFColors.text,
-  });
+    12,
+    { color: PDFColors.text }
+  );
   
-  page.drawText(formatCurrency(profit), {
-    x: width - margin_x - 80,
-    y: currentY - 50,
-    size: 12,
-    font: boldFont,
-    color: PDFColors.primary,
-  });
+  drawPositionedText(
+    page,
+    formatCurrency(profit),
+    width - margin_x - 80,
+    currentY - 50,
+    boldFont,
+    12,
+    { color: PDFColors.primary }
+  );
   
   // Linha separadora
   page.drawLine({
@@ -278,32 +322,38 @@ export function addQuotePage(
   });
   
   // Total
-  page.drawText("Total Mensal:", {
-    x: width - margin_x - 240,
-    y: currentY - 85,
-    size: 14,
-    font: boldFont,
-    color: PDFColors.text,
-  });
+  drawPositionedText(
+    page,
+    "Total Mensal:",
+    width - margin_x - 240,
+    currentY - 85,
+    boldFont,
+    14,
+    { color: PDFColors.text }
+  );
   
-  page.drawText(formatCurrency(total), {
-    x: width - margin_x - 80,
-    y: currentY - 85,
-    size: 14,
-    font: boldFont,
-    color: PDFColors.primary,
-  });
+  drawPositionedText(
+    page,
+    formatCurrency(total),
+    width - margin_x - 80,
+    currentY - 85,
+    boldFont,
+    14,
+    { color: PDFColors.primary }
+  );
   
   // Condições comerciais
   currentY -= 140;
   
-  page.drawText("Condições Comerciais", {
-    x: margin_x,
-    y: currentY,
-    size: 16,
-    font: boldFont,
-    color: PDFColors.text,
-  });
+  drawPositionedText(
+    page,
+    "Condições Comerciais",
+    margin_x,
+    currentY,
+    boldFont,
+    16,
+    { color: PDFColors.text }
+  );
   
   currentY -= 30;
   
@@ -315,21 +365,27 @@ export function addQuotePage(
   ];
   
   for (const condition of conditions) {
-    page.drawText(condition.label, {
-      x: margin_x,
-      y: currentY,
-      size: 11,
-      font: boldFont,
-      color: PDFColors.text,
-    });
+    // Label
+    drawPositionedText(
+      page,
+      condition.label,
+      margin_x,
+      currentY,
+      boldFont,
+      11,
+      { color: PDFColors.text }
+    );
     
-    page.drawText(condition.value, {
-      x: margin_x + 180,
-      y: currentY,
-      size: 11,
+    // Value
+    drawPositionedText(
+      page,
+      condition.value,
+      margin_x + 180,
+      currentY,
       font,
-      color: PDFColors.text,
-    });
+      11,
+      { color: PDFColors.text }
+    );
     
     currentY -= 20;
   }

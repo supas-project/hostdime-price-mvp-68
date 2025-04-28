@@ -8,6 +8,10 @@ export const generateQuotePDF = async (
   margin: number
 ) => {
   try {
+    toast.info("Gerando PDF...", {
+      description: "Aguarde enquanto preparamos seu documento"
+    });
+    
     const pdfBytes = await generateQuoteFromTemplate(selectedComponents, margin);
     
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -21,10 +25,14 @@ export const generateQuotePDF = async (
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    toast.success("PDF gerado com sucesso!");
+    toast.success("PDF gerado com sucesso!", {
+      description: "Seu documento foi baixado automaticamente"
+    });
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
-    toast.error("Erro ao gerar o PDF. Por favor, tente novamente.");
+    toast.error("Erro ao gerar o PDF", {
+      description: "Verifique se as imagens de template estão disponíveis."
+    });
     throw error;
   }
 };

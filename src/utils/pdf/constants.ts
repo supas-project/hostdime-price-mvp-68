@@ -29,5 +29,24 @@ export const PDFConfig = {
     heading: 16,
     body: 11,
     small: 9
+  },
+  templates: {
+    basePath: '/pdf-templates',
+    pages: {
+      cover: '/pdf-templates/cover.jpg',
+      institutional: '/pdf-templates/institucional.jpg',
+      confidentiality: '/pdf-templates/confidentiality.jpg',
+      quote: '/pdf-templates/quote.jpg',
+      datacenter: '/pdf-templates/datacenter.jpg',
+      contact: '/pdf-templates/contact.jpg',
+    },
+    logos: {
+      main: '/pdf-templates/hostdime-logo.png',
+      certification: '/pdf-templates/certification.png',
+    },
+    backgrounds: {
+      orange: '/pdf-templates/orange-bg.jpg',
+      white: '/pdf-templates/white-bg.jpg',
+    }
   }
 };

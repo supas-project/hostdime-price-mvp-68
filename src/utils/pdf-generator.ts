@@ -13,33 +13,38 @@ export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number
 ): Promise<Uint8Array> {
-  // Create PDF document
-  const pdfDoc = await PDFDocument.create();
-  
-  // Load fonts
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-  
-  // Add pages
-  let page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addCoverPage(page, boldFont, font, pdfDoc);
-  
-  page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addInstitutionalPage(page, boldFont, font, pdfDoc);
-  
-  page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addConfidentialityPage(page, boldFont, font, pdfDoc);
-  
-  page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  page = addQuotePage(page, selectedComponents, margin, boldFont, font, italicFont, pdfDoc);
-  
-  page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addDataCenterPage(page, boldFont, font, pdfDoc);
-  
-  page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
-  addContactPage(page, boldFont, font, italicFont, pdfDoc);
-  
-  // Return the finalized PDF
-  return pdfDoc.save();
+  try {
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create();
+    
+    // Load fonts
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+    
+    // Add pages
+    let page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    await addCoverPage(page, boldFont, font, pdfDoc);
+    
+    page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    await addInstitutionalPage(page, boldFont, font, pdfDoc);
+    
+    page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    await addConfidentialityPage(page, boldFont, font, pdfDoc);
+    
+    page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    page = await addQuotePage(page, selectedComponents, margin, boldFont, font, italicFont, pdfDoc);
+    
+    page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    await addDataCenterPage(page, boldFont, font, pdfDoc);
+    
+    page = pdfDoc.addPage([PDFConfig.pageSize.width, PDFConfig.pageSize.height]);
+    await addContactPage(page, boldFont, font, italicFont, pdfDoc);
+    
+    // Return the finalized PDF
+    return pdfDoc.save();
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    throw new Error("Falha na geração do PDF: " + (error as Error).message);
+  }
 }

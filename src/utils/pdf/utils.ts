@@ -1,4 +1,4 @@
-import { PDFFont, PDFPage, RGB } from 'pdf-lib';
+import { PDFFont, PDFPage, RGB, PDFDocument, PDFImage } from 'pdf-lib';
 import { PDFColors } from './constants';
 
 export function wrapText(text: string, font: PDFFont, fontSize: number, maxWidth: number): string[] {
@@ -45,7 +45,7 @@ export function drawFooter(page: any, pageWidth: number, font: PDFFont) {
   });
 }
 
-// Updated function for drawing boxes - removed borderRadius property
+// Updated function for drawing boxes - without rounded corners
 export function drawRoundedBox(
   page: PDFPage,
   x: number,
@@ -221,4 +221,185 @@ export function drawSimpleTable(
   }
   
   return currentY;
+}
+
+// Nova função para carregar e incorporar imagens como fundo de página
+export async function embedPageBackground(
+  pdfDoc: PDFDocument, 
+  page: PDFPage, 
+  imagePath: string,
+  options: {
+    opacity?: number;
+    stretch?: boolean;
+  } = { opacity: 1, stretch: true }
+): Promise<void> {
+  try {
+    // Carregar a imagem do caminho especificado
+    const imageResponse = await fetch(imagePath);
+    const imageArrayBuffer = await imageResponse.arrayBuffer();
+    
+    // Verificar a extensão do arquivo para decidir como incorporá-lo
+    const extension = imagePath.split('.').pop()?.toLowerCase();
+    
+    let image: PDFImage;
+    if (extension === 'jpg' || extension === 'jpeg') {
+      image = await pdfDoc.embedJpg(imageArrayBuffer);
+    } else if (extension === 'png') {
+      image = await pdfDoc.embedPng(imageArrayBuffer);
+    } else {
+      throw new Error(`Formato de imagem não suportado: ${extension}`);
+    }
+    
+    // Obter dimensões
+    const { width, height } = page.getSize();
+    const { width: imgWidth, height: imgHeight } = image;
+    
+    // Calcular proporções para manter aspect ratio
+    let drawWidth = width;
+    let drawHeight = height;
+    
+    if (!options.stretch) {
+      // Manter proporção da imagem
+      const scaleX = width / imgWidth;
+      const scaleY = height / imgHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      drawWidth = imgWidth * scale;
+      drawHeight = imgHeight * scale;
+    }
+    
+    // Centralizar a imagem na página, se não estiver esticada
+    const x = options.stretch ? 0 : (width - drawWidth) / 2;
+    const y = options.stretch ? 0 : (height - drawHeight) / 2;
+    
+    // Desenhar a imagem com a opacidade especificada
+    page.drawImage(image, {
+      x,
+      y,
+      width: drawWidth,
+      height: drawHeight,
+      opacity: options.opacity
+    });
+  } catch (error) {
+    console.error('Erro ao carregar imagem de fundo:', error);
+    // Continuar sem a imagem de fundo em caso de erro
+  }
+}
+
+// Nova função para posicionar texto com precisão absoluta
+export function drawPositionedText(
+  page: PDFPage,
+  text: string,
+  x: number,
+  y: number,
+  font: PDFFont,
+  size: number,
+  options: {
+    color?: RGB;
+    opacity?: number;
+    align?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+  } = {}
+) {
+  const { 
+    color = PDFColors.text, 
+    opacity = 1, 
+    align = 'left',
+    maxWidth
+  } = options;
+  
+  // Se temos largura máxima, precisamos quebrar o texto
+  if (maxWidth) {
+    const lines = wrapText(text, font, size, maxWidth);
+    const lineHeight = size * 1.2; // 1.2 é um valor comum para espaçamento entre linhas
+    
+    lines.forEach((line, index) => {
+      let xPos = x;
+      
+      // Ajustar posição baseado no alinhamento
+      if (align === 'center') {
+        const lineWidth = font.widthOfTextAtSize(line, size);
+        xPos = x - (lineWidth / 2);
+      } else if (align === 'right') {
+        const lineWidth = font.widthOfTextAtSize(line, size);
+        xPos = x - lineWidth;
+      }
+      
+      page.drawText(line, {
+        x: xPos,
+        y: y - (index * lineHeight),
+        size,
+        font,
+        color,
+        opacity
+      });
+    });
+  } else {
+    // Texto sem quebra
+    let xPos = x;
+    
+    // Ajustar posição baseado no alinhamento
+    if (align === 'center') {
+      const textWidth = font.widthOfTextAtSize(text, size);
+      xPos = x - (textWidth / 2);
+    } else if (align === 'right') {
+      const textWidth = font.widthOfTextAtSize(text, size);
+      xPos = x - textWidth;
+    }
+    
+    page.drawText(text, {
+      x: xPos,
+      y,
+      size,
+      font,
+      color,
+      opacity
+    });
+  }
+}
+
+// Função para trabalhar com imagens no PDF (ícones, logos, etc)
+export async function embedImage(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  imagePath: string,
+  x: number,
+  y: number,
+  width: number,
+  height?: number
+): Promise<void> {
+  try {
+    // Carregar a imagem
+    const imageResponse = await fetch(imagePath);
+    const imageArrayBuffer = await imageResponse.arrayBuffer();
+    
+    // Verificar a extensão e carregar adequadamente
+    const extension = imagePath.split('.').pop()?.toLowerCase();
+    
+    let image: PDFImage;
+    if (extension === 'jpg' || extension === 'jpeg') {
+      image = await pdfDoc.embedJpg(imageArrayBuffer);
+    } else if (extension === 'png') {
+      image = await pdfDoc.embedPng(imageArrayBuffer);
+    } else {
+      throw new Error(`Formato de imagem não suportado: ${extension}`);
+    }
+    
+    // Calcular altura proporcional se não fornecida
+    if (!height) {
+      const aspectRatio = image.height / image.width;
+      height = width * aspectRatio;
+    }
+    
+    // Desenhar a imagem na página
+    page.drawImage(image, {
+      x,
+      y,
+      width,
+      height
+    });
+  } catch (error) {
+    console.error('Erro ao incorporar imagem:', error);
+    // Continuar sem a imagem em caso de erro
+  }
 }
