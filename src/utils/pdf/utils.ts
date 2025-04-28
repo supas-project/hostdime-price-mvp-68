@@ -1,4 +1,3 @@
-
 import { PDFFont, PDFPage, RGB } from 'pdf-lib';
 import { PDFColors } from './constants';
 
@@ -46,7 +45,7 @@ export function drawFooter(page: any, pageWidth: number, font: PDFFont) {
   });
 }
 
-// Nova função para desenhar caixas com bordas arredondadas
+// Updated function for drawing boxes - removed borderRadius property
 export function drawRoundedBox(
   page: PDFPage,
   x: number,
@@ -57,17 +56,20 @@ export function drawRoundedBox(
   borderColor?: RGB,
   borderWidth: number = 1
 ) {
-  // Desenha o fundo
+  // Draw the background rectangle
   page.drawRectangle({
     x,
     y,
     width,
     height,
-    borderRadius: 5,
     color,
     borderColor,
     borderWidth
   });
+  
+  // Note: pdf-lib doesn't support borderRadius directly
+  // To simulate rounded corners, we'd need to draw curves or multiple shapes
+  // This is a simplified version without rounded corners
 }
 
 // Nova função para desenhar cabeçalhos de seção
