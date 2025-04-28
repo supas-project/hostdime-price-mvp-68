@@ -2,7 +2,7 @@
 import ComponentSyncService from "./component-sync-service";
 import { PriceService } from "./price-service";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 /**
  * Inicializa os serviços e sincroniza dados
@@ -13,15 +13,21 @@ export const initializeServices = async () => {
   try {
     // Verificar conexão com Supabase
     try {
-      // Testar se o cliente Supabase está configurado corretamente
-      if (supabase && supabase.auth) {
+      // Verificar se o Supabase está configurado e exibir mensagem apropriada
+      if (!isSupabaseConfigured()) {
+        console.warn("Aviso: Supabase não configurado. Algumas funcionalidades estarão limitadas.");
+        toast.warning("Supabase não configurado", {
+          description: "Configure as variáveis de ambiente para habilitar autenticação e recursos online."
+        });
+      } else {
+        // Testar se o cliente Supabase está funcionando corretamente
         const { data, error } = await supabase.auth.getSession();
         if (!error) {
           console.log("Conexão com Supabase estabelecida com sucesso");
         }
       }
     } catch (supabaseError) {
-      console.warn("Aviso: Supabase não configurado ou indisponível. Usando modo offline.", supabaseError);
+      console.warn("Aviso: Erro ao conectar com Supabase. Usando modo offline.", supabaseError);
     }
     
     // Inicializar o serviço de preços para garantir que temos as estruturas básicas

@@ -9,8 +9,9 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Lock, LogIn, LogOut, Mail } from "lucide-react";
+import { AlertCircle, Lock, LogIn, LogOut, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
@@ -18,7 +19,7 @@ const formSchema = z.object({
 });
 
 export function LoginDialog() {
-  const { isAuthenticated, isAdmin, user, login, loginWithGoogle, logout, loading } = useAuth();
+  const { isAuthenticated, isAdmin, user, login, loginWithGoogle, logout, loading, isSupabaseReady } = useAuth();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -90,11 +91,22 @@ export function LoginDialog() {
           <DialogTitle className="text-center">Acesso ao Sistema</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
+          {!isSupabaseReady && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Configuração incompleta</AlertTitle>
+              <AlertDescription>
+                Supabase não está configurado. O login não funcionará até que as variáveis de ambiente sejam definidas.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Button 
             variant="outline" 
             className="w-full flex items-center justify-center gap-2"
             onClick={handleGoogleLogin}
             type="button"
+            disabled={!isSupabaseReady}
           >
             <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
               <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -157,12 +169,19 @@ export function LoginDialog() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={isLoading}
+                disabled={isLoading || !isSupabaseReady}
               >
                 {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </Form>
+          
+          {!isSupabaseReady && (
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Para configurar o Supabase, crie um projeto no Supabase e adicione as variáveis de ambiente 
+              VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>
