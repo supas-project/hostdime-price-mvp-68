@@ -41,3 +41,21 @@ export function convertToGB(capacity: string): number {
   
   return value;
 }
+
+/**
+ * Extrai o valor numérico e a unidade de uma string de capacidade
+ * @param capacity String com a capacidade (ex: "500GB" ou "2TB")
+ * @returns Objeto com valor numérico e unidade, ou null se não conseguir extrair
+ */
+export function extractStorageCapacity(capacity: string): { value: number; unit: string } | null {
+  if (!capacity) return null;
+  
+  // Tenta encontrar padrões como "500GB", "2 TB", "1.5TB" etc.
+  const match = capacity.match(/(\d+(?:\.\d+)?)\s*(TB|GB)/i);
+  if (!match) return null;
+  
+  return {
+    value: parseFloat(match[1]),
+    unit: match[2].toUpperCase()
+  };
+}
