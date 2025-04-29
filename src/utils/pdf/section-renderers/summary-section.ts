@@ -26,7 +26,7 @@ export function renderSummarySection(
   
   currentY -= 25;
   
-  const summaryText = "Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades específicas. Nossa equipe está à disposição para quaisquer esclarecimentos adicionais.";
+  const summaryText = "Agradecemos seu interesse nos servicos da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades especificas. Nossa equipe esta a disposicao para quaisquer esclarecimentos adicionais.";
   
   // Break summary into lines
   const maxWidth = width - (marginX * 2);

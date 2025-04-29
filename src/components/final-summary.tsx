@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings } from "lucide-react";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderDetails } from "./order-details";
 import { generateQuotePDF } from "@/utils/quote-export";
@@ -27,19 +27,32 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const { toast } = useToast();
   const { storageItems, customServices } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
   
-  const handleSaveQuote = () => {
-    toast({
-      title: "Cotação salva",
-      description: "Sua cotação foi salva com sucesso."
-    });
+  const handleSaveQuote = async () => {
+    setIsSaving(true);
+    try {
+      // Simular uma operação de salvamento
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast({
+        title: "Cotação salva",
+        description: "Sua cotação foi salva com sucesso."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar cotação",
+        description: "Não foi possível salvar sua cotação. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleExportPDF = async () => {
-    toast({
-      title: "Exportação iniciada",
-      description: "Seu PDF está sendo gerado..."
-    });
+    setIsGeneratingPDF(true);
     
     try {
       // Corrigindo a chamada para passar todos os argumentos necessários
@@ -50,24 +63,37 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         profitMargin
       );
       
-      toast({
-        title: "PDF Gerado",
-        description: "Seu arquivo PDF foi gerado com sucesso!"
-      });
     } catch (error) {
       toast({
         title: "Erro na exportação",
         description: "Não foi possível gerar o PDF. Tente novamente.",
         variant: "destructive"
       });
+      console.error("Erro detalhado:", error);
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
-  const handleFinishOrder = () => {
-    toast({
-      title: "Pedido finalizado",
-      description: "Obrigado por escolher a HostDime! Em breve entraremos em contato."
-    });
+  const handleFinishOrder = async () => {
+    setIsFinishing(true);
+    try {
+      // Simular o processamento do pedido
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Pedido finalizado",
+        description: "Obrigado por escolher a HostDime! Em breve entraremos em contato."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao finalizar pedido",
+        description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsFinishing(false);
+    }
   };
   
   return (
@@ -128,22 +154,49 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         <Button 
           className="flex-1 flex items-center justify-center gap-2" 
           onClick={handleFinishOrder}
+          disabled={isFinishing || isGeneratingPDF || isSaving}
         >
-          Finalizar Pedido <ArrowRight className="h-4 w-4" />
+          {isFinishing ? (
+            <>
+              <Loader className="h-4 w-4 animate-spin" /> Processando...
+            </>
+          ) : (
+            <>
+              Finalizar Pedido <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </Button>
         <Button 
           variant="outline" 
           className="flex-1 flex items-center justify-center gap-2" 
           onClick={handleSaveQuote}
+          disabled={isSaving || isGeneratingPDF || isFinishing}
         >
-          <Save className="h-4 w-4" /> Salvar Cotação
+          {isSaving ? (
+            <>
+              <Loader className="h-4 w-4 animate-spin" /> Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> Salvar Cotação
+            </>
+          )}
         </Button>
         <Button 
           variant="outline" 
           className="flex-1 flex items-center justify-center gap-2" 
           onClick={handleExportPDF}
+          disabled={isGeneratingPDF || isSaving || isFinishing}
         >
-          <FileDown className="h-4 w-4" /> Exportar PDF
+          {isGeneratingPDF ? (
+            <>
+              <Loader className="h-4 w-4 animate-spin" /> Gerando PDF...
+            </>
+          ) : (
+            <>
+              <FileDown className="h-4 w-4" /> Exportar PDF
+            </>
+          )}
         </Button>
       </div>
       

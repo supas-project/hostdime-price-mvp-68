@@ -10,6 +10,11 @@ export const generateQuotePDF = async (
   margin: number
 ) => {
   try {
+    // Notificar o usuário que o processo começou
+    toast.info("Gerando PDF...", {
+      description: "Aguarde enquanto preparamos seu documento"
+    });
+    
     // Gerar o PDF
     const pdfBytes = await buildQuotePDF(
       selectedComponents,
@@ -20,7 +25,7 @@ export const generateQuotePDF = async (
     
     // Gerar nome do arquivo com número aleatório e data
     const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-    const fileName = `HostDime_Cotação_${quoteNumber}.pdf`;
+    const fileName = `HostDime_Cotacao_${quoteNumber}.pdf`;
     
     // Fazer o download do PDF
     downloadPDF(pdfBytes, fileName);

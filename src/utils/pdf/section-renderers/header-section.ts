@@ -47,14 +47,17 @@ export async function renderHeaderSection(
     color: COLOR.SECONDARY
   });
   
-  // Adicionar data
-  const currentDate = new Date().toLocaleDateString('pt-BR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // Adicionar data (sem acentos)
+  const date = new Date();
+  const monthNames = [
+    "Janeiro", "Fevereiro", "Marco", "Abril",
+    "Maio", "Junho", "Julho", "Agosto",
+    "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
   
-  page.drawText(`Data: ${currentDate}`, {
+  const formattedDate = `${date.getDate()} de ${monthNames[date.getMonth()]} de ${date.getFullYear()}`;
+  
+  page.drawText(`Data: ${formattedDate}`, {
     x: quoteBox.x + 10,
     y: quoteBox.y - 45,
     size: 10,
@@ -64,7 +67,7 @@ export async function renderHeaderSection(
   
   // Adicionar número da cotação
   const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-  page.drawText(`Cotação: ${quoteNumber}`, {
+  page.drawText(`Cotacao: ${quoteNumber}`, {
     x: quoteBox.x + 10,
     y: quoteBox.y - 60,
     size: 10,

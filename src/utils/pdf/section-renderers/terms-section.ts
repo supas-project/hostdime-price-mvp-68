@@ -29,7 +29,7 @@ export function renderTermsSection(
   
   currentY -= 15;
   
-  const termsText = "Esta proposta tem validade de 15 dias. Os valores podem sofrer alterações sem aviso prévio. Impostos não inclusos. As configurações deste documento foram personalizadas com base nas informações fornecidas pelo cliente.";
+  const termsText = "Esta proposta tem validade de 15 dias. Os valores podem sofrer alteracoes sem aviso previo. Impostos nao inclusos. As configuracoes deste documento foram personalizadas com base nas informacoes fornecidas pelo cliente.";
   
   page.drawText(termsText, {
     x: marginX,
