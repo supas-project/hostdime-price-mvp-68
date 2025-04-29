@@ -95,12 +95,6 @@ export function ExternalStoragePanel({
     }
   };
 
-  // Example storage use cases to help users understand capacity needs
-  const storageExamples = [
-    { size: "100 GB", examples: ["25.000 fotos", "30h vídeo HD"] },
-    { size: "1 TB", examples: ["250.000 fotos", "300h vídeo HD"] }
-  ];
-
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
@@ -128,25 +122,6 @@ export function ExternalStoragePanel({
         
         {/* Capacity Slider */}
         <CapacitySlider capacity={capacity} onCapacityChange={setCapacity} />
-        
-        {/* Storage usage examples - mais compacto */}
-        <div className="bg-muted/30 p-2 rounded-lg text-xs flex items-center gap-2">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <HelpTooltip
-              title="Exemplos de capacidade"
-              description="Estes exemplos ajudam a entender quanto espaço você pode precisar."
-            />
-            <span>Exemplos:</span>
-          </div>
-          <div className="flex gap-3">
-            {storageExamples.map((example) => (
-              <div key={example.size} className="flex items-center gap-1">
-                <div className="font-medium">{example.size}:</div>
-                <div className="text-muted-foreground">{example.examples.join(" ou ")}</div>
-              </div>
-            ))}
-          </div>
-        </div>
         
         {/* Price and Add Button */}
         <div className="pt-3 border-t border-border flex items-center justify-between">

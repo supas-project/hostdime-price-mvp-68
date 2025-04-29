@@ -90,7 +90,7 @@ export function CapacitySlider({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               onKeyPress={handleKeyPress}
-              className="w-20 h-8 text-right pr-8"
+              className="w-24 h-8 text-right pr-8"
               min={min}
               max={max}
               step={step}
