@@ -1,5 +1,4 @@
 
-import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { Server } from "lucide-react";
@@ -10,6 +9,7 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -72,7 +72,7 @@ export function ProcessorContent({
           <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
             <SelectValue placeholder="Escolha o processador ideal para você" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
+          <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[280px]">
             {options.map((option) => (
               <SelectItem
                 key={option.id}
@@ -81,7 +81,7 @@ export function ProcessorContent({
               >
                 <div className="flex justify-between items-center w-full gap-4">
                   <div className="flex items-center gap-2">
-                    <span>{option.name}</span>
+                    <span className="truncate">{option.name}</span>
                     {option.specs && (
                       <HelpTooltip
                         title={option.name}

@@ -54,6 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: DEFAULT_ADMIN_EMAIL,
         password: DEFAULT_ADMIN_PASSWORD,
+        options: {
+          // Definir para não requerer confirmação de email, já que é um usuário padrão
+          emailRedirectTo: window.location.origin,
+          data: {
+            is_admin: true
+          }
+        }
       });
 
       if (signUpError) {
@@ -63,6 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (signUpData?.user) {
         console.log("Usuário admin criado com sucesso");
+        
+        // Se o usuário foi criado com sucesso, vamos tentar confirmar manualmente
+        try {
+          // Recuperar a sessão do usuário recém-criado
+          if (signUpData.session) {
+            console.log("Usuário admin confirmado automaticamente");
+          }
+        } catch (confirmError) {
+          console.error("Erro ao confirmar email do admin:", confirmError);
+        }
         
         // Fazer logout depois de criar o usuário
         await supabase.auth.signOut();

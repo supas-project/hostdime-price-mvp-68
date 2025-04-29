@@ -54,7 +54,7 @@ export function ComponentSelector({
     >
       <div className="flex justify-between items-center w-full gap-4">
         <div className="flex items-center gap-2">
-          <span>{option.name}</span>
+          <span className="truncate max-w-[200px]">{option.name}</span>
           {option.specs && (
             <HelpTooltip
               title={option.name}
@@ -92,7 +92,7 @@ export function ComponentSelector({
         <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
           <SelectValue placeholder={`Escolha o ${label.toLowerCase()} ideal para você`} />
         </SelectTrigger>
-        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] z-50">
+        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] z-50 max-h-[280px]">
           {groupedOptions ? (
             groupedOptions.map((group) => (
               <SelectGroup key={group.group}>

@@ -5,6 +5,7 @@ import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -51,21 +52,23 @@ export function WizardContent() {
       </Button>
 
       {showAllSteps ? (
-        <div className="space-y-4">
-          {serverData.componentes.map((component, index) => (
-            <AccordionStep
-              key={component.id}
-              component={component}
-              selectedOption={getSelectedOption(component)}
-              onSelectOption={handleSelectOption}
-              isActive={index === currentStep}
-              isComplete={isStepComplete(index)}
-              connectivityItems={component.type === "Conectividade" ? connectivityItems : undefined}
-              onUpdateConnectivityItems={component.type === "Conectividade" ? setConnectivityItems : undefined}
-              onSelectStorageItem={component.type === "Armazenamento" ? handleSelectStorageItem : undefined}
-            />
-          ))}
-        </div>
+        <ScrollArea className="max-h-[calc(100vh-200px)]">
+          <div className="space-y-4 pr-4">
+            {serverData.componentes.map((component, index) => (
+              <AccordionStep
+                key={component.id}
+                component={component}
+                selectedOption={getSelectedOption(component)}
+                onSelectOption={handleSelectOption}
+                isActive={index === currentStep}
+                isComplete={isStepComplete(index)}
+                connectivityItems={component.type === "Conectividade" ? connectivityItems : undefined}
+                onUpdateConnectivityItems={component.type === "Conectividade" ? setConnectivityItems : undefined}
+                onSelectStorageItem={component.type === "Armazenamento" ? handleSelectStorageItem : undefined}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       ) : (
         <AccordionStep
           component={currentComponent}
