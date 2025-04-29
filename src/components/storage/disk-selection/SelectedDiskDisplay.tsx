@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { CircleDot, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -26,6 +27,7 @@ export function SelectedDiskDisplay({
   const [raidType, setRaidType] = useState<RaidType>("none");
   const [isHardwareRaid, setIsHardwareRaid] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showRaidConfig, setShowRaidConfig] = useState(false);
 
   useEffect(() => {
     setShowRaidConfig(quantity >= 2);
