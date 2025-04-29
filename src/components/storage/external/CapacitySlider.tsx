@@ -3,6 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface CapacitySliderProps {
   capacity: number;
@@ -20,6 +21,15 @@ export function CapacitySlider({
   step = 100
 }: CapacitySliderProps) {
   const [inputValue, setInputValue] = useState<string>(capacity.toString());
+
+  // Get size classification based on capacity
+  const getSizeCategory = (): { label: string; variant: "info" | "warning" | "success" | "default" } => {
+    if (capacity <= 250) return { label: "Pequeno", variant: "info" };
+    if (capacity <= 800) return { label: "Médio", variant: "warning" };
+    return { label: "Grande", variant: "success" };
+  };
+
+  const sizeCategory = getSizeCategory();
 
   // Update input value when capacity prop changes
   useEffect(() => {
@@ -51,16 +61,27 @@ export function CapacitySlider({
     }
   };
 
+  // Quick capacity options based on common usage patterns
+  const quickCapacityOptions = [
+    { value: 100, label: "Mínimo" },
+    { value: 500, label: "Padrão" },
+    { value: 1000, label: "1 TB" },
+    { value: 2000, label: "Máximo" }
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex justify-between items-center">
-        <label className="text-sm font-medium flex items-center gap-2">
-          Capacidade
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Tamanho</label>
           <HelpTooltip
-            title="Capacidade do Storage"
-            description="Ajuste a capacidade do seu storage externo conforme sua necessidade. Quanto maior a capacidade, maior o espaço disponível para seus dados."
+            title="Escolha o tamanho ideal"
+            description="Defina quanto espaço de armazenamento você precisa. Quanto maior o tamanho, mais dados você pode guardar."
           />
-        </label>
+          <Badge variant={sizeCategory.variant} className="ml-1 text-xs">
+            {sizeCategory.label}
+          </Badge>
+        </div>
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -68,7 +89,7 @@ export function CapacitySlider({
             onChange={handleInputChange}
             onBlur={handleInputBlur}
             onKeyPress={handleKeyPress}
-            className="w-20 h-8 text-right"
+            className="w-24 h-8 text-right"
             min={min}
             max={max}
             step={step}
@@ -82,11 +103,37 @@ export function CapacitySlider({
         min={min}
         max={max}
         step={step}
-        className="my-4"
+        className="my-6"
       />
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>{min} GB</span>
-        <span>{max} GB</span>
+      <div className="flex justify-between items-center pt-1">
+        <div className="text-xs text-muted-foreground">
+          {min} GB
+          <span className="mx-1">•</span>
+          Mínimo
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Máximo
+          <span className="mx-1">•</span>
+          {max} GB
+        </div>
+      </div>
+      
+      {/* Quick capacity selection options */}
+      <div className="grid grid-cols-4 gap-2 pt-3">
+        {quickCapacityOptions.map((option) => (
+          <button 
+            key={option.value}
+            type="button"
+            className={`text-xs py-2 px-3 rounded-md border transition-all duration-200 ${
+              capacity === option.value 
+                ? 'border-primary bg-primary/10 text-primary' 
+                : 'border-border hover:border-primary/30 hover:bg-primary/5'
+            }`}
+            onClick={() => onCapacityChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   );

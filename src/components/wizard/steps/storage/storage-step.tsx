@@ -2,6 +2,7 @@
 import { ComponentOption } from "@/types/component";
 import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
+import { toast } from "sonner";
 
 interface StorageStepProps {
   onSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
@@ -32,6 +33,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     };
     
     onSelectStorageItem(storageOption, 'internal');
+    toast.success(`Disco ${disk.type.toUpperCase()} ${disk.capacity} adicionado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
@@ -49,6 +51,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     };
     
     onSelectStorageItem(storageOption, 'external');
+    toast.success(`Storage ${type} de ${capacity} GB adicionado`);
   };
 
   return (
