@@ -5,16 +5,6 @@ import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Check, Shield } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface OrderDetailsProps {
@@ -360,38 +350,54 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
             <div className="flex justify-between items-center pb-2">
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center">
-                  Subtotal
+                  Hardware & Software
                   <HelpTooltip 
                     title="O que é isso?"
-                    description="Valor base dos componentes selecionados, sem margem adicional"
+                    description="Valor dos componentes de hardware e software selecionados"
                   />
                 </span>
               </div>
-              <span className="font-medium">{formatCurrency(subtotal)}</span>
+              <span className="font-medium">{formatCurrency(nonStoragePrice)}</span>
             </div>
             
             <div className="flex justify-between items-center pb-2">
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center">
-                  Margem ({margin}%)
+                  Armazenamento
                   <HelpTooltip 
                     title="O que é isso?"
-                    description="Margem operacional aplicada sobre o valor base dos componentes"
+                    description="Valor total das soluções de armazenamento"
                   />
                 </span>
               </div>
-              <span className="font-medium text-primary">{formatCurrency(profit)}</span>
+              <span className="font-medium">{formatCurrency(internalStoragePrice + externalStoragePrice)}</span>
             </div>
+            
+            {customServicesPrice > 0 && (
+              <div className="flex justify-between items-center pb-2">
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center">
+                    Serviços
+                    <HelpTooltip 
+                      title="O que é isso?"
+                      description="Valor dos serviços adicionais contratados"
+                    />
+                  </span>
+                </div>
+                <span className="font-medium">{formatCurrency(customServicesPrice)}</span>
+              </div>
+            )}
             
             <Separator />
             
+            {/* Removed margin display, showing only final price */}
             <div className="flex justify-between items-center pt-2">
               <div className="space-y-1">
                 <span className="text-lg font-medium flex items-center">
                   Total Mensal
                   <HelpTooltip 
                     title="O que é isso?"
-                    description="Valor total mensal do seu servidor, incluindo todos os componentes e margem"
+                    description="Valor total mensal do seu servidor"
                   />
                 </span>
               </div>

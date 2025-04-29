@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { SummaryCart } from "./summary-cart";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
 
 interface FloatingCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -17,6 +18,9 @@ interface FloatingCartProps {
 
 export function FloatingCart(props: FloatingCartProps) {
   const isMobile = useIsMobile();
+  
+  // Count selected components to show in badge
+  const componentCount = Object.keys(props.selectedComponents).length;
 
   if (isMobile) {
     return (
@@ -29,6 +33,11 @@ export function FloatingCart(props: FloatingCartProps) {
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Ver Resumo</span>
+              {componentCount > 0 && (
+                <Badge variant="secondary" className="ml-1 bg-white text-primary">
+                  {componentCount}
+                </Badge>
+              )}
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[80vh]">

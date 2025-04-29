@@ -9,16 +9,18 @@ interface GroupedDisk {
   quantity: number;
 }
 
-// Constants for better PDF styling
+// Enhanced color scheme for a more professional look
 const COLOR = {
   PRIMARY: rgb(0.96, 0.51, 0.13),      // HostDime Orange (#f58220)
   SECONDARY: rgb(0.10, 0.12, 0.17),    // Dark Blue (#1A1F2C)
+  PRIMARY_LIGHT: rgb(0.98, 0.67, 0.40), // Light Orange
   TEXT: rgb(0.2, 0.2, 0.2),            // Dark Gray for text
   TEXT_LIGHT: rgb(0.4, 0.4, 0.4),      // Light Gray for secondary text
   ACCENT: rgb(0.61, 0.53, 0.96),       // Purple accent (#9b87f5)
   WHITE: rgb(1, 1, 1),                 // White
   BACKGROUND: rgb(0.98, 0.98, 0.98),   // Light gray background
-  HIGHLIGHT: rgb(1, 0.97, 0.91)        // Cream highlight
+  HIGHLIGHT: rgb(1, 0.97, 0.91),       // Cream highlight
+  TABLE_ROW_ALT: rgb(0.97, 0.97, 0.97) // Alternating row color
 };
 
 // Helper function to group disks by type and capacity for cleaner display
@@ -41,7 +43,76 @@ const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] =>
   return Object.values(diskGroups);
 };
 
-// Helper function to create section headers with gradient-like effect
+// Improved header drawing function with gradient background
+const drawHeader = async (
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  width: number,
+  currentY: number,
+  helveticaBold: PDFFont
+): Promise<number> => {
+  // Draw header background
+  page.drawRectangle({
+    x: 0,
+    y: currentY - 60,
+    width: width,
+    height: 60,
+    color: COLOR.SECONDARY
+  });
+  
+  // Draw orange accent line
+  page.drawRectangle({
+    x: 0,
+    y: currentY - 60,
+    width: width,
+    height: 8,
+    color: COLOR.PRIMARY
+  });
+  
+  // Try to load and embed the HostDime logo
+  let logoImage: PDFImage | null = null;
+  try {
+    // Attempt to fetch HostDime logo
+    const logoResponse = await fetch('https://www.hostdime.com.br/blog/wp-content/uploads/2022/01/hostdime-logo-laranja.png');
+    const logoArrayBuffer = await logoResponse.arrayBuffer();
+    logoImage = await pdfDoc.embedPng(new Uint8Array(logoArrayBuffer));
+    
+    // Draw logo on white background for better visibility
+    page.drawRectangle({
+      x: 50,
+      y: currentY - 50,
+      width: 140,
+      height: 40,
+      color: COLOR.WHITE,
+      borderWidth: 0,
+      borderRadius: 4
+    });
+    
+    const logoWidth = 130;
+    const logoHeight = logoWidth / (logoImage.width / logoImage.height);
+    
+    page.drawImage(logoImage, {
+      x: 55,
+      y: currentY - 45,
+      width: logoWidth,
+      height: logoHeight - 5
+    });
+  } catch (error) {
+    console.error("Failed to load logo:", error);
+    // Fallback text if logo can't be loaded
+    page.drawText("HostDime Brasil", {
+      x: 50,
+      y: currentY - 30,
+      size: 24,
+      font: helveticaBold,
+      color: COLOR.WHITE
+    });
+  }
+  
+  return currentY - 70;
+};
+
+// Enhanced section header with accent styling
 const drawSectionHeader = (
   page: PDFPage, 
   text: string,
@@ -59,7 +130,18 @@ const drawSectionHeader = (
     height: size + 10,
     color: COLOR.PRIMARY,
     borderWidth: 0,
-    opacity: 0.1
+    opacity: 0.1,
+    borderRadius: 4
+  });
+  
+  // Draw accent line
+  page.drawRectangle({
+    x: x - 10,
+    y: y - 5,
+    width: 5,
+    height: size + 10,
+    color: COLOR.PRIMARY,
+    borderWidth: 0,
   });
   
   // Draw the actual text
@@ -80,34 +162,99 @@ const drawHighlightBox = (
   x: number,
   y: number,
   width: number,
-  height: number
+  height: number,
+  color: RGB = COLOR.HIGHLIGHT,
+  borderColor: RGB = COLOR.PRIMARY_LIGHT
 ) => {
   page.drawRectangle({
     x,
     y: y - height,
     width,
     height,
-    color: COLOR.HIGHLIGHT,
+    color: color,
     borderWidth: 1,
-    borderColor: rgb(0.96, 0.51, 0.13),
-    opacity: 0.7
+    borderColor: borderColor,
+    opacity: 0.7,
+    borderRadius: 5
   });
 };
 
-// Helper function to draw a line separator
+// Enhanced separator with gradient effect
 const drawSeparator = (
   page: PDFPage,
   x: number,
   y: number,
-  width: number
+  width: number,
+  opacity: number = 0.2
 ) => {
+  // Draw main separator line
   page.drawLine({
     start: { x, y },
     end: { x: x + width, y },
-    thickness: 0.5,
-    color: rgb(0.10, 0.12, 0.17),
-    opacity: 0.2
+    thickness: 0.7,
+    color: COLOR.SECONDARY,
+    opacity: opacity
   });
+  
+  // Draw accent line at start
+  page.drawLine({
+    start: { x, y },
+    end: { x: x + 30, y },
+    thickness: 1.5,
+    color: COLOR.PRIMARY,
+    opacity: opacity + 0.3
+  });
+};
+
+// Helper function to draw table rows with alternating colors
+const drawTableRow = (
+  page: PDFPage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  isAlternate: boolean = false
+) => {
+  if (isAlternate) {
+    page.drawRectangle({
+      x,
+      y: y - height,
+      width,
+      height,
+      color: COLOR.TABLE_ROW_ALT,
+      borderWidth: 0
+    });
+  }
+};
+
+// Helper function to check if we need a new page
+const checkAndCreateNewPage = (
+  pdfDoc: PDFDocument,
+  currentPage: PDFPage,
+  currentY: number,
+  requiredSpace: number,
+  marginX: number,
+  marginY: number
+): { page: PDFPage, y: number } => {
+  if (currentY < requiredSpace) {
+    // Create new page
+    const newPage = pdfDoc.addPage([595.276, 841.890]);
+    const { width, height } = newPage.getSize();
+    
+    // Add page number at the bottom
+    const pageNumber = pdfDoc.getPageCount();
+    newPage.drawText(`Pagina ${pageNumber}`, {
+      x: width / 2 - 20,
+      y: 30,
+      size: 10,
+      font: currentPage.getFont(),
+      color: COLOR.TEXT_LIGHT
+    });
+    
+    return { page: newPage, y: height - marginY };
+  }
+  
+  return { page: currentPage, y: currentY };
 };
 
 export const generateQuotePDF = async (
@@ -136,79 +283,62 @@ export const generateQuotePDF = async (
     // Page margins
     const marginX = 50;
     const marginRight = width - marginX;
-    let currentY = height - marginX;
+    let currentY = height - 50;
     
-    // Try to load and embed the HostDime logo
-    let logoImage: PDFImage | null = null;
-    try {
-      // Attempt to fetch HostDime logo
-      const logoResponse = await fetch('https://www.hostdime.com.br/blog/wp-content/uploads/2022/01/hostdime-logo-laranja.png');
-      const logoArrayBuffer = await logoResponse.arrayBuffer();
-      logoImage = await pdfDoc.embedPng(new Uint8Array(logoArrayBuffer));
-    } catch (error) {
-      console.error("Failed to load logo:", error);
-      // Continue without logo - will use text fallback
-    }
+    // Draw enhanced header
+    currentY = await drawHeader(pdfDoc, page, width, currentY, helveticaBold);
     
-    // Draw the logo at the top of the document if available
-    if (logoImage) {
-      const logoWidth = 140;
-      const logoHeight = logoWidth / (logoImage.width / logoImage.height);
-      
-      page.drawImage(logoImage, {
-        x: marginX,
-        y: currentY - logoHeight + 15,
-        width: logoWidth,
-        height: logoHeight
-      });
-      
-      // Add quote title on the right side
-      page.drawText("PROPOSTA COMERCIAL", {
-        x: marginRight - 220,
-        y: currentY - 20,
-        size: 20,
-        font: timesRomanBold,
-        color: COLOR.SECONDARY
-      });
-      
-      // Add date under the title
-      const currentDate = new Date().toLocaleDateString('pt-BR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      page.drawText(`Data: ${currentDate}`, {
-        x: marginRight - 220,
-        y: currentY - 45,
-        size: 10,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-      
-      // Add quote number
-      const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-      page.drawText(`Cotacao: ${quoteNumber}`, {
-        x: marginRight - 220,
-        y: currentY - 60,
-        size: 10,
-        font: helveticaBold,
-        color: COLOR.TEXT
-      });
-      
-      currentY -= logoHeight + 40;
-    } else {
-      // Fallback if no logo is available
-      page.drawText("HostDime Brasil", {
-        x: marginX,
-        y: currentY,
-        size: 24,
-        font: helveticaBold,
-        color: COLOR.PRIMARY
-      });
-      
-      currentY -= 40;
-    }
+    // Add quote title and date in an elegant format
+    const quoteBox = {
+      x: marginRight - 250,
+      y: currentY + 20,
+      width: 230,
+      height: 80
+    };
+    
+    // Draw quote info box
+    drawHighlightBox(
+      page,
+      quoteBox.x,
+      quoteBox.y,
+      quoteBox.width,
+      quoteBox.height,
+      COLOR.BACKGROUND
+    );
+    
+    // Add title
+    page.drawText("PROPOSTA COMERCIAL", {
+      x: quoteBox.x + 10,
+      y: quoteBox.y - 25,
+      size: 16,
+      font: helveticaBold,
+      color: COLOR.SECONDARY
+    });
+    
+    // Add date under the title
+    const currentDate = new Date().toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    page.drawText(`Data: ${currentDate}`, {
+      x: quoteBox.x + 10,
+      y: quoteBox.y - 45,
+      size: 10,
+      font: helvetica,
+      color: COLOR.TEXT
+    });
+    
+    // Add quote number
+    const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
+    page.drawText(`Cotacao: ${quoteNumber}`, {
+      x: quoteBox.x + 10,
+      y: quoteBox.y - 60,
+      size: 10,
+      font: helveticaBold,
+      color: COLOR.PRIMARY
+    });
     
     // Draw a border around the entire document
     page.drawRectangle({
@@ -216,13 +346,15 @@ export const generateQuotePDF = async (
       y: 40,
       width: width - (marginX * 2) + 20,
       height: height - 80,
-      borderColor: rgb(0.96, 0.51, 0.13),
-      borderWidth: 1,
+      borderColor: COLOR.PRIMARY,
+      borderWidth: 0.7,
       opacity: 0.15,
-      color: COLOR.WHITE
+      color: COLOR.WHITE,
+      borderRadius: 3
     });
     
     // Executive Summary
+    currentY -= 20;
     drawSeparator(page, marginX, currentY, width - (marginX * 2));
     currentY -= 25;
     
@@ -290,9 +422,24 @@ export const generateQuotePDF = async (
     );
     
     // Regular Components Section
+    let rowAlt = false;
     Object.values(selectedComponents).forEach(component => {
       // Skip storage components as they will be handled separately
       if (component.type === "Armazenamento") return;
+      
+      // Check if we need a new page
+      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50);
+      page = result.page;
+      currentY = result.y;
+      
+      // Draw alternating row background
+      drawTableRow(page, marginX - 5, currentY + 5, width - (marginX * 2) + 10, 20 + 
+        (component.description ? 18 : 0) + 
+        (component.specs ? component.specs.length * 14 + 5 : 0) + 
+        (component.metadata?.features ? component.metadata.features.length * 14 + 5 : 0),
+        rowAlt
+      );
+      rowAlt = !rowAlt;
       
       // Component name and price
       page.drawText(component.name, {
@@ -303,13 +450,24 @@ export const generateQuotePDF = async (
         color: COLOR.TEXT
       });
       
-      page.drawText(formatCurrency(component.price), {
-        x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(component.price), 12),
-        y: currentY,
-        size: 12,
-        font: helvetica,
-        color: COLOR.TEXT
-      });
+      if (component.type !== "DataCenter" && component.type !== "Contrato") {
+        const price = formatCurrency(component.price);
+        page.drawText(price, {
+          x: marginRight - helvetica.widthOfTextAtSize(price, 12),
+          y: currentY,
+          size: 12,
+          font: helvetica,
+          color: COLOR.TEXT
+        });
+      } else {
+        page.drawText("Incluído", {
+          x: marginRight - helvetica.widthOfTextAtSize("Incluído", 12),
+          y: currentY,
+          size: 12,
+          font: helvetica,
+          color: COLOR.TEXT_LIGHT
+        });
+      }
       
       currentY -= 18;
       
@@ -343,7 +501,7 @@ export const generateQuotePDF = async (
       if (component.metadata?.features && component.metadata.features.length > 0) {
         currentY -= 5;
         component.metadata.features.forEach(feature => {
-          page.drawText(`> ${feature}`, {  // Changed from ✓ to > for better compatibility
+          page.drawText(`> ${feature}`, {
             x: marginX + 20,
             y: currentY,
             size: 10,
@@ -360,19 +518,9 @@ export const generateQuotePDF = async (
     // Storage Section
     if (storageItems.internal.length > 0 || storageItems.external.length > 0) {
       // Check if we need to add a new page based on remaining space
-      if (currentY < 300) {
-        page = pdfDoc.addPage([595.276, 841.890]);
-        currentY = height - marginX;
-        
-        // Add page number at the bottom
-        page.drawText(`Pagina 2`, {
-          x: width / 2 - 20,
-          y: 30,
-          size: 10,
-          font: helvetica,
-          color: COLOR.TEXT_LIGHT
-        });
-      }
+      const storagePageCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 300, marginX, 50);
+      page = storagePageCheck.page;
+      currentY = storagePageCheck.y;
       
       currentY = drawSectionHeader(
         page, 
@@ -397,7 +545,22 @@ export const generateQuotePDF = async (
         
         const groupedDisks = groupDisksByTypeAndCapacity(storageItems.internal);
         
+        rowAlt = false;
         groupedDisks.forEach(group => {
+          // Check if we need a new page
+          const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50);
+          page = result.page;
+          currentY = result.y;
+          
+          // Draw alternating row background
+          const rowHeight = 20 + 
+            (group.disk.description ? 15 : 0) + 
+            (group.disk.specs ? group.disk.specs.length * 14 : 0) +
+            (group.disk.metadata?.raid && group.disk.metadata.raid.type !== 'none' ? 80 : 0);
+          
+          drawTableRow(page, marginX + 10, currentY + 5, width - (marginX * 2) - 20, rowHeight, rowAlt);
+          rowAlt = !rowAlt;
+          
           // Name and quantity
           page.drawText(`${group.quantity}x ${group.disk.name}`, {
             x: marginX + 15,
@@ -407,8 +570,9 @@ export const generateQuotePDF = async (
             color: COLOR.TEXT
           });
           
-          page.drawText(formatCurrency(group.disk.price * group.quantity), {
-            x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(group.disk.price * group.quantity), 12),
+          const price = formatCurrency(group.disk.price * group.quantity);
+          page.drawText(price, {
+            x: marginRight - helvetica.widthOfTextAtSize(price, 12),
             y: currentY,
             size: 12,
             font: helvetica,
@@ -450,7 +614,9 @@ export const generateQuotePDF = async (
               marginX + 25,
               currentY - 5,
               300,
-              80
+              80,
+              rgb(0.95, 0.95, 1.0), // Light blue background
+              rgb(0.7, 0.7, 0.9)     // Blue border
             );
             
             currentY -= 15;
@@ -491,19 +657,9 @@ export const generateQuotePDF = async (
       // External Storage
       if (storageItems.external.length > 0) {
         // Check if we need a new page
-        if (currentY < 200) {
-          page = pdfDoc.addPage([595.276, 841.890]);
-          currentY = height - marginX;
-          
-          // Add page number at the bottom
-          page.drawText(`Pagina 3`, {
-            x: width / 2 - 20,
-            y: 30,
-            size: 10,
-            font: helvetica,
-            color: COLOR.TEXT_LIGHT
-          });
-        }
+        const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+        page = result.page;
+        currentY = result.y;
         
         page.drawText("2.2 Storage Externo:", {
           x: marginX,
@@ -515,7 +671,16 @@ export const generateQuotePDF = async (
         
         currentY -= 20;
         
+        rowAlt = false;
         storageItems.external.forEach(storage => {
+          // Draw alternating row background
+          const rowHeight = 20 + 
+            (storage.description ? 15 : 0) + 
+            (storage.specs ? storage.specs.length * 14 : 0);
+          
+          drawTableRow(page, marginX + 10, currentY + 5, width - (marginX * 2) - 20, rowHeight, rowAlt);
+          rowAlt = !rowAlt;
+          
           page.drawText(storage.name, {
             x: marginX + 15,
             y: currentY,
@@ -524,8 +689,9 @@ export const generateQuotePDF = async (
             color: COLOR.TEXT
           });
           
-          page.drawText(formatCurrency(storage.price), {
-            x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(storage.price), 12),
+          const price = formatCurrency(storage.price);
+          page.drawText(price, {
+            x: marginRight - helvetica.widthOfTextAtSize(price, 12),
             y: currentY,
             size: 12,
             font: helvetica,
@@ -566,20 +732,9 @@ export const generateQuotePDF = async (
     // Custom Services Section
     if (customServices.length > 0) {
       // Check if we need to add a new page
-      if (currentY < 200) {
-        page = pdfDoc.addPage([595.276, 841.890]);
-        currentY = height - marginX;
-        
-        // Add page number at the bottom
-        const pageNumber = pdfDoc.getPageCount();
-        page.drawText(`Pagina ${pageNumber}`, {
-          x: width / 2 - 20,
-          y: 30,
-          size: 10,
-          font: helvetica,
-          color: COLOR.TEXT_LIGHT
-        });
-      }
+      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+      page = result.page;
+      currentY = result.y;
       
       currentY = drawSectionHeader(
         page, 
@@ -590,7 +745,16 @@ export const generateQuotePDF = async (
         helveticaBold
       );
       
+      rowAlt = false;
       customServices.forEach(service => {
+        // Draw alternating row background
+        const rowHeight = 20 + 
+          (service.description ? 15 : 0) + 
+          (service.specs ? service.specs.length * 14 : 0);
+        
+        drawTableRow(page, marginX - 5, currentY + 5, width - (marginX * 2) + 10, rowHeight, rowAlt);
+        rowAlt = !rowAlt;
+        
         const quantity = service.metadata?.quantity || 1;
         const serviceText = quantity > 1 ? `${quantity}x ${service.name}` : service.name;
         
@@ -602,8 +766,9 @@ export const generateQuotePDF = async (
           color: COLOR.TEXT
         });
         
-        page.drawText(formatCurrency(service.price), {
-          x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(service.price), 12),
+        const price = formatCurrency(service.price);
+        page.drawText(price, {
+          x: marginRight - helvetica.widthOfTextAtSize(price, 12),
           y: currentY,
           size: 12,
           font: helvetica,
@@ -642,40 +807,10 @@ export const generateQuotePDF = async (
     
     // Financial Summary
     // Check if we need to add a new page
-    if (currentY < 250) {
-      page = pdfDoc.addPage([595.276, 841.890]);
-      currentY = height - marginX;
-      
-      // Add page number at the bottom
-      const pageNumber = pdfDoc.getPageCount();
-      page.drawText(`Pagina ${pageNumber}`, {
-        x: width / 2 - 20,
-        y: 30,
-        size: 10,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-    } else {
-      currentY -= 20;
-    }
-    
-    // Draw a highlighted box for financial summary
-    drawHighlightBox(
-      page,
-      marginX - 5,
-      currentY + 15,
-      width - (marginX * 2) + 10,
-      130
-    );
-    
-    currentY = drawSectionHeader(
-      page, 
-      "Resumo Financeiro", 
-      marginX, 
-      currentY, 
-      300,
-      helveticaBold
-    );
+    const result = checkAndCreateNewPage(pdfDoc, page, currentY, 250, marginX, 50);
+    page = result.page;
+    currentY = result.y;
+    currentY -= 20;
     
     // Calculate totals
     const componentsPrice = Object.values(selectedComponents)
@@ -696,92 +831,74 @@ export const generateQuotePDF = async (
     );
     
     const subtotal = componentsPrice + storagePrice + servicesPrice;
+    // Calculate margin but don't show it in the PDF
     const profit = (subtotal * margin) / 100;
     const total = subtotal + profit;
     
-    // Subtotal
-    page.drawText("Subtotal de Hardware:", {
+    // Draw a highlighted box for financial summary with improved styling
+    drawHighlightBox(
+      page,
+      marginX - 10,
+      currentY + 20,
+      width - (marginX * 2) + 20,
+      180,
+      rgb(0.97, 0.97, 0.99),  // Very light background
+      COLOR.PRIMARY           // Orange border
+    );
+    
+    currentY = drawSectionHeader(
+      page, 
+      "Resumo Financeiro", 
+      marginX, 
+      currentY, 
+      300,
+      helveticaBold
+    );
+    
+    // Draw financial breakdown without showing the margin calculation
+    
+    // Hardware subtotal
+    page.drawText("Hardware:", {
       x: marginX + 15,
       y: currentY,
-      size: 11,
+      size: 12,
       font: helvetica,
       color: COLOR.TEXT
     });
     
-    page.drawText(formatCurrency(componentsPrice), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(componentsPrice), 11),
+    const hardwarePrice = formatCurrency(componentsPrice);
+    page.drawText(hardwarePrice, {
+      x: marginRight - helvetica.widthOfTextAtSize(hardwarePrice, 12),
       y: currentY,
-      size: 11,
+      size: 12,
       font: helvetica,
       color: COLOR.TEXT
     });
     
-    currentY -= 18;
+    currentY -= 20;
     
     // Storage subtotal
-    page.drawText("Subtotal de Armazenamento:", {
+    page.drawText("Armazenamento:", {
       x: marginX + 15,
       y: currentY,
-      size: 11,
+      size: 12,
       font: helvetica,
       color: COLOR.TEXT
     });
     
-    page.drawText(formatCurrency(storagePrice), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(storagePrice), 11),
+    const storagePriceFormatted = formatCurrency(storagePrice);
+    page.drawText(storagePriceFormatted, {
+      x: marginRight - helvetica.widthOfTextAtSize(storagePriceFormatted, 12),
       y: currentY,
-      size: 11,
+      size: 12,
       font: helvetica,
       color: COLOR.TEXT
     });
     
-    currentY -= 18;
+    currentY -= 20;
     
     // Services subtotal
-    page.drawText("Subtotal de Servicos:", {
-      x: marginX + 15,
-      y: currentY,
-      size: 11,
-      font: helvetica,
-      color: COLOR.TEXT
-    });
-    
-    page.drawText(formatCurrency(servicesPrice), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(servicesPrice), 11),
-      y: currentY,
-      size: 11,
-      font: helvetica,
-      color: COLOR.TEXT
-    });
-    
-    currentY -= 18;
-    
-    // Draw separator line
-    drawSeparator(page, marginX + 15, currentY, width - (marginX * 2) - 30);
-    
-    currentY -= 18;
-    
-    // Subtotal
-    page.drawText("Subtotal:", {
-      x: marginX + 15,
-      y: currentY,
-      size: 12,
-      font: helveticaBold,
-      color: COLOR.TEXT
-    });
-    
-    page.drawText(formatCurrency(subtotal), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(subtotal), 12),
-      y: currentY,
-      size: 12,
-      font: helveticaBold,
-      color: COLOR.TEXT
-    });
-    
-    currentY -= 18;
-    
-    // Margin
-    page.drawText(`Margem (${margin}%):`, {
+    page.drawText("Servicos:", {
       x: marginX + 15,
       y: currentY,
       size: 12,
@@ -789,50 +906,57 @@ export const generateQuotePDF = async (
       color: COLOR.TEXT
     });
     
-    page.drawText(formatCurrency(profit), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(profit), 12),
+    const servicesPriceFormatted = formatCurrency(servicesPrice);
+    page.drawText(servicesPriceFormatted, {
+      x: marginRight - helvetica.widthOfTextAtSize(servicesPriceFormatted, 12),
       y: currentY,
       size: 12,
-      font: helveticaBold,
-      color: COLOR.PRIMARY
+      font: helvetica,
+      color: COLOR.TEXT
     });
     
     currentY -= 25;
     
-    // Total
-    page.drawText("Total Mensal:", {
+    // Draw separator line
+    drawSeparator(page, marginX + 15, currentY, width - (marginX * 2) - 30, 0.5);
+    
+    currentY -= 30;
+    
+    // Highly visible total section
+    page.drawRectangle({
       x: marginX + 15,
-      y: currentY,
+      y: currentY - 5,
+      width: width - (marginX * 2) - 30,
+      height: 40,
+      color: COLOR.PRIMARY_LIGHT,
+      opacity: 0.1,
+      borderRadius: 5
+    });
+    
+    // Total - Show only the final price without margin breakdown
+    page.drawText("Total Mensal:", {
+      x: marginX + 25,
+      y: currentY + 10,
       size: 14,
       font: helveticaBold,
       color: COLOR.SECONDARY
     });
     
-    page.drawText(formatCurrency(total), {
-      x: marginRight - helvetica.widthOfTextAtSize(formatCurrency(total), 14),
-      y: currentY,
-      size: 14,
+    const totalPrice = formatCurrency(total);
+    page.drawText(totalPrice, {
+      x: marginRight - helvetica.widthOfTextAtSize(totalPrice, 16) - 15,
+      y: currentY + 10,
+      size: 16,
       font: helveticaBold,
       color: COLOR.PRIMARY
     });
     
-    currentY -= 40;
+    currentY -= 50;
     
     // Commercial section - Benefits
-    if (currentY < 200) {
-      page = pdfDoc.addPage([595.276, 841.890]);
-      currentY = height - marginX;
-      
-      // Add page number
-      const pageNumber = pdfDoc.getPageCount();
-      page.drawText(`Pagina ${pageNumber}`, {
-        x: width / 2 - 20,
-        y: 30,
-        size: 10,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-    }
+    const benefitsCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+    page = benefitsCheck.page;
+    currentY = benefitsCheck.y;
     
     currentY = drawSectionHeader(
       page, 
@@ -843,6 +967,7 @@ export const generateQuotePDF = async (
       helveticaBold
     );
     
+    // Enhanced benefits display with icons (using text markers for now)
     const benefits = [
       "Suporte Tecnico 24x7x365 por telefone, chat e ticket",
       "Data Centers com certificacao Tier III e Tier IV",
@@ -852,18 +977,56 @@ export const generateQuotePDF = async (
       "Mais de 20 anos de experiencia em hospedagem"
     ];
     
-    benefits.forEach(benefit => {
-      page.drawText(`> ${benefit}`, { // Changed from ✓ to > for better compatibility
-        x: marginX + 15,
-        y: currentY,
-        size: 11,
+    // Draw benefits in a two-column layout
+    const columnWidth = (width - (marginX * 2) - 40) / 2;
+    let leftColumnY = currentY;
+    let rightColumnY = currentY;
+    
+    for (let i = 0; i < benefits.length; i++) {
+      const benefit = benefits[i];
+      const isLeftColumn = i % 2 === 0;
+      const x = isLeftColumn ? marginX + 5 : marginX + columnWidth + 30;
+      const y = isLeftColumn ? leftColumnY : rightColumnY;
+      
+      // Draw highlight box
+      page.drawRectangle({
+        x: x - 5,
+        y: y - 5,
+        width: columnWidth,
+        height: 25,
+        color: COLOR.PRIMARY,
+        opacity: 0.05,
+        borderRadius: 3
+      });
+      
+      // Draw check mark
+      page.drawText("✓", {
+        x: x,
+        y,
+        size: 12,
+        font: helveticaBold,
+        color: COLOR.PRIMARY
+      });
+      
+      // Draw benefit text
+      page.drawText(benefit, {
+        x: x + 15,
+        y,
+        size: 10,
         font: helvetica,
         color: COLOR.TEXT
       });
-      currentY -= 18;
-    });
+      
+      // Update column position
+      if (isLeftColumn) {
+        leftColumnY -= 30;
+      } else {
+        rightColumnY -= 30;
+      }
+    }
     
-    currentY -= 20;
+    // Use the lowest Y position
+    currentY = Math.min(leftColumnY, rightColumnY) - 20;
     
     // Terms and Conditions
     currentY = drawSectionHeader(
@@ -901,6 +1064,7 @@ export const generateQuotePDF = async (
       
       drawSeparator(footerPage, marginX, 50, width - (marginX * 2));
       
+      // Footer with company information
       footerPage.drawText("HostDime Brasil | www.hostdime.com.br | 0800 200 8532 | comercial@hostdime.com.br", {
         x: width / 2 - 190, // Centered
         y: footerY,
@@ -915,7 +1079,7 @@ export const generateQuotePDF = async (
         y: footerY,
         size: 8,
         font: helveticaOblique,
-        color: rgb(0.4, 0.4, 0.4),
+        color: COLOR.TEXT_LIGHT,
         opacity: 0.6
       });
       

@@ -42,7 +42,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     });
     
     try {
-      // Corrigindo a chamada para passar todos os 4 argumentos necessários
+      // Corrigindo a chamada para passar todos os argumentos necessários
       await generateQuotePDF(
         selectedComponents,
         storageItems,
@@ -111,6 +111,9 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
                 max={100}
                 step={1}
               />
+              <p className="text-xs text-muted-foreground mt-4">
+                Nota: A margem é usada para cálculos internos e não será mostrada no PDF.
+              </p>
             </div>
           </DialogContent>
         </Dialog>
