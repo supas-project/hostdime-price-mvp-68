@@ -1,15 +1,17 @@
-
 import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface StorageListProps {
   storageItems: ComponentOption[];
+  onRemoveItem?: (diskId: string) => void;
 }
 
-export function StorageList({ storageItems }: StorageListProps) {
+export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
   // Agrupar discos internos por tipo para melhor organização
   const groupedStorage = storageItems
     .filter(disk => disk && disk.price > 0)
@@ -67,14 +69,31 @@ export function StorageList({ storageItems }: StorageListProps) {
             </Badge>
           </div>
           {disks.map((disk) => (
-            <div key={disk.id} className="flex justify-between items-center group animate-fade-in pl-2">
+            <div 
+              key={disk.id} 
+              className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
+            >
               <p className="text-sm">
                 {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
                   `${disk.metadata.quantity}x ${getDisplayCapacity(disk)}` : 
                   getDisplayCapacity(disk)
                 }
               </p>
-              <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                
+                {onRemoveItem && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => onRemoveItem(disk.id)}
+                  >
+                    <X className="h-3 w-3" />
+                    <span className="sr-only">Remover disco</span>
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

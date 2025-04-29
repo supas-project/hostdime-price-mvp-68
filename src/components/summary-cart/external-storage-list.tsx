@@ -1,16 +1,17 @@
-
 import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive } from "lucide-react";
+import { HardDrive, X } from "lucide-react";
 import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
+import { Button } from "@/components/ui/button";
 
 interface ExternalStorageListProps {
   storageItems: ComponentOption[];
+  onRemoveItem?: (storageId: string) => void;
 }
 
-export function ExternalStorageList({ storageItems }: ExternalStorageListProps) {
+export function ExternalStorageList({ storageItems, onRemoveItem }: ExternalStorageListProps) {
   const filteredItems = storageItems.filter(storage => storage && storage.price > 0);
   
   if (!filteredItems.length) return null;
@@ -90,14 +91,30 @@ export function ExternalStorageList({ storageItems }: ExternalStorageListProps) 
         const badgeVariant = getBadgeVariant(type);
         
         return (
-          <div key={storage.id} className="flex justify-between items-center group p-1.5 pl-2 rounded-md hover:bg-accent/40 transition-colors">
+          <div key={storage.id} 
+               className="flex justify-between items-center group p-1.5 pl-2 rounded-md hover:bg-accent/40 transition-colors">
             <div className="flex items-center gap-2">
               <Badge variant={badgeVariant} className="text-xs">
                 {type}
               </Badge>
               <p className="text-sm font-medium">{capacity}</p>
             </div>
-            <p className="text-sm font-medium">{formatCurrency(storage.price)}</p>
+            
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">{formatCurrency(storage.price)}</p>
+              
+              {onRemoveItem && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => onRemoveItem(storage.id)}
+                >
+                  <X className="h-3 w-3" />
+                  <span className="sr-only">Remover storage</span>
+                </Button>
+              )}
+            </div>
           </div>
         );
       })}

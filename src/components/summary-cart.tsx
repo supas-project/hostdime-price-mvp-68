@@ -5,6 +5,7 @@ import { useWizard } from "@/contexts/WizardContext";
 import { CartHeader } from "./summary-cart/cart-header";
 import { CartContent } from "./summary-cart/cart-content";
 import { CartFooter } from "./summary-cart/cart-footer";
+import { toast } from "sonner";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -23,7 +24,7 @@ export function SummaryCart({
   onNext,
   onComplete
 }: SummaryCartProps) {
-  const { storageItems, connectivityItems } = useWizard();
+  const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
 
   // Filter standard components (excluding DataCenter and Contract)
   const standardComponents = Object.values(selectedComponents).filter(
@@ -58,14 +59,36 @@ export function SummaryCart({
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   
+  // Verifica se há qualquer componente ou item selecionado
+  const hasItems = Boolean(
+    Object.keys(selectedComponents).length || 
+    storageItems.internal.length || 
+    storageItems.external.length ||
+    Object.keys(connectivityItems).length
+  );
+  
+  const handleClearAll = () => {
+    handleRestart();
+    toast.success('Configuração reiniciada com sucesso!');
+  };
+  
+  const handleRemoveComponentWithFeedback = (type: string) => {
+    handleRemoveComponent(type);
+    toast.success('Item removido com sucesso!');
+  };
+  
   return (
     <div className="bg-card rounded-2xl border border-border shadow-lg">
-      <CartHeader />
+      <CartHeader 
+        onClearAll={handleClearAll}
+        hasItems={hasItems}
+      />
       
       <CartContent 
         selectedComponents={selectedComponents}
         storageItems={storageItems}
         connectivityItems={connectivityItems}
+        onRemoveItem={handleRemoveComponentWithFeedback}
       />
       
       <CartFooter

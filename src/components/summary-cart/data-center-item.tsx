@@ -11,7 +11,7 @@ export function DataCenterItem({ component }: DataCenterItemProps) {
   if (!component) return null;
 
   return (
-    <div className="flex justify-between items-center group animate-fade-in">
+    <div className="flex justify-between items-center group animate-fade-in hover:bg-accent/20 p-1 rounded-md transition-colors">
       <div>
         <p className="text-sm font-medium flex items-center gap-2">
           {component.name}
