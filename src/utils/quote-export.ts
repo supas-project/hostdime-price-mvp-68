@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
@@ -234,7 +233,8 @@ const checkAndCreateNewPage = (
   currentY: number,
   requiredSpace: number,
   marginX: number,
-  marginY: number
+  marginY: number,
+  helveticaFont: PDFFont  // Add parameter to pass the font
 ): { page: PDFPage, y: number } => {
   if (currentY < requiredSpace) {
     // Create new page
@@ -243,14 +243,11 @@ const checkAndCreateNewPage = (
     
     // Add page number at the bottom
     const pageNumber = pdfDoc.getPageCount();
-    // Usando um método disponível ao invés de getFont()
-    const helvetica = StandardFonts.Helvetica;
     newPage.drawText(`Pagina ${pageNumber}`, {
       x: width / 2 - 20,
       y: 30,
       size: 10,
-      // Usamos a fonte padrão em vez de tentar acessar a fonte atual
-      font: helvetica,
+      font: helveticaFont,  // Use the passed font parameter
       color: COLOR.TEXT_LIGHT
     });
     
@@ -431,7 +428,7 @@ export const generateQuotePDF = async (
       if (component.type === "Armazenamento") return;
       
       // Check if we need a new page
-      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50);
+      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
       page = result.page;
       currentY = result.y;
       
@@ -521,7 +518,7 @@ export const generateQuotePDF = async (
     // Storage Section
     if (storageItems.internal.length > 0 || storageItems.external.length > 0) {
       // Check if we need to add a new page based on remaining space
-      const storagePageCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 300, marginX, 50);
+      const storagePageCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 300, marginX, 50, helvetica);
       page = storagePageCheck.page;
       currentY = storagePageCheck.y;
       
@@ -551,7 +548,7 @@ export const generateQuotePDF = async (
         rowAlt = false;
         groupedDisks.forEach(group => {
           // Check if we need a new page
-          const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50);
+          const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
           page = result.page;
           currentY = result.y;
           
@@ -660,7 +657,7 @@ export const generateQuotePDF = async (
       // External Storage
       if (storageItems.external.length > 0) {
         // Check if we need a new page
-        const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+        const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
         page = result.page;
         currentY = result.y;
         
@@ -735,7 +732,7 @@ export const generateQuotePDF = async (
     // Custom Services Section
     if (customServices.length > 0) {
       // Check if we need to add a new page
-      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+      const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
       page = result.page;
       currentY = result.y;
       
@@ -810,7 +807,7 @@ export const generateQuotePDF = async (
     
     // Financial Summary
     // Check if we need to add a new page
-    const result = checkAndCreateNewPage(pdfDoc, page, currentY, 250, marginX, 50);
+    const result = checkAndCreateNewPage(pdfDoc, page, currentY, 250, marginX, 50, helvetica);
     page = result.page;
     currentY = result.y;
     currentY -= 20;
@@ -957,174 +954,6 @@ export const generateQuotePDF = async (
     currentY -= 50;
     
     // Commercial section - Benefits
-    const benefitsCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50);
+    const benefitsCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
     page = benefitsCheck.page;
     currentY = benefitsCheck.y;
-    
-    currentY = drawSectionHeader(
-      page, 
-      "Por que escolher a HostDime?", 
-      marginX, 
-      currentY, 
-      300,
-      helveticaBold
-    );
-    
-    // Enhanced benefits display with icons (using text markers for now)
-    const benefits = [
-      "Suporte Tecnico 24x7x365 por telefone, chat e ticket",
-      "Data Centers com certificacao Tier III e Tier IV",
-      "Infraestrutura de rede redundante com multiplos carriers",
-      "Monitoramento proativo em tempo real",
-      "SLA de 99.999% de uptime",
-      "Mais de 20 anos de experiencia em hospedagem"
-    ];
-    
-    // Draw benefits in a two-column layout
-    const columnWidth = (width - (marginX * 2) - 40) / 2;
-    let leftColumnY = currentY;
-    let rightColumnY = currentY;
-    
-    for (let i = 0; i < benefits.length; i++) {
-      const benefit = benefits[i];
-      const isLeftColumn = i % 2 === 0;
-      const x = isLeftColumn ? marginX + 5 : marginX + columnWidth + 30;
-      const y = isLeftColumn ? leftColumnY : rightColumnY;
-      
-      // Draw highlight box
-      page.drawRectangle({
-        x: x - 5,
-        y: y - 5,
-        width: columnWidth,
-        height: 25,
-        color: COLOR.PRIMARY,
-        opacity: 0.05
-        // Removida a propriedade borderRadius que causa erro
-      });
-      
-      // Draw check mark
-      page.drawText("✓", {
-        x: x,
-        y,
-        size: 12,
-        font: helveticaBold,
-        color: COLOR.PRIMARY
-      });
-      
-      // Draw benefit text
-      page.drawText(benefit, {
-        x: x + 15,
-        y,
-        size: 10,
-        font: helvetica,
-        color: COLOR.TEXT
-      });
-      
-      // Update column position
-      if (isLeftColumn) {
-        leftColumnY -= 30;
-      } else {
-        rightColumnY -= 30;
-      }
-    }
-    
-    // Use the lowest Y position
-    currentY = Math.min(leftColumnY, rightColumnY) - 20;
-    
-    // Terms and Conditions
-    currentY = drawSectionHeader(
-      page, 
-      "Termos e Condicoes", 
-      marginX, 
-      currentY, 
-      300,
-      helveticaBold
-    );
-    
-    const terms = [
-      "• Valores em reais (BRL), cobrados mensalmente.",
-      "• Esta proposta e valida por 15 dias a partir da data de emissao.",
-      "• Prazo de ativacao: ate 48 horas apos confirmacao do pagamento.",
-      "• O pagamento pode ser realizado via boleto bancario, cartao de credito ou transferencia.",
-      "• Impostos podem ser aplicaveis dependendo da regiao e modalidade de contratacao."
-    ];
-    
-    terms.forEach(term => {
-      page.drawText(term, {
-        x: marginX,
-        y: currentY,
-        size: 10,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-      currentY -= 16;
-    });
-    
-    // Footer on all pages
-    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
-      const footerPage = pdfDoc.getPage(i);
-      const footerY = 15;
-      
-      drawSeparator(footerPage, marginX, 50, width - (marginX * 2));
-      
-      // Footer with company information
-      footerPage.drawText("HostDime Brasil | www.hostdime.com.br | 0800 200 8532 | comercial@hostdime.com.br", {
-        x: width / 2 - 190, // Centered
-        y: footerY,
-        size: 9,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-      
-      // Add small watermark-style text
-      footerPage.drawText("Proposta gerada em " + new Date().toLocaleDateString('pt-BR'), {
-        x: marginX,
-        y: footerY,
-        size: 8,
-        font: helveticaOblique,
-        color: COLOR.TEXT_LIGHT,
-        opacity: 0.6
-      });
-      
-      // Add page number
-      footerPage.drawText(`Pagina ${i + 1} de ${pdfDoc.getPageCount()}`, {
-        x: marginRight - 80,
-        y: footerY,
-        size: 8,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-    }
-    
-    // Improved error handling for PDF generation
-    try {
-      // Save and download
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `HostDime-Proposta-${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success("PDF gerado com sucesso!", {
-        description: "Seu documento foi baixado automaticamente"
-      });
-    } catch (pdfError) {
-      console.error('Erro ao finalizar o PDF:', pdfError);
-      toast.error("Erro ao finalizar o PDF", {
-        description: "Tente novamente ou entre em contato com o suporte."
-      });
-    }
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    toast.error("Erro ao gerar o PDF", {
-      description: "Por favor, tente novamente."
-    });
-    throw error;
-  }
-};
