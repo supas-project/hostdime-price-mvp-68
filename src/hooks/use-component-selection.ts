@@ -92,6 +92,27 @@ export function useComponentSelection() {
   const handleRemoveComponent = (type: string) => {
     console.log("Removing component:", type);
     
+    // Check for internal disk IDs (they start with "internal-disk-")
+    if (type.startsWith("internal-disk-")) {
+      setStorageItems(prev => ({
+        ...prev,
+        internal: prev.internal.filter(disk => disk.id !== type)
+      }));
+      toast.success("Disco interno removido");
+      return;
+    }
+    
+    // Check for external storage IDs (they start with "external-storage-")
+    if (type.startsWith("external-storage-")) {
+      setStorageItems(prev => ({
+        ...prev,
+        external: prev.external.filter(storage => storage.id !== type)
+      }));
+      toast.success("Storage externo removido");
+      return;
+    }
+    
+    // Handle the original storage removal cases
     if (type === "storage_internal") {
       setStorageItems(prev => ({
         ...prev,
