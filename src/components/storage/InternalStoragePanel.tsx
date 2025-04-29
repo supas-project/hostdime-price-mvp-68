@@ -137,8 +137,17 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   };
 
   const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
+    // Atualizar tipo selecionado
     setSelectedDiskType(type);
     setSelectedCapacity("");
+    
+    // Limpar seleção atual para evitar confusão
+    // Notificar o usuário sobre a mudança de contexto
+    if (selectedDisks.length > 0 && selectedDisks.some(item => item.disk.type !== type)) {
+      toast.info(`Agora você está configurando discos ${type.toUpperCase()}`, {
+        description: "Os discos já adicionados foram mantidos no seu carrinho"
+      });
+    }
   };
 
   const handleQuantityChange = (diskId: string, newQuantity: number) => {
@@ -167,6 +176,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     toast.success("Disco removido com sucesso");
   };
 
+  // Filtrar discos pelo tipo atualmente selecionado para exibição
+  const visibleDisks = selectedDisks.filter(
+    item => selectedDiskType ? item.disk.type === selectedDiskType : true
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-2 gap-4">
@@ -182,9 +196,17 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         />
       </div>
 
-      {selectedDisks.length > 0 && (
+      {selectedDiskType && (
+        <div className="px-3 py-2 bg-primary/10 rounded-md border border-primary/20">
+          <p className="text-sm text-center">
+            Configurando discos <span className="font-semibold">{selectedDiskType.toUpperCase()}</span>
+          </p>
+        </div>
+      )}
+
+      {visibleDisks.length > 0 ? (
         <div className="space-y-4">
-          {selectedDisks.map((item) => (
+          {visibleDisks.map((item) => (
             <div key={item.disk.id} className="animate-fade-in">
               <SelectedDiskDisplay
                 disk={item.disk}
@@ -194,6 +216,41 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               />
             </div>
           ))}
+        </div>
+      ) : selectedDisks.length > 0 ? (
+        <div className="text-center py-4 text-muted-foreground">
+          <p>Nenhum disco {selectedDiskType?.toUpperCase()} adicionado.</p>
+          <p className="text-sm mt-1">Selecione uma capacidade para adicionar.</p>
+        </div>
+      ) : null}
+
+      {selectedDisks.length > 0 && selectedDisks.some(item => item.disk.type !== selectedDiskType) && (
+        <div className="mt-4 p-3 bg-card rounded-lg border border-border">
+          <p className="text-sm font-medium mb-2">Outros discos no seu servidor:</p>
+          <div className="space-y-2">
+            {Object.entries(
+              selectedDisks
+                .filter(item => item.disk.type !== selectedDiskType)
+                .reduce((acc, curr) => {
+                  const type = curr.disk.type;
+                  if (!acc[type]) acc[type] = [];
+                  acc[type].push(curr);
+                  return acc;
+                }, {} as Record<string, typeof selectedDisks>)
+            ).map(([type, disks]) => (
+              <div key={type} className="flex items-center justify-between">
+                <span className="text-sm">
+                  {type.toUpperCase()} ({disks.length} {disks.length === 1 ? "disco" : "discos"})
+                </span>
+                <button
+                  onClick={() => setSelectedDiskType(type as "nvme" | "ssd" | "hdd")}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Editar
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

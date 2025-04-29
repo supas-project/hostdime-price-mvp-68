@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useWizard } from "@/contexts/WizardContext";
 import { useState } from 'react';
 import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -75,6 +76,24 @@ export function SummaryCart({
     }, 300);
   };
 
+  // Agrupar discos internos por tipo para melhor organização
+  const groupedInternalStorage = storageItems.internal
+    .filter(disk => disk && disk.price > 0)
+    .reduce((groups, disk) => {
+      const type = disk.subtype || disk.name.split(' ')[0].toLowerCase();
+      if (!groups[type]) {
+        groups[type] = [];
+      }
+      groups[type].push(disk);
+      return groups;
+    }, {} as Record<string, ComponentOption[]>);
+
+  const diskTypeColors = {
+    nvme: "success",
+    ssd: "info",
+    hdd: "warning"
+  };
+
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   
@@ -138,20 +157,27 @@ export function SummaryCart({
           </div>
         ))}
         
-        {/* Storage components */}
-        {storageItems.internal
-          .filter(disk => disk && disk.price > 0)
-          .map((disk) => (
-            <div key={disk.id} className="flex justify-between items-center group animate-fade-in">
-              <p className="text-sm font-medium">
-                {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                  `${disk.metadata.quantity}x ${disk.name}` : 
-                  disk.name
-                }
-              </p>
-              <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+        {/* Storage components grouped by type */}
+        {Object.entries(groupedInternalStorage).map(([type, disks]) => (
+          <div key={type} className="space-y-2 pt-2 border-t border-border/50 first:border-t-0 first:pt-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={diskTypeColors[type as keyof typeof diskTypeColors] || "default"}>
+                {type.toUpperCase()}
+              </Badge>
             </div>
-          ))}
+            {disks.map((disk) => (
+              <div key={disk.id} className="flex justify-between items-center group animate-fade-in pl-2">
+                <p className="text-sm">
+                  {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
+                    `${disk.metadata.quantity}x ${disk.capacity || disk.name.split(' ').slice(1).join(' ')}` : 
+                    disk.capacity || disk.name.split(' ').slice(1).join(' ')
+                  }
+                </p>
+                <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+              </div>
+            ))}
+          </div>
+        ))}
         
         {storageItems.external
           .filter(storage => storage && storage.price > 0)

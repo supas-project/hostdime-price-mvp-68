@@ -8,6 +8,7 @@ import { SimpleRaidCalculator } from "@/components/storage/raid/SimpleRaidCalcul
 import { RaidType } from "@/types/raid";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface SelectedDiskDisplayProps {
   disk: PricedDiskOption;
@@ -44,14 +45,23 @@ export function SelectedDiskDisplay({
     onQuantityChange(newQuantity);
   };
 
+  const diskTypeColors = {
+    nvme: "bg-green-500/20 text-green-600 border-green-500/30",
+    ssd: "bg-blue-500/20 text-blue-600 border-blue-500/30",
+    hdd: "bg-amber-500/20 text-amber-600 border-amber-500/30"
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a] transition-all duration-300">
         <div className="flex items-center gap-3">
           <CircleDot className="w-4 h-4 text-[#f58220]" />
-          <span className="text-white">
-            {disk.type.toUpperCase()} {disk.capacity}
-          </span>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={diskTypeColors[disk.type]}>
+              {disk.type.toUpperCase()}
+            </Badge>
+            <span className="text-white">{disk.capacity}</span>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
