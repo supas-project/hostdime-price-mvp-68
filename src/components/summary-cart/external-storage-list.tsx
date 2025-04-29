@@ -61,7 +61,7 @@ export function ExternalStorageList({ storageItems }: ExternalStorageListProps) 
 
   return (
     <div className="space-y-2 animate-fade-in">
-      <div className="flex items-center gap-2 mb-1.5 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
         <HardDrive className="h-3.5 w-3.5" />
         <span>Storage Externo</span>
       </div>

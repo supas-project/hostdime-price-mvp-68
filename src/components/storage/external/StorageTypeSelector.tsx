@@ -1,9 +1,10 @@
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Circle, CircleDashed, CircleDot } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface StorageType {
   name: string;
@@ -66,54 +67,57 @@ export function StorageTypeSelector({
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Tipo de Storage</label>
           <HelpTooltip
             title="Escolha o tipo ideal"
-            description="O tipo determina a velocidade e desempenho do seu armazenamento externo. Escolha com base em quanto você precisa acessar seus arquivos."
+            description="O tipo determina a velocidade e desempenho do seu armazenamento externo."
           />
         </div>
       </div>
       
-      <Select onValueChange={onTypeChange} value={selectedType}>
-        <SelectTrigger className="w-full transition-all duration-300 hover:border-primary/50 focus:ring-2 focus:ring-primary/20">
-          <SelectValue placeholder="Escolha o tipo de armazenamento" />
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
-          {Object.entries(storageTypes).map(([key, type]) => {
-            const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
-            
-            return (
-              <SelectItem 
-                key={key} 
-                value={key}
+      <RadioGroup 
+        value={selectedType} 
+        onValueChange={onTypeChange} 
+        className="grid grid-cols-3 gap-2"
+      >
+        {Object.entries(storageTypes).map(([key, type]) => {
+          const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
+          
+          return (
+            <div key={key} className="relative">
+              <RadioGroupItem 
+                value={key} 
+                id={`storage-type-${key}`} 
+                className="sr-only peer"
+              />
+              <Label
+                htmlFor={`storage-type-${key}`}
                 className={cn(
-                  "transition-colors duration-200 py-3",
-                  selectedType === key ? "bg-accent" : ""
+                  "flex flex-col gap-1 p-3 rounded-lg border cursor-pointer transition-all text-center",
+                  "peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
+                  selectedType === key 
+                    ? "border-primary bg-primary/10" 
+                    : "border-border hover:border-primary/30 hover:bg-primary/5"
                 )}
               >
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {icon}
-                      <span className="font-medium">{type.name}</span>
-                    </div>
-                    <Badge variant={variant} className="ml-2">
-                      {label}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{simpleDesc}</p>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    R$ {type.pricePerGB.toFixed(2)}/GB
-                  </div>
+                <div className="flex items-center justify-center gap-2">
+                  {icon}
+                  <span className="font-medium text-sm">{type.name}</span>
                 </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
+                <Badge variant={variant} className="w-fit mx-auto">
+                  {label}
+                </Badge>
+                <div className="text-xs text-muted-foreground mt-1">
+                  R$ {type.pricePerGB.toFixed(2)}/GB
+                </div>
+              </Label>
+            </div>
+          );
+        })}
+      </RadioGroup>
     </div>
   );
 }

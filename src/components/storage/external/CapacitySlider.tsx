@@ -63,68 +63,59 @@ export function CapacitySlider({
 
   // Quick capacity options based on common usage patterns
   const quickCapacityOptions = [
-    { value: 100, label: "Mínimo" },
-    { value: 500, label: "Padrão" },
-    { value: 1000, label: "1 TB" },
-    { value: 2000, label: "Máximo" }
+    { value: 100, label: "100GB" },
+    { value: 500, label: "500GB" },
+    { value: 1000, label: "1TB" },
+    { value: 2000, label: "2TB" }
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Tamanho</label>
           <HelpTooltip
             title="Escolha o tamanho ideal"
-            description="Defina quanto espaço de armazenamento você precisa. Quanto maior o tamanho, mais dados você pode guardar."
+            description="Defina quanto espaço de armazenamento você precisa."
           />
           <Badge variant={sizeCategory.variant} className="ml-1 text-xs">
             {sizeCategory.label}
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            onKeyPress={handleKeyPress}
-            className="w-24 h-8 text-right"
-            min={min}
-            max={max}
-            step={step}
-          />
-          <span className="font-medium text-primary">GB</span>
+        <div className="flex items-center gap-1">
+          <div className="relative">
+            <Input
+              type="number"
+              value={inputValue}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              onKeyPress={handleKeyPress}
+              className="w-20 h-8 text-right pr-8"
+              min={min}
+              max={max}
+              step={step}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-primary font-medium">
+              GB
+            </div>
+          </div>
         </div>
       </div>
+      
       <Slider
         value={[capacity]}
         onValueChange={([value]) => onCapacityChange(value)}
         min={min}
         max={max}
         step={step}
-        className="my-6"
       />
-      <div className="flex justify-between items-center pt-1">
-        <div className="text-xs text-muted-foreground">
-          {min} GB
-          <span className="mx-1">•</span>
-          Mínimo
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Máximo
-          <span className="mx-1">•</span>
-          {max} GB
-        </div>
-      </div>
       
-      {/* Quick capacity selection options */}
-      <div className="grid grid-cols-4 gap-2 pt-3">
+      <div className="grid grid-cols-4 gap-2">
         {quickCapacityOptions.map((option) => (
           <button 
             key={option.value}
             type="button"
-            className={`text-xs py-2 px-3 rounded-md border transition-all duration-200 ${
+            className={`text-xs py-1.5 px-2 rounded-md border transition-all duration-200 ${
               capacity === option.value 
                 ? 'border-primary bg-primary/10 text-primary' 
                 : 'border-border hover:border-primary/30 hover:bg-primary/5'
