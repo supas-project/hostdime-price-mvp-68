@@ -25,7 +25,7 @@ interface FinalSummaryProps {
 
 export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
   const { toast } = useToast();
-  const { storageItems, customServices } = useWizard();
+  const { storageItems, customServices, connectivityItems } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,12 +61,13 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         description: "Aguarde enquanto geramos seu documento..."
       });
       
-      // Corrigindo a chamada para passar todos os argumentos necessários
+      // Corrigindo a chamada para passar todos os argumentos necessários, incluindo connectivityItems
       await generateQuotePDF(
         selectedComponents,
         storageItems,
         customServices,
-        profitMargin
+        profitMargin,
+        connectivityItems // Adicionando conectividade para o PDF 
       );
       
     } catch (error) {

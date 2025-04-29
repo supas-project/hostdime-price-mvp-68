@@ -1,9 +1,10 @@
+
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Check, Shield } from "lucide-react";
+import { Check, Shield, Wifi } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +53,7 @@ const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] =>
 };
 
 export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
-  const { storageItems, customServices } = useWizard();
+  const { storageItems, customServices, connectivityItems } = useWizard();
 
   // Separate DataCenter and Contract components
   const dataCenterComponent = selectedComponents["datacenter"];
@@ -101,7 +102,12 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
     0
   );
   
-  const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice;
+  // Calcular preço de conectividade
+  const connectivityPrice = Object.values(connectivityItems)
+    .filter(item => item && item.option)
+    .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
+  
+  const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice + connectivityPrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
@@ -300,6 +306,31 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
               </div>
             )}
             
+            {/* Connectivity Items - Nova seção */}
+            {Object.keys(connectivityItems).length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-medium text-primary/80">Conectividade</h3>
+                {Object.entries(connectivityItems).map(([itemId, { option, quantity }]) => (
+                  <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium flex items-center gap-2">
+                          <Wifi className="h-4 w-4 text-primary" />
+                          {quantity > 1 ? `${quantity}x ${option.name}` : option.name}
+                          <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                            {option.subtype === "porta" ? "Porta de Rede" : "IP"}
+                          </span>
+                        </h4>
+                        <p className="text-sm text-muted-foreground">{option.description}</p>
+                      </div>
+                      <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
+                    </div>
+                    <Separator className="mt-4" />
+                  </div>
+                ))}
+              </div>
+            )}
+            
             {/* Custom Services */}
             {customServices.length > 0 && (
               <div className="space-y-4">
@@ -372,6 +403,22 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
               </div>
               <span className="font-medium">{formatCurrency(internalStoragePrice + externalStoragePrice)}</span>
             </div>
+            
+            {/* Nova seção para exibir o preço da conectividade */}
+            {connectivityPrice > 0 && (
+              <div className="flex justify-between items-center pb-2">
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center">
+                    Conectividade
+                    <HelpTooltip 
+                      title="O que é isso?"
+                      description="Valor das portas de rede e blocos de IP"
+                    />
+                  </span>
+                </div>
+                <span className="font-medium">{formatCurrency(connectivityPrice)}</span>
+              </div>
+            )}
             
             {customServicesPrice > 0 && (
               <div className="flex justify-between items-center pb-2">
