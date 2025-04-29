@@ -19,9 +19,6 @@ export const initializeServices = async () => {
         console.log("Conexão com Supabase estabelecida com sucesso");
       } else {
         console.warn("Aviso: Erro ao conectar com Supabase:", error.message);
-        toast.warning("Erro na conexão com Supabase", {
-          description: "Verifique sua configuração do Supabase."
-        });
       }
     } catch (supabaseError) {
       console.warn("Aviso: Erro ao conectar com Supabase. Usando modo offline.", supabaseError);

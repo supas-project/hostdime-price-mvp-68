@@ -17,12 +17,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Constantes para o usuário admin padrão
+const DEFAULT_ADMIN_EMAIL = "admin@hostdime.com.br";
+const DEFAULT_ADMIN_PASSWORD = "H0stD1m3@2025";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSupabaseReady, setIsSupabaseReady] = useState(true); // Sempre true, pois estamos usando o cliente oficial
+  const [isSupabaseReady, setIsSupabaseReady] = useState(true);
+
+  // Função para criar o usuário admin padrão
+  const createAdminUser = async () => {
+    try {
+      // Verificar se o usuário já existe
+      const { data: existingUser, error: checkError } = await supabase
+        .from('auth.users')
+        .select('*')
+        .eq('email', DEFAULT_ADMIN_EMAIL)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.log("Verificando se o usuário admin já existe:", checkError);
+        // Tentamos criar de qualquer forma
+      }
+
+      if (!existingUser) {
+        // Criar o usuário admin se ele não existir
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: DEFAULT_ADMIN_EMAIL,
+          password: DEFAULT_ADMIN_PASSWORD,
+        });
+
+        if (signUpError) {
+          console.error("Erro ao criar usuário admin:", signUpError);
+          return;
+        }
+
+        console.log("Usuário admin criado com sucesso");
+      } else {
+        console.log("Usuário admin já existe");
+      }
+    } catch (error) {
+      console.error("Erro ao criar usuário admin:", error);
+    }
+  };
 
   // Check for existing session on initial load
   useEffect(() => {
@@ -40,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session.user);
           
           // Check if user is admin (example: check user metadata or specific email domain)
-          // This is a simple check - in production you might want to check against a database role
           const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
           setIsAdmin(isUserAdmin);
         }
@@ -52,6 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkSession();
+
+    // Tenta criar o usuário admin
+    createAdminUser();
     
     // Set up auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -147,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithGoogle, 
       logout, 
       loading,
-      isSupabaseReady: true // Sempre true, pois estamos usando o cliente oficial
+      isSupabaseReady: true 
     }}>
       {children}
     </AuthContext.Provider>
