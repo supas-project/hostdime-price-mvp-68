@@ -1,5 +1,5 @@
 
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
