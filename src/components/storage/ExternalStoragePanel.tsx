@@ -1,10 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StorageSpecs } from "./external/StorageSpecs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { StorageTier } from "@/types/storage";
 import { formatCurrency } from "@/lib/utils";
+import { CapacitySlider } from "./external/CapacitySlider";
+import { StorageTypeSelector } from "./external/StorageTypeSelector";
+import { HardDrive, BarChart3, Zap } from "lucide-react";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface ExternalStoragePanelProps {
   onSelect?: (option: StorageTier) => void;
@@ -29,186 +33,163 @@ export function ExternalStoragePanel({
   onSelectStorage,
   storageTypes = {}
 }: ExternalStoragePanelProps) {
-  const [activeTab, setActiveTab] = useState<string>("standard");
+  // Default storage types if none provided through props
+  const defaultStorageTypes = {
+    standard: { 
+      name: "Standard", 
+      pricePerGB: 0.30, 
+      iops: "Até 3.000 IOPS", 
+      throughput: "125 MB/s",
+      description: "Ideal para armazenamento geral e backups"
+    },
+    performance: { 
+      name: "Performance", 
+      pricePerGB: 0.45, 
+      iops: "Até 6.000 IOPS", 
+      throughput: "250 MB/s",
+      description: "Recomendado para bancos de dados e aplicações de média demanda"
+    },
+    premium: { 
+      name: "Premium", 
+      pricePerGB: 0.60, 
+      iops: "Até 16.000 IOPS", 
+      throughput: "500 MB/s",
+      description: "Para cargas de trabalho intensivas e aplicações críticas"
+    }
+  };
   
-  // Default storage tiers if none provided through props
-  const defaultStorageTiers: Record<string, StorageTier[]> = {
-    standard: [
-      {
-        name: "Standard 100GB",
-        price: 29.90,
-        iops: "Até 3.000 IOPS",
-        throughput: "125 MB/s",
-        description: "Ideal para armazenamento geral e backups"
-      },
-      {
-        name: "Standard 500GB",
-        price: 99.90,
-        iops: "Até 3.000 IOPS",
-        throughput: "125 MB/s",
-        description: "Ideal para armazenamento geral e backups"
-      },
-      {
-        name: "Standard 1TB",
-        price: 189.90,
-        iops: "Até 3.000 IOPS",
-        throughput: "125 MB/s",
-        description: "Ideal para armazenamento geral e backups"
-      }
-    ],
-    performance: [
-      {
-        name: "Performance 100GB",
-        price: 49.90,
-        iops: "Até 6.000 IOPS",
-        throughput: "250 MB/s",
-        description: "Recomendado para bancos de dados e aplicações de média demanda"
-      },
-      {
-        name: "Performance 500GB",
-        price: 159.90,
-        iops: "Até 6.000 IOPS",
-        throughput: "250 MB/s",
-        description: "Recomendado para bancos de dados e aplicações de média demanda"
-      },
-      {
-        name: "Performance 1TB",
-        price: 299.90,
-        iops: "Até 6.000 IOPS",
-        throughput: "250 MB/s",
-        description: "Recomendado para bancos de dados e aplicações de média demanda"
-      }
-    ],
-    premium: [
-      {
-        name: "Premium 100GB",
-        price: 79.90,
-        iops: "Até 16.000 IOPS",
-        throughput: "500 MB/s",
-        description: "Para cargas de trabalho intensivas e aplicações críticas"
-      },
-      {
-        name: "Premium 500GB",
-        price: 259.90,
-        iops: "Até 16.000 IOPS",
-        throughput: "500 MB/s",
-        description: "Para cargas de trabalho intensivas e aplicações críticas"
-      },
-      {
-        name: "Premium 1TB",
-        price: 499.90,
-        iops: "Até 16.000 IOPS",
-        throughput: "500 MB/s",
-        description: "Para cargas de trabalho intensivas e aplicações críticas"
-      }
-    ]
+  // Use provided storage types or defaults
+  const availableStorageTypes = Object.keys(storageTypes).length > 0 ? storageTypes : defaultStorageTypes;
+  
+  const [selectedType, setSelectedType] = useState<string>(Object.keys(availableStorageTypes)[0]);
+  const [capacity, setCapacity] = useState<number>(100);
+  const [selectedTypeDetails, setSelectedTypeDetails] = useState(availableStorageTypes[selectedType]);
+
+  // Get badge variant based on storage type
+  const getBadgeVariant = (type: string): "default" | "secondary" | "outline" | "success" | "warning" | "info" => {
+    switch (type.toLowerCase()) {
+      case 'standard': return "info";
+      case 'performance': return "warning";
+      case 'premium': return "success";
+      default: return "secondary";
+    }
   };
 
-  // Process storage types from props to create tiers
-  const processedStorageTiers: Record<string, StorageTier[]> = {};
-  if (Object.keys(storageTypes).length > 0) {
-    // Convert from storageTypes format to tiers format
-    Object.entries(storageTypes).forEach(([key, type]) => {
-      processedStorageTiers[key] = [
-        {
-          name: `${type.name} 100GB`,
-          price: type.pricePerGB * 100,
-          iops: type.iops,
-          throughput: type.throughput,
-          description: type.description
-        },
-        {
-          name: `${type.name} 500GB`,
-          price: type.pricePerGB * 500,
-          iops: type.iops,
-          throughput: type.throughput,
-          description: type.description
-        },
-        {
-          name: `${type.name} 1TB`,
-          price: type.pricePerGB * 1000,
-          iops: type.iops,
-          throughput: type.throughput,
-          description: type.description
-        }
-      ];
-    });
-  }
-  
-  // Use processed tiers if available, otherwise default
-  const storageTiers = Object.keys(processedStorageTiers).length > 0 
-    ? processedStorageTiers 
-    : defaultStorageTiers;
+  // Update selected type details when type changes
+  useEffect(() => {
+    if (availableStorageTypes[selectedType]) {
+      setSelectedTypeDetails(availableStorageTypes[selectedType]);
+    }
+  }, [selectedType, availableStorageTypes]);
 
-  const handleTierSelect = (tier: StorageTier) => {
-    if (onSelect) {
-      onSelect(tier);
+  // Calculate price based on capacity and price per GB
+  const calculatePrice = () => {
+    return (selectedTypeDetails.pricePerGB * capacity);
+  };
+
+  // Handle the add storage button click
+  const handleAddStorage = () => {
+    if (onSelectStorage) {
+      onSelectStorage(selectedTypeDetails.name, capacity, calculatePrice());
     }
     
-    // Also support the onSelectStorage prop for backward compatibility
-    if (onSelectStorage) {
-      // Extract capacity from name (e.g., "Standard 100GB" -> 100)
-      const capacityMatch = tier.name.match(/(\d+)GB|(\d+)TB/i);
-      let capacity = 0;
-      
-      if (capacityMatch) {
-        if (capacityMatch[1]) {
-          capacity = parseInt(capacityMatch[1]);
-        } else if (capacityMatch[2]) {
-          // Convert TB to GB
-          capacity = parseInt(capacityMatch[2]) * 1000;
-        }
-      }
-      
-      // Extract type from name (e.g., "Standard 100GB" -> "Standard")
-      const typeMatch = tier.name.match(/^(\w+)/);
-      const type = typeMatch ? typeMatch[1] : "Standard";
-      
-      onSelectStorage(type, capacity, tier.price);
+    if (onSelect) {
+      const tier: StorageTier = {
+        name: `${selectedTypeDetails.name} ${capacity}GB`,
+        price: calculatePrice(),
+        iops: selectedTypeDetails.iops,
+        throughput: selectedTypeDetails.throughput,
+        description: selectedTypeDetails.description
+      };
+      onSelect(tier);
     }
   };
+
+  // Define quick capacity options
+  const quickCapacityOptions = [100, 500, 1000, 2000];
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Armazenamento Externo</CardTitle>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <HardDrive className="h-5 w-5 text-primary" />
+          Armazenamento Externo
+        </CardTitle>
         <CardDescription>
-          Adicione volumes de armazenamento externo para seus dados
+          Configure o tipo e tamanho do seu storage externo
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="standard" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            {Object.keys(storageTiers).map(key => (
-              <TabsTrigger key={key} value={key}>
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {Object.entries(storageTiers).map(([key, tiers]) => (
-            <TabsContent key={key} value={key} className="space-y-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {tiers.map((tier) => (
-                  <div 
-                    key={tier.name}
-                    className={`cursor-pointer transition-all ${
-                      selectedTier === tier.name ? 'ring-2 ring-primary rounded-xl' : ''
-                    }`}
-                    onClick={() => handleTierSelect(tier)}
-                  >
-                    <StorageSpecs
-                      iops={tier.iops}
-                      throughput={tier.throughput}
-                      price={tier.price}
-                      description={tier.description}
-                    />
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
+      <CardContent className="space-y-6">
+        {/* Storage Type Selector */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Tipo de Storage</label>
+            <HelpTooltip
+              title="Tipos de Storage"
+              description="Escolha o tipo de storage ideal para sua aplicação, considerando performance e preço."
+            />
+          </div>
+          <StorageTypeSelector
+            storageTypes={availableStorageTypes}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+          />
+        </div>
+        
+        {/* Storage Specs */}
+        <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Zap className="h-4 w-4" /> IOPS
+            </div>
+            <p className="font-medium">{selectedTypeDetails.iops}</p>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <BarChart3 className="h-4 w-4" /> Throughput
+            </div>
+            <p className="font-medium">{selectedTypeDetails.throughput}</p>
+          </div>
+          <div className="col-span-2 mt-2 text-sm">
+            <Badge variant={getBadgeVariant(selectedType)} className="mb-2">
+              {selectedTypeDetails.name}
+            </Badge>
+            <p className="text-muted-foreground">{selectedTypeDetails.description}</p>
+          </div>
+        </div>
+        
+        {/* Capacity Slider */}
+        <CapacitySlider capacity={capacity} onCapacityChange={setCapacity} />
+        
+        {/* Quick Capacity Options */}
+        <div className="grid grid-cols-4 gap-2 pt-2">
+          {quickCapacityOptions.map((option) => (
+            <Button 
+              key={option}
+              variant="outline" 
+              size="sm"
+              className={`transition-all ${capacity === option ? 'border-primary text-primary' : ''}`}
+              onClick={() => setCapacity(option)}
+            >
+              {option} GB
+            </Button>
           ))}
-        </Tabs>
+        </div>
+        
+        {/* Price and Add Button */}
+        <div className="pt-4 border-t border-border flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Preço mensal</p>
+            <p className="text-2xl font-semibold text-primary">{formatCurrency(calculatePrice())}</p>
+          </div>
+          <Button 
+            onClick={handleAddStorage}
+            className="gap-2"
+          >
+            <HardDrive className="h-4 w-4" />
+            Adicionar ao Servidor
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
