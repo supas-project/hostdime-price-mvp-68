@@ -17,7 +17,8 @@ export function renderFinancialSection(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont
+  helveticaBold: PDFFont,
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -45,7 +46,13 @@ export function renderFinancialSection(
     0
   );
   
-  const subtotal = componentsPrice + storagePrice + servicesPrice;
+  // Calculate connectivity price
+  const connectivityPrice = Object.values(connectivityItems).reduce(
+    (sum, item) => sum + (item.option.price * item.quantity),
+    0
+  );
+  
+  const subtotal = componentsPrice + storagePrice + servicesPrice + connectivityPrice;
   // Calculate margin but don't show it in the PDF
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
@@ -130,7 +137,29 @@ export function renderFinancialSection(
     color: COLOR.TEXT
   });
   
-  currentY -= 25;
+  currentY -= 20;
+  
+  // Connectivity subtotal
+  if (connectivityPrice > 0) {
+    page.drawText("Conectividade:", {
+      x: marginX + 15,
+      y: currentY,
+      size: 12,
+      font: helvetica,
+      color: COLOR.TEXT
+    });
+    
+    const connectivityPriceFormatted = formatCurrency(connectivityPrice);
+    page.drawText(connectivityPriceFormatted, {
+      x: marginRight - helvetica.widthOfTextAtSize(connectivityPriceFormatted, 12) - 15,
+      y: currentY,
+      size: 12,
+      font: helvetica,
+      color: COLOR.TEXT
+    });
+    
+    currentY -= 20;
+  }
   
   // Draw separator line
   drawSeparator(page, marginX + 15, currentY, width - (marginX * 2) - 30, 0.5);
