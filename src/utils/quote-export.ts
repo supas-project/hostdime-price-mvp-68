@@ -85,7 +85,7 @@ const drawHeader = async (
       height: 40,
       color: COLOR.WHITE,
       borderWidth: 0,
-      borderRadius: 4
+      // Removida a propriedade borderRadius que causa erro
     });
     
     const logoWidth = 130;
@@ -130,8 +130,8 @@ const drawSectionHeader = (
     height: size + 10,
     color: COLOR.PRIMARY,
     borderWidth: 0,
-    opacity: 0.1,
-    borderRadius: 4
+    opacity: 0.1
+    // Removida a propriedade borderRadius que causa erro
   });
   
   // Draw accent line
@@ -174,8 +174,8 @@ const drawHighlightBox = (
     color: color,
     borderWidth: 1,
     borderColor: borderColor,
-    opacity: 0.7,
-    borderRadius: 5
+    opacity: 0.7
+    // Removida a propriedade borderRadius que causa erro
   });
 };
 
@@ -243,11 +243,14 @@ const checkAndCreateNewPage = (
     
     // Add page number at the bottom
     const pageNumber = pdfDoc.getPageCount();
+    // Usando um método disponível ao invés de getFont()
+    const helvetica = StandardFonts.Helvetica;
     newPage.drawText(`Pagina ${pageNumber}`, {
       x: width / 2 - 20,
       y: 30,
       size: 10,
-      font: currentPage.getFont(),
+      // Usamos a fonte padrão em vez de tentar acessar a fonte atual
+      font: helvetica,
       color: COLOR.TEXT_LIGHT
     });
     
@@ -349,8 +352,8 @@ export const generateQuotePDF = async (
       borderColor: COLOR.PRIMARY,
       borderWidth: 0.7,
       opacity: 0.15,
-      color: COLOR.WHITE,
-      borderRadius: 3
+      color: COLOR.WHITE
+      // Removida a propriedade borderRadius que causa erro
     });
     
     // Executive Summary
@@ -929,8 +932,8 @@ export const generateQuotePDF = async (
       width: width - (marginX * 2) - 30,
       height: 40,
       color: COLOR.PRIMARY_LIGHT,
-      opacity: 0.1,
-      borderRadius: 5
+      opacity: 0.1
+      // Removida a propriedade borderRadius que causa erro
     });
     
     // Total - Show only the final price without margin breakdown
@@ -995,8 +998,8 @@ export const generateQuotePDF = async (
         width: columnWidth,
         height: 25,
         color: COLOR.PRIMARY,
-        opacity: 0.05,
-        borderRadius: 3
+        opacity: 0.05
+        // Removida a propriedade borderRadius que causa erro
       });
       
       // Draw check mark
