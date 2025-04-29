@@ -66,16 +66,16 @@ export function CartContent({
         onRemoveItem={onRemoveItem}
       />
       
-      {/* Internal Storage components */}
+      {/* Internal Storage components - Passando o ID diretamente, sem adicionar prefixo */}
       <StorageList 
         storageItems={storageItems.internal} 
-        onRemoveItem={onRemoveItem ? (diskId) => onRemoveItem(`internal-disk-${diskId}`) : undefined}
+        onRemoveItem={onRemoveItem}
       />
       
-      {/* External Storage components */}
+      {/* External Storage components - Passando o ID diretamente, sem adicionar prefixo */}
       <ExternalStorageList 
         storageItems={storageItems.external} 
-        onRemoveItem={onRemoveItem ? (storageId) => onRemoveItem(`external-storage-${storageId}`) : undefined}
+        onRemoveItem={onRemoveItem}
       />
       
       {/* Connectivity items */}
