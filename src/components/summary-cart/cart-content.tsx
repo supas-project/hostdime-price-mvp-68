@@ -8,6 +8,7 @@ import { StorageList } from "./storage-list";
 import { ExternalStorageList } from "./external-storage-list";
 import { ConnectivityList } from "./connectivity-list";
 import { StorageItems } from "@/types/component";
+import { ShoppingCart } from "lucide-react";
 
 interface CartContentProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -46,8 +47,12 @@ export function CartContent({
   
   if (!hasItems && !dataCenterComponent && !contractComponent) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
-        Nenhum componente selecionado
+      <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
+        <ShoppingCart className="h-10 w-10 opacity-30" />
+        <div>Nenhum componente selecionado</div>
+        <div className="text-xs text-muted-foreground max-w-[200px]">
+          Selecione componentes para visualizar seu servidor aqui
+        </div>
       </div>
     );
   }
