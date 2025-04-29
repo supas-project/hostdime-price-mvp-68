@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface AuthContextType {
@@ -22,17 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSupabaseReady, setIsSupabaseReady] = useState(isSupabaseConfigured());
+  const [isSupabaseReady, setIsSupabaseReady] = useState(true); // Sempre true, pois estamos usando o cliente oficial
 
   // Check for existing session on initial load
   useEffect(() => {
     const checkSession = async () => {
       try {
-        if (!isSupabaseConfigured()) {
-          setLoading(false);
-          return;
-        }
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -58,44 +53,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkSession();
     
-    // Only set up auth listener if Supabase is configured
-    if (isSupabaseConfigured()) {
-      const { data: authListener } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          if (event === 'SIGNED_IN' && session) {
-            setIsAuthenticated(true);
-            setUser(session.user);
-            
-            // Check if admin
-            const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
-            setIsAdmin(isUserAdmin);
-            
-            toast.success("Login realizado com sucesso");
-          } else if (event === 'SIGNED_OUT') {
-            setIsAuthenticated(false);
-            setIsAdmin(false);
-            setUser(null);
-            toast.info("Sessão finalizada");
-          }
+    // Set up auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setIsAuthenticated(true);
+          setUser(session.user);
+          
+          // Check if admin
+          const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
+          setIsAdmin(isUserAdmin);
+          
+          toast.success("Login realizado com sucesso");
+        } else if (event === 'SIGNED_OUT') {
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setUser(null);
+          toast.info("Sessão finalizada");
         }
-      );
+      }
+    );
 
-      return () => {
-        if (authListener && authListener.subscription) {
-          authListener.subscription.unsubscribe();
-        }
-      };
-    }
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (!isSupabaseConfigured()) {
-      toast.error("Supabase não configurado", {
-        description: "Configure as variáveis de ambiente para habilitar autenticação."
-      });
-      return false;
-    }
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -118,13 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithGoogle = async (): Promise<void> => {
-    if (!isSupabaseConfigured()) {
-      toast.error("Supabase não configurado", {
-        description: "Configure as variáveis de ambiente para habilitar autenticação com Google."
-      });
-      return;
-    }
-    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -145,14 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async (): Promise<void> => {
-    if (!isSupabaseConfigured()) {
-      // Reset local state if Supabase isn't configured
-      setIsAuthenticated(false);
-      setIsAdmin(false);
-      setUser(null);
-      return;
-    }
-    
     try {
       const { error } = await supabase.auth.signOut();
       
@@ -176,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithGoogle, 
       logout, 
       loading,
-      isSupabaseReady: isSupabaseConfigured()
+      isSupabaseReady: true // Sempre true, pois estamos usando o cliente oficial
     }}>
       {children}
     </AuthContext.Provider>
