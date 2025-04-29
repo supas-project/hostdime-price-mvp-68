@@ -19,7 +19,7 @@ export function renderTermsSection(
   page = footnoteCheck.page;
   currentY = footnoteCheck.y;
   
-  page.drawText("Termos e Condições:", {
+  page.drawText("Termos e Condicoes:", {
     x: marginX,
     y: currentY,
     size: 10,

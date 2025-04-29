@@ -28,9 +28,9 @@ export function renderBenefitsSection(
     helveticaBold
   );
   
-  // List of benefits
+  // List of benefits (removed accents)
   const benefits = [
-    "Suporte técnico 24x7x365 em português",
+    "Suporte tecnico 24x7x365 em portugues",
     "Data centers certificados Tier III",
     "Garantia de disponibilidade (SLA) de 99,9%",
     "Rede redundante e alta disponibilidade",

@@ -8,6 +8,11 @@ export async function generateQuoteFromTemplate(
   margin: number
 ): Promise<Uint8Array> {
   try {
+    // Mostrar toast de processamento
+    toast.info("Iniciando geração do PDF...", {
+      description: "Preparando os dados para exportação"
+    });
+    
     // Passando objetos vazios para os parâmetros adicionais requeridos
     await generateQuotePDF(
       selectedComponents, 
@@ -20,8 +25,8 @@ export async function generateQuoteFromTemplate(
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
     toast.error("Falha na geração do PDF", {
-      description: (error as Error).message
+      description: "Verifique se todos os dados estão corretos e tente novamente"
     });
-    throw new Error("Falha na geração do PDF: " + (error as Error).message);
+    throw new Error("Falha na geração do PDF: " + (error instanceof Error ? error.message : String(error)));
   }
 }

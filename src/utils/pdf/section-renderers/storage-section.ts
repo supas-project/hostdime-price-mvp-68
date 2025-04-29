@@ -32,7 +32,7 @@ export function renderStorageSection(
   // Desenhar o cabeçalho da seção
   currentY = drawSectionHeader(
     page, 
-    "2. Soluções de Armazenamento", 
+    "2. Solucoes de Armazenamento", 
     marginX, 
     currentY, 
     300,

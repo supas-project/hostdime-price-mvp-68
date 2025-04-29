@@ -55,6 +55,12 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     setIsGeneratingPDF(true);
     
     try {
+      // Exibir toast de início da geração do PDF
+      toast({
+        title: "Preparando PDF",
+        description: "Aguarde enquanto geramos seu documento..."
+      });
+      
       // Corrigindo a chamada para passar todos os argumentos necessários
       await generateQuotePDF(
         selectedComponents,
@@ -66,7 +72,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     } catch (error) {
       toast({
         title: "Erro na exportação",
-        description: "Não foi possível gerar o PDF. Tente novamente.",
+        description: "Não foi possível gerar o PDF. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
       console.error("Erro detalhado:", error);

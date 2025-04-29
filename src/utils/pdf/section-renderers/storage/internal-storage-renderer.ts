@@ -113,7 +113,7 @@ export function renderInternalStorage(
       );
       
       currentY -= 15;
-      page.drawText("Configuração RAID:", {
+      page.drawText("Configuracao RAID:", {
         x: marginX + 30,
         y: currentY,
         size: 11,
@@ -125,8 +125,8 @@ export function renderInternalStorage(
       const raidInfo = [
         `Tipo: RAID ${group.disk.metadata.raid.type}`,
         group.disk.metadata.raid.description,
-        `Proteção: ${group.disk.metadata.raid.protection}`,
-        `Capacidade útil: ${group.disk.metadata.raid.usableCapacity}GB`
+        `Protecao: ${group.disk.metadata.raid.protection}`,
+        `Capacidade util: ${group.disk.metadata.raid.usableCapacity}GB`
       ];
       
       raidInfo.forEach(info => {

@@ -26,6 +26,7 @@ export function renderSummarySection(
   
   currentY -= 25;
   
+  // Fixed text without special characters
   const summaryText = "Agradecemos seu interesse nos servicos da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades especificas. Nossa equipe esta a disposicao para quaisquer esclarecimentos adicionais.";
   
   // Break summary into lines

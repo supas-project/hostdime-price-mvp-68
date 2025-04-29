@@ -113,7 +113,7 @@ export function renderFinancialSection(
   currentY -= 20;
   
   // Services subtotal
-  page.drawText("Serviços:", {
+  page.drawText("Servicos:", {
     x: marginX + 15,
     y: currentY,
     size: 12,

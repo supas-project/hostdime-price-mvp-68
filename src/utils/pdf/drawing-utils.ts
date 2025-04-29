@@ -176,8 +176,8 @@ export const drawHeader = async (
   
   // Carregar logo embutido para evitar problemas de rede
   try {
-    // Usar a imagem em Base64 em vez de buscar da internet
-    const logoImageBytes = Buffer.from(hostDimeLogoBase64, 'base64');
+    // Fix: Usar método compatível com navegador em vez de Buffer
+    const logoImageBytes = Uint8Array.from(atob(hostDimeLogoBase64), c => c.charCodeAt(0));
     const logoImage = await pdfDoc.embedPng(logoImageBytes);
     
     // Area branca para destacar o logo
