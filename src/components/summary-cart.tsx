@@ -88,7 +88,8 @@ export function SummaryCart({
       return groups;
     }, {} as Record<string, ComponentOption[]>);
 
-  const diskTypeColors = {
+  // Mapeamento explícito para tipos de variante do Badge
+  const diskTypeVariants: {[key: string]: "success" | "info" | "warning" | "default"} = {
     nvme: "success",
     ssd: "info",
     hdd: "warning"
@@ -161,7 +162,7 @@ export function SummaryCart({
         {Object.entries(groupedInternalStorage).map(([type, disks]) => (
           <div key={type} className="space-y-2 pt-2 border-t border-border/50 first:border-t-0 first:pt-0">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant={diskTypeColors[type as keyof typeof diskTypeColors] || "default"}>
+              <Badge variant={diskTypeVariants[type] || "default"}>
                 {type.toUpperCase()}
               </Badge>
             </div>
@@ -169,8 +170,8 @@ export function SummaryCart({
               <div key={disk.id} className="flex justify-between items-center group animate-fade-in pl-2">
                 <p className="text-sm">
                   {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                    `${disk.metadata.quantity}x ${disk.capacity || disk.name.split(' ').slice(1).join(' ')}` : 
-                    disk.capacity || disk.name.split(' ').slice(1).join(' ')
+                    `${disk.metadata.quantity}x ${disk.specs?.[1]?.split(': ')[1] || disk.name.split(' ').slice(1).join(' ')}` : 
+                    disk.specs?.[1]?.split(': ')[1] || disk.name.split(' ').slice(1).join(' ')
                   }
                 </p>
                 <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
