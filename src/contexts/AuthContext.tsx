@@ -9,7 +9,6 @@ interface AuthContextType {
   isAdmin: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   isSupabaseReady: boolean;
@@ -31,33 +30,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Função para criar o usuário admin padrão
   const createAdminUser = async () => {
     try {
-      // Verificar se o usuário já existe
-      const { data: existingUser, error: checkError } = await supabase
-        .from('auth.users')
-        .select('*')
-        .eq('email', DEFAULT_ADMIN_EMAIL)
-        .single();
+      // Tentar fazer login com o usuário admin para verificar se ele existe
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: DEFAULT_ADMIN_EMAIL,
+        password: DEFAULT_ADMIN_PASSWORD,
+      });
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.log("Verificando se o usuário admin já existe:", checkError);
-        // Tentamos criar de qualquer forma
+      // Se recebemos um erro que não seja de credenciais inválidas, registramos
+      if (signInError && signInError.message !== 'Invalid login credentials') {
+        console.log("Verificando se o usuário admin existe:", signInError);
       }
 
-      if (!existingUser) {
-        // Criar o usuário admin se ele não existir
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: DEFAULT_ADMIN_EMAIL,
-          password: DEFAULT_ADMIN_PASSWORD,
-        });
-
-        if (signUpError) {
-          console.error("Erro ao criar usuário admin:", signUpError);
-          return;
-        }
-
-        console.log("Usuário admin criado com sucesso");
-      } else {
+      // Se conseguimos fazer login, o usuário já existe
+      if (signInData?.user) {
         console.log("Usuário admin já existe");
+        
+        // Fazer logout depois de verificar que o usuário existe
+        await supabase.auth.signOut();
+        return;
+      }
+
+      // Se não conseguimos fazer login, tentamos criar o usuário
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: DEFAULT_ADMIN_EMAIL,
+        password: DEFAULT_ADMIN_PASSWORD,
+      });
+
+      if (signUpError) {
+        console.error("Erro ao criar usuário admin:", signUpError);
+        return;
+      }
+
+      if (signUpData?.user) {
+        console.log("Usuário admin criado com sucesso");
+        
+        // Fazer logout depois de criar o usuário
+        await supabase.auth.signOut();
       }
     } catch (error) {
       console.error("Erro ao criar usuário admin:", error);
@@ -145,26 +153,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async (): Promise<void> => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/configure`
-        }
-      });
-
-      if (error) {
-        toast.error("Erro ao fazer login com Google", {
-          description: error.message
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao fazer login com Google:", error);
-      toast.error("Ocorreu um erro durante o login com Google");
-    }
-  };
-
   const logout = async (): Promise<void> => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -186,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin, 
       user, 
       login, 
-      loginWithGoogle, 
       logout, 
       loading,
       isSupabaseReady: true 

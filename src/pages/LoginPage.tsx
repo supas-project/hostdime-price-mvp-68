@@ -86,11 +86,11 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <div className="relative w-full">
+                        <div className="relative">
                           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="seu@email.com" 
-                            className="pl-10 w-full"
+                            className="pl-10"
                             {...field} 
                           />
                         </div>
@@ -106,12 +106,12 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Senha</FormLabel>
                       <FormControl>
-                        <div className="relative w-full">
+                        <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input 
                             type="password" 
                             placeholder="********" 
-                            className="pl-10 w-full"
+                            className="pl-10"
                             {...field} 
                           />
                         </div>
