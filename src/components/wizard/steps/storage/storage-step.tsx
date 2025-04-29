@@ -3,6 +3,7 @@ import { ComponentOption } from "@/types/component";
 import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
+import { normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface StorageStepProps {
   onSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
@@ -13,12 +14,15 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Create consistent ID without quantity to prevent duplicates
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
     
+    // Normalizar capacidade para garantir que tenha unidade
+    const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
-      name: `${disk.type.toUpperCase()} ${disk.capacity}`,
-      description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
+      name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
+      description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
       price: disk.price * quantity,
       metadata: {
         quantity: quantity,
@@ -27,31 +31,34 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
-        `Capacidade: ${disk.capacity}`,
+        `Capacidade: ${normalizedCapacity}`,
         `Quantidade: ${quantity}`
       ]
     };
     
     onSelectStorageItem(storageOption, 'internal');
-    toast.success(`Disco ${disk.type.toUpperCase()} ${disk.capacity} adicionado`);
+    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
+    // Garantir que a capacidade tenha unidade (GB)
+    const formattedCapacity = `${capacity}GB`;
+    
     const storageOption: ComponentOption = {
       id: `external-storage-${type}-${capacity}`,
       type: "Armazenamento",
       subtype: "Storage Externo",
-      name: `Storage ${type} ${capacity} GB`,
-      description: `Storage externo: ${type} ${capacity} GB`,
+      name: `Storage ${type} ${formattedCapacity}`,
+      description: `Storage externo: ${type} ${formattedCapacity}`,
       price: price,
       specs: [
         `Tipo: Storage ${type}`,
-        `Capacidade: ${capacity} GB`
+        `Capacidade: ${formattedCapacity}`
       ]
     };
     
     onSelectStorageItem(storageOption, 'external');
-    toast.success(`Storage ${type} de ${capacity} GB adicionado`);
+    toast.success(`Storage ${type} de ${formattedCapacity} adicionado`);
   };
 
   return (

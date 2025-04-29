@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { diskData } from "@/data/disk-data";
 import { PricedDiskOption } from "@/types/storage";
@@ -7,6 +6,7 @@ import { DiskCapacitySelector } from "./disk-selection/DiskCapacitySelector";
 import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -39,6 +39,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               else if (capacityMatches[3]) capacity = `${capacityMatches[3]}GB`;
             }
             
+            // Normalizar para garantir que a capacidade tenha unidade
+            capacity = normalizeStorageCapacity(capacity);
+            
             return {
               id: item.id,
               type: item.subtype as "nvme" | "ssd" | "hdd",
@@ -52,7 +55,14 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       } catch (error) {
         console.error('Erro ao carregar discos:', error);
         // Fallback para dados estáticos originais
-        const fallbackDisks = selectedDiskType ? diskData.filter(disk => disk.type === selectedDiskType) : [];
+        const fallbackDisks = selectedDiskType ? 
+          diskData
+            .filter(disk => disk.type === selectedDiskType)
+            .map(disk => ({
+              ...disk,
+              capacity: normalizeStorageCapacity(disk.capacity) // Normalizar capacidade
+            })) : 
+          [];
         setAvailableDisks(fallbackDisks);
       }
     };

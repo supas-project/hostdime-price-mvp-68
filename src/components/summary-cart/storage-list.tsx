@@ -3,6 +3,7 @@ import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface StorageListProps {
   storageItems: ComponentOption[];
@@ -30,6 +31,32 @@ export function StorageList({ storageItems }: StorageListProps) {
 
   if (Object.keys(groupedStorage).length === 0) return null;
 
+  // Extrair capacidade do disco com tratamento adequado para unidades
+  const getDisplayCapacity = (disk: ComponentOption): string => {
+    // Primeiro tenta extrair de specs
+    if (disk.specs && disk.specs.length > 0) {
+      const capacitySpec = disk.specs.find(spec => spec.toLowerCase().includes('capacidade:'));
+      if (capacitySpec) {
+        const capacity = capacitySpec.split(':')[1]?.trim();
+        if (capacity) return normalizeStorageCapacity(capacity);
+      }
+    }
+    
+    // Se não encontrar nos specs, tenta extrair do nome
+    const nameMatch = disk.name.match(/(\d+)\s*([GT]B)/i);
+    if (nameMatch) {
+      return `${nameMatch[1]}${nameMatch[2].toUpperCase()}`;
+    }
+    
+    // Último recurso: pegar a segunda parte do nome do disco (após o tipo)
+    const nameParts = disk.name.split(' ');
+    if (nameParts.length > 1) {
+      return normalizeStorageCapacity(nameParts.slice(1).join(' '));
+    }
+    
+    return "N/A";
+  };
+
   return (
     <>
       {Object.entries(groupedStorage).map(([type, disks]) => (
@@ -43,8 +70,8 @@ export function StorageList({ storageItems }: StorageListProps) {
             <div key={disk.id} className="flex justify-between items-center group animate-fade-in pl-2">
               <p className="text-sm">
                 {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                  `${disk.metadata.quantity}x ${disk.specs?.[1]?.split(': ')[1] || disk.name.split(' ').slice(1).join(' ')}` : 
-                  disk.specs?.[1]?.split(': ')[1] || disk.name.split(' ').slice(1).join(' ')
+                  `${disk.metadata.quantity}x ${getDisplayCapacity(disk)}` : 
+                  getDisplayCapacity(disk)
                 }
               </p>
               <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>

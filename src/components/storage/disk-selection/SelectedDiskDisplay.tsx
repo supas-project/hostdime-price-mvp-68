@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { CircleDot, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -9,6 +8,7 @@ import { RaidType } from "@/types/raid";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface SelectedDiskDisplayProps {
   disk: PricedDiskOption;
@@ -24,7 +24,8 @@ export function SelectedDiskDisplay({
   onRemove 
 }: SelectedDiskDisplayProps) {
   const [raidType, setRaidType] = useState<RaidType>("none");
-  const [showRaidConfig, setShowRaidConfig] = useState(quantity >= 2);
+  const [isHardwareRaid, setIsHardwareRaid] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     setShowRaidConfig(quantity >= 2);
@@ -50,6 +51,9 @@ export function SelectedDiskDisplay({
     ssd: "bg-blue-500/20 text-blue-600 border-blue-500/30",
     hdd: "bg-amber-500/20 text-amber-600 border-amber-500/30"
   };
+  
+  // Normalizar a capacidade do disco para garantir consistência na exibição
+  const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -60,7 +64,7 @@ export function SelectedDiskDisplay({
             <Badge variant="outline" className={diskTypeColors[disk.type]}>
               {disk.type.toUpperCase()}
             </Badge>
-            <span className="text-white">{disk.capacity}</span>
+            <span className="text-white">{normalizedCapacity}</span>
           </div>
         </div>
         <div className="flex items-center gap-4">

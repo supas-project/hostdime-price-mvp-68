@@ -4,6 +4,7 @@ import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { HardDrive } from "lucide-react";
+import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface ExternalStorageListProps {
   storageItems: ComponentOption[];
@@ -30,29 +31,47 @@ export function ExternalStorageList({ storageItems }: ExternalStorageListProps) 
     
     // Try to extract from specs first
     if (storage.specs && storage.specs.length > 0) {
-      const capacitySpec = storage.specs.find(spec => spec.includes('Capacidade:'));
+      const capacitySpec = storage.specs.find(spec => spec.toLowerCase().includes('capacidade:'));
       if (capacitySpec) {
-        capacity = capacitySpec.replace('Capacidade:', '').trim();
+        capacity = capacitySpec.split(':')[1]?.trim() || "N/A";
+        capacity = normalizeStorageCapacity(capacity);
       }
       
-      const typeSpec = storage.specs.find(spec => spec.includes('Tipo:'));
+      const typeSpec = storage.specs.find(spec => spec.toLowerCase().includes('tipo:'));
       if (typeSpec) {
-        type = typeSpec.replace('Tipo:', '').trim();
+        type = typeSpec.split(':')[1]?.trim() || "Padrão";
         // Remove "Storage" prefix if present
-        type = type.replace('Storage', '').trim();
+        type = type.replace(/storage/i, '').trim();
       }
     }
     
-    // If not in specs, try to extract from name
+    // If capacity still N/A, try to extract from name
     if (capacity === "N/A") {
-      const capacityMatch = storage.name.match(/(\d+)\s*GB/i);
-      if (capacityMatch && capacityMatch[1]) {
-        capacity = `${capacityMatch[1]} GB`;
+      const capacityMatch = storage.name.match(/(\d+)\s*([GT]B)/i);
+      if (capacityMatch) {
+        capacity = `${capacityMatch[1]}${capacityMatch[2].toUpperCase()}`;
+      } else {
+        // Try to find any number that might be capacity
+        const numMatch = storage.name.match(/(\d+)/);
+        if (numMatch) {
+          capacity = `${numMatch[1]}GB`; // Assume GB if no unit specified
+        }
       }
       
-      const nameArr = storage.name.split(' ');
-      if (nameArr.length > 1) {
-        type = nameArr[1];
+      if (!type || type === "Padrão") {
+        const nameArr = storage.name.split(' ');
+        if (nameArr.length > 1) {
+          // First word after "Storage" is likely the type
+          const storageIndex = nameArr.findIndex(word => 
+            word.toLowerCase() === 'storage'
+          );
+          
+          if (storageIndex >= 0 && nameArr[storageIndex + 1]) {
+            type = nameArr[storageIndex + 1];
+          } else if (nameArr.length > 1) {
+            type = nameArr[1]; // Fallback to second word
+          }
+        }
       }
     }
     

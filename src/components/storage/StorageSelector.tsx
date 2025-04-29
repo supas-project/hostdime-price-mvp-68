@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { InternalStoragePanel } from "./InternalStoragePanel";
@@ -13,6 +12,7 @@ import { HardDrive } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
+import { normalizeStorageCapacity } from "@/utils/storage-utils";
 
 interface StorageSelectorProps {
   onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -34,7 +34,6 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     }
   }>({});
 
-  // Carregar tipos de storage da tabela de preços
   useEffect(() => {
     const loadStorageTypes = () => {
       try {
@@ -48,26 +47,22 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
           
           const key = item.name.replace('Storage ', '').toLowerCase();
           
-          // Extrair informações de IOPS e throughput das specs
           let iops = 'Até 1000';
           let throughput = 'Até 125 MB/s';
           let throughputAdd: number | undefined = undefined;
           let maxThroughput: string | undefined = undefined;
           
           if (item.specs) {
-            // Encontrar IOPS
             const iopsSpec = item.specs.find(spec => spec.includes('IOPS'));
             if (iopsSpec) {
               iops = iopsSpec.replace('IOPS: ', '');
             }
             
-            // Encontrar throughput
             const throughputSpec = item.specs.find(spec => spec.includes('Throughput:') && !spec.includes('adicional') && !spec.includes('máximo'));
             if (throughputSpec) {
               throughput = throughputSpec.replace('Throughput: ', '');
             }
             
-            // Verificar se tem throughput adicional
             const throughputAddSpec = item.specs.find(spec => spec.includes('Throughput adicional'));
             if (throughputAddSpec) {
               const match = throughputAddSpec.match(/R\$\s*(\d+\.\d+)/);
@@ -76,7 +71,6 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
               }
             }
             
-            // Verificar se tem throughput máximo
             const maxThroughputSpec = item.specs.find(spec => spec.includes('Throughput máximo'));
             if (maxThroughputSpec) {
               maxThroughput = maxThroughputSpec.replace('Throughput máximo: ', '');
@@ -94,11 +88,9 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
           };
         });
         
-        // Se encontrou tipos, atualiza o estado
         if (Object.keys(types).length > 0) {
           setStorageTypes(types);
         } else {
-          // Fallback para os tipos padrão
           setStorageTypes({
             standard: { 
               name: "Standard", 
@@ -123,7 +115,6 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     
     loadStorageTypes();
     
-    // Registrar para mudanças na tabela de preços
     PriceService.addDataChangeListener(() => loadStorageTypes());
     
     return () => {
@@ -132,17 +123,16 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   }, []);
 
   const handleSelectInternalDiskInternal = (disk: PricedDiskOption, quantity: number) => {
-    // Criar ID consistente sem quantidade para evitar duplicatas
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
     
-    // Fix the issue with specs potentially being an object instead of an array
+    const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    
     let diskSpecs: string[] = [];
     
     if (disk.specs) {
       if (Array.isArray(disk.specs)) {
         diskSpecs = disk.specs;
       } else {
-        // Convert the object properties to an array of strings
         if (disk.specs.readSpeed) diskSpecs.push(`Leitura: ${disk.specs.readSpeed}`);
         if (disk.specs.writeSpeed) diskSpecs.push(`Escrita: ${disk.specs.writeSpeed}`);
         if (disk.specs.iops) diskSpecs.push(`IOPS: ${disk.specs.iops}`);
@@ -156,8 +146,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
-      name: `${disk.type.toUpperCase()} ${disk.capacity}`,
-      description: `Disco interno: ${disk.type.toUpperCase()} ${disk.capacity}`,
+      name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
+      description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
       price: disk.price * quantity,
       metadata: {
         quantity: quantity,
@@ -166,9 +156,9 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
-        `Capacidade: ${disk.capacity}`,
+        `Capacidade: ${normalizedCapacity}`,
         `Quantidade: ${quantity}`,
-        ...diskSpecs // Use the processed specs array that is always an array
+        ...diskSpecs
       ]
     };
     
@@ -180,7 +170,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   };
 
   const handleSelectExternalStorageInternal = (type: string, capacity: number, price: number) => {
-    // Obter detalhes do tipo de storage para enriquecer os dados
+    const formattedCapacity = `${capacity}GB`;
+    
     const storageType = storageTypes[type.toLowerCase()];
     const iops = storageType?.iops || "Padrão";
     const throughput = storageType?.throughput || "Padrão";
@@ -189,18 +180,17 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       id: `external-storage-${type}-${capacity}`,
       type: "Armazenamento",
       subtype: "Storage Externo",
-      name: `Storage ${type} ${capacity} GB`,
-      description: `Storage externo: ${type} ${capacity} GB`,
+      name: `Storage ${type} ${formattedCapacity}`,
+      description: `Storage externo: ${type} ${formattedCapacity}`,
       price: price,
       specs: [
         `Tipo: Storage ${type}`,
-        `Capacidade: ${capacity} GB`,
+        `Capacidade: ${formattedCapacity}`,
         `IOPS: ${iops}`,
         `Throughput: ${throughput}`
       ]
     };
     
-    // Usar a prop passada se disponível, caso contrário usar função do contexto
     if (onSelectExternalStorage) {
       onSelectExternalStorage(type, capacity, price);
     } else {
