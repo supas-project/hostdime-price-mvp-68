@@ -1,14 +1,14 @@
 
 import { ComponentOption } from "@/types/component";
 import { generateQuotePDF } from "./quote-export";
-import { toast } from "sonner"; // Add this import for toast notifications
+import { toast } from "sonner"; 
 
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number
 ): Promise<Uint8Array> {
   try {
-    // Passing objects vazios para os parâmetros adicionais requeridos
+    // Passando objetos vazios para os parâmetros adicionais requeridos
     await generateQuotePDF(
       selectedComponents, 
       { internal: [], external: [] }, 
@@ -16,7 +16,7 @@ export async function generateQuoteFromTemplate(
       margin
     );
     
-    return new Uint8Array(); // Return empty array as the file is downloaded directly
+    return new Uint8Array(); // Retorna array vazio já que o arquivo é baixado diretamente
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
     toast.error("Falha na geração do PDF", {

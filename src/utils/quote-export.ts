@@ -3,6 +3,7 @@ import { ComponentOption } from "@/types/component";
 import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { hostDimeLogoBase64 } from "./pdf-assets";
 
 interface GroupedDisk {
   disk: ComponentOption;
@@ -69,15 +70,13 @@ const drawHeader = async (
     color: COLOR.PRIMARY
   });
   
-  // Try to load and embed the HostDime logo
-  let logoImage: PDFImage | null = null;
+  // Carregar logo embutido para evitar problemas de rede
   try {
-    // Attempt to fetch HostDime logo
-    const logoResponse = await fetch('https://www.hostdime.com.br/blog/wp-content/uploads/2022/01/hostdime-logo-laranja.png');
-    const logoArrayBuffer = await logoResponse.arrayBuffer();
-    logoImage = await pdfDoc.embedPng(new Uint8Array(logoArrayBuffer));
+    // Usar a imagem em Base64 em vez de buscar da internet
+    const logoImageBytes = Buffer.from(hostDimeLogoBase64, 'base64');
+    const logoImage = await pdfDoc.embedPng(logoImageBytes);
     
-    // Draw logo on white background for better visibility
+    // Area branca para destacar o logo
     page.drawRectangle({
       x: 50,
       y: currentY - 50,
@@ -85,7 +84,6 @@ const drawHeader = async (
       height: 40,
       color: COLOR.WHITE,
       borderWidth: 0,
-      // Removida a propriedade borderRadius que causa erro
     });
     
     const logoWidth = 130;
@@ -98,12 +96,21 @@ const drawHeader = async (
       height: logoHeight - 5
     });
   } catch (error) {
-    console.error("Failed to load logo:", error);
-    // Fallback text if logo can't be loaded
+    console.error("Falha ao carregar logo:", error);
+    // Fallback text melhorado se o logo não puder ser carregado
+    page.drawRectangle({
+      x: 40,
+      y: currentY - 42,
+      width: 160,
+      height: 30,
+      color: COLOR.PRIMARY,
+      opacity: 0.9,
+    });
+    
     page.drawText("HostDime Brasil", {
       x: 50,
       y: currentY - 30,
-      size: 24,
+      size: 20,
       font: helveticaBold,
       color: COLOR.WHITE
     });
@@ -131,7 +138,6 @@ const drawSectionHeader = (
     color: COLOR.PRIMARY,
     borderWidth: 0,
     opacity: 0.1
-    // Removida a propriedade borderRadius que causa erro
   });
   
   // Draw accent line
@@ -175,7 +181,6 @@ const drawHighlightBox = (
     borderWidth: 1,
     borderColor: borderColor,
     opacity: 0.7
-    // Removida a propriedade borderRadius que causa erro
   });
 };
 
@@ -244,11 +249,11 @@ const checkAndCreateNewPage = (
     
     // Add page number at the bottom
     const pageNumber = pdfDoc.getPageCount();
-    newPage.drawText(`Pagina ${pageNumber}`, {
+    newPage.drawText(`Página ${pageNumber}`, {
       x: width / 2 - 20,
       y: 30,
       size: 10,
-      font: helveticaFont,  // Use the passed font parameter
+      font: helveticaFont,
       color: COLOR.TEXT_LIGHT
     });
     
@@ -333,7 +338,7 @@ export const generateQuotePDF = async (
     
     // Add quote number
     const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-    page.drawText(`Cotacao: ${quoteNumber}`, {
+    page.drawText(`Cotação: ${quoteNumber}`, {
       x: quoteBox.x + 10,
       y: quoteBox.y - 60,
       size: 10,
@@ -351,7 +356,6 @@ export const generateQuotePDF = async (
       borderWidth: 0.7,
       opacity: 0.15,
       color: COLOR.WHITE
-      // Removida a propriedade borderRadius que causa erro
     });
     
     // Executive Summary
@@ -369,7 +373,7 @@ export const generateQuotePDF = async (
     
     currentY -= 25;
     
-    const summaryText = "Agradecemos seu interesse nos servicos da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades especificas. Nossa equipe esta a disposicao para quaisquer esclarecimentos adicionais.";
+    const summaryText = "Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades específicas. Nossa equipe está à disposição para quaisquer esclarecimentos adicionais.";
     
     // Break summary into lines
     const maxWidth = width - (marginX * 2);
@@ -415,7 +419,7 @@ export const generateQuotePDF = async (
     // Hardware Configuration Section
     currentY = drawSectionHeader(
       page, 
-      "1. Configuracao de Hardware", 
+      "1. Configuração de Hardware", 
       marginX, 
       currentY, 
       300,
@@ -525,7 +529,7 @@ export const generateQuotePDF = async (
       
       currentY = drawSectionHeader(
         page, 
-        "2. Solucoes de Armazenamento", 
+        "2. Soluções de Armazenamento", 
         marginX, 
         currentY, 
         300,
@@ -621,7 +625,7 @@ export const generateQuotePDF = async (
             );
             
             currentY -= 15;
-            page.drawText("Configuracao RAID:", {
+            page.drawText("Configuração RAID:", {
               x: marginX + 30,
               y: currentY,
               size: 11,
@@ -633,8 +637,8 @@ export const generateQuotePDF = async (
             const raidInfo = [
               `Tipo: RAID ${group.disk.metadata.raid.type}`,
               group.disk.metadata.raid.description,
-              `Protecao: ${group.disk.metadata.raid.protection}`,
-              `Capacidade util: ${group.disk.metadata.raid.usableCapacity}GB`
+              `Proteção: ${group.disk.metadata.raid.protection}`,
+              `Capacidade útil: ${group.disk.metadata.raid.usableCapacity}GB`
             ];
             
             raidInfo.forEach(info => {
@@ -739,7 +743,7 @@ export const generateQuotePDF = async (
       
       currentY = drawSectionHeader(
         page, 
-        "3. Servicos Adicionais", 
+        "3. Serviços Adicionais", 
         marginX, 
         currentY, 
         300,
@@ -869,7 +873,7 @@ export const generateQuotePDF = async (
     
     const hardwarePrice = formatCurrency(componentsPrice);
     page.drawText(hardwarePrice, {
-      x: marginRight - helvetica.widthOfTextAtSize(hardwarePrice, 12),
+      x: marginRight - helvetica.widthOfTextAtSize(hardwarePrice, 12) - 15,
       y: currentY,
       size: 12,
       font: helvetica,
@@ -889,7 +893,7 @@ export const generateQuotePDF = async (
     
     const storagePriceFormatted = formatCurrency(storagePrice);
     page.drawText(storagePriceFormatted, {
-      x: marginRight - helvetica.widthOfTextAtSize(storagePriceFormatted, 12),
+      x: marginRight - helvetica.widthOfTextAtSize(storagePriceFormatted, 12) - 15,
       y: currentY,
       size: 12,
       font: helvetica,
@@ -899,7 +903,7 @@ export const generateQuotePDF = async (
     currentY -= 20;
     
     // Services subtotal
-    page.drawText("Servicos:", {
+    page.drawText("Serviços:", {
       x: marginX + 15,
       y: currentY,
       size: 12,
@@ -909,7 +913,7 @@ export const generateQuotePDF = async (
     
     const servicesPriceFormatted = formatCurrency(servicesPrice);
     page.drawText(servicesPriceFormatted, {
-      x: marginRight - helvetica.widthOfTextAtSize(servicesPriceFormatted, 12),
+      x: marginRight - helvetica.widthOfTextAtSize(servicesPriceFormatted, 12) - 15,
       y: currentY,
       size: 12,
       font: helvetica,
@@ -931,7 +935,6 @@ export const generateQuotePDF = async (
       height: 40,
       color: COLOR.PRIMARY_LIGHT,
       opacity: 0.1
-      // Removida a propriedade borderRadius que causa erro
     });
     
     // Total - Show only the final price without margin breakdown
@@ -945,7 +948,7 @@ export const generateQuotePDF = async (
     
     const totalPrice = formatCurrency(total);
     page.drawText(totalPrice, {
-      x: marginRight - helvetica.widthOfTextAtSize(totalPrice, 16) - 15,
+      x: marginRight - helvetica.widthOfTextAtSize(totalPrice, 16) - 25,
       y: currentY + 10,
       size: 16,
       font: helveticaBold,
@@ -1023,7 +1026,7 @@ export const generateQuotePDF = async (
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `HostDime_Cotacao_${quoteNumber}.pdf`;
+    link.download = `HostDime_Cotação_${quoteNumber}.pdf`;
     link.click();
     
     // Success notification
@@ -1034,7 +1037,7 @@ export const generateQuotePDF = async (
     return pdfBytes;
     
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    console.error("Erro ao gerar PDF:", error);
     toast.error("Falha ao gerar PDF", {
       description: "Tente novamente mais tarde"
     });
