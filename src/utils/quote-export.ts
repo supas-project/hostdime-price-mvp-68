@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { PDFDocument, StandardFonts, rgb, PDFImage, PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { formatCurrency } from "@/lib/utils";
@@ -957,3 +958,86 @@ export const generateQuotePDF = async (
     const benefitsCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
     page = benefitsCheck.page;
     currentY = benefitsCheck.y;
+    
+    // Add company benefits section
+    currentY = drawSectionHeader(
+      page, 
+      "Vantagens HostDime", 
+      marginX, 
+      currentY, 
+      300,
+      helveticaBold
+    );
+    
+    // List of benefits
+    const benefits = [
+      "Suporte técnico 24x7x365 em português",
+      "Data centers certificados Tier III",
+      "Garantia de disponibilidade (SLA) de 99,9%",
+      "Rede redundante e alta disponibilidade",
+      "Monitoramento proativo do servidor",
+      "Painel de gerenciamento exclusivo"
+    ];
+    
+    benefits.forEach(benefit => {
+      page.drawText(`• ${benefit}`, {
+        x: marginX + 20,
+        y: currentY,
+        size: 11,
+        font: helvetica,
+        color: COLOR.TEXT
+      });
+      currentY -= 20;
+    });
+    
+    // Add footnote
+    currentY -= 30;
+    const footnoteCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
+    page = footnoteCheck.page;
+    currentY = footnoteCheck.y;
+    
+    page.drawText("Termos e Condições:", {
+      x: marginX,
+      y: currentY,
+      size: 10,
+      font: helveticaBold,
+      color: COLOR.TEXT
+    });
+    
+    currentY -= 15;
+    
+    const termsText = "Esta proposta tem validade de 15 dias. Os valores podem sofrer alterações sem aviso prévio. Impostos não inclusos. As configurações deste documento foram personalizadas com base nas informações fornecidas pelo cliente.";
+    
+    page.drawText(termsText, {
+      x: marginX,
+      y: currentY,
+      size: 8,
+      font: helvetica,
+      color: COLOR.TEXT_LIGHT
+    });
+    
+    // Finalize PDF and offer download
+    const pdfBytes = await pdfDoc.save();
+    
+    // Create blob and trigger download
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `HostDime_Cotacao_${quoteNumber}.pdf`;
+    link.click();
+    
+    // Success notification
+    toast.success("PDF Gerado com Sucesso", {
+      description: "Seu documento foi baixado automaticamente"
+    });
+    
+    return pdfBytes;
+    
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    toast.error("Falha ao gerar PDF", {
+      description: "Tente novamente mais tarde"
+    });
+    throw error;
+  }
+};
