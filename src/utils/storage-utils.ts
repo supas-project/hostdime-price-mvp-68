@@ -1,61 +1,134 @@
 
 /**
- * Normaliza a capacidade de armazenamento garantindo que tenha unidade (GB ou TB)
- * @param capacity Capacidade a ser normalizada
- * @returns Capacidade formatada
+ * Utilitários para formatação e conversão de unidades de armazenamento
  */
-export function normalizeStorageCapacity(capacity: string | number): string {
+
+/**
+ * Normaliza uma string de capacidade para o formato padronizado com unidade
+ * @param capacity String de capacidade (ex: "1TB", "500GB", "1")
+ * @returns Capacidade normalizada com unidade
+ */
+export function normalizeStorageCapacity(capacity: string): string {
+  if (!capacity) return "N/A";
+  
+  // Se já tiver unidade (GB ou TB), retorna formatado
+  if (capacity.match(/\d+\s*[GT]B/i)) {
+    // Remove espaços extras entre número e unidade
+    return capacity.replace(/(\d+)\s*([GT]B)/i, "$1$2");
+  }
+
+  // Se for apenas número, assume GB por padrão
+  if (capacity.match(/^\d+$/)) {
+    return `${capacity}GB`;
+  }
+
+  // Verifica se é número com TB ou GB escrito por extenso
+  const extensoMatch = capacity.match(/(\d+(?:\.\d+)?)\s*(terabytes?|gigabytes?|tb|gb)/i);
+  if (extensoMatch) {
+    const valor = extensoMatch[1];
+    const unidade = extensoMatch[2].toLowerCase();
+    if (unidade.startsWith('t')) {
+      return `${valor}TB`;
+    } else {
+      return `${valor}GB`;
+    }
+  }
+
+  return capacity; // Retorna como está se não conseguir normalizar
+}
+
+/**
+ * Formata a exibição de capacidade para mostrar de forma consistente
+ * @param capacity Capacidade em qualquer formato
+ * @returns Capacidade formatada com unidade
+ */
+export function formatStorageCapacity(capacity: string | number): string {
   if (typeof capacity === 'number') {
-    // Assumir GB por padrão
+    // Se for número maior que 1000, converte para TB
+    if (capacity >= 1000) {
+      return `${(capacity / 1000).toFixed(1).replace(/\.0$/, '')}TB`;
+    }
     return `${capacity}GB`;
   }
   
-  if (!capacity) return '0GB';
+  // Trata string de capacidade
+  const normalized = normalizeStorageCapacity(capacity);
   
-  // Se já tiver unidade, retorna como está
-  if (capacity.toUpperCase().includes('GB') || capacity.toUpperCase().includes('TB')) {
-    return capacity;
+  // Converte TB fracionários para GB se for menor que 1TB
+  const tbMatch = normalized.match(/^([0-9.]+)TB$/i);
+  if (tbMatch) {
+    const tbValue = parseFloat(tbMatch[1]);
+    if (tbValue < 1) {
+      return `${Math.round(tbValue * 1000)}GB`;
+    }
   }
   
-  // Caso contrário, adiciona GB como unidade padrão
-  return `${capacity}GB`;
+  return normalized;
 }
 
 /**
- * Converte capacidade de armazenamento para GB para comparação
- * @param capacity Capacidade como string (ex: "500GB" ou "2TB")
- * @returns Capacidade em GB como número
+ * Extrai a capacidade de um texto ou especificação
+ * @param text Texto para extrair a capacidade
+ * @returns Capacidade extraída com unidade
+ */
+export function extractStorageCapacity(text: string | string[] | undefined): string {
+  if (!text) return "N/A";
+  
+  // Se for um array de especificações, procura pelo item com "Capacidade:"
+  if (Array.isArray(text)) {
+    const capacitySpec = text.find(spec => 
+      spec.toLowerCase().includes('capacidade:')
+    );
+    
+    if (capacitySpec) {
+      const capacity = capacitySpec.split(':')[1]?.trim();
+      return normalizeStorageCapacity(capacity || "");
+    }
+    
+    // Se não encontrou especificação de capacidade, procura por padrões de capacidade em todos os itens
+    for (const spec of text) {
+      const match = spec.match(/(\d+)\s*([GT]B)/i);
+      if (match) {
+        return `${match[1]}${match[2].toUpperCase()}`;
+      }
+    }
+  } else {
+    // Se for uma string, procura por padrões de capacidade
+    const match = text.match(/(\d+)\s*([GT]B)/i);
+    if (match) {
+      return `${match[1]}${match[2].toUpperCase()}`;
+    }
+  }
+  
+  return "N/A";
+}
+
+/**
+ * Determina se um valor representa uma capacidade TB
+ */
+export function isTBCapacity(capacity: string): boolean {
+  return /TB/i.test(capacity);
+}
+
+/**
+ * Converte capacidade para GB
  */
 export function convertToGB(capacity: string): number {
-  if (!capacity) return 0;
-  
-  const match = capacity.match(/(\d+(?:\.\d+)?)\s*(TB|GB)/i);
-  if (!match) return 0;
-  
-  const value = parseFloat(match[1]);
-  const unit = match[2].toUpperCase();
-  
-  if (unit === 'TB') {
-    return value * 1024; // 1 TB = 1024 GB
+  const tbMatch = capacity.match(/(\d+(?:\.\d+)?)\s*TB/i);
+  if (tbMatch) {
+    return parseFloat(tbMatch[1]) * 1000;
   }
   
-  return value;
-}
-
-/**
- * Extrai o valor numérico e a unidade de uma string de capacidade
- * @param capacity String com a capacidade (ex: "500GB" ou "2TB")
- * @returns Objeto com valor numérico e unidade, ou null se não conseguir extrair
- */
-export function extractStorageCapacity(capacity: string): { value: number; unit: string } | null {
-  if (!capacity) return null;
+  const gbMatch = capacity.match(/(\d+(?:\.\d+)?)\s*GB/i);
+  if (gbMatch) {
+    return parseFloat(gbMatch[1]);
+  }
   
-  // Tenta encontrar padrões como "500GB", "2 TB", "1.5TB" etc.
-  const match = capacity.match(/(\d+(?:\.\d+)?)\s*(TB|GB)/i);
-  if (!match) return null;
+  // Se for apenas um número, assume GB
+  const numMatch = capacity.match(/^(\d+(?:\.\d+)?)$/);
+  if (numMatch) {
+    return parseFloat(numMatch[1]);
+  }
   
-  return {
-    value: parseFloat(match[1]),
-    unit: match[2].toUpperCase()
-  };
+  return 0;
 }
