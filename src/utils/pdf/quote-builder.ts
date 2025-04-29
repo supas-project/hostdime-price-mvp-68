@@ -15,7 +15,8 @@ export async function buildQuotePDF(
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
   customServices: ComponentOption[],
-  margin: number
+  margin: number,
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
 ): Promise<Uint8Array> {
   try {
     toast.info("Gerando PDF...", {
@@ -68,7 +69,8 @@ export async function buildQuotePDF(
     // 6. Financial Summary
     pageContext = renderFinancialSection(
       pdfDoc, pageContext, selectedComponents, storageItems, customServices, 
-      margin, width, marginX, marginRight, helvetica, helveticaBold
+      margin, width, marginX, marginRight, helvetica, helveticaBold,
+      connectivityItems
     );
     
     // 7. Benefits Section

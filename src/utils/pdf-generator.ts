@@ -19,7 +19,7 @@ export async function generateQuoteFromTemplate(
       { internal: [], external: [] }, 
       [], 
       margin,
-      {} // Adicionando connectivityItems vazio por padrão
+      {} // Adicionando connectivityItems vazio
     );
     
     return new Uint8Array(); // Retorna array vazio já que o arquivo é baixado diretamente

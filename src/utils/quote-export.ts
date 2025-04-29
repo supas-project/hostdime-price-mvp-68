@@ -7,7 +7,8 @@ export const generateQuotePDF = async (
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
   customServices: ComponentOption[],
-  margin: number
+  margin: number,
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
 ) => {
   try {
     // Notificar o usuário que o processo começou
@@ -20,7 +21,8 @@ export const generateQuotePDF = async (
       selectedComponents,
       storageItems,
       customServices,
-      margin
+      margin,
+      connectivityItems
     );
     
     // Gerar nome do arquivo com número aleatório e data
