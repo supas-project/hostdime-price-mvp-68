@@ -13,12 +13,15 @@ export function useWizardSteps() {
     const type = component.type;
     console.log(`Checking completion for type: ${type}`);
 
-    let hasComponent = false;
+    // Serviços Personalizados é o único passo opcional
+    if (type === "ServiçosPersonalizados") {
+      return true;
+    }
     
     if (type === "Memória") {
-      hasComponent = selectedComponents["memoria"] !== undefined;
+      return selectedComponents["memoria"] !== undefined;
     } else if (type === "Contrato") {
-      hasComponent = selectedComponents["contrato"] !== undefined;
+      return selectedComponents["contrato"] !== undefined;
     } else if (type === "Conectividade") {
       const hasPort = Object.values(connectivityItems).some(
         (item: any) => item.option.subtype === "porta"
@@ -26,21 +29,17 @@ export function useWizardSteps() {
       const hasIp = Object.values(connectivityItems).some(
         (item: any) => item.option.subtype === "ip"
       );
-      hasComponent = hasPort && hasIp;
+      return hasPort && hasIp;
     } else if (type === "Armazenamento") {
+      // Modificado para exigir pelo menos um armazenamento interno
       const hasInternalStorage = storageItems.internal.length > 0;
-      const hasExternalStorage = storageItems.external.length > 0;
-      hasComponent = hasInternalStorage || hasExternalStorage;
+      return hasInternalStorage;
     } else if (type === "SistemaOperacional") {
-      hasComponent = selectedComponents["sistemaoperacional"] !== undefined;
-    } else if (type === "ServiçosPersonalizados") {
-      hasComponent = true;
+      return selectedComponents["sistemaoperacional"] !== undefined;
     } else {
       const typeKey = type.toLowerCase();
-      hasComponent = selectedComponents[typeKey] !== undefined;
+      return selectedComponents[typeKey] !== undefined;
     }
-
-    return hasComponent;
   };
 
   return {
