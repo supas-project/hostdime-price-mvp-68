@@ -142,9 +142,9 @@ type Toast = Omit<ToasterToast, "id">
 
 // Configuração para controlar se os toasts de UI devem ser exibidos
 const config = {
-  showUIToasts: false, // Por padrão, desabilitar toasts de UI
+  showUIToasts: false, // Confirmando que os toasts de UI estão desabilitados por padrão
   showErrorToasts: true, // Manter toasts de erro sempre habilitados
-}
+};
 
 function toast({ ...props }: Toast) {
   const id = genId()

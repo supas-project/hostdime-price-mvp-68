@@ -131,12 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
           setIsAdmin(isUserAdmin);
           
-          toast.success("Login realizado com sucesso");
+          // Toast removido para evitar poluição visual
         } else if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false);
           setIsAdmin(false);
           setUser(null);
-          toast.info("Sessão finalizada");
+          // Toast removido para evitar poluição visual
         }
       }
     );
