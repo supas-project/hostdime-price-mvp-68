@@ -2,17 +2,24 @@
 import { useWizard } from "@/contexts/WizardContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
+import { toast } from "sonner";
 
 export function BeginnerModeToggle() {
-  const { beginnerMode } = useWizard();
+  const { beginnerMode, setBeginnerMode } = useWizard();
   
-  // Access the context setter function directly
-  const updateBeginnerMode = (value: boolean) => {
-    // We'll use localStorage directly since the context already uses useLocalStorage
-    localStorage.setItem('beginnerMode', JSON.stringify(value));
-    // Force reload to apply the change throughout the app
-    window.location.reload();
+  const handleToggleMode = (value: boolean) => {
+    setBeginnerMode(value);
+    
+    // Show a toast notification instead of reloading
+    toast.success(
+      value ? "Modo Iniciante ativado" : "Modo Avançado ativado", 
+      {
+        description: value 
+          ? "Você receberá dicas e orientações durante o processo" 
+          : "Interface simplificada para usuários experientes",
+        duration: 3000
+      }
+    );
   };
 
   return (
@@ -20,7 +27,7 @@ export function BeginnerModeToggle() {
       <Switch 
         id="beginner-mode" 
         checked={beginnerMode} 
-        onCheckedChange={updateBeginnerMode}
+        onCheckedChange={handleToggleMode}
       />
       <Label htmlFor="beginner-mode" className="cursor-pointer">
         {beginnerMode ? "Modo Iniciante" : "Modo Avançado"}

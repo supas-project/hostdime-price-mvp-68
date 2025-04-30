@@ -38,6 +38,15 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', true);
   const [seenSteps, setSeenSteps] = useLocalStorage<number[]>('seenSteps', []);
 
+  // Define a wrapper function for setBeginnerMode that also handles side effects
+  const updateBeginnerMode = (value: boolean) => {
+    setBeginnerMode(value);
+    
+    // If turning on beginner mode, reset seen steps to show tooltips again
+    if (value && !beginnerMode) {
+      setSeenSteps([]);
+    }
+  };
   
   // Função para verificar se o componente é de seleção única - caso insensitivo
   const isSingleSelectionComponent = (type: string): boolean => {
@@ -239,7 +248,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         customServices,
         addCustomService,
         removeCustomService,
-        beginnerMode // Expose the beginner mode setting to all components
+        beginnerMode,
+        setBeginnerMode: updateBeginnerMode // Expose the wrapper function
       }}
     >
       {children}

@@ -29,5 +29,6 @@ export interface WizardContextType {
   customServices: ComponentOption[]; // Changed from CustomService[] to ComponentOption[]
   addCustomService: (service: ComponentOption) => void;
   removeCustomService: (id: string) => void;
-  beginnerMode?: boolean;
+  beginnerMode: boolean;
+  setBeginnerMode: (value: boolean) => void; // Add the setter function
 }
