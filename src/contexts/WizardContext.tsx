@@ -88,7 +88,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           console.log(`Step ${currentStep} complete, advancing to next step`);
           setTimeout(() => {
             setCurrentStep(currentStep + 1);
-            toast.success("Avançando para o próximo passo");
+            // Toast removido para evitar poluição visual
           }, 800); // Aumentado para 800ms
         }
       }
@@ -120,7 +120,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           if (currentStep < serverData.componentes.length - 1) {
             console.log(`Auto-advancing to step ${currentStep + 1}`);
             setCurrentStep(currentStep + 1);
-            toast.success("Seleção completa! Avançando para o próximo passo");
+            // Toast removido para evitar poluição visual
           } else {
             console.log(`Already at last step, not advancing`);
           }
