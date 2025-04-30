@@ -122,10 +122,24 @@ export function useComponentSelection() {
             description: "O disco foi removido da configuração"
           });
         } else {
-          const existingIndex = prev.internal.findIndex(item => item.id === option.id);
+          // Criar uma chave única baseada nas propriedades reais do disco para evitar duplicações
+          const diskType = option.subtype || option.name.split(' ')[0];
+          const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+          const capacity = capacityMatch ? capacityMatch[0] : '';
+          const uniqueKey = `${diskType}-${capacity}`;
+          
+          // Verificar se já existe um disco com essas características
+          const existingIndex = prev.internal.findIndex(disk => {
+            const diskTypeMatch = disk.subtype || disk.name.split(' ')[0];
+            const diskCapacityMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+            const diskCapacity = diskCapacityMatch ? diskCapacityMatch[0] : '';
+            return `${diskTypeMatch}-${diskCapacity}` === uniqueKey && disk.id === option.id;
+          });
+
           const updatedItems = [...prev.internal];
 
           if (existingIndex >= 0) {
+            // Atualizar disco existente
             updatedItems[existingIndex] = {
               ...option,
               price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
@@ -134,13 +148,24 @@ export function useComponentSelection() {
               description: `Quantidade de ${option.name} atualizada`
             });
           } else {
-            updatedItems.push({
+            // Adicionar novo disco
+            // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
+            const filteredItems = updatedItems.filter(disk => disk.id !== option.id);
+            filteredItems.push({
               ...option,
               price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
             });
+            
+            updatedStorageItems = {
+              ...prev,
+              internal: filteredItems
+            };
+            
             toast.success("Disco adicionado", {
               description: option.name
             });
+            
+            return updatedStorageItems;
           }
 
           updatedStorageItems = {

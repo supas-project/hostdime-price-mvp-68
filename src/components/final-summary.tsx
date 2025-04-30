@@ -25,7 +25,7 @@ interface FinalSummaryProps {
 
 export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
   const { toast } = useToast();
-  const { storageItems, customServices, connectivityItems } = useWizard();
+  const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +155,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       <OrderDetails 
         selectedComponents={selectedComponents}
         margin={profitMargin}
+        onRemoveItem={handleRemoveComponent}
       />
       
       <div className="flex flex-col md:flex-row gap-4">

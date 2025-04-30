@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -38,8 +39,58 @@ export function SimpleRaidCalculator({
     return quantity >= RAID_INFO[type].minDisks;
   };
 
+  // Função auxiliar para formatar corretamente as capacidades
+  const formatCapacity = (capacityGB: number): string => {
+    if (capacityGB >= 1000) {
+      return `${(capacityGB / 1000).toFixed(1)}TB`;
+    }
+    return `${Math.floor(capacityGB)}GB`;
+  };
+
   useEffect(() => {
     if (calculation && isValidRaidConfiguration(raidType)) {
+      // Extrair a capacidade correta do disco selecionado em GB
+      const capacityMatch = selectedDisk.capacity.match(/(\d+(?:\.\d+)?)\s*([GT]B)/i);
+      let capacityValue = 0;
+      let unit = 'GB';
+      
+      if (capacityMatch) {
+        capacityValue = parseFloat(capacityMatch[1]);
+        unit = capacityMatch[2].toUpperCase();
+        
+        // Converter para GB se estiver em TB
+        if (unit === 'TB') {
+          capacityValue *= 1000;
+        }
+      }
+      
+      // Cálculo correto da capacidade total e útil
+      const totalCapacityGB = capacityValue * quantity;
+      let usableCapacityGB = totalCapacityGB;
+      
+      // Aplicar o cálculo de RAID
+      switch (raidType) {
+        case '1':
+          usableCapacityGB = totalCapacityGB / 2;
+          break;
+        case '5':
+          usableCapacityGB = totalCapacityGB * ((quantity - 1) / quantity);
+          break;
+        case '6':
+          usableCapacityGB = totalCapacityGB * ((quantity - 2) / quantity);
+          break;
+        case '10':
+          usableCapacityGB = totalCapacityGB / 2;
+          break;
+        default:
+          // Para RAID 0 e none, usableCapacityGB = totalCapacityGB
+          break;
+      }
+      
+      // Formatar valores para exibição
+      const formattedTotalCapacity = formatCapacity(totalCapacityGB);
+      const formattedUsableCapacity = formatCapacity(usableCapacityGB);
+
       const storageOption = {
         id: `internal-disk-${selectedDisk.type}-${selectedDisk.capacity}`,
         type: "Armazenamento",
@@ -55,15 +106,15 @@ export function SimpleRaidCalculator({
             description: RAID_INFO[raidType].description,
             protection: RAID_INFO[raidType].protection,
             isHardware: isHardwareRaid,
-            usableCapacity: calculation.usableCapacity,
-            totalCapacity: calculation.totalCapacity,
+            usableCapacity: usableCapacityGB,
+            totalCapacity: totalCapacityGB,
             performance: calculation.performance
           }
         },
         specs: [
           `Tipo: ${selectedDisk.type.toUpperCase()}`,
-          `Capacidade Total: ${calculation.totalCapacity}GB`,
-          `Capacidade Útil: ${calculation.usableCapacity}GB`,
+          `Capacidade Total: ${formattedTotalCapacity}`,
+          `Capacidade Útil: ${formattedUsableCapacity}`,
           `RAID: ${raidType === 'none' ? 'Sem RAID' : `RAID ${raidType}`}`,
           `Tipo RAID: ${isHardwareRaid ? 'Hardware' : 'Software'}`,
           `Proteção: ${RAID_INFO[raidType].protection}`
@@ -73,7 +124,7 @@ export function SimpleRaidCalculator({
       handleSelectStorageItem(storageOption, 'internal');
       onRaidTypeChange(raidType, isHardwareRaid);
     }
-  }, [calculation, raidType, isHardwareRaid]);
+  }, [calculation, raidType, isHardwareRaid, selectedDisk, quantity, handleSelectStorageItem, onRaidTypeChange]);
 
   const handleRaidTypeChange = (value: RaidType) => {
     if (!isValidRaidConfiguration(value)) {
@@ -192,8 +243,8 @@ export function SimpleRaidCalculator({
                     <span className="font-medium">Capacidade</span>
                   </div>
                   <div className="text-xs text-muted-foreground pl-5">
-                    <div>Útil: {calculation.usableCapacity}GB</div>
-                    <div>Total: {calculation.totalCapacity}GB</div>
+                    <div>Útil: {formatCapacity(calculation.usableCapacity)}</div>
+                    <div>Total: {formatCapacity(calculation.totalCapacity)}</div>
                   </div>
                 </div>
 

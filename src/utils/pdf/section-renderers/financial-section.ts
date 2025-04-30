@@ -30,16 +30,20 @@ export function renderFinancialSection(
   
   // Calculate totals
   const componentsPrice = Object.values(selectedComponents)
-    .filter(comp => comp.type !== "Armazenamento") // Exclude storage components
+    .filter(comp => comp.type !== "Armazenamento" && comp.type !== "DataCenter" && comp.type !== "Contrato") // Exclude storage, datacenter and contract components
     .reduce((sum, component) => sum + component.price, 0);
   
-  const storagePrice = storageItems.internal.reduce(
-    (sum, disk) => sum + disk.price,
-    0
-  ) + storageItems.external.reduce(
-    (sum, storage) => sum + storage.price,
-    0
-  );
+  const storagePrice = storageItems.internal
+    .filter(disk => disk && disk.price > 0)
+    .reduce(
+      (sum, disk) => sum + disk.price,
+      0
+    ) + storageItems.external
+    .filter(storage => storage && storage.price > 0)
+    .reduce(
+      (sum, storage) => sum + storage.price,
+      0
+    );
   
   const servicesPrice = customServices.reduce(
     (sum, service) => sum + service.price,

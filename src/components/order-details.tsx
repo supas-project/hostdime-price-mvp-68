@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
   margin?: number;
+  onRemoveItem?: (type: string) => void; // Adicionando prop para remoção de itens
 }
 
 // Helper function to group internal disks by type and capacity
@@ -52,8 +53,8 @@ const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] =>
   return Object.values(diskGroups);
 };
 
-export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsProps) {
-  const { storageItems, customServices, connectivityItems } = useWizard();
+export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
+  const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
 
   // Separate DataCenter and Contract components
   const dataCenterComponent = selectedComponents["datacenter"];
@@ -79,7 +80,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   );
 
   // Group storage disks
-  const groupedInternalDisks = groupDisksByTypeAndCapacity(storageItems.internal);
+  const groupedInternalDisks = groupDisksByTypeAndCapacity(storageItems.internal.filter(disk => disk.price > 0));
   
   // Calculate prices (excluding DataCenter and Contract)
   const nonStoragePrice = otherComponents.reduce(
@@ -87,15 +88,19 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
     0
   );
   
-  const internalStoragePrice = storageItems.internal.reduce(
-    (sum, disk) => sum + disk.price,
-    0
-  );
+  const internalStoragePrice = storageItems.internal
+    .filter(disk => disk && disk.price > 0) // Filtrar discos com preço zero
+    .reduce(
+      (sum, disk) => sum + disk.price,
+      0
+    );
   
-  const externalStoragePrice = storageItems.external.reduce(
-    (sum, storage) => sum + storage.price,
-    0
-  );
+  const externalStoragePrice = storageItems.external
+    .filter(storage => storage && storage.price > 0) // Filtrar storages com preço zero
+    .reduce(
+      (sum, storage) => sum + storage.price,
+      0
+    );
   
   const customServicesPrice = customServices.reduce(
     (sum, service) => sum + service.price,
@@ -110,6 +115,15 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
   const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice + connectivityPrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
+
+  // Handler para remoção de itens
+  const handleRemoveItem = (type: string) => {
+    if (onRemoveItem) {
+      onRemoveItem(type);
+    } else if (handleRemoveComponent) {
+      handleRemoveComponent(type);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -180,7 +194,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
 
             {/* Other regular components */}
             {otherComponents.map((component) => (
-              <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+              <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-medium flex items-center">
@@ -191,9 +205,22 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                     </h4>
                     <p className="text-sm text-muted-foreground">{component.description}</p>
                   </div>
-                  {component.type !== "DataCenter" && component.type !== "Contrato" && (
+                  <div className="flex items-center gap-2">
                     <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
-                  )}
+                    
+                    {onRemoveItem && (
+                      <button
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemoveItem(component.type.toLowerCase())}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                          <path d="M18 6 6 18"></path>
+                          <path d="m6 6 12 12"></path>
+                        </svg>
+                        <span className="sr-only">Remover {component.name}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {component.specs && (
                   <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
@@ -219,7 +246,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
                     {groupedInternalDisks.map((groupedDisk) => (
-                      <div key={groupedDisk.disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                      <div key={groupedDisk.disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium flex items-center gap-2">
@@ -227,9 +254,24 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                             </h4>
                             <p className="text-sm text-muted-foreground">{groupedDisk.disk.description}</p>
                           </div>
-                          <span className="font-medium text-primary">
-                            {formatCurrency(groupedDisk.disk.price * groupedDisk.quantity)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-primary">
+                              {formatCurrency(groupedDisk.disk.price * groupedDisk.quantity)}
+                            </span>
+                            
+                            {onRemoveItem && (
+                              <button
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoveItem(groupedDisk.disk.id)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                                  <path d="M18 6 6 18"></path>
+                                  <path d="m6 6 12 12"></path>
+                                </svg>
+                                <span className="sr-only">Remover disco</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {groupedDisk.disk.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
@@ -260,7 +302,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                                 {groupedDisk.disk.metadata.raid.protection}
                               </p>
                               <div className="text-xs text-muted-foreground mt-1">
-                                <p>Capacidade útil: {groupedDisk.disk.metadata.raid.usableCapacity}GB</p>
+                                <p>Capacidade útil: {(groupedDisk.disk.metadata.raid.usableCapacity || 0).toFixed(0)}GB</p>
                                 <p>Tipo: {groupedDisk.disk.metadata.raid.isHardware ? 'Hardware RAID' : 'Software RAID'}</p>
                               </div>
                             </div>
@@ -274,11 +316,11 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                 )}
                 
                 {/* External storage */}
-                {storageItems.external.length > 0 && (
+                {storageItems.external.filter(storage => storage && storage.price > 0).length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Storage Externo</h4>
-                    {storageItems.external.map((storage) => (
-                      <div key={storage.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                    {storageItems.external.filter(storage => storage && storage.price > 0).map((storage) => (
+                      <div key={storage.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium flex items-center">
@@ -286,7 +328,22 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                             </h4>
                             <p className="text-sm text-muted-foreground">{storage.description}</p>
                           </div>
-                          <span className="font-medium text-primary">{formatCurrency(storage.price)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-primary">{formatCurrency(storage.price)}</span>
+                            
+                            {onRemoveItem && (
+                              <button
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoveItem(storage.id)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                                  <path d="M18 6 6 18"></path>
+                                  <path d="m6 6 12 12"></path>
+                                </svg>
+                                <span className="sr-only">Remover storage</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {storage.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
@@ -311,7 +368,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Conectividade</h3>
                 {Object.entries(connectivityItems).map(([itemId, { option, quantity }]) => (
-                  <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                  <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium flex items-center gap-2">
@@ -323,7 +380,22 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                         </h4>
                         <p className="text-sm text-muted-foreground">{option.description}</p>
                       </div>
-                      <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
+                        
+                        {onRemoveItem && (
+                          <button
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            onClick={() => handleRemoveItem(itemId)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                              <path d="M18 6 6 18"></path>
+                              <path d="m6 6 12 12"></path>
+                            </svg>
+                            <span className="sr-only">Remover item</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <Separator className="mt-4" />
                   </div>
@@ -336,7 +408,7 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Serviços Personalizados</h3>
                 {customServices.map(service => (
-                  <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
+                  <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium flex items-center gap-2">
@@ -345,7 +417,22 @@ export function OrderDetails({ selectedComponents, margin = 25 }: OrderDetailsPr
                         </h4>
                         <p className="text-sm text-muted-foreground">{service.description}</p>
                       </div>
-                      <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
+                        
+                        {onRemoveItem && (
+                          <button
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            onClick={() => handleRemoveItem(service.id)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                              <path d="M18 6 6 18"></path>
+                              <path d="m6 6 12 12"></path>
+                            </svg>
+                            <span className="sr-only">Remover serviço</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {service.specs && (
                       <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
