@@ -1,3 +1,4 @@
+
 /**
  * Normalizes storage capacity format to ensure consistency.
  * Examples: 
@@ -68,4 +69,32 @@ export function convertToGB(capacity: string): number {
     case 'mb': return value / 1000;
     default: return value;
   }
+}
+
+/**
+ * Utility function to extract storage capacity from disk name or specs
+ * Replacement for the missing function referenced in components
+ */
+export function extractStorageCapacity(disk: any): string {
+  // First check specs for capacity information
+  if (disk.specs && Array.isArray(disk.specs)) {
+    const capacitySpec = disk.specs.find((spec: string) => 
+      spec.toLowerCase().includes('capacidade:')
+    );
+    if (capacitySpec) {
+      const capacity = capacitySpec.split(':')[1]?.trim();
+      if (capacity) return normalizeStorageCapacity(capacity);
+    }
+  }
+  
+  // Then try to extract from name
+  if (disk.name) {
+    const nameMatch = disk.name.match(/(\d+)\s*([GT]B)/i);
+    if (nameMatch) {
+      return `${nameMatch[1]}${nameMatch[2].toUpperCase()}`;
+    }
+  }
+  
+  // Default fallback
+  return "N/A";
 }
