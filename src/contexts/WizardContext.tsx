@@ -1,4 +1,3 @@
-
 import { createContext, useContext, ReactNode, useEffect } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
@@ -35,9 +34,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     isStepComplete: baseIsStepComplete
   } = useWizardSteps();
   
+  // Use the correct hook format
   const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', true);
   const [seenSteps, setSeenSteps] = useLocalStorage<number[]>('seenSteps', []);
 
+  
   // Função para verificar se o componente é de seleção única - caso insensitivo
   const isSingleSelectionComponent = (type: string): boolean => {
     if (!type) return false;

@@ -7,7 +7,6 @@ import { WizardProvider, useWizard } from "@/contexts/WizardContext";
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { serverData } from "@/data/server-components";
 import { BeginnerModeToggle } from "@/components/beginner-mode-toggle";
-import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
 
 // Create a separate component to use the context
 const WizardContainer = () => {

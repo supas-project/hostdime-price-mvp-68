@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 
+// Simplified hook that takes a key and initial value and returns a state and setter
 export function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {

@@ -6,15 +6,9 @@ export interface StorageItems {
   external: ComponentOption[];
 }
 
-export interface CustomService {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  specs?: string[];
-  metadata?: {
-    quantity?: number;
-  };
+// Update CustomService to extend ComponentOption to ensure type compatibility
+export interface CustomService extends ComponentOption {
+  // Additional fields specific to CustomService can be added here
 }
 
 export interface WizardContextType {
@@ -32,8 +26,8 @@ export interface WizardContextType {
   isStepComplete: (stepIndex: number) => boolean;
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
   handleRemoveComponent: (id: string, type?: string) => void;
-  customServices: CustomService[];
-  addCustomService: (service: CustomService) => void;
+  customServices: ComponentOption[]; // Changed from CustomService[] to ComponentOption[]
+  addCustomService: (service: ComponentOption) => void;
   removeCustomService: (id: string) => void;
-  beginnerMode?: boolean; // New property for beginner mode
+  beginnerMode?: boolean;
 }

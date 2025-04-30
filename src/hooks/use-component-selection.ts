@@ -3,7 +3,6 @@ import { useStandardComponents } from "./component-selection/use-standard-compon
 import { useStorageComponents } from "./component-selection/use-storage-components";
 import { useConnectivityComponents } from "./component-selection/use-connectivity-components";
 import { useCustomServices } from "./component-selection/use-custom-services";
-import { useLocalStorage } from "./component-selection/use-local-storage";
 import { ComponentOption } from "@/types/component";
 
 // Helper function to normalize component types for consistent key usage
@@ -65,17 +64,7 @@ export function useComponentSelection() {
     removeCustomService
   } = useCustomServices();
 
-  // Integrar com o localStorage
-  useLocalStorage(
-    selectedComponents,
-    setSelectedComponents,
-    storageItems,
-    setStorageItems,
-    connectivityItems,
-    setConnectivityItems,
-    customServices,
-    setCustomServices
-  );
+  // We're not calling useLocalStorage here anymore - each hook manages its own localStorage
 
   // Função principal para remover componentes
   const handleRemoveComponent = (type: string) => {

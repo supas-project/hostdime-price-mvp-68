@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
@@ -61,13 +60,13 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         description: "Aguarde enquanto geramos seu documento..."
       });
       
-      // Corrigindo a chamada para passar todos os argumentos necessários, incluindo connectivityItems
+      // Ensure we're passing all arguments with correct types
       await generateQuotePDF(
         selectedComponents,
         storageItems,
-        customServices,
+        customServices, // Now this is ComponentOption[] instead of CustomService[]
         profitMargin,
-        connectivityItems // Adicionando conectividade para o PDF 
+        connectivityItems
       );
       
     } catch (error) {
