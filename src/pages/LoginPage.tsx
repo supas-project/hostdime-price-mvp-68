@@ -148,11 +148,6 @@ export default function LoginPage() {
                 </Button>
               </form>
             </Form>
-            
-            <div className="text-sm text-center text-muted-foreground">
-              <p>Credenciais padrão de administrador:</p>
-              <p className="font-medium">admin@hostdime.com.br / H0stD1m3@2025</p>
-            </div>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-xs text-muted-foreground">
