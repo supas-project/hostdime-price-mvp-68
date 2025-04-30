@@ -6,6 +6,22 @@ import { useCustomServices } from "./component-selection/use-custom-services";
 import { useLocalStorage } from "./component-selection/use-local-storage";
 import { ComponentOption } from "@/types/component";
 
+// Helper function to normalize component types for consistent key usage
+export const normalizeComponentType = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    "Memória": "memoria",
+    "SistemaOperacional": "sistemaoperacional",
+    "Processador": "processador",
+    "DataCenter": "datacenter",
+    "Contrato": "contrato",
+    "Conectividade": "conectividade",
+    "Armazenamento": "armazenamento",
+    "ServiçosPersonalizados": "servicospersonalizados"
+  };
+  
+  return typeMap[type] || type.toLowerCase();
+};
+
 export function useComponentSelection() {
   const {
     selectedComponents,
@@ -75,6 +91,7 @@ export function useComponentSelection() {
     handleSelectStorageItem,
     handleRemoveComponent,
     addCustomService,
-    removeCustomService
+    removeCustomService,
+    normalizeComponentType
   };
 }

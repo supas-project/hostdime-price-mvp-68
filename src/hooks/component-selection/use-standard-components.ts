@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
+import { normalizeComponentType } from "../use-component-selection";
 
 export function useStandardComponents() {
   const [selectedComponents, setSelectedComponents] = useState<{ [key: string]: ComponentOption }>({});
@@ -24,15 +25,10 @@ export function useStandardComponents() {
 
     setSelectedComponents((prev) => {
       const updated = { ...prev };
+      const normalizedType = normalizeComponentType(option.type);
       
-      if (option.type.toLowerCase() === "memoria") {
-        console.log("Setting memory component:", option);
-        updated["memoria"] = option;
-      } else if (option.type === "SistemaOperacional") {
-        updated["sistemaoperacional"] = option;
-      } else {
-        updated[option.type.toLowerCase()] = option;
-      }
+      console.log(`Normalized type for ${option.type}: ${normalizedType}`);
+      updated[normalizedType] = option;
       
       console.log("Updated components:", updated);
       return updated;

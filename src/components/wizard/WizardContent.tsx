@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { normalizeComponentType } from "@/hooks/use-component-selection";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -21,11 +22,15 @@ export function WizardContent() {
 
   const getSelectedOption = (component: any) => {
     const type = component.type;
-    if (type === "Contrato") return selectedComponents["contrato"];
+    const normalizedType = normalizeComponentType(type);
+    
+    console.log(`Getting selected option for ${type} (normalized: ${normalizedType})`);
+    
     if (type === "Armazenamento") {
       return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
     }
-    return selectedComponents[type.toLowerCase()];
+    
+    return selectedComponents[normalizedType];
   };
 
   const currentComponent = serverData.componentes[currentStep];
