@@ -14,16 +14,20 @@ export const drawHighlightBox = (
   color: RGB = COLOR.HIGHLIGHT,
   borderColor: RGB = COLOR.PRIMARY_LIGHT
 ) => {
-  page.drawRectangle({
-    x,
-    y: y - height,
-    width,
-    height,
-    color: color,
-    borderWidth: 1,
-    borderColor: borderColor,
-    opacity: 0.7
-  });
+  // Add subtle gradient effect by using multiple rectangles with decreasing opacity
+  for (let i = 0; i < 3; i++) {
+    const opacity = 0.7 - (i * 0.2);
+    page.drawRectangle({
+      x: x + i,
+      y: y - height + i,
+      width: width - (i * 2),
+      height: height - (i * 2),
+      color: color,
+      borderWidth: i === 0 ? 1 : 0,
+      borderColor: borderColor,
+      opacity: opacity
+    });
+  }
 };
 
 // Enhanced separator with gradient effect
@@ -34,6 +38,16 @@ export const drawSeparator = (
   width: number,
   opacity: number = 0.2
 ) => {
+  // Draw subtle background highlight
+  page.drawRectangle({
+    x: x - 5,
+    y: y - 2,
+    width: width + 10,
+    height: 4,
+    color: COLOR.HIGHLIGHT,
+    opacity: 0.3
+  });
+  
   // Draw main separator line
   page.drawLine({
     start: { x, y },
@@ -46,7 +60,7 @@ export const drawSeparator = (
   // Draw accent line at start
   page.drawLine({
     start: { x, y },
-    end: { x: x + 30, y },
+    end: { x: x + 40, y },
     thickness: 1.5,
     color: COLOR.PRIMARY,
     opacity: opacity + 0.3
@@ -72,6 +86,15 @@ export const drawTableRow = (
       borderWidth: 0
     });
   }
+  
+  // Add subtle border effect
+  page.drawLine({
+    start: { x, y: y - height },
+    end: { x: x + width, y: y - height },
+    thickness: 0.5,
+    color: COLOR.PRIMARY_LIGHT,
+    opacity: 0.1
+  });
 };
 
 // Helper function to check if we need a new page
@@ -89,14 +112,36 @@ export const checkAndCreateNewPage = (
     const newPage = pdfDoc.addPage([595.276, 841.890]);
     const { width, height } = newPage.getSize();
     
-    // Add page number at the bottom
+    // Add page number at the bottom with more elegant styling
     const pageNumber = pdfDoc.getPageCount();
+    
+    // Draw footer background
+    newPage.drawRectangle({
+      x: 0,
+      y: 0,
+      width: width,
+      height: 30,
+      color: COLOR.BACKGROUND,
+      opacity: 0.5
+    });
+    
+    // Add page number
     newPage.drawText(`Página ${pageNumber}`, {
-      x: width / 2 - 20,
-      y: 30,
-      size: 10,
+      x: width / 2 - 25,
+      y: 15,
+      size: 9,
       font: helveticaFont,
       color: COLOR.TEXT_LIGHT
+    });
+    
+    // Add subtle corner decoration
+    newPage.drawRectangle({
+      x: width - 20,
+      y: height - 20,
+      width: 15,
+      height: 15,
+      color: COLOR.PRIMARY,
+      opacity: 0.2
     });
     
     return { page: newPage, y: height - marginY };
@@ -115,23 +160,27 @@ export const drawSectionHeader = (
   boldFont: PDFFont,
   size: number = 16
 ): number => {
-  // Draw a rectangle with the primary color
-  page.drawRectangle({
-    x: x - 10,
-    y: y - 5,
-    width: width + 20,
-    height: size + 10,
-    color: COLOR.PRIMARY,
-    borderWidth: 0,
-    opacity: 0.1
-  });
+  // Draw a background gradient effect
+  const gradientSteps = 3;
+  for (let i = 0; i < gradientSteps; i++) {
+    const opacity = 0.1 - (i * 0.03);
+    page.drawRectangle({
+      x: x - 15,
+      y: y - 8 + i,
+      width: width + 30,
+      height: size + 16 - (i * 2),
+      color: COLOR.PRIMARY,
+      borderWidth: 0,
+      opacity: opacity
+    });
+  }
   
-  // Draw accent line
+  // Draw modern accent line
   page.drawRectangle({
-    x: x - 10,
-    y: y - 5,
+    x: x - 15,
+    y: y - 8,
     width: 5,
-    height: size + 10,
+    height: size + 16,
     color: COLOR.PRIMARY,
     borderWidth: 0,
   });
@@ -145,7 +194,16 @@ export const drawSectionHeader = (
     color: COLOR.PRIMARY
   });
   
-  return y - (size + 15); // Return new Y position after the header
+  // Draw subtle underline
+  page.drawLine({
+    start: { x: x, y: y - 5 },
+    end: { x: x + boldFont.widthOfTextAtSize(text, size), y: y - 5 },
+    thickness: 0.5,
+    color: COLOR.TEXT_LIGHT,
+    opacity: 0.3
+  });
+  
+  return y - (size + 20); // Return new Y position after the header
 };
 
 // Improved header drawing function
@@ -156,23 +214,30 @@ export const drawHeader = async (
   currentY: number,
   helveticaBold: PDFFont
 ): Promise<number> => {
-  // Draw header background
-  page.drawRectangle({
-    x: 0,
-    y: currentY - 60,
-    width: width,
-    height: 60,
-    color: COLOR.SECONDARY
-  });
+  // Draw header background with gradient effect
+  for (let i = 0; i < 4; i++) {
+    const opacity = 1 - (i * 0.15);
+    page.drawRectangle({
+      x: 0,
+      y: currentY - 60 + i,
+      width: width,
+      height: 60 - (i * 2),
+      color: COLOR.SECONDARY,
+      opacity: opacity
+    });
+  }
   
-  // Draw orange accent line
-  page.drawRectangle({
-    x: 0,
-    y: currentY - 60,
-    width: width,
-    height: 8,
-    color: COLOR.PRIMARY
-  });
+  // Draw modern accent bar with gradient
+  for (let i = 0; i < 3; i++) {
+    page.drawRectangle({
+      x: 0,
+      y: currentY - 60,
+      width: width,
+      height: 8 - i,
+      color: COLOR.PRIMARY,
+      opacity: 1 - (i * 0.2)
+    });
+  }
   
   // Carregar logo embutido para evitar problemas de rede
   try {
@@ -180,7 +245,22 @@ export const drawHeader = async (
     const logoImageBytes = Uint8Array.from(atob(hostDimeLogoBase64), c => c.charCodeAt(0));
     const logoImage = await pdfDoc.embedPng(logoImageBytes);
     
-    // Area branca para destacar o logo
+    // Area branca para destacar o logo com sombra sutil
+    for (let i = 0; i < 3; i++) {
+      const shadowOffset = i;
+      const shadowOpacity = 0.1 - (i * 0.03);
+      page.drawRectangle({
+        x: 50 + shadowOffset,
+        y: currentY - 50 - shadowOffset,
+        width: 140,
+        height: 40,
+        color: COLOR.SECONDARY,
+        borderWidth: 0,
+        opacity: shadowOpacity
+      });
+    }
+    
+    // Background branco para o logo
     page.drawRectangle({
       x: 50,
       y: currentY - 50,

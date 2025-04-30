@@ -10,19 +10,20 @@ export async function generateQuoteFromTemplate(
   try {
     // Mostrar toast de processamento
     toast.info("Iniciando geração do PDF...", {
-      description: "Preparando os dados para exportação"
+      description: "Preparando os dados para visualização"
     });
     
     // Passando objetos vazios para os parâmetros adicionais requeridos
-    await generateQuotePDF(
+    const pdfBytes = await generateQuotePDF(
       selectedComponents, 
       { internal: [], external: [] }, 
       [], 
       margin,
-      {} // Adicionando connectivityItems vazio
+      {}, // Adicionando connectivityItems vazio
+      true // Novo parâmetro para abrir em nova aba
     );
     
-    return new Uint8Array(); // Retorna array vazio já que o arquivo é baixado diretamente
+    return pdfBytes;
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
     toast.error("Falha na geração do PDF", {

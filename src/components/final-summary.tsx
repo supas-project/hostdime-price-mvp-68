@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -29,6 +31,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [pdfPreviewOption, setPdfPreviewOption] = useState("preview");
   
   const handleSaveQuote = async () => {
     setIsSaving(true);
@@ -64,9 +67,10 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       await generateQuotePDF(
         selectedComponents,
         storageItems,
-        customServices, // Now this is ComponentOption[] instead of CustomService[]
+        customServices,
         profitMargin,
-        connectivityItems
+        connectivityItems,
+        pdfPreviewOption === "preview" // Passar true para abrir em nova aba, false para download direto
       );
       
     } catch (error) {
@@ -143,6 +147,17 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
                 max={100}
                 step={1}
               />
+              
+              <div className="mt-6 border-t pt-4">
+                <h4 className="text-sm font-medium mb-2">Opções de exportação PDF:</h4>
+                <Tabs defaultValue="preview" value={pdfPreviewOption} onValueChange={setPdfPreviewOption}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="preview">Visualizar em Nova Aba</TabsTrigger>
+                    <TabsTrigger value="download">Download Direto</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+              
               <p className="text-xs text-muted-foreground mt-4">
                 Nota: A margem é usada para cálculos internos e não será mostrada no PDF.
               </p>
@@ -201,7 +216,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
             </>
           ) : (
             <>
-              <FileDown className="h-4 w-4" /> Exportar PDF
+              <FileDown className="h-4 w-4" /> {pdfPreviewOption === "preview" ? "Visualizar PDF" : "Exportar PDF"}
             </>
           )}
         </Button>

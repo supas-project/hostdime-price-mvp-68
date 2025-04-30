@@ -1,14 +1,15 @@
 
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
-import { buildQuotePDF, downloadPDF } from "./pdf/quote-builder";
+import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
 
 export const generateQuotePDF = async (
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
   customServices: ComponentOption[],
   margin: number,
-  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
+  openInNewTab: boolean = false
 ) => {
   try {
     // Notificar o usuário que o processo começou
@@ -29,8 +30,12 @@ export const generateQuotePDF = async (
     const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     const fileName = `HostDime_Cotacao_${quoteNumber}.pdf`;
     
-    // Fazer o download do PDF
-    downloadPDF(pdfBytes, fileName);
+    // Abrir em nova aba ou fazer download dependendo do parâmetro
+    if (openInNewTab) {
+      openPDFInNewTab(pdfBytes, fileName);
+    } else {
+      downloadPDF(pdfBytes, fileName);
+    }
     
     return pdfBytes;
   } catch (error) {

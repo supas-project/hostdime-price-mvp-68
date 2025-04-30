@@ -25,10 +25,12 @@ export async function buildQuotePDF(
     
     const pdfDoc = await PDFDocument.create();
     
-    // Load the standardized fonts
+    // Load the standardized fonts - adicionando fontes mais modernas
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     
     // Set up the first page of the PDF
     let page = pdfDoc.addPage([595.276, 841.890]); // A4 dimensions
@@ -38,12 +40,12 @@ export async function buildQuotePDF(
     const marginX = 50;
     const marginRight = width - marginX;
     
-    // 1. Header Section
+    // 1. Header Section - redesigned
     const { currentY, quoteNumber } = await renderHeaderSection(
       pdfDoc, page, width, height, helvetica, helveticaBold, marginX
     );
     
-    // 2. Summary Section
+    // 2. Summary Section - with modern styling
     let newY = renderSummarySection(
       page, currentY, width, marginX, helveticaBold, helvetica
     );
@@ -108,4 +110,34 @@ export function downloadPDF(pdfBytes: Uint8Array, fileName: string): void {
   toast.success("PDF Gerado com Sucesso", {
     description: "Seu documento foi baixado automaticamente"
   });
+}
+
+// Nova função para abrir o PDF em uma nova aba
+export function openPDFInNewTab(pdfBytes: Uint8Array, fileName: string): void {
+  // Criar blob e URL para visualização
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const blobUrl = URL.createObjectURL(blob);
+  
+  // Abrir em nova aba
+  const newTab = window.open(blobUrl, '_blank');
+  
+  if (newTab) {
+    newTab.focus();
+    toast.success("PDF Gerado com Sucesso", {
+      description: "O documento foi aberto em uma nova aba"
+    });
+  } else {
+    // Fallback se o navegador bloquear popups
+    toast.warning("Popup bloqueado pelo navegador", {
+      description: "Tente permitir popups para este site ou faça o download diretamente"
+    });
+    
+    // Fallback para download direto
+    downloadPDF(pdfBytes, fileName);
+  }
+  
+  // Limpar URL após um tempo para liberar memória
+  setTimeout(() => {
+    URL.revokeObjectURL(blobUrl);
+  }, 30000);
 }

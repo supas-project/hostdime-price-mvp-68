@@ -23,10 +23,10 @@ export function renderFinancialSection(
   let { page, y: currentY } = pageContext;
   
   // Check if we need to add a new page
-  const result = checkAndCreateNewPage(pdfDoc, page, currentY, 250, marginX, 50, helvetica);
+  const result = checkAndCreateNewPage(pdfDoc, page, currentY, 300, marginX, 50, helvetica);
   page = result.page;
   currentY = result.y;
-  currentY -= 20;
+  currentY -= 30; // Extra spacing for better layout
   
   // Calculate totals
   const componentsPrice = Object.values(selectedComponents)
@@ -61,16 +61,43 @@ export function renderFinancialSection(
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
   
-  // Draw a highlighted box for financial summary with improved styling
-  drawHighlightBox(
-    page,
-    marginX - 10,
-    currentY + 20,
-    width - (marginX * 2) + 20,
-    180,
-    COLOR.BACKGROUND,
-    COLOR.PRIMARY
-  );
+  // Draw a modernized highlighted box for financial summary
+  const boxHeight = 220; // Aumentado para melhor espaçamento
+  
+  // Draw background with subtle gradient effect
+  for (let i = 0; i < 4; i++) {
+    const gradOpacity = 0.05 - (i * 0.01);
+    page.drawRectangle({
+      x: marginX - 20 + i,
+      y: currentY + 30 - i,
+      width: width - (marginX * 2) + 40 - (i * 2),
+      height: boxHeight - (i * 2),
+      color: COLOR.ACCENT,
+      opacity: gradOpacity
+    });
+  }
+  
+  // Main box background
+  page.drawRectangle({
+    x: marginX - 20,
+    y: currentY + 30 - boxHeight,
+    width: width - (marginX * 2) + 40,
+    height: boxHeight,
+    color: COLOR.BACKGROUND,
+    opacity: 0.9,
+    borderWidth: 1,
+    borderColor: COLOR.PRIMARY_LIGHT
+  });
+  
+  // Top accent bar
+  page.drawRectangle({
+    x: marginX - 20,
+    y: currentY + 30,
+    width: width - (marginX * 2) + 40,
+    height: 4,
+    color: COLOR.PRIMARY,
+    opacity: 0.9
+  });
   
   currentY = drawSectionHeader(
     page, 
@@ -81,11 +108,23 @@ export function renderFinancialSection(
     helveticaBold
   );
   
+  // Add some spacing for better layout
+  currentY -= 20;
+  
   // Draw financial breakdown without showing the margin calculation
   
-  // Hardware subtotal
+  // Hardware subtotal with icon
+  const hardwareIcon = "■"; // Simulated icon
+  page.drawText(hardwareIcon, {
+    x: marginX + 20,
+    y: currentY,
+    size: 12,
+    font: helveticaBold,
+    color: COLOR.PRIMARY
+  });
+  
   page.drawText("Hardware:", {
-    x: marginX + 15,
+    x: marginX + 40,
     y: currentY,
     size: 12,
     font: helvetica,
@@ -94,18 +133,27 @@ export function renderFinancialSection(
   
   const hardwarePrice = formatCurrency(componentsPrice);
   page.drawText(hardwarePrice, {
-    x: marginRight - helvetica.widthOfTextAtSize(hardwarePrice, 12) - 15,
+    x: marginRight - helvetica.widthOfTextAtSize(hardwarePrice, 12) - 20,
     y: currentY,
     size: 12,
     font: helvetica,
     color: COLOR.TEXT
   });
   
-  currentY -= 20;
+  currentY -= 25; // Increased spacing
   
   // Storage subtotal
+  const storageIcon = "●"; // Simulated icon
+  page.drawText(storageIcon, {
+    x: marginX + 20,
+    y: currentY,
+    size: 12,
+    font: helveticaBold,
+    color: COLOR.ACCENT
+  });
+  
   page.drawText("Armazenamento:", {
-    x: marginX + 15,
+    x: marginX + 40,
     y: currentY,
     size: 12,
     font: helvetica,
@@ -114,18 +162,27 @@ export function renderFinancialSection(
   
   const storagePriceFormatted = formatCurrency(storagePrice);
   page.drawText(storagePriceFormatted, {
-    x: marginRight - helvetica.widthOfTextAtSize(storagePriceFormatted, 12) - 15,
+    x: marginRight - helvetica.widthOfTextAtSize(storagePriceFormatted, 12) - 20,
     y: currentY,
     size: 12,
     font: helvetica,
     color: COLOR.TEXT
   });
   
-  currentY -= 20;
+  currentY -= 25; // Increased spacing
   
   // Services subtotal
+  const serviceIcon = "▲"; // Simulated icon
+  page.drawText(serviceIcon, {
+    x: marginX + 20,
+    y: currentY,
+    size: 12,
+    font: helveticaBold,
+    color: COLOR.PRIMARY_LIGHT
+  });
+  
   page.drawText("Servicos:", {
-    x: marginX + 15,
+    x: marginX + 40,
     y: currentY,
     size: 12,
     font: helvetica,
@@ -134,19 +191,28 @@ export function renderFinancialSection(
   
   const servicesPriceFormatted = formatCurrency(servicesPrice);
   page.drawText(servicesPriceFormatted, {
-    x: marginRight - helvetica.widthOfTextAtSize(servicesPriceFormatted, 12) - 15,
+    x: marginRight - helvetica.widthOfTextAtSize(servicesPriceFormatted, 12) - 20,
     y: currentY,
     size: 12,
     font: helvetica,
     color: COLOR.TEXT
   });
   
-  currentY -= 20;
+  currentY -= 25; // Increased spacing
   
   // Connectivity subtotal
   if (connectivityPrice > 0) {
+    const connIcon = "◆"; // Simulated icon
+    page.drawText(connIcon, {
+      x: marginX + 20,
+      y: currentY,
+      size: 12,
+      font: helveticaBold,
+      color: COLOR.TEXT_LIGHT
+    });
+    
     page.drawText("Conectividade:", {
-      x: marginX + 15,
+      x: marginX + 40,
       y: currentY,
       size: 12,
       font: helvetica,
@@ -155,48 +221,56 @@ export function renderFinancialSection(
     
     const connectivityPriceFormatted = formatCurrency(connectivityPrice);
     page.drawText(connectivityPriceFormatted, {
-      x: marginRight - helvetica.widthOfTextAtSize(connectivityPriceFormatted, 12) - 15,
+      x: marginRight - helvetica.widthOfTextAtSize(connectivityPriceFormatted, 12) - 20,
       y: currentY,
       size: 12,
       font: helvetica,
       color: COLOR.TEXT
     });
     
-    currentY -= 20;
+    currentY -= 25; // Increased spacing
   }
   
-  // Draw separator line
-  drawSeparator(page, marginX + 15, currentY, width - (marginX * 2) - 30, 0.5);
+  // Draw modernized separator line
+  drawSeparator(page, marginX + 20, currentY, width - (marginX * 2) - 40, 0.5);
   
-  currentY -= 30;
+  currentY -= 40; // More space before total
   
-  // Highly visible total section
-  page.drawRectangle({
-    x: marginX + 15,
-    y: currentY - 5,
-    width: width - (marginX * 2) - 30,
-    height: 40,
-    color: COLOR.PRIMARY_LIGHT,
-    opacity: 0.1
-  });
+  // Modern total section with gradient background
+  // Background highlight
+  for (let i = 0; i < 3; i++) {
+    const highlightOpacity = 0.15 - (i * 0.03);
+    page.drawRectangle({
+      x: marginX + 20 + i,
+      y: currentY - 10 - i,
+      width: width - (marginX * 2) - 40 - (i * 2),
+      height: 50 - (i * 2),
+      color: COLOR.PRIMARY,
+      opacity: highlightOpacity,
+      borderWidth: i === 0 ? 1 : 0,
+      borderColor: i === 0 ? COLOR.PRIMARY_LIGHT : undefined,
+      borderOpacity: 0.3
+    });
+  }
   
-  // Total - Show only the final price without margin breakdown
+  // Total Label
   page.drawText("Total Mensal:", {
-    x: marginX + 25,
+    x: marginX + 35,
     y: currentY + 10,
-    size: 14,
+    size: 15,
     font: helveticaBold,
     color: COLOR.SECONDARY
   });
   
+  // Total Value with enhanced styling
   const totalPrice = formatCurrency(total);
   page.drawText(totalPrice, {
-    x: marginRight - helvetica.widthOfTextAtSize(totalPrice, 16) - 25,
+    x: marginRight - helveticaBold.widthOfTextAtSize(totalPrice, 18) - 30,
     y: currentY + 10,
-    size: 16,
+    size: 18,
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
   
-  return { page, y: currentY - 50 };
+  return { page, y: currentY - 60 };
 }
