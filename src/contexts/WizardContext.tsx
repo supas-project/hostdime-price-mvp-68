@@ -13,7 +13,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     connectivityItems,
     setConnectivityItems,
     storageItems,
+    setStorageItems,
     customServices,
+    setCustomServices,
     handleSelectOption,
     handleSelectStorageItem,
     handleRemoveComponent,
@@ -32,6 +34,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const handleRestart = () => {
     setSelectedComponents({});
     setConnectivityItems({});
+    setStorageItems({ internal: [], external: [] });
+    setCustomServices([]);
     setCurrentStep(0);
     setShowFinalSummary(false);
   };
