@@ -45,37 +45,6 @@
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
-  /* Definições do tema claro com cores de alto contraste */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
-    --popover: 0 0% 98%;
-    --popover-foreground: 0 0% 12%;
-    --primary: 29 91% 54%;
-    --primary-hover: 29 91% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 0 0% 12%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 220 14% 92%;
-    --accent-foreground: 0 0% 12%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 29 91% 54%;
-
-    /* Sombras mais fortes para melhor visibilidade em fundo claro */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.15), 0 1px 2px -1px rgb(0 0 0 / 0.15);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.15);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.15);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.15);
-  }
-
   * {
     @apply border-border selection:bg-primary/10 selection:text-primary;
   }
