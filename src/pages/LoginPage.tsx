@@ -38,7 +38,6 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // Navigate to the page they were trying to access or default to /configure
       const from = location.state?.from?.pathname || "/configure";
       navigate(from, { replace: true });
     }
@@ -82,132 +81,102 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-background/80">
-      {/* Container principal */}
-      <div className="flex flex-col md:flex-row w-full">
-        {/* Seção da imagem (esquerda) - visível apenas em telas médias ou maiores */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/10 to-primary/5 justify-center items-center p-8">
-          <div className="max-w-md text-center">
-            <img 
-              src={hostdimeLogo} 
-              alt="HostDime Logo" 
-              className="h-24 mb-8 mx-auto animate-fade-in" 
-            />
-            <h2 className="text-3xl font-bold mb-4 text-foreground">Configure seus servidores dedicados</h2>
-            <p className="text-muted-foreground">
-              Plataforma de configuração e cotação para servidores dedicados da HostDime.
-              Configure e receba cotações de forma rápida e intuitiva.
-            </p>
-          </div>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="flex justify-center mb-8">
+          <img 
+            src={hostdimeLogo}
+            alt="HostDime Logo" 
+            className="h-14 object-contain"
+          />
         </div>
 
-        {/* Seção do formulário (direita) */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 animate-fade-in">
-          <div className="w-full max-w-md">
-            {/* Logo para dispositivos móveis */}
-            <div className="mb-8 text-center md:hidden">
-              <img 
-                src={hostdimeLogo} 
-                alt="HostDime Logo" 
-                className="h-16 mx-auto" 
-              />
+        <Card className="border-border bg-card/90 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-semibold">Acesso ao Sistema</h1>
+              <p className="text-xs text-muted-foreground mt-1">
+                Configure seus servidores dedicados
+              </p>
             </div>
 
-            <Card className="border-border bg-card/80 backdrop-blur-lg shadow-2xl rounded-2xl">
-              <CardContent className="pt-8 pb-6 px-6">
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold mb-2">Acesso ao sistema</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Faça login para acessar a plataforma
-                  </p>
-                </div>
-
-                {loginError && (
-                  <Alert variant="destructive" className="mb-6">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Erro</AlertTitle>
-                    <AlertDescription>
-                      {loginError}
-                    </AlertDescription>
-                  </Alert>
-                )}
+            {loginError && (
+              <Alert variant="destructive" className="mb-5">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>{loginError}</AlertDescription>
+              </Alert>
+            )}
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Email</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            placeholder="seu@email.com" 
+                            className="pl-10 bg-background/50"
+                            {...field} 
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" autoComplete="off">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Email</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                placeholder="seu@email.com" 
-                                className="pl-10 h-11 bg-background/50"
-                                autoComplete="off"
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Senha</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                type={showPassword ? "text" : "password"}
-                                placeholder="********" 
-                                className="pl-10 pr-10 h-11 bg-background/50"
-                                autoComplete="new-password"
-                                {...field} 
-                              />
-                              <button 
-                                type="button" 
-                                onClick={toggleShowPassword}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              >
-                                {showPassword ? 
-                                  <EyeOff className="h-4 w-4" /> : 
-                                  <Eye className="h-4 w-4" />
-                                }
-                              </button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full h-11 mt-2 bg-primary hover:bg-primary-hover text-white font-medium transition-all"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Entrando..." : "Entrar"}
-                    </Button>
-                  </form>
-                </Form>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm">Senha</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            type={showPassword ? "text" : "password"}
+                            placeholder="********" 
+                            className="pl-10 pr-10 bg-background/50"
+                            {...field} 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={toggleShowPassword}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="mt-6 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    HostDime Brasil - Sistema de configuração de servidores
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <Button 
+                  type="submit" 
+                  className="w-full mt-2 bg-primary hover:bg-primary-hover text-white"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
+            </Form>
+            
+            <div className="mt-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                HostDime Brasil &copy; {new Date().getFullYear()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
