@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PriceService } from "@/services/price-service";
 
 interface StorageType {
@@ -16,8 +16,12 @@ export function useStorageTypes() {
   const [storageTypes, setStorageTypes] = useState<{
     [key: string]: StorageType;
   }>({});
+  
+  // Usar useRef para armazenar a função de callback para evitar recriação
+  const loadStorageTypesRef = useRef<() => void>();
 
   useEffect(() => {
+    // Definir a função de carregamento de tipos de armazenamento
     const loadStorageTypes = () => {
       try {
         const storageCategory = PriceService.getCategory('storage');
@@ -96,12 +100,22 @@ export function useStorageTypes() {
       }
     };
     
+    // Armazenar referência da função para usar depois
+    loadStorageTypesRef.current = loadStorageTypes;
+    
+    // Executar busca inicial
     loadStorageTypes();
     
-    PriceService.addDataChangeListener(() => loadStorageTypes());
+    // Registrar listener usando a referência armazenada
+    if (loadStorageTypesRef.current) {
+      PriceService.addDataChangeListener(loadStorageTypesRef.current);
+    }
     
+    // Cleanup: remover listener quando componente for desmontado
     return () => {
-      PriceService.removeDataChangeListener(() => loadStorageTypes());
+      if (loadStorageTypesRef.current) {
+        PriceService.removeDataChangeListener(loadStorageTypesRef.current);
+      }
     };
   }, []);
 

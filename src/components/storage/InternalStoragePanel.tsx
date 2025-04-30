@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { diskData } from "@/data/disk-data";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -17,6 +17,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisks, setSelectedDisks] = useState<Array<{disk: PricedDiskOption, quantity: number}>>([]);
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
+  
+  // Armazenar referência da função de callback para evitar recriação
+  const updateDisksRef = useRef<() => void>();
 
   // Carregar dados de disco da tabela de preços
   useEffect(() => {
@@ -77,6 +80,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Registrar listener para atualização de dados
   useEffect(() => {
+    // Definir a função de atualização dos discos
     const updateDisks = () => {
       if (selectedDiskType) {
         const diskCategory = PriceService.getCategory('disk');
@@ -109,12 +113,19 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       }
     };
 
+    // Armazenar referência da função para usar depois
+    updateDisksRef.current = updateDisks;
+    
     // Registrar para mudanças na tabela de preços
-    PriceService.addDataChangeListener(updateDisks);
+    if (updateDisksRef.current) {
+      PriceService.addDataChangeListener(updateDisksRef.current);
+    }
     
     // Limpar listener quando o componente é desmontado
     return () => {
-      PriceService.removeDataChangeListener(updateDisks);
+      if (updateDisksRef.current) {
+        PriceService.removeDataChangeListener(updateDisksRef.current);
+      }
     };
   }, [selectedDiskType]);
 
