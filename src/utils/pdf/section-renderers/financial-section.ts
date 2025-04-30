@@ -113,8 +113,8 @@ export function renderFinancialSection(
   
   // Draw financial breakdown without showing the margin calculation
   
-  // Hardware subtotal with icon
-  const hardwareIcon = "■"; // Simulated icon
+  // Hardware subtotal with icon (replaced special character with WinAnsi compatible character)
+  const hardwareIcon = "+"; // Replacing ■ with +
   page.drawText(hardwareIcon, {
     x: marginX + 20,
     y: currentY,
@@ -142,8 +142,8 @@ export function renderFinancialSection(
   
   currentY -= 25; // Increased spacing
   
-  // Storage subtotal
-  const storageIcon = "●"; // Simulated icon
+  // Storage subtotal (replaced special character with WinAnsi compatible character)
+  const storageIcon = "o"; // Replacing ● with o
   page.drawText(storageIcon, {
     x: marginX + 20,
     y: currentY,
@@ -171,8 +171,8 @@ export function renderFinancialSection(
   
   currentY -= 25; // Increased spacing
   
-  // Services subtotal
-  const serviceIcon = "▲"; // Simulated icon
+  // Services subtotal (replaced special character with WinAnsi compatible character)
+  const serviceIcon = "^"; // Replacing ▲ with ^
   page.drawText(serviceIcon, {
     x: marginX + 20,
     y: currentY,
@@ -200,9 +200,9 @@ export function renderFinancialSection(
   
   currentY -= 25; // Increased spacing
   
-  // Connectivity subtotal
+  // Connectivity subtotal (replaced special character with WinAnsi compatible character)
   if (connectivityPrice > 0) {
-    const connIcon = "◆"; // Simulated icon
+    const connIcon = "#"; // Replacing ◆ with #
     page.drawText(connIcon, {
       x: marginX + 20,
       y: currentY,
