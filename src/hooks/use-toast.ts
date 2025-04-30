@@ -4,6 +4,7 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
+import { toast as sonnerToast } from "sonner";
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -139,6 +140,12 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+// Configuração para controlar se os toasts de UI devem ser exibidos
+const config = {
+  showUIToasts: false, // Por padrão, desabilitar toasts de UI
+  showErrorToasts: true, // Manter toasts de erro sempre habilitados
+}
+
 function toast({ ...props }: Toast) {
   const id = genId()
 
@@ -168,6 +175,39 @@ function toast({ ...props }: Toast) {
   }
 }
 
+// Wrapper para expor o sonner toast mas com controles adicionais
+const controlledToast = {
+  // Funções de erro sempre habilitadas
+  error: sonnerToast.error,
+  
+  // Funções de UI condicionais
+  success: (title: string, options?: any) => {
+    if (config.showUIToasts) {
+      sonnerToast.success(title, options);
+    }
+  },
+  info: (title: string, options?: any) => {
+    if (config.showUIToasts) {
+      sonnerToast.info(title, options);
+    }
+  },
+  warning: (title: string, options?: any) => {
+    if (config.showUIToasts) {
+      sonnerToast.warning(title, options);
+    }
+  },
+  
+  // Permitir configuração
+  configure: (options: { showUIToasts?: boolean, showErrorToasts?: boolean }) => {
+    if (options.showUIToasts !== undefined) {
+      config.showUIToasts = options.showUIToasts;
+    }
+    if (options.showErrorToasts !== undefined) {
+      config.showErrorToasts = options.showErrorToasts;
+    }
+  }
+};
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -188,4 +228,4 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { useToast, controlledToast as toast }

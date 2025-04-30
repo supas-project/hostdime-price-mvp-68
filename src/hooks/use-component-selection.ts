@@ -87,16 +87,7 @@ export function useComponentSelection() {
       
       console.log("Updated components:", updated);
       
-      // Notificar usuário
-      const componentType = option.type.toLowerCase() === "memoria" 
-        ? "Memória" 
-        : option.type === "SistemaOperacional" 
-          ? "Sistema Operacional"
-          : option.type;
-      
-      toast.success(`${componentType} selecionado`, {
-        description: option.name
-      });
+      // Removido as notificações de toast para seleção de componentes
       
       return updated;
     });
@@ -118,9 +109,7 @@ export function useComponentSelection() {
             ...prev,
             internal: prev.internal.filter(disk => disk.id !== option.id)
           };
-          toast.success("Disco removido", {
-            description: "O disco foi removido da configuração"
-          });
+          // Removido toast de disco removido
         } else {
           // Criar uma chave única baseada nas propriedades reais do disco para evitar duplicações
           const diskType = option.subtype || option.name.split(' ')[0];
@@ -144,9 +133,7 @@ export function useComponentSelection() {
               ...option,
               price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
             };
-            toast.success("Disco atualizado", {
-              description: `Quantidade de ${option.name} atualizada`
-            });
+            // Removido toast de disco atualizado
           } else {
             // Adicionar novo disco
             // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
@@ -161,9 +148,7 @@ export function useComponentSelection() {
               internal: filteredItems
             };
             
-            toast.success("Disco adicionado", {
-              description: option.name
-            });
+            // Removido toast de disco adicionado
             
             return updatedStorageItems;
           }
@@ -179,17 +164,7 @@ export function useComponentSelection() {
                           prev.external[0]?.id !== option.id || 
                           option.price === 0;
                           
-        if (hasChanged) {
-          if (option.price === 0) {
-            toast.success("Storage externo removido", {
-              description: "O storage externo foi removido da configuração"
-            });
-          } else {
-            toast.success("Storage externo adicionado", {
-              description: option.name
-            });
-          }
-        }
+        // Removidos todos os toasts de storage externo
         
         updatedStorageItems = {
           ...prev,
@@ -210,7 +185,7 @@ export function useComponentSelection() {
         ...prev,
         internal: prev.internal.filter(disk => disk.id !== type)
       }));
-      toast.success("Disco interno removido");
+      // Removido toast de disco interno removido
       return;
     }
     
@@ -220,7 +195,7 @@ export function useComponentSelection() {
         ...prev,
         external: prev.external.filter(storage => storage.id !== type)
       }));
-      toast.success("Storage externo removido");
+      // Removido toast de storage externo removido
       return;
     }
     
@@ -230,19 +205,19 @@ export function useComponentSelection() {
         ...prev,
         internal: []
       }));
-      toast.success("Armazenamento interno removido");
+      // Removido toast de armazenamento interno removido
     } else if (type === "storage_external") {
       setStorageItems(prev => ({
         ...prev,
         external: []
       }));
-      toast.success("Storage externo removido");
+      // Removido toast de storage externo removido
     } else if (type.includes("network-") || type.includes("ip-")) {
       setConnectivityItems(prev => {
         const newItems = { ...prev };
         const itemName = prev[type]?.option.name || "Item de conectividade";
         delete newItems[type];
-        toast.success(`${itemName} removido`);
+        // Removido toast de item de conectividade removido
         return newItems;
       });
     } else if (type.includes("custom-service-")) {
@@ -252,7 +227,7 @@ export function useComponentSelection() {
         const updated = { ...prev };
         const componentName = prev[type]?.name || type;
         delete updated[type];
-        toast.success(`${componentName} removido`);
+        // Removido toast de componente removido
         return updated;
       });
     }
@@ -261,6 +236,7 @@ export function useComponentSelection() {
   const addCustomService = (service: ComponentOption) => {
     setCustomServices(prev => {
       const updated = [...prev, service];
+      // Mantido apenas este toast por ser uma ação menos frequente
       toast.success("Serviço adicional incluído", {
         description: service.name
       });
@@ -273,6 +249,7 @@ export function useComponentSelection() {
       const serviceToRemove = prev.find(service => service.id === serviceId);
       const updated = prev.filter(service => service.id !== serviceId);
       
+      // Mantido apenas este toast por ser uma ação menos frequente
       if (serviceToRemove) {
         toast.success("Serviço adicional removido", {
           description: serviceToRemove.name

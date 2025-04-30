@@ -2,7 +2,6 @@
 import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 
 interface ContractContentProps {
   options: ComponentOption[];
@@ -20,15 +19,7 @@ export function ContractContent({
     if (option) {
       onSelectOption(option);
       
-      // Mostrar toast com informação sobre o desconto
-      if (option.metadata?.discount) {
-        toast.success(
-          `Contrato de ${option.name} selecionado`, 
-          { description: `Desconto de ${option.metadata.discount}% aplicado no valor final` }
-        );
-      } else {
-        toast.info(`Contrato de ${option.name} selecionado`);
-      }
+      // Removido todos os toasts de seleção de contrato
     }
   };
 

@@ -69,12 +69,12 @@ export function SummaryCart({
   
   const handleClearAll = () => {
     handleRestart();
-    toast.success('Configuração reiniciada com sucesso!');
+    // Removido toast de configuração reiniciada
   };
   
   const handleRemoveComponentWithFeedback = (type: string) => {
     handleRemoveComponent(type);
-    toast.success('Item removido com sucesso!');
+    // Removido toast de item removido
   };
   
   return (
