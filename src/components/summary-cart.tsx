@@ -5,6 +5,7 @@ import { useWizard } from "@/contexts/WizardContext";
 import { CartHeader } from "./summary-cart/cart-header";
 import { CartContent } from "./summary-cart/cart-content";
 import { CartFooter } from "./summary-cart/cart-footer";
+import { CartNavigation } from "./summary-cart/cart-navigation";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -81,6 +82,14 @@ export function SummaryCart({
         hasItems={hasItems}
       />
       
+      <CartNavigation
+        isFirstStep={isFirstStep}
+        isLastStep={isLastStep}
+        onPrevious={onPrevious}
+        onNext={onNext}
+        onComplete={onComplete}
+      />
+      
       <CartContent 
         selectedComponents={selectedComponents}
         storageItems={storageItems}
@@ -90,11 +99,6 @@ export function SummaryCart({
       
       <CartFooter
         totalPrice={totalPrice}
-        isFirstStep={isFirstStep}
-        isLastStep={isLastStep}
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onComplete={onComplete}
       />
     </div>
   );
