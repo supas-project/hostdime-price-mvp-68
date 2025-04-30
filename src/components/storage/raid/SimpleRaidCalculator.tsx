@@ -12,6 +12,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useWizard } from "@/contexts/WizardContext";
 import { toast } from "sonner";
+import { formatStorageCapacity } from "@/utils/storage-utils";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -37,14 +38,6 @@ export function SimpleRaidCalculator({
   const isValidRaidConfiguration = (type: RaidType): boolean => {
     if (!selectedDisk || quantity < 2) return false;
     return quantity >= RAID_INFO[type].minDisks;
-  };
-
-  // Função auxiliar para formatar corretamente as capacidades
-  const formatCapacity = (capacityGB: number): string => {
-    if (capacityGB >= 1000) {
-      return `${(capacityGB / 1000).toFixed(1)}TB`;
-    }
-    return `${Math.floor(capacityGB)}GB`;
   };
 
   useEffect(() => {
@@ -88,8 +81,8 @@ export function SimpleRaidCalculator({
       }
       
       // Formatar valores para exibição
-      const formattedTotalCapacity = formatCapacity(totalCapacityGB);
-      const formattedUsableCapacity = formatCapacity(usableCapacityGB);
+      const formattedTotalCapacity = formatStorageCapacity(totalCapacityGB);
+      const formattedUsableCapacity = formatStorageCapacity(usableCapacityGB);
 
       const storageOption = {
         id: `internal-disk-${selectedDisk.type}-${selectedDisk.capacity}`,
@@ -243,8 +236,8 @@ export function SimpleRaidCalculator({
                     <span className="font-medium">Capacidade</span>
                   </div>
                   <div className="text-xs text-muted-foreground pl-5">
-                    <div>Útil: {formatCapacity(calculation.usableCapacity)}</div>
-                    <div>Total: {formatCapacity(calculation.totalCapacity)}</div>
+                    <div>Útil: {formatStorageCapacity(calculation.usableCapacity)}</div>
+                    <div>Total: {formatStorageCapacity(calculation.totalCapacity)}</div>
                   </div>
                 </div>
 

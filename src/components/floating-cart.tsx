@@ -30,7 +30,7 @@ export function FloatingCart(props: FloatingCartProps) {
             <Button 
               size="lg" 
               className="rounded-full shadow-lg flex items-center gap-2"
-              style={{ zIndex: 100 }} // Garantir que fique acima de outros elementos
+              style={{ zIndex: 100 }}
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Ver Resumo</span>
@@ -52,7 +52,7 @@ export function FloatingCart(props: FloatingCartProps) {
   }
 
   return (
-    <div className="md:sticky md:top-24 h-fit animate-fade-in">
+    <div className="md:sticky md:top-24 h-fit animate-fade-in md:w-[380px] lg:w-[420px]">
       <SummaryCart {...props} />
     </div>
   );

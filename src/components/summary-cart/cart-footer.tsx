@@ -41,7 +41,7 @@ export function CartFooter({
   };
   
   return (
-    <div className="p-4 border-t border-border">
+    <div className="p-4 border-t border-border mt-auto sticky bottom-0 bg-card rounded-b-2xl">
       <div className="flex justify-between items-center mb-4">
         <span className="font-medium">Total</span>
         <span className="font-bold text-primary text-lg">{formatCurrency(totalPrice)}</span>

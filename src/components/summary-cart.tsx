@@ -5,7 +5,6 @@ import { useWizard } from "@/contexts/WizardContext";
 import { CartHeader } from "./summary-cart/cart-header";
 import { CartContent } from "./summary-cart/cart-content";
 import { CartFooter } from "./summary-cart/cart-footer";
-import { toast } from "sonner";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -69,16 +68,14 @@ export function SummaryCart({
   
   const handleClearAll = () => {
     handleRestart();
-    // Removido toast de configuração reiniciada
   };
   
   const handleRemoveComponentWithFeedback = (type: string) => {
     handleRemoveComponent(type);
-    // Removido toast de item removido
   };
   
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-lg">
+    <div className="bg-card rounded-2xl border border-border shadow-lg flex flex-col max-h-[calc(100vh-200px)]">
       <CartHeader 
         onClearAll={handleClearAll}
         hasItems={hasItems}

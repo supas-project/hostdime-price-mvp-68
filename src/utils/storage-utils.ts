@@ -39,14 +39,16 @@ export function normalizeStorageCapacity(capacity: string): string {
 
 /**
  * Formata a exibição de capacidade para mostrar de forma consistente
+ * Corrige exibição entre GB e TB para melhor legibilidade
  * @param capacity Capacidade em qualquer formato
- * @returns Capacidade formatada com unidade
+ * @returns Capacidade formatada com unidade adequada (TB para valores grandes)
  */
 export function formatStorageCapacity(capacity: string | number): string {
   if (typeof capacity === 'number') {
-    // Se for número maior que 1000, converte para TB
+    // Se for número maior que 1000, converte para TB com uma casa decimal
     if (capacity >= 1000) {
-      return `${(capacity / 1000).toFixed(1).replace(/\.0$/, '')}TB`;
+      const tbValue = capacity / 1000;
+      return `${tbValue.toFixed(1).replace(/\.0$/, '')}TB`;
     }
     return `${capacity}GB`;
   }

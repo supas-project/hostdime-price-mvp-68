@@ -46,14 +46,14 @@ export function CartContent({
   
   if (!hasItems && !dataCenterComponent && !contractComponent) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
+      <div className="px-4 py-6 text-center text-muted-foreground">
         Nenhum componente selecionado
       </div>
     );
   }
   
   return (
-    <div className="p-4 space-y-4 max-h-[300px] overflow-auto">
+    <div className="p-3 space-y-3 overflow-y-auto flex-1 text-sm">
       {/* Data Center */}
       <DataCenterItem component={dataCenterComponent} />
       
@@ -66,13 +66,13 @@ export function CartContent({
         onRemoveItem={onRemoveItem}
       />
       
-      {/* Internal Storage components - Passando o ID diretamente, sem adicionar prefixo */}
+      {/* Internal Storage components */}
       <StorageList 
         storageItems={storageItems.internal} 
         onRemoveItem={onRemoveItem}
       />
       
-      {/* External Storage components - Passando o ID diretamente, sem adicionar prefixo */}
+      {/* External Storage components */}
       <ExternalStorageList 
         storageItems={storageItems.external} 
         onRemoveItem={onRemoveItem}
