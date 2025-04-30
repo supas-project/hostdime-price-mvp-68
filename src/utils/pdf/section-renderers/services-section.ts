@@ -31,7 +31,7 @@ export function renderServicesSection(
   
   currentY = drawSectionHeader(
     page, 
-    "3. Serviços Adicionais", 
+    "3. Servicos Adicionais", 
     marginX, 
     currentY, 
     300,
@@ -83,7 +83,7 @@ export function renderServicesSection(
     
     if (service.specs) {
       service.specs.forEach(spec => {
-        page.drawText(`• ${spec}`, {
+        page.drawText(`* ${spec}`, {
           x: marginX + 20,
           y: currentY,
           size: 10,

@@ -22,7 +22,7 @@ export function renderComponentsSection(
   // Hardware Configuration Section
   currentY = drawSectionHeader(
     page, 
-    "1. Configuração de Hardware", 
+    "1. Configuracao de Hardware", 
     marginX, 
     currentY, 
     300,
@@ -68,8 +68,8 @@ export function renderComponentsSection(
         color: COLOR.TEXT
       });
     } else {
-      page.drawText("Incluído", {
-        x: marginRight - helvetica.widthOfTextAtSize("Incluído", 12),
+      page.drawText("Incluido", {
+        x: marginRight - helvetica.widthOfTextAtSize("Incluido", 12),
         y: currentY,
         size: 12,
         font: helvetica,
@@ -94,7 +94,7 @@ export function renderComponentsSection(
     // Specifications
     if (component.specs) {
       component.specs.forEach(spec => {
-        page.drawText(`• ${spec}`, {
+        page.drawText(`* ${spec}`, {
           x: marginX + 20,
           y: currentY,
           size: 10,

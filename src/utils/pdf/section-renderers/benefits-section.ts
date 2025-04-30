@@ -39,7 +39,7 @@ export function renderBenefitsSection(
   ];
   
   benefits.forEach(benefit => {
-    page.drawText(`• ${benefit}`, {
+    page.drawText(`* ${benefit}`, {
       x: marginX + 20,
       y: currentY,
       size: 11,

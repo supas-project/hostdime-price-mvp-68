@@ -62,7 +62,7 @@ export function renderFinancialSection(
   const total = subtotal + profit;
   
   // Draw a modernized highlighted box for financial summary
-  const boxHeight = 220; // Aumentado para melhor espaçamento
+  const boxHeight = 220; // Aumentado para melhor espacamento
   
   // Draw background with subtle gradient effect
   for (let i = 0; i < 4; i++) {

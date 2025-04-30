@@ -29,7 +29,7 @@ export function renderExternalStorage(
   page = result.page;
   currentY = result.y;
   
-  // Adicionar cabeçalho da seção
+  // Adicionar cabecalho da secao
   page.drawText("2.2 Storage Externo:", {
     x: marginX,
     y: currentY,
@@ -82,7 +82,7 @@ export function renderExternalStorage(
     
     if (storage.specs) {
       storage.specs.forEach(spec => {
-        page.drawText(`• ${spec}`, {
+        page.drawText(`* ${spec}`, {
           x: marginX + 30,
           y: currentY,
           size: 10,

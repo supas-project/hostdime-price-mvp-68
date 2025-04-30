@@ -13,22 +13,22 @@ export async function renderHeaderSection(
   helveticaBold: PDFFont,
   marginX: number
 ): Promise<{ currentY: number, quoteNumber: string }> {
-  // Configuração inicial
+  // Configuracao inicial
   const marginRight = width - marginX;
   let currentY = height - 50;
   
-  // Desenhar cabeçalho
+  // Desenhar cabecalho
   currentY = await drawHeader(pdfDoc, page, width, currentY, helveticaBold);
   
-  // Adicionar título da cotação e data em um formato elegante
+  // Adicionar titulo da cotacao e data em um formato elegante
   const quoteBox: QuoteBoxDimensions = {
     x: marginRight - 250,
     y: currentY + 20,
     width: 230,
-    height: 100 // Aumentando altura para melhor espaçamento
+    height: 100 // Aumentando altura para melhor espacamento
   };
   
-  // Desenhar caixa de informação da cotação com estilo moderno e gradiente sutil
+  // Desenhar caixa de informacao da cotacao com estilo moderno e gradiente sutil
   drawHighlightBox(
     page,
     quoteBox.x,
@@ -48,7 +48,7 @@ export async function renderHeaderSection(
     borderWidth: 0
   });
   
-  // Adicionar título com estilo modernizado
+  // Adicionar titulo com estilo modernizado
   page.drawText("PROPOSTA COMERCIAL", {
     x: quoteBox.x + 15,
     y: quoteBox.y - 30,
@@ -67,7 +67,7 @@ export async function renderHeaderSection(
   
   const formattedDate = `${date.getDate()} de ${monthNames[date.getMonth()]} de ${date.getFullYear()}`;
   
-  // Desenhar ícone de calendário (simulado)
+  // Desenhar icone de calendario (simulado)
   page.drawRectangle({
     x: quoteBox.x + 15,
     y: quoteBox.y - 50,
@@ -85,10 +85,10 @@ export async function renderHeaderSection(
     color: COLOR.TEXT
   });
   
-  // Adicionar número da cotação com destaque
+  // Adicionar numero da cotacao com destaque
   const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
   
-  // Desenhar ícone de documento (simulado)
+  // Desenhar icone de documento (simulado)
   page.drawRectangle({
     x: quoteBox.x + 15,
     y: quoteBox.y - 75,

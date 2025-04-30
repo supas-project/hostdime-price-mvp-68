@@ -29,7 +29,7 @@ export function renderStorageSection(
   page = storagePageCheck.page;
   currentY = storagePageCheck.y;
   
-  // Desenhar o cabeçalho da seção
+  // Desenhar o cabecalho da secao
   currentY = drawSectionHeader(
     page, 
     "2. Solucoes de Armazenamento", 

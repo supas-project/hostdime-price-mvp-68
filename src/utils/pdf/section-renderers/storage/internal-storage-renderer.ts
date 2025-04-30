@@ -25,7 +25,7 @@ export function renderInternalStorage(
     return { page, y: currentY };
   }
   
-  // Adicionar cabeçalho da seção
+  // Adicionar cabecalho da secao
   page.drawText("2.1 Discos Internos:", {
     x: marginX,
     y: currentY,
@@ -74,7 +74,7 @@ export function renderInternalStorage(
     
     currentY -= 20;
     
-    // Descrição e especificações
+    // Descricao e especificacoes
     if (group.disk.description) {
       page.drawText(group.disk.description, {
         x: marginX + 30,
@@ -88,7 +88,7 @@ export function renderInternalStorage(
     
     if (group.disk.specs) {
       group.disk.specs.forEach(spec => {
-        page.drawText(`• ${spec}`, {
+        page.drawText(`* ${spec}`, {
           x: marginX + 30,
           y: currentY,
           size: 10,
@@ -99,9 +99,9 @@ export function renderInternalStorage(
       });
     }
     
-    // Configuração RAID
+    // Configuracao RAID
     if (group.disk.metadata?.raid && group.disk.metadata.raid.type !== 'none') {
-      // Adicionar um fundo destacado para a configuração RAID
+      // Adicionar um fundo destacado para a configuracao RAID
       drawHighlightBox(
         page,
         marginX + 25,
@@ -130,7 +130,7 @@ export function renderInternalStorage(
       ];
       
       raidInfo.forEach(info => {
-        page.drawText(`• ${info}`, {
+        page.drawText(`* ${info}`, {
           x: marginX + 35,
           y: currentY,
           size: 10,
