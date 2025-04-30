@@ -1,5 +1,6 @@
 import { RaidType, RaidCalculation, RaidInfo } from "@/types/raid";
 import { PricedDiskOption } from "@/types/storage";
+import { convertToGB, formatStorageCapacity } from "@/utils/storage-utils";
 
 export const RAID_INFO: Record<RaidType, RaidInfo> = {
   "none": {
@@ -147,52 +148,40 @@ export const RAID_INFO: Record<RaidType, RaidInfo> = {
 };
 
 export function calculateRaidCapacity(disks: PricedDiskOption[], quantity: number, raidType: RaidType, isHardware: boolean = false): RaidCalculation {
-  const diskCapacity = parseInt(disks[0].capacity.replace(/[^0-9]/g, ''));
-  const totalCapacity = diskCapacity * quantity;
+  // Extrair a capacidade do disco selecionado e converter para GB consistentemente
+  const diskCapacityGB = convertToGB(disks[0].capacity);
+  const totalCapacityGB = diskCapacityGB * quantity;
   
-  let usableCapacity: number;
-  let readPerformance: string;
-  let writePerformance: string;
+  let usableCapacityGB: number;
   
+  // Aplicar o cálculo de RAID baseado no tipo
   switch (raidType) {
     case "0":
-      usableCapacity = totalCapacity;
-      readPerformance = "Excelente";
-      writePerformance = "Excelente";
+      usableCapacityGB = totalCapacityGB;
       break;
     case "1":
-      usableCapacity = totalCapacity / 2;
-      readPerformance = "Muito Boa";
-      writePerformance = "Boa";
+      usableCapacityGB = totalCapacityGB / 2;
       break;
     case "5":
-      usableCapacity = totalCapacity * ((quantity - 1) / quantity);
-      readPerformance = "Boa";
-      writePerformance = "Moderada";
+      usableCapacityGB = totalCapacityGB * ((quantity - 1) / quantity);
       break;
     case "6":
-      usableCapacity = totalCapacity * ((quantity - 2) / quantity);
-      readPerformance = "Boa";
-      writePerformance = "Moderada";
+      usableCapacityGB = totalCapacityGB * ((quantity - 2) / quantity);
       break;
     case "10":
-      usableCapacity = totalCapacity / 2;
-      readPerformance = "Excelente";
-      writePerformance = "Muito Boa";
+      usableCapacityGB = totalCapacityGB / 2;
       break;
     case "none":
     default:
-      usableCapacity = totalCapacity;
-      readPerformance = "Normal";
-      writePerformance = "Normal";
+      usableCapacityGB = totalCapacityGB;
   }
 
   const raidInfo = { ...RAID_INFO[raidType] };
   raidInfo.isHardware = isHardware;
 
   return {
-    usableCapacity,
-    totalCapacity,
+    usableCapacity: usableCapacityGB,
+    totalCapacity: totalCapacityGB,
     protection: raidInfo.protection,
     performance: {
       read: RAID_INFO[raidType].performanceLevel.read,

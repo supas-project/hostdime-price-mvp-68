@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useWizard } from "@/contexts/WizardContext";
 import { toast } from "sonner";
-import { formatStorageCapacity } from "@/utils/storage-utils";
+import { formatStorageCapacity, convertToGB } from "@/utils/storage-utils";
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -42,45 +41,11 @@ export function SimpleRaidCalculator({
 
   useEffect(() => {
     if (calculation && isValidRaidConfiguration(raidType)) {
-      // Extrair a capacidade correta do disco selecionado em GB
-      const capacityMatch = selectedDisk.capacity.match(/(\d+(?:\.\d+)?)\s*([GT]B)/i);
-      let capacityValue = 0;
-      let unit = 'GB';
+      // Obter capacidades calculadas pelo RAID em GB
+      const usableCapacityGB = calculation.usableCapacity;
+      const totalCapacityGB = calculation.totalCapacity;
       
-      if (capacityMatch) {
-        capacityValue = parseFloat(capacityMatch[1]);
-        unit = capacityMatch[2].toUpperCase();
-        
-        // Converter para GB se estiver em TB
-        if (unit === 'TB') {
-          capacityValue *= 1000;
-        }
-      }
-      
-      // Cálculo correto da capacidade total e útil
-      const totalCapacityGB = capacityValue * quantity;
-      let usableCapacityGB = totalCapacityGB;
-      
-      // Aplicar o cálculo de RAID
-      switch (raidType) {
-        case '1':
-          usableCapacityGB = totalCapacityGB / 2;
-          break;
-        case '5':
-          usableCapacityGB = totalCapacityGB * ((quantity - 1) / quantity);
-          break;
-        case '6':
-          usableCapacityGB = totalCapacityGB * ((quantity - 2) / quantity);
-          break;
-        case '10':
-          usableCapacityGB = totalCapacityGB / 2;
-          break;
-        default:
-          // Para RAID 0 e none, usableCapacityGB = totalCapacityGB
-          break;
-      }
-      
-      // Formatar valores para exibição
+      // Formatar para exibição usando a função de formatação consistente
       const formattedTotalCapacity = formatStorageCapacity(totalCapacityGB);
       const formattedUsableCapacity = formatStorageCapacity(usableCapacityGB);
 

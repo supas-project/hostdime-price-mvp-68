@@ -50,7 +50,7 @@ export function formatStorageCapacity(capacity: string | number): string {
       const tbValue = capacity / 1000;
       return `${tbValue.toFixed(1).replace(/\.0$/, '')}TB`;
     }
-    return `${capacity}GB`;
+    return `${Math.round(capacity)}GB`;
   }
   
   // Trata string de capacidade
@@ -114,23 +114,34 @@ export function isTBCapacity(capacity: string): boolean {
 
 /**
  * Converte capacidade para GB
+ * Função crítica usada nos cálculos de RAID para normalizar valores
  */
 export function convertToGB(capacity: string): number {
-  const tbMatch = capacity.match(/(\d+(?:\.\d+)?)\s*TB/i);
-  if (tbMatch) {
-    return parseFloat(tbMatch[1]) * 1000;
+  // Se já for um número, retorna ele mesmo
+  if (typeof capacity === 'number') {
+    return capacity;
   }
   
-  const gbMatch = capacity.match(/(\d+(?:\.\d+)?)\s*GB/i);
+  // Normaliza a string de capacidade primeiro
+  const normalizedCapacity = normalizeStorageCapacity(capacity);
+  
+  // Procura por valor em TB
+  const tbMatch = normalizedCapacity.match(/(\d+(?:\.\d+)?)\s*TB/i);
+  if (tbMatch) {
+    return parseFloat(tbMatch[1]) * 1000; // Converte TB para GB
+  }
+  
+  // Procura por valor em GB
+  const gbMatch = normalizedCapacity.match(/(\d+(?:\.\d+)?)\s*GB/i);
   if (gbMatch) {
     return parseFloat(gbMatch[1]);
   }
   
   // Se for apenas um número, assume GB
-  const numMatch = capacity.match(/^(\d+(?:\.\d+)?)$/);
+  const numMatch = normalizedCapacity.match(/^(\d+(?:\.\d+)?)$/);
   if (numMatch) {
     return parseFloat(numMatch[1]);
   }
   
-  return 0;
+  return 0; // Valor padrão se não conseguir converter
 }
