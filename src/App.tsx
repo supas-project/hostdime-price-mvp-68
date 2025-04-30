@@ -14,8 +14,20 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminProtectedRoute from "./components/auth/AdminProtectedRoute";
 
-const queryClient = new QueryClient();
+// Configuração do cliente de consulta com retry e stale time
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 30 * 1000, // 30 segundos
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -35,7 +47,14 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<Navigate to="/configure" replace />} />
-              <Route path="price-table" element={<PriceTable />} />
+              
+              {/* Admin protected route */}
+              <Route path="price-table" element={
+                <AdminProtectedRoute>
+                  <PriceTable />
+                </AdminProtectedRoute>
+              } />
+              
               <Route path="configure" element={<Index />} />
               <Route path="home" element={<Home />} />
             </Route>

@@ -104,8 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(true);
           setUser(session.user);
           
-          // Check if user is admin (example: check user metadata or specific email domain)
-          const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
+          // Check if user is admin (email verification)
+          const isUserAdmin = session.user.email === DEFAULT_ADMIN_EMAIL || 
+                              session.user.email?.endsWith('@hostdime.com.br') || 
+                              false;
           setIsAdmin(isUserAdmin);
         }
       } catch (error) {
@@ -123,20 +125,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
+        
         if (event === 'SIGNED_IN' && session) {
           setIsAuthenticated(true);
           setUser(session.user);
           
           // Check if admin
-          const isUserAdmin = session.user.email?.endsWith('@hostdime.com.br') || false;
+          const isUserAdmin = session.user.email === DEFAULT_ADMIN_EMAIL || 
+                              session.user.email?.endsWith('@hostdime.com.br') || 
+                              false;
           setIsAdmin(isUserAdmin);
-          
-          // Toast removido para evitar poluição visual
         } else if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false);
           setIsAdmin(false);
           setUser(null);
-          // Toast removido para evitar poluição visual
         }
       }
     );
@@ -172,12 +175,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
+      // Limpar os estados antes de fazer o logout
+      setIsAuthenticated(false);
+      setIsAdmin(false);
+      setUser(null);
+      
+      // Fazer o logout no Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        toast.error("Erro ao fazer logout");
+        console.error("Erro ao fazer logout no Supabase:", error);
+        toast.error("Erro ao fazer logout", {
+          description: "Houve um problema, mas sua sessão local foi finalizada."
+        });
         return;
       }
+      
+      toast.success("Logout realizado com sucesso");
+      
+      // Forçar redirecionamento para a página de login após o logout
+      window.location.href = "/login";
       
     } catch (error) {
       console.error("Erro ao fazer logout:", error);

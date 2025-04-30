@@ -8,8 +8,9 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -20,6 +21,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const { isAuthenticated, login, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -41,7 +43,9 @@ export default function LoginPage() {
   }, [isAuthenticated, navigate, location]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setLoginError(null);
     setIsLoading(true);
+    
     try {
       const success = await login(values.email, values.password);
       if (success) {
@@ -49,7 +53,12 @@ export default function LoginPage() {
         navigate(from, { replace: true });
         form.reset();
         toast.success("Login realizado com sucesso");
+      } else {
+        setLoginError("Credenciais inválidas. Tente novamente.");
       }
+    } catch (error) {
+      console.error("Erro no processo de login:", error);
+      setLoginError("Ocorreu um erro durante o login. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +86,16 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {loginError && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>
+                  {loginError}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -129,6 +148,11 @@ export default function LoginPage() {
                 </Button>
               </form>
             </Form>
+            
+            <div className="text-sm text-center text-muted-foreground">
+              <p>Credenciais padrão de administrador:</p>
+              <p className="font-medium">admin@hostdime.com.br / H0stD1m3@2025</p>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-xs text-muted-foreground">

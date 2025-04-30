@@ -1,19 +1,46 @@
 
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/components/login-dialog";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Server, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Home, FileText, Server, Menu, X, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
-  const navigationItems = [
+  // Verificar se há uma mensagem de redirecionamento
+  useEffect(() => {
+    if (location.state && location.state.message) {
+      toast.error("Acesso restrito", {
+        description: location.state.message,
+        icon: <AlertCircle className="h-4 w-4" />
+      });
+      
+      // Limpar a mensagem para evitar que ela seja exibida novamente
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
+  // Páginas disponíveis para todos os usuários autenticados
+  const commonNavigationItems = [
     { name: "Início", path: "/", icon: Home },
-    { name: "Configurar Servidor", path: "/configure", icon: Server },
+    { name: "Configurar Servidor", path: "/configure", icon: Server }
+  ];
+
+  // Páginas disponíveis apenas para administradores
+  const adminNavigationItems = [
     { name: "Tabela de Preços", path: "/price-table", icon: FileText }
   ];
+
+  // Combinar os itens de navegação com base nas permissões do usuário
+  const navigationItems = isAdmin 
+    ? [...commonNavigationItems, ...adminNavigationItems] 
+    : commonNavigationItems;
 
   const isActive = (path: string) => {
     return location.pathname === path;
