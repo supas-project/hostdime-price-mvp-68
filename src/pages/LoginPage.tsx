@@ -80,8 +80,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 animate-fade-in">
+      <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <h1 className="text-3xl font-bold">
             <span className="text-primary">Host</span>
@@ -92,14 +92,14 @@ export default function LoginPage() {
         <Card className="border-border bg-card/90 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
           <CardContent className="p-6">
             <div className="text-center mb-6">
-              <h1 className="text-xl font-semibold">Acesso ao Sistema</h1>
+              <h1 className="text-xl font-semibold">Bem-vindo</h1>
               <p className="text-xs text-muted-foreground mt-1">
                 Configure seus servidores dedicados
               </p>
             </div>
 
             {loginError && (
-              <Alert variant="destructive" className="mb-5">
+              <Alert variant="destructive" className="mb-5 animate-fade-in">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Erro</AlertTitle>
                 <AlertDescription>{loginError}</AlertDescription>
@@ -147,7 +147,8 @@ export default function LoginPage() {
                           <button 
                             type="button" 
                             onClick={toggleShowPassword}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
@@ -160,10 +161,15 @@ export default function LoginPage() {
                 
                 <Button 
                   type="submit" 
-                  className="w-full mt-2 bg-primary hover:bg-primary-hover text-white"
+                  className="w-full mt-2 bg-primary hover:bg-primary-hover text-white transition-all duration-200"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Entrando..." : "Entrar"}
+                  {isLoading ? (
+                    <>
+                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                      Entrando...
+                    </>
+                  ) : "Entrar"}
                 </Button>
               </form>
             </Form>

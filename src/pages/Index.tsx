@@ -6,6 +6,8 @@ import { ProgressIndicator } from "@/components/progress-indicator";
 import { WizardProvider, useWizard } from "@/contexts/WizardContext";
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { serverData } from "@/data/server-components";
+import { BeginnerModeToggle } from "@/components/beginner-mode-toggle";
+import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
 
 // Create a separate component to use the context
 const WizardContainer = () => {
@@ -18,6 +20,8 @@ const WizardContainer = () => {
     isStepComplete,
     handleRestart
   } = useWizard();
+  
+  const [beginnerMode] = useLocalStorage('beginnerMode', true);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -29,6 +33,9 @@ const WizardContainer = () => {
           <p className="text-muted-foreground max-w-lg mx-auto">
             Selecione as opções ideais para seu servidor dedicado em poucos passos
           </p>
+          <div className="flex justify-center mt-4">
+            <BeginnerModeToggle />
+          </div>
         </div>
 
         <ProgressIndicator 
