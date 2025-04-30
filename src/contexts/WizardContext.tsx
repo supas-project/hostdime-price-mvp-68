@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useEffect } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
@@ -34,10 +35,12 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     isStepComplete: baseIsStepComplete
   } = useWizardSteps();
   
-  // Use the correct hook format
-  const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', true);
+  // Use the correct hook format - default to false to disable beginner mode
+  const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', false);
   const [seenSteps, setSeenSteps] = useLocalStorage<number[]>('seenSteps', []);
-
+  // Add a new state to track which steps have been automatically advanced through
+  const [autoAdvancedSteps, setAutoAdvancedSteps] = useLocalStorage<number[]>('autoAdvancedSteps', []);
+  
   // Define a wrapper function for setBeginnerMode that also handles side effects
   const updateBeginnerMode = (value: boolean) => {
     setBeginnerMode(value);
@@ -76,63 +79,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     return isComplete;
   };
 
-  // Show helpful messages when user enters a new step in beginner mode
-  useEffect(() => {
-    if (beginnerMode && currentStep !== undefined && !seenSteps.includes(currentStep)) {
-      const component = serverData.componentes[currentStep];
-      if (component) {
-        // Show helpful messages only the first time a user sees this step
-        setSeenSteps(prev => [...prev, currentStep]);
-        
-        // Give helpful guidance based on the component type
-        switch(component.type.toLowerCase()) {
-          case "datacenter":
-            toast.info("Escolha um data center", {
-              description: "Selecione o local mais próximo do seu público-alvo para melhor desempenho",
-              duration: 5000
-            });
-            break;
-          case "contrato":
-            toast.info("Duração do contrato", {
-              description: "Contratos mais longos oferecem descontos maiores no valor mensal",
-              duration: 5000
-            });
-            break;
-          case "processador":
-            toast.info("Escolha do processador", {
-              description: "Mais núcleos = mais performance para múltiplas tarefas ao mesmo tempo",
-              duration: 5000
-            });
-            break;
-          case "memória":
-          case "memoria":
-            toast.info("Memória RAM", {
-              description: "Mais RAM permite executar mais aplicações simultaneamente",
-              duration: 5000
-            });
-            break;
-          case "armazenamento":
-            toast.info("Opções de armazenamento", {
-              description: "NVMe é o mais rápido, SSD tem bom equilíbrio, HDD oferece mais espaço por menor custo",
-              duration: 6000
-            });
-            break;
-          case "conectividade":
-            toast.info("Conectividade", {
-              description: "Escolha a velocidade da porta e quantos IPs você precisa para seu servidor",
-              duration: 5000
-            });
-            break;
-          case "sistemaoperacional":
-            toast.info("Sistema Operacional", {
-              description: "Windows tem custo de licença, Linux é gratuito. Escolha conforme sua aplicação",
-              duration: 5000
-            });
-            break;
-        }
-      }
-    }
-  }, [currentStep, beginnerMode, seenSteps]);
+  // Removed the useEffect that showed helpful messages for beginners
 
   // Efeito para monitorar mudanças nos componentes selecionados
   useEffect(() => {
@@ -152,16 +99,25 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       const componentSelected = Object.keys(selectedComponents).some(key => 
         normalizeComponentType(key) === normalizedCurrentType);
       
+      // Automatic navigation logic - only advance if step complete and we haven't already auto-advanced this step
       if (componentSelected) {
         console.log(`Component ${normalizedCurrentType} was selected, checking if step is complete`);
         const isComplete = contextIsStepComplete(currentStep);
         
-        if (isComplete && currentStep < serverData.componentes.length - 1) {
+        // Only advance if:
+        // 1. The step is complete
+        // 2. We haven't already auto-advanced this step before
+        // 3. We're not at the last step
+        if (isComplete && 
+            !autoAdvancedSteps.includes(currentStep) && 
+            currentStep < serverData.componentes.length - 1) {
           console.log(`Step ${currentStep} complete, advancing to next step`);
+          // Add this step to the auto-advanced steps
+          setAutoAdvancedSteps(prev => [...prev, currentStep]);
           setTimeout(() => {
             setCurrentStep(currentStep + 1);
-            // Toast removido para evitar poluição visual
-          }, 800); // Aumentado para 800ms
+            // No more toast notifications here
+          }, 800);
         }
       }
     }
@@ -187,26 +143,22 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         const isComplete = contextIsStepComplete(currentStep);
         console.log(`Step ${currentStep} complete: ${isComplete}`);
         
-        if (isComplete) {
+        // Only auto-advance if we haven't already auto-advanced this step before
+        if (isComplete && !autoAdvancedSteps.includes(currentStep)) {
           // Avançar automaticamente para o próximo passo
           if (currentStep < serverData.componentes.length - 1) {
             console.log(`Auto-advancing to step ${currentStep + 1}`);
+            // Add this step to the auto-advanced steps
+            setAutoAdvancedSteps(prev => [...prev, currentStep]);
             setCurrentStep(currentStep + 1);
-            
-            // Add confirmation for beginners
-            if (beginnerMode) {
-              toast.success(`${currentComponent.friendlyName} configurado!`, {
-                description: "Avançando para o próximo passo...",
-                duration: 3000
-              });
-            }
+            // No toast notification here anymore
           } else {
             console.log(`Already at last step, not advancing`);
           }
         } else {
-          console.log(`Step not complete, not advancing`);
+          console.log(`Step already auto-advanced before or not complete, not advancing`);
         }
-      }, 1000); // Aumentado para 1000ms para garantir que o estado foi atualizado
+      }, 1000);
     } else {
       console.log(`${currentComponent?.type || 'Unknown'} is not a single selection component, no auto-progression`);
     }
@@ -222,6 +174,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     
     // Reset seen steps when restarting
     setSeenSteps([]);
+    // Also reset auto-advanced steps
+    setAutoAdvancedSteps([]);
     
     toast.info("Configuração reiniciada", {
       description: "Vamos começar do zero!",

@@ -22,8 +22,9 @@ export function BeginnerModeToggle() {
     );
   };
 
+  // Component is now hidden by default but still functional if needed elsewhere
   return (
-    <div className="flex items-center space-x-2">
+    <div className="hidden items-center space-x-2">
       <Switch 
         id="beginner-mode" 
         checked={beginnerMode} 
