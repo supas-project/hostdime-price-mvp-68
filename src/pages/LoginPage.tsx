@@ -12,7 +12,6 @@ import { Lock, Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import hostdimeLogo from "../assets/hostdime-logo.png";
 
 const formSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
@@ -84,11 +83,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="flex justify-center mb-8">
-          <img 
-            src={hostdimeLogo}
-            alt="HostDime Logo" 
-            className="h-14 object-contain"
-          />
+          <h1 className="text-3xl font-bold">
+            <span className="text-primary">Host</span>
+            <span className="text-white">Dime</span>
+          </h1>
         </div>
 
         <Card className="border-border bg-card/90 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
