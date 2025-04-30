@@ -8,18 +8,33 @@ import { ComponentOption } from "@/types/component";
 
 // Helper function to normalize component types for consistent key usage
 export const normalizeComponentType = (type: string): string => {
+  // Primeiro, trata nulo ou undefined
+  if (!type) return "";
+  
+  // Remove acentos e caracteres especiais
+  const withoutAccents = type
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  
+  // Converte para minúsculas
+  const lowercase = withoutAccents.toLowerCase();
+  
+  // Mapeamento específico para garantir consistência
   const typeMap: Record<string, string> = {
-    "Memória": "memoria",
-    "SistemaOperacional": "sistemaoperacional",
-    "Processador": "processador",
-    "DataCenter": "datacenter",
-    "Contrato": "contrato",
-    "Conectividade": "conectividade",
-    "Armazenamento": "armazenamento",
-    "ServiçosPersonalizados": "servicospersonalizados"
+    "memoria": "memoria",
+    "memória": "memoria",
+    "sistemaoperacional": "sistemaoperacional",
+    "processador": "processador",
+    "datacenter": "datacenter",
+    "contrato": "contrato",
+    "conectividade": "conectividade",
+    "armazenamento": "armazenamento",
+    "servicospersonalizados": "servicospersonalizados",
+    "serviçospersonalizados": "servicospersonalizados"
   };
   
-  return typeMap[type] || type.toLowerCase();
+  console.log(`Normalizing type: ${type} -> lowercase: ${lowercase} -> normalized: ${typeMap[lowercase] || lowercase}`);
+  return typeMap[lowercase] || lowercase;
 };
 
 export function useComponentSelection() {

@@ -28,17 +28,27 @@ export function useStandardComponents() {
       const normalizedType = normalizeComponentType(option.type);
       
       console.log(`Normalized type for ${option.type}: ${normalizedType}`);
-      updated[normalizedType] = option;
       
-      console.log("Updated components:", updated);
-      return updated;
+      // Sempre fazemos uma cópia para garantir que o estado seja atualizado
+      const newState = { ...updated };
+      newState[normalizedType] = { ...option };
+      
+      console.log("Updated components:", newState);
+      
+      // Notificação ao usuário para feedback (removido para não afetar a experiência)
+      // toast.success(`${option.name} selecionado`);
+      
+      return newState;
     });
   };
 
   const handleRemoveStandardComponent = (type: string) => {
+    const normalizedType = normalizeComponentType(type);
+    console.log(`Removing component type: ${type} (normalized: ${normalizedType})`);
+    
     setSelectedComponents((prev) => {
       const updated = { ...prev };
-      delete updated[type];
+      delete updated[normalizedType];
       return updated;
     });
   };

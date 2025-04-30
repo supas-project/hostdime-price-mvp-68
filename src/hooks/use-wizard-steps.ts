@@ -15,23 +15,29 @@ export function useWizardSteps() {
     const normalizedType = normalizeComponentType(type);
     
     console.log(`Checking completion for type: ${type} (normalized: ${normalizedType})`);
-    console.log(`Selected components:`, selectedComponents);
+    console.log(`Selected components keys:`, Object.keys(selectedComponents).map(k => normalizeComponentType(k)));
 
     // Serviços Personalizados é o único passo opcional
-    if (type === "ServiçosPersonalizados") {
+    if (normalizedType === "servicospersonalizados") {
       console.log(`${type} is optional, marking as complete`);
       return true;
     }
     
-    if (type === "Memória") {
-      const isComplete = selectedComponents["memoria"] !== undefined;
-      console.log(`Memory completion: ${isComplete}`, selectedComponents["memoria"]);
-      return isComplete;
-    } else if (type === "Contrato") {
-      const isComplete = selectedComponents["contrato"] !== undefined;
-      console.log(`Contract completion: ${isComplete}`, selectedComponents["contrato"]);
-      return isComplete;
-    } else if (type === "Conectividade") {
+    if (normalizedType === "memoria") {
+      const hasMemory = Object.keys(selectedComponents).some(
+        key => normalizeComponentType(key) === "memoria"
+      );
+      console.log(`Memory completion: ${hasMemory}`, 
+        Object.keys(selectedComponents).filter(k => normalizeComponentType(k) === "memoria"));
+      return hasMemory;
+    } else if (normalizedType === "contrato") {
+      const hasContract = Object.keys(selectedComponents).some(
+        key => normalizeComponentType(key) === "contrato"
+      );
+      console.log(`Contract completion: ${hasContract}`, 
+        Object.keys(selectedComponents).filter(k => normalizeComponentType(k) === "contrato"));
+      return hasContract;
+    } else if (normalizedType === "conectividade") {
       const hasPort = Object.values(connectivityItems).some(
         (item: any) => item.option.subtype === "porta"
       );
@@ -41,20 +47,26 @@ export function useWizardSteps() {
       const isComplete = hasPort && hasIp;
       console.log(`Connectivity completion: ${isComplete} (port: ${hasPort}, ip: ${hasIp})`);
       return isComplete;
-    } else if (type === "Armazenamento") {
+    } else if (normalizedType === "armazenamento") {
       // Modificado para exigir pelo menos um armazenamento interno
       const hasInternalStorage = storageItems.internal.length > 0;
       console.log(`Storage completion: ${hasInternalStorage} (internal items: ${storageItems.internal.length})`);
       return hasInternalStorage;
-    } else if (type === "SistemaOperacional") {
-      const isComplete = selectedComponents["sistemaoperacional"] !== undefined;
-      console.log(`OS completion: ${isComplete}`, selectedComponents["sistemaoperacional"]);
-      return isComplete;
+    } else if (normalizedType === "sistemaoperacional") {
+      const hasOS = Object.keys(selectedComponents).some(
+        key => normalizeComponentType(key) === "sistemaoperacional"
+      );
+      console.log(`OS completion: ${hasOS}`, 
+        Object.keys(selectedComponents).filter(k => normalizeComponentType(k) === "sistemaoperacional"));
+      return hasOS;
     } else {
       // Caso padrão, usando o tipo normalizado para verificar
-      const isComplete = selectedComponents[normalizedType] !== undefined;
-      console.log(`Standard component completion for ${normalizedType}: ${isComplete}`, selectedComponents[normalizedType]);
-      return isComplete;
+      const hasComponent = Object.keys(selectedComponents).some(
+        key => normalizeComponentType(key) === normalizedType
+      );
+      console.log(`Standard component completion for ${normalizedType}: ${hasComponent}`, 
+        Object.keys(selectedComponents).filter(k => normalizeComponentType(k) === normalizedType));
+      return hasComponent;
     }
   };
 

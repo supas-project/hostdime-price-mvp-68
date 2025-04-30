@@ -1,10 +1,11 @@
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useEffect } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
 import { useWizardSteps } from "@/hooks/use-wizard-steps";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
+import { toast } from "sonner";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
@@ -35,6 +36,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   // Função para verificar se o componente é de seleção única - caso insensitivo
   const isSingleSelectionComponent = (type: string): boolean => {
+    if (!type) return false;
+    
     const singleSelectionTypes = [
       "datacenter",
       "contrato",
@@ -44,11 +47,53 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       "sistemaoperacional"
     ];
     
-    const normalizedType = type.toLowerCase();
-    console.log(`Checking if ${type} (${normalizedType}) is single selection:`, singleSelectionTypes.includes(normalizedType));
+    const normalizedType = normalizeComponentType(type);
+    console.log(`Checking if ${type} (normalized: ${normalizedType}) is single selection:`, 
+      singleSelectionTypes.includes(normalizedType));
     
     return singleSelectionTypes.includes(normalizedType);
   };
+
+  // Função melhorada para verificar se o passo está completo
+  const contextIsStepComplete = (stepIndex: number) => {
+    console.log(`contextIsStepComplete checking step ${stepIndex}`);
+    const isComplete = baseIsStepComplete(stepIndex, selectedComponents, connectivityItems, storageItems);
+    console.log(`Step ${stepIndex} complete check result: ${isComplete}`);
+    return isComplete;
+  };
+
+  // Efeito para monitorar mudanças nos componentes selecionados
+  useEffect(() => {
+    if (Object.keys(selectedComponents).length === 0) return;
+    
+    const currentComponent = serverData.componentes[currentStep];
+    if (!currentComponent) return;
+    
+    const normalizedCurrentType = normalizeComponentType(currentComponent.type);
+    console.log(`Current component type: ${currentComponent.type} (normalized: ${normalizedCurrentType})`);
+    
+    // Verifica se o componente atual foi selecionado
+    if (isSingleSelectionComponent(currentComponent.type)) {
+      console.log(`Checking if ${normalizedCurrentType} is in selectedComponents:`, 
+        Object.keys(selectedComponents).map(k => normalizeComponentType(k)));
+      
+      const componentSelected = Object.keys(selectedComponents).some(key => 
+        normalizeComponentType(key) === normalizedCurrentType);
+      
+      if (componentSelected) {
+        console.log(`Component ${normalizedCurrentType} was selected, checking if step is complete`);
+        const isComplete = contextIsStepComplete(currentStep);
+        
+        if (isComplete && currentStep < serverData.componentes.length - 1) {
+          console.log(`Step ${currentStep} complete, advancing to next step`);
+          setTimeout(() => {
+            setCurrentStep(currentStep + 1);
+            toast.success("Avançando para o próximo passo");
+          }, 800); // Aumentado para 800ms
+        }
+      }
+    }
+  }, [selectedComponents, currentStep]);
 
   // Função para avançar automaticamente após selecionar componente único
   const handleSelectOption = (option: ComponentOption) => {
@@ -75,13 +120,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
           if (currentStep < serverData.componentes.length - 1) {
             console.log(`Auto-advancing to step ${currentStep + 1}`);
             setCurrentStep(currentStep + 1);
+            toast.success("Seleção completa! Avançando para o próximo passo");
           } else {
             console.log(`Already at last step, not advancing`);
           }
         } else {
           console.log(`Step not complete, not advancing`);
         }
-      }, 500); // Aumentado para 500ms para garantir que o estado foi atualizado
+      }, 1000); // Aumentado para 1000ms para garantir que o estado foi atualizado
     } else {
       console.log(`${currentComponent?.type || 'Unknown'} is not a single selection component, no auto-progression`);
     }
@@ -94,11 +140,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setCustomServices([]);
     setCurrentStep(0);
     setShowFinalSummary(false);
-  };
-
-  const contextIsStepComplete = (stepIndex: number) => {
-    console.log(`contextIsStepComplete checking step ${stepIndex}`);
-    return baseIsStepComplete(stepIndex, selectedComponents, connectivityItems, storageItems);
   };
 
   return (

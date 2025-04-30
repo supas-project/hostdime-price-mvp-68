@@ -21,16 +21,26 @@ export function WizardContent() {
   } = useWizard();
 
   const getSelectedOption = (component: any) => {
+    if (!component) return null;
+    
     const type = component.type;
     const normalizedType = normalizeComponentType(type);
     
     console.log(`Getting selected option for ${type} (normalized: ${normalizedType})`);
+    console.log(`Available keys:`, Object.keys(selectedComponents).map(k => normalizeComponentType(k)));
     
-    if (type === "Armazenamento") {
+    if (normalizedType === "armazenamento") {
       return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
     }
     
-    return selectedComponents[normalizedType];
+    // Procurar o componente usando o tipo normalizado
+    for (const key of Object.keys(selectedComponents)) {
+      if (normalizeComponentType(key) === normalizedType) {
+        return selectedComponents[key];
+      }
+    }
+    
+    return null;
   };
 
   const currentComponent = serverData.componentes[currentStep];
