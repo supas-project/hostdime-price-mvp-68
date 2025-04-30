@@ -152,21 +152,15 @@ export default function PriceTable() {
         metadata: {}
       };
       
-      const newItem = PriceService.addItem(activeTab, itemData);
+      // Apenas adiciona o item ao serviço, o listener já atualiza o estado
+      PriceService.addItem(activeTab, itemData);
       
-      setPriceData(prev => ({
-        ...prev,
-        [activeTab]: {
-          ...prev[activeTab],
-          items: [...prev[activeTab].items, newItem]
-        }
-      }));
-      
+      // Fecha o modal
       setOpenAddItem(false);
       
       toast({
         title: "Item adicionado",
-        description: `O item ${newItem.name} foi adicionado com sucesso.`
+        description: `O item ${values.name} foi adicionado com sucesso.`
       });
     } catch (error) {
       toast({

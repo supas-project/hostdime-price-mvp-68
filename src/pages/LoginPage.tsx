@@ -97,7 +97,7 @@ export default function LoginPage() {
             )}
             
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
                 <FormField
                   control={form.control}
                   name="email"
@@ -110,6 +110,7 @@ export default function LoginPage() {
                           <Input 
                             placeholder="seu@email.com" 
                             className="pl-10"
+                            autoComplete="off"
                             {...field} 
                           />
                         </div>
@@ -131,6 +132,7 @@ export default function LoginPage() {
                             type="password" 
                             placeholder="********" 
                             className="pl-10"
+                            autoComplete="new-password"
                             {...field} 
                           />
                         </div>
