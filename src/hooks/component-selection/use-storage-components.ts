@@ -44,18 +44,12 @@ export function useStorageComponents() {
 
           if (existingIndex >= 0) {
             // Atualizar disco existente
-            updatedItems[existingIndex] = {
-              ...option,
-              price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
-            };
+            updatedItems[existingIndex] = option;
           } else {
             // Adicionar novo disco
             // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
             const filteredItems = updatedItems.filter(disk => disk.id !== option.id);
-            filteredItems.push({
-              ...option,
-              price: (option.metadata?.unitPrice || option.price) * (option.metadata?.quantity || 1)
-            });
+            filteredItems.push(option);
             
             updatedStorageItems = {
               ...prev,

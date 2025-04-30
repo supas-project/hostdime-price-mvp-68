@@ -18,10 +18,9 @@ const WizardContainer = () => {
     showFinalSummary,
     setShowFinalSummary,
     isStepComplete,
-    handleRestart
+    handleRestart,
+    beginnerMode
   } = useWizard();
-  
-  const [beginnerMode] = useLocalStorage('beginnerMode', true);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

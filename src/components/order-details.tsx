@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -7,51 +6,13 @@ import { Separator } from "@/components/ui/separator";
 import { Check, Shield, Wifi } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { cn } from "@/lib/utils";
+import { CustomService } from "@/types/wizard";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
   margin?: number;
   onRemoveItem?: (type: string) => void; // Adicionando prop para remoção de itens
 }
-
-// Helper function to group internal disks by type and capacity
-type GroupedDisk = {
-  disk: ComponentOption;
-  quantity: number;
-};
-
-const groupDisksByTypeAndCapacity = (disks: ComponentOption[]): GroupedDisk[] => {
-  const diskGroups: { [key: string]: GroupedDisk } = {};
-  
-  disks.forEach(disk => {
-    // Create a unique key based on disk type and capacity
-    const typeMatch = disk.description?.match(/Disco interno: (\w+)/);
-    const capacityMatch = disk.description?.match(/(\d+(?:\.\d+)?[GT]B)/);
-    
-    if (typeMatch && capacityMatch) {
-      const diskType = typeMatch[1];
-      const diskCapacity = capacityMatch[1];
-      const key = `${diskType}-${diskCapacity}`;
-      
-      if (diskGroups[key]) {
-        // Increment quantity for existing disk type
-        diskGroups[key].quantity += 1;
-      } else {
-        // Create new group for this disk type
-        diskGroups[key] = {
-          disk: { ...disk },
-          quantity: 1
-        };
-      }
-    } else {
-      // Fallback for disks that don't match the expected pattern
-      const key = `disk-${disk.id}`;
-      diskGroups[key] = { disk, quantity: 1 };
-    }
-  });
-  
-  return Object.values(diskGroups);
-};
 
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
@@ -79,9 +40,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     }
   );
 
-  // Group storage disks
-  const groupedInternalDisks = groupDisksByTypeAndCapacity(storageItems.internal.filter(disk => disk.price > 0));
-  
   // Calculate prices (excluding DataCenter and Contract)
   const nonStoragePrice = otherComponents.reduce(
     (sum, component) => sum + component.price,
@@ -237,32 +195,32 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             ))}
             
             {/* Storage components section */}
-            {(groupedInternalDisks.length > 0 || storageItems.external.length > 0) && (
+            {(storageItems.internal.length > 0 || storageItems.external.length > 0) && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Armazenamento</h3>
                 
-                {/* Internal storage disks - grouped */}
-                {groupedInternalDisks.length > 0 && (
+                {/* Internal storage disks */}
+                {storageItems.internal.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
-                    {groupedInternalDisks.map((groupedDisk) => (
-                      <div key={groupedDisk.disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
+                    {storageItems.internal.map((disk) => (
+                      <div key={disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium flex items-center gap-2">
-                              {groupedDisk.quantity > 1 ? `${groupedDisk.quantity}x ` : ''}{groupedDisk.disk.name}
+                              {disk.metadata?.quantity && disk.metadata.quantity > 1 ? `${disk.metadata.quantity}x ` : ''}{disk.name}
                             </h4>
-                            <p className="text-sm text-muted-foreground">{groupedDisk.disk.description}</p>
+                            <p className="text-sm text-muted-foreground">{disk.description}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-primary">
-                              {formatCurrency(groupedDisk.disk.price * groupedDisk.quantity)}
+                              {formatCurrency(disk.price)}
                             </span>
                             
                             {onRemoveItem && (
                               <button
                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                                onClick={() => handleRemoveItem(groupedDisk.disk.id)}
+                                onClick={() => handleRemoveItem(disk.id)}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
                                   <path d="M18 6 6 18"></path>
@@ -273,9 +231,9 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                             )}
                           </div>
                         </div>
-                        {groupedDisk.disk.specs && (
+                        {disk.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                            {groupedDisk.disk.specs.map((spec, index) => (
+                            {disk.specs.map((spec, index) => (
                               <li key={index} className="flex items-center">
                                 <Check className="h-4 w-4 text-primary mr-2" />
                                 <span>{spec}</span>
@@ -285,7 +243,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                         )}
                         
                         {/* RAID Configuration */}
-                        {groupedDisk.disk.metadata?.raid && groupedDisk.disk.metadata.raid.type !== 'none' && (
+                        {disk.metadata?.raid && disk.metadata.raid.type !== 'none' && (
                           <div className="mt-2 p-2 bg-muted/30 rounded-lg">
                             <div className="flex items-center gap-2">
                               <Shield className="h-4 w-4 text-primary" />
@@ -293,17 +251,17 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                             </div>
                             <div className="mt-2 text-sm space-y-1">
                               <p className="text-muted-foreground">
-                                RAID {groupedDisk.disk.metadata.raid.type} - {groupedDisk.disk.metadata.raid.description}
+                                RAID {disk.metadata.raid.type} - {disk.metadata.raid.description}
                               </p>
                               <p className={cn(
                                 "text-xs",
-                                groupedDisk.disk.metadata.raid.type === 'none' ? "text-destructive" : "text-green-500"
+                                disk.metadata.raid.type === 'none' ? "text-destructive" : "text-green-500"
                               )}>
-                                {groupedDisk.disk.metadata.raid.protection}
+                                {disk.metadata.raid.protection}
                               </p>
                               <div className="text-xs text-muted-foreground mt-1">
-                                <p>Capacidade útil: {(groupedDisk.disk.metadata.raid.usableCapacity || 0).toFixed(0)}GB</p>
-                                <p>Tipo: {groupedDisk.disk.metadata.raid.isHardware ? 'Hardware RAID' : 'Software RAID'}</p>
+                                <p>Capacidade útil: {(disk.metadata.raid.usableCapacity || 0).toFixed(0)}GB</p>
+                                <p>Tipo: {disk.metadata.raid.isHardware ? 'Hardware RAID' : 'Software RAID'}</p>
                               </div>
                             </div>
                           </div>
@@ -363,7 +321,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
               </div>
             )}
             
-            {/* Connectivity Items - Nova seção */}
+            {/* Connectivity Items */}
             {Object.keys(connectivityItems).length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Conectividade</h3>
@@ -407,13 +365,13 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             {customServices.length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Serviços Personalizados</h3>
-                {customServices.map(service => (
+                {customServices.map((service) => (
                   <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium flex items-center gap-2">
                           {service.name}
-                          {service.metadata?.quantity > 1 && <span>({service.metadata.quantity}x)</span>}
+                          {service.metadata?.quantity && service.metadata.quantity > 1 && <span>({service.metadata.quantity}x)</span>}
                         </h4>
                         <p className="text-sm text-muted-foreground">{service.description}</p>
                       </div>

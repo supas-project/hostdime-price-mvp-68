@@ -35,7 +35,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     isStepComplete: baseIsStepComplete
   } = useWizardSteps();
   
-  const [beginnerMode] = useLocalStorage('beginnerMode', true);
+  const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', true);
   const [seenSteps, setSeenSteps] = useLocalStorage<number[]>('seenSteps', []);
 
   // Função para verificar se o componente é de seleção única - caso insensitivo

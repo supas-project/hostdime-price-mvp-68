@@ -1,7 +1,8 @@
+
 import { ComponentOption } from "./component";
 
 export interface StorageItems {
-  internal: { disk: ComponentOption; quantity: number }[];
+  internal: ComponentOption[];
   external: ComponentOption[];
 }
 
@@ -10,6 +11,10 @@ export interface CustomService {
   name: string;
   description: string;
   price: number;
+  specs?: string[];
+  metadata?: {
+    quantity?: number;
+  };
 }
 
 export interface WizardContextType {
@@ -17,8 +22,8 @@ export interface WizardContextType {
   setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   selectedComponents: { [key: string]: ComponentOption };
   setSelectedComponents: React.Dispatch<React.SetStateAction<{ [key: string]: ComponentOption }>>;
-  connectivityItems: { [key: string]: ComponentOption };
-  setConnectivityItems: React.Dispatch<React.SetStateAction<{ [key: string]: ComponentOption }>>;
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } };
+  setConnectivityItems: React.Dispatch<React.SetStateAction<{ [key: string]: { option: ComponentOption, quantity: number } }>>;
   storageItems: StorageItems;
   showFinalSummary: boolean;
   setShowFinalSummary: React.Dispatch<React.SetStateAction<boolean>>;
