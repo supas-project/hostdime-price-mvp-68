@@ -16,15 +16,17 @@ export function DataCenterContent({
   selectedOption, 
   onSelectOption 
 }: DataCenterContentProps) {
-  // Find the matching selected option in the available options
+  // Local state to track selection
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
-  // Synchronize selected option when it changes
+  // Synchronize local state with props when selectedOption changes
   useEffect(() => {
     if (selectedOption) {
       // Try to find a matching component in case the selectedOption came from elsewhere
       const matchingComponent = findMatchingComponent(selectedOption, options);
       setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+    } else {
+      setLocalSelectedId("");
     }
   }, [selectedOption, options]);
   

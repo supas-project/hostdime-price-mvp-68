@@ -16,14 +16,31 @@ export function OSContent({
   selectedOption, 
   onSelectOption 
 }: OSContentProps) {
-  // Find the matching selected option in the available options
-  const matchingOption = selectedOption ? findMatchingComponent(selectedOption, options) : null;
+  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  // Synchronize local state with props when selectedOption changes
+  useEffect(() => {
+    if (selectedOption) {
+      // Find the matching option in available options
+      const matchingOption = findMatchingComponent(selectedOption, options);
+      setLocalSelectedId(matchingOption?.id || selectedOption.id);
+    } else {
+      setLocalSelectedId("");
+    }
+  }, [selectedOption, options]);
+  
+  // Handle selection change
+  const handleChange = (value: string) => {
+    setLocalSelectedId(value);
+    const option = options.find(opt => opt.id === value);
+    if (option) onSelectOption(option);
+  };
   
   return (
     <Card className="p-6">
       <OSSelector
         options={options}
-        selectedOption={matchingOption || selectedOption}
+        selectedOption={options.find(opt => opt.id === localSelectedId) || null}
         onSelectOption={onSelectOption}
       />
     </Card>

@@ -7,6 +7,7 @@ export interface PriceItem {
   specs?: string[];
   type: string;
   subtype?: string;
+  isHardware?: boolean; // Added isHardware property
   metadata?: {
     discount?: number;
     features?: string[];

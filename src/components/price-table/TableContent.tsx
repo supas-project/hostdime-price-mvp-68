@@ -1,4 +1,6 @@
+
 import { PriceCategory, PriceItem } from "@/types/pricing";
+import { ComponentOption } from "@/types/component"; // Added import
 import { TableCell, TableRow } from "@/components/ui/table";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Button } from "@/components/ui/button";

@@ -43,7 +43,7 @@ export function useComponentOptions(
             specs: Array.isArray(item.specs) ? item.specs : [],
             type: item.type,
             subtype: item.subtype,
-            isHardware: item.isHardware,
+            isHardware: item.isHardware || false, // Added default value
             metadata: item.metadata
           }));
           
