@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CategoryForm } from "./forms/CategoryForm";
 import { ItemForm } from "./forms/ItemForm";
-import { Plus, UploadCloud, Download, RefreshCw } from "lucide-react";
+import { Plus, Download, RefreshCw, FileUp } from "lucide-react";
 import { PriceCategory } from "@/types/pricing";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface TableActionsProps {
   activeTab: string;
@@ -52,7 +53,7 @@ export function TableActions({
     <div className="flex flex-wrap gap-2">
       <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4" />
             Nova Categoria
           </Button>
@@ -71,6 +72,10 @@ export function TableActions({
             <Button variant="outline" size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Novo Item
+              <HelpTooltip 
+                title="Adicionar item"
+                description={`Adiciona um novo item à categoria ${priceData[activeTab]?.name || ''}`}
+              />
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
@@ -86,6 +91,7 @@ export function TableActions({
         variant="outline" 
         size="sm" 
         onClick={onExportData}
+        title="Exportar dados como JSON"
       >
         <Download className="mr-2 h-4 w-4" />
         Exportar JSON
@@ -96,6 +102,7 @@ export function TableActions({
           <Button 
             variant="outline" 
             size="sm"
+            title="Restaurar dados para os valores padrão"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Restaurar Padrões

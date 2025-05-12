@@ -18,14 +18,13 @@ export function useStandardComponents() {
     if (!validateOption(option)) return;
 
     setSelectedComponents((prev) => {
-      const updated = { ...prev };
       const normalizedType = normalizeComponentType(option.type);
       
-      // Sempre fazemos uma cópia para garantir que o estado seja atualizado
-      const newState = { ...updated };
-      newState[normalizedType] = { ...option };
-      
-      return newState;
+      // Always create a new object to ensure state is updated
+      return {
+        ...prev,
+        [normalizedType]: { ...option }
+      };
     });
   };
 
