@@ -24,7 +24,6 @@ interface PriceTableContentProps {
   onDeleteCategory: (categoryId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (item: PriceItem) => void;
-  contractDuration?: string;
 }
 
 export function PriceTableContent({
@@ -40,8 +39,7 @@ export function PriceTableContent({
   filterItems,
   onDeleteCategory,
   onDeleteItem,
-  onEditItem,
-  contractDuration = "0"
+  onEditItem
 }: PriceTableContentProps) {
   
   if (Object.keys(priceData).length === 0) {
@@ -87,7 +85,6 @@ export function PriceTableContent({
                     onEdit={isAdmin ? onEditItem : undefined}
                     displayMode="card"
                     sortOrder={sortOrder}
-                    contractDuration={contractDuration}
                   />
                 ) : (
                   <div className="rounded-xl overflow-hidden border border-border">
@@ -106,7 +103,6 @@ export function PriceTableContent({
                           onDelete={isAdmin ? onDeleteItem : undefined}
                           onEdit={isAdmin ? onEditItem : undefined}
                           sortOrder={sortOrder}
-                          contractDuration={contractDuration}
                         />
                       </TableBody>
                     </Table>

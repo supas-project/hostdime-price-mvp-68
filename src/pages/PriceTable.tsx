@@ -27,9 +27,7 @@ export default function PriceTable() {
     setDisplayMode,
     collapsedCategories,
     toggleCategoryCollapse,
-    filterItems,
-    contractDuration,
-    setContractDuration
+    filterItems
   } = usePriceTable();
 
   const {
@@ -65,11 +63,7 @@ export default function PriceTable() {
 
   return (
     <div className="container py-8 animate-fade-in">
-      <PriceTableHeader 
-        lastSyncTime={lastSyncTime} 
-        contractDuration={contractDuration}
-        onContractChange={setContractDuration}
-      />
+      <PriceTableHeader lastSyncTime={lastSyncTime} />
 
       <Card className="border border-border rounded-xl shadow-lg overflow-hidden">
         <CardHeader className="pb-0">
