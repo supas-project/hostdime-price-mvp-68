@@ -7,6 +7,7 @@ export interface PriceItem {
   specs?: string[];
   type: string;
   subtype?: string;
+  isHardware?: boolean;
   metadata?: {
     discount?: number;
     features?: string[];
@@ -37,4 +38,5 @@ export interface PriceItemFormData {
   type: string;
   subtype?: string;
   specs?: string[];  // Make sure this is defined as string[] to match PriceItem
+  isHardware?: boolean;
 }

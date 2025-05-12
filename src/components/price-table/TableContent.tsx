@@ -1,4 +1,6 @@
+
 import { PriceCategory, PriceItem } from "@/types/pricing";
+import { ComponentOption } from "@/types/component";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Button } from "@/components/ui/button";
@@ -57,7 +59,7 @@ export function TableContent({
   // Helper function to calculate price with PayBack applied
   const getPriceWithPayBack = (item: PriceItem): { original: number, withPayback: number | null } => {
     if (item.isHardware && contractDuration !== "0") {
-      const paybackValue = getPayBackValue(item as ComponentOption, contractDuration);
+      const paybackValue = getPayBackValue(item as unknown as ComponentOption, contractDuration);
       if (paybackValue) {
         return {
           original: item.price,

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -44,7 +43,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
     // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
-    handleSelectExternalStorageInternal(type, capacity, price, storageTypes, true); // Added isHardware flag
+    handleSelectExternalStorageInternal(type, capacity, price, storageTypes);
   };
 
   const storageDescriptions = {
