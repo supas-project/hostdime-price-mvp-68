@@ -1,5 +1,6 @@
 
 export interface StorageType {
+  id?: string;
   name: string;
   pricePerGB: number;
   iops: string;
@@ -7,6 +8,7 @@ export interface StorageType {
   description: string;
   throughputAdd?: number;
   maxThroughput?: string;
+  performance?: string;
 }
 
 export interface StorageHandlerConfig {

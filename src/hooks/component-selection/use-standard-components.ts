@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
-import { usePriceData } from "../use-component-options";
 import { useLocalStorage } from "./use-local-storage";
 import { normalizeComponentType } from "../use-component-selection";
 import { canSelectItem } from "@/utils/item-validation";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function useStandardComponents() {
   const [selectedComponents, setSelectedComponents] = useLocalStorage<{[key: string]: ComponentOption}>(
@@ -17,10 +16,8 @@ export function useStandardComponents() {
     // Validação do item antes de selecionar
     if (!canSelectItem(option)) {
       console.warn(`Item não pode ser selecionado: ${option.name}`);
-      toast({
-        title: "Item não selecionável",
-        description: "Este item não pode ser selecionado devido a configuração inválida.",
-        variant: "destructive"
+      toast.error("Item não selecionável", {
+        description: "Este item não pode ser selecionado devido a configuração inválida."
       });
       return;
     }

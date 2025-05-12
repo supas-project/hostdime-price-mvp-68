@@ -1,9 +1,20 @@
 
 import { ComponentOption } from "@/types/component";
-import { PricedDiskOption, StorageType } from "@/types/storage";
+import { PricedDiskOption, StorageTier } from "@/types/storage";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { canSelectItem } from "@/utils/item-validation";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+
+// Use StorageTier from types/storage.ts
+interface StorageType {
+  id?: string;
+  name: string;
+  pricePerGB: number;
+  iops: string;
+  throughput: string;
+  description: string;
+  performance?: string;
+}
 
 interface StorageHandlersProps {
   onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -38,19 +49,18 @@ export function useStorageHandlers({
       metadata: {
         specs: {
           capacity: disk.capacity,
-          readSpeed: disk.specs.readSpeed,
-          writeSpeed: disk.specs.writeSpeed,
-          iops: disk.specs.iops
+          // Safe type checking for specs
+          readSpeed: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.readSpeed : undefined,
+          writeSpeed: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.writeSpeed : undefined,
+          iops: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.iops : undefined
         }
       }
     };
 
     // Verificar se o item pode ser selecionado
     if (!canSelectItem(storageOption)) {
-      toast({
-        title: "Disco não selecionável",
-        description: "Este disco não pode ser selecionado devido a configuração inválida.",
-        variant: "destructive"
+      toast.error("Disco não selecionável", {
+        description: "Este disco não pode ser selecionado devido a configuração inválida."
       });
       return;
     }
@@ -71,7 +81,7 @@ export function useStorageHandlers({
     }
 
     // Encontrar o tipo de armazenamento correspondente para obter detalhes
-    const storageTypeInfo = storageTypes?.find(st => st.id === type);
+    const storageTypeInfo = storageTypes?.find(st => st.id === type || st.name === type);
 
     // Criando um ID único para este armazenamento específico
     const storageId = `external-storage-${type}-${capacity}-${Date.now().toString().slice(-4)}`;
@@ -96,10 +106,8 @@ export function useStorageHandlers({
 
     // Verificar se o item pode ser selecionado
     if (!canSelectItem(storageOption)) {
-      toast({
-        title: "Armazenamento não selecionável",
-        description: "Este armazenamento não pode ser selecionado devido a configuração inválida.",
-        variant: "destructive"
+      toast.error("Armazenamento não selecionável", {
+        description: "Este armazenamento não pode ser selecionado devido a configuração inválida."
       });
       return;
     }
