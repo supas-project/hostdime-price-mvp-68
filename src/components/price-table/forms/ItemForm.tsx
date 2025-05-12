@@ -1,11 +1,9 @@
-
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormField,
@@ -19,7 +17,7 @@ import { PriceItem } from "@/types/pricing";
 import { useEffect, useState } from "react";
 import { debounce } from "@/lib/utils";
 
-// Define o schema com tipagem explícita para specs como string[] e adiciona isHardware
+// Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
   name: z.string()
     .min(3, { message: "Nome do item deve ter pelo menos 3 caracteres" })
@@ -49,7 +47,6 @@ const itemFormSchema = z.object({
     },
     z.array(z.string())
   ),
-  isHardware: z.boolean().optional()
 });
 
 type FormValues = z.infer<typeof itemFormSchema>;
@@ -59,12 +56,6 @@ type ItemFormProps = {
   defaultType?: string;
   item?: PriceItem; // Added to support editing existing items
   isEditing?: boolean; // Flag to indicate if we're editing an item
-};
-
-// Helper function to check if a type is likely to be hardware
-const isHardwareType = (type: string): boolean => {
-  const hardwareTypes = ["processador", "memoria", "memória", "armazenamento", "disco", "rede", "chassi", "hardware"];
-  return hardwareTypes.some(hwType => type.toLowerCase().includes(hwType));
 };
 
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
@@ -79,7 +70,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       type: item?.type || defaultType || "",
       subtype: item?.subtype || "",
       specs: item?.specs || [],
-      isHardware: item?.isHardware !== undefined ? item?.isHardware : isHardwareType(item?.type || defaultType || "")
     },
     mode: "onBlur", // Validar ao perder o foco
   });
@@ -94,21 +84,9 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
         type: item.type,
         subtype: item.subtype || "",
         specs: item.specs || [],
-        isHardware: item.isHardware !== undefined ? item.isHardware : isHardwareType(item.type || "")
       });
     }
   }, [item, form]);
-
-  // Auto-atualiza o status de hardware com base no tipo
-  const watchType = form.watch("type");
-  
-  useEffect(() => {
-    if (watchType && !isEditing) {
-      // Só faz a atualização automática para novos itens
-      const shouldBeHardware = isHardwareType(watchType);
-      form.setValue("isHardware", shouldBeHardware);
-    }
-  }, [watchType, form, isEditing]);
 
   const handleSubmit = (values: FormValues) => {
     // Evita múltiplas submissões
@@ -231,29 +209,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
                 Cada linha será um item da lista de especificações
               </FormDescription>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="isHardware"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  É um componente de hardware
-                </FormLabel>
-                <FormDescription>
-                  Marque se este item representa um componente físico.
-                </FormDescription>
-              </div>
             </FormItem>
           )}
         />

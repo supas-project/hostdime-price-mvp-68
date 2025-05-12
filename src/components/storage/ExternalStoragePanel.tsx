@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,14 +9,21 @@ import { StorageTypeSelector } from "./external/StorageTypeSelector";
 import { StorageSpecs } from "./external/StorageSpecs";
 import { HardDrive } from "lucide-react";
 import { HelpTooltip } from "@/components/help-tooltip";
-import { StorageType } from "./types";
 
 interface ExternalStoragePanelProps {
   onSelect?: (option: StorageTier) => void;
   selectedTier?: string;
   onSelectStorage?: (type: string, capacity: number, price: number) => void;
   storageTypes?: {
-    [key: string]: StorageType
+    [key: string]: { 
+      name: string;
+      pricePerGB: number;
+      iops: string;
+      throughput: string;
+      description: string;
+      throughputAdd?: number;
+      maxThroughput?: string;
+    }
   };
 }
 

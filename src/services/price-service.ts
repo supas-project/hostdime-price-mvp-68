@@ -1,4 +1,3 @@
-
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 import { toast } from "@/hooks/use-toast";
@@ -52,20 +51,6 @@ const initialPriceData: PriceData = {
 // Tipo para listeners (observadores)
 type DataChangeListener = (data: PriceData) => void;
 let dataChangeListeners: DataChangeListener[] = [];
-
-// Função auxiliar para identificar categorias de hardware
-const isHardwareCategory = (categoryId: string, type?: string): boolean => {
-  const hardwareCategories = [
-    'cpu', 'memory', 'disk', 'storage', 'network', 'chassis'
-  ];
-  
-  const hardwareTypes = [
-    'Processador', 'Memória', 'Armazenamento', 'Disco', 'Interface de Rede', 'Chassi', 'Hardware'
-  ];
-  
-  return hardwareCategories.includes(categoryId.toLowerCase()) || 
-         (type && hardwareTypes.some(hwType => type.includes(hwType)));
-};
 
 // Carrega dados do localStorage ou usa dados iniciais
 const loadDataFromStorage = (): PriceData => {
@@ -267,18 +252,13 @@ export const PriceService = {
       throw new Error(`Já existe um item com o nome "${item.name}" nesta categoria`);
     }
     
-    // Determinar se o item é hardware com base na categoria ou tipo
-    const shouldMarkAsHardware = isHardwareCategory(categoryId, item.type);
-    console.log(`Adicionando item: ${item.name}, Categoria: ${categoryId}, É hardware: ${shouldMarkAsHardware}`);
-    
     const newItem: PriceItem = {
       id: generateUniqueId(),
       ...item,
       name: item.name.trim(),
       description: item.description?.trim() || '',
       specs: item.specs || [],
-      price: Number(item.price), // Garantir que o preço seja um número
-      isHardware: item.isHardware !== undefined ? item.isHardware : shouldMarkAsHardware // Usa o flag explícito ou infere da categoria
+      price: Number(item.price) // Garantir que o preço seja um número
     };
     
     // Cria uma nova cópia dos dados para garantir atomicidade
@@ -333,12 +313,6 @@ export const PriceService = {
       }
     }
     
-    // Se estiver atualizando o tipo, podemos recalcular se deve ser marcado como hardware
-    let updatedIsHardware = updates.isHardware;
-    if (updates.type && updatedIsHardware === undefined) {
-      updatedIsHardware = isHardwareCategory(categoryId, updates.type);
-    }
-    
     // Atualizar o item com os novos valores
     data[categoryId].items[itemIndex] = {
       ...data[categoryId].items[itemIndex],
@@ -350,9 +324,7 @@ export const PriceService = {
       description: updates.description !== undefined ? 
         updates.description.trim() : data[categoryId].items[itemIndex].description,
       // Garantir que o preço seja um número
-      price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price,
-      // Atualiza o flag isHardware se necessário
-      isHardware: updatedIsHardware !== undefined ? updatedIsHardware : data[categoryId].items[itemIndex].isHardware
+      price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price
     };
     
     saveDataToStorage(data);

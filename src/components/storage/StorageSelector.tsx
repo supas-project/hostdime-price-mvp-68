@@ -42,12 +42,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
-    // Convert storageTypes object to an array for the handler
-    const storageTypesArray = Object.entries(storageTypes).map(([key, value]) => ({
-      ...value,
-      id: key
-    }));
-    handleSelectExternalStorageInternal(type, capacity, price, storageTypesArray);
+    // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
+    handleSelectExternalStorageInternal(type, capacity, price, storageTypes);
   };
 
   const storageDescriptions = {

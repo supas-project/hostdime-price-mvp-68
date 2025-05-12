@@ -31,15 +31,6 @@ export interface ComponentOption {
     raid?: RaidMetadata;
     quantity?: number;
     unitPrice?: number;
-    specs?: {
-      capacity?: string;
-      readSpeed?: string;
-      writeSpeed?: string;
-      iops?: string;
-      type?: string;
-      performance?: string;
-      recommended?: string[];
-    };
   };
 }
 
