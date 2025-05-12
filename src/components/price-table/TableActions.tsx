@@ -59,6 +59,21 @@ export function TableActions({
   onExportData,
   onResetData
 }: TableActionsProps) {
+  // Handler para fechar o diálogo de edição e limpar o item
+  const handleCloseEditDialog = () => {
+    setOpenEditItem(false);
+    // Pequeno delay para evitar animações estranhas
+    setTimeout(() => {
+      setItemToEdit(undefined);
+    }, 300);
+  };
+
+  // Handler para submissão do formulário de edição
+  const handleEditSubmit = (values: any, itemId?: string) => {
+    onEditItem(values, itemId);
+    handleCloseEditDialog();
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
@@ -100,8 +115,7 @@ export function TableActions({
           <Dialog 
             open={openEditItem} 
             onOpenChange={(open) => {
-              setOpenEditItem(open);
-              if (!open) setItemToEdit(undefined);
+              if (!open) handleCloseEditDialog();
             }}
           >
             <DialogContent className="max-w-lg">
@@ -110,7 +124,7 @@ export function TableActions({
               </DialogHeader>
               {itemToEdit && (
                 <ItemForm 
-                  onSubmit={onEditItem} 
+                  onSubmit={handleEditSubmit}
                   item={itemToEdit} 
                   isEditing={true} 
                 />

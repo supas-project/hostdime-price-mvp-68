@@ -15,19 +15,33 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PriceItem } from "@/types/pricing";
+import { useEffect } from "react";
 
 // Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
-  name: z.string().min(3, { message: "Nome do item deve ter pelo menos 3 caracteres" }),
-  description: z.string().min(3, { message: "Descrição deve ter pelo menos 3 caracteres" }),
-  price: z.coerce.number().min(0, { message: "Preço deve ser maior ou igual a zero" }),
-  type: z.string().min(1, { message: "Tipo é obrigatório" }),
+  name: z.string()
+    .min(3, { message: "Nome do item deve ter pelo menos 3 caracteres" })
+    .trim(),
+  description: z.string()
+    .min(3, { message: "Descrição deve ter pelo menos 3 caracteres" })
+    .trim(),
+  price: z.coerce.number()
+    .min(0, { message: "Preço deve ser maior ou igual a zero" })
+    .nonnegative({ message: "Preço não pode ser negativo" }),
+  type: z.string()
+    .min(1, { message: "Tipo é obrigatório" })
+    .trim(),
   subtype: z.string().optional(),
   specs: z.preprocess(
     // Garantir que a entrada seja transformada em array
     (val): string[] => {
       if (typeof val === 'string') {
-        return val.split('\n').filter(Boolean);
+        return val.split('\n').filter(Boolean).map(line => line.trim());
+      }
+      if (Array.isArray(val)) {
+        return val.filter(Boolean).map(line => 
+          typeof line === 'string' ? line.trim() : String(line)
+        );
       }
       return [];
     },
@@ -47,25 +61,33 @@ type ItemFormProps = {
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues: item ? {
-      name: item.name,
-      description: item.description,
-      price: item.price,
-      type: item.type,
-      subtype: item.subtype || "",
-      specs: item.specs || [],
-    } : {
-      name: "",
-      description: "",
-      price: 0,
-      type: defaultType || "",
-      subtype: "",
-      specs: [], // Inicializa specs como array vazio
+    defaultValues: {
+      name: item?.name || "",
+      description: item?.description || "",
+      price: item?.price || 0,
+      type: item?.type || defaultType || "",
+      subtype: item?.subtype || "",
+      specs: item?.specs || [],
     },
+    mode: "onBlur", // Validar ao perder o foco
   });
 
+  // Atualiza o formulário quando o item muda (edição)
+  useEffect(() => {
+    if (item) {
+      form.reset({
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        type: item.type,
+        subtype: item.subtype || "",
+        specs: item.specs || [],
+      });
+    }
+  }, [item, form]);
+
   const handleSubmit = (values: FormValues) => {
-    // Pass the item ID if we're in edit mode
+    // Passa o item ID se estamos em modo de edição
     onSubmit(values, isEditing ? item?.id : undefined);
   };
 
@@ -109,8 +131,19 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
                   type="number" 
                   min="0" 
                   step="0.01" 
-                  placeholder="0.00" 
-                  {...field} 
+                  placeholder="0.00"
+                  {...field}
+                  onChange={(e) => {
+                    // Garantir que o valor seja um número válido
+                    const value = e.target.value;
+                    const numValue = parseFloat(value);
+                    if (isNaN(numValue) || numValue < 0) {
+                      e.target.setCustomValidity("Preço deve ser um número positivo");
+                    } else {
+                      e.target.setCustomValidity("");
+                      field.onChange(value);
+                    }
+                  }}
                 />
               </FormControl>
               <FormMessage />

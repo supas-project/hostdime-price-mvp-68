@@ -1,5 +1,7 @@
+
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
+import { toast } from "@/hooks/use-toast";
 
 // Chave para armazenamento local
 const PRICE_DATA_KEY = 'priceData';
@@ -57,6 +59,12 @@ const loadDataFromStorage = (): PriceData => {
     }
   } catch (error) {
     console.error('Erro ao carregar dados da tabela de preços:', error);
+    // Notificar o usuário sobre o erro de carregamento
+    toast({
+      title: "Erro ao carregar dados",
+      description: "Não foi possível carregar os dados salvos. Usando dados padrão.",
+      variant: "destructive"
+    });
   }
   
   // Salva dados iniciais no localStorage se não existirem
@@ -71,6 +79,12 @@ const saveDataToStorage = (data: PriceData): void => {
     notifyDataChangeListeners(data);
   } catch (error) {
     console.error('Erro ao salvar dados da tabela de preços:', error);
+    toast({
+      title: "Erro ao salvar dados",
+      description: "Não foi possível salvar os dados. Verifique o espaço disponível no navegador.",
+      variant: "destructive"
+    });
+    throw new Error("Falha ao salvar dados no armazenamento local");
   }
 };
 
@@ -88,6 +102,23 @@ const notifyDataChangeListeners = (data: PriceData): void => {
 // Gera um ID único
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+};
+
+// Validação de item
+const validateItem = (item: Partial<PriceItem>): string | null => {
+  if (!item.name || item.name.trim() === '') {
+    return "Nome do item é obrigatório";
+  }
+  
+  if (item.price === undefined || item.price < 0) {
+    return "Preço deve ser um número positivo";
+  }
+  
+  if (!item.type || item.type.trim() === '') {
+    return "Tipo do item é obrigatório";
+  }
+  
+  return null; // Item válido
 };
 
 // Funções para manipular dados de preços
@@ -109,23 +140,32 @@ export const PriceService = {
   
   // Obtém uma categoria específica
   getCategory: (categoryId: string): PriceCategory | null => {
+    if (!categoryId) {
+      console.error('ID de categoria inválido ou não fornecido');
+      return null;
+    }
+    
     const data = loadDataFromStorage();
     return data[categoryId] || null;
   },
   
   // Adiciona uma nova categoria
   addCategory: (category: Omit<PriceCategory, 'id'>): PriceCategory => {
+    if (!category.name || category.name.trim() === '') {
+      throw new Error("Nome da categoria é obrigatório");
+    }
+    
     const data = loadDataFromStorage();
     const id = category.name.toLowerCase().replace(/\s+/g, '-');
     
     // Verifica se a categoria já existe
     if (data[id]) {
-      throw new Error(`Categoria com ID ${id} já existe`);
+      throw new Error(`Categoria "${category.name}" já existe`);
     }
     
     const newCategory: PriceCategory = {
       id,
-      name: category.name,
+      name: category.name.trim(),
       items: [],
     };
     
@@ -136,15 +176,25 @@ export const PriceService = {
   
   // Atualiza uma categoria
   updateCategory: (categoryId: string, updates: Partial<PriceCategory>): PriceCategory => {
+    if (!categoryId) {
+      throw new Error("ID de categoria não fornecido");
+    }
+    
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
+    }
+    
+    if (updates.name && updates.name.trim() === '') {
+      throw new Error("Nome da categoria não pode ser vazio");
     }
     
     data[categoryId] = {
       ...data[categoryId],
       ...updates,
+      // Garantir que o ID não seja alterado
+      id: categoryId
     };
     
     saveDataToStorage(data);
@@ -153,10 +203,14 @@ export const PriceService = {
   
   // Remove uma categoria
   deleteCategory: (categoryId: string): void => {
+    if (!categoryId) {
+      throw new Error("ID de categoria não fornecido");
+    }
+    
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
     delete data[categoryId];
@@ -165,10 +219,19 @@ export const PriceService = {
   
   // Adiciona um item a uma categoria
   addItem: (categoryId: string, item: Omit<PriceItem, 'id'>): PriceItem => {
+    if (!categoryId) {
+      throw new Error("ID de categoria não fornecido");
+    }
+    
+    const validationError = validateItem(item);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+    
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
     // Verifica se já existe um item com o mesmo nome
@@ -183,6 +246,10 @@ export const PriceService = {
     const newItem: PriceItem = {
       id: generateUniqueId(),
       ...item,
+      name: item.name.trim(),
+      description: item.description?.trim() || '',
+      specs: item.specs || [],
+      price: Number(item.price) // Garantir que o preço seja um número
     };
     
     data[categoryId].items.push(newItem);
@@ -192,16 +259,29 @@ export const PriceService = {
   
   // Atualiza um item
   updateItem: (categoryId: string, itemId: string, updates: Partial<PriceItem>): PriceItem => {
+    if (!categoryId || !itemId) {
+      throw new Error("ID de categoria ou ID de item não fornecido");
+    }
+    
+    // Validar campos atualizados
+    if (updates.price !== undefined && (isNaN(Number(updates.price)) || Number(updates.price) < 0)) {
+      throw new Error("Preço deve ser um número positivo");
+    }
+    
+    if (updates.name !== undefined && updates.name.trim() === '') {
+      throw new Error("Nome do item não pode ser vazio");
+    }
+    
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
     const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
-      throw new Error(`Item com ID ${itemId} não encontrado na categoria ${categoryId}`);
+      throw new Error(`Item com ID "${itemId}" não encontrado na categoria ${categoryId}`);
     }
     
     // Verificar se estamos alterando o nome para um nome já existente
@@ -215,9 +295,18 @@ export const PriceService = {
       }
     }
     
+    // Atualizar o item com os novos valores
     data[categoryId].items[itemIndex] = {
       ...data[categoryId].items[itemIndex],
       ...updates,
+      // Garantir que o ID não seja alterado
+      id: itemId,
+      // Processar campos de texto para remover espaços extras
+      name: updates.name !== undefined ? updates.name.trim() : data[categoryId].items[itemIndex].name,
+      description: updates.description !== undefined ? 
+        updates.description.trim() : data[categoryId].items[itemIndex].description,
+      // Garantir que o preço seja um número
+      price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price
     };
     
     saveDataToStorage(data);
@@ -226,16 +315,20 @@ export const PriceService = {
   
   // Remove um item
   deleteItem: (categoryId: string, itemId: string): void => {
+    if (!categoryId || !itemId) {
+      throw new Error("ID de categoria ou ID de item não fornecido");
+    }
+    
     const data = loadDataFromStorage();
     
     if (!data[categoryId]) {
-      throw new Error(`Categoria com ID ${categoryId} não encontrada`);
+      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
     const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
-      throw new Error(`Item com ID ${itemId} não encontrado na categoria ${categoryId}`);
+      throw new Error(`Item com ID "${itemId}" não encontrado na categoria ${categoryId}`);
     }
     
     data[categoryId].items.splice(itemIndex, 1);
@@ -268,9 +361,9 @@ export const PriceService = {
           name: (category as PriceCategory).name || categoryId,
           items: (category as PriceCategory).items.map(item => ({
             id: item.id || generateUniqueId(),
-            name: item.name,
-            description: item.description || '',
-            price: typeof item.price === 'number' ? item.price : 0,
+            name: item.name?.trim() || 'Item sem nome',
+            description: item.description?.trim() || '',
+            price: typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0,
             specs: Array.isArray(item.specs) ? item.specs : [],
             type: item.type || categoryId,
             subtype: item.subtype,
@@ -283,6 +376,11 @@ export const PriceService = {
       return mergedData;
     } catch (error) {
       console.error('Erro ao importar dados JSON:', error);
+      toast({
+        title: "Erro ao importar dados",
+        description: error instanceof Error ? error.message : "Formato JSON inválido",
+        variant: "destructive"
+      });
       throw error;
     }
   },
@@ -291,6 +389,10 @@ export const PriceService = {
   importFromCSV: (csvData: string): PriceData => {
     try {
       const lines = csvData.split('\n');
+      
+      if (lines.length < 2) {
+        throw new Error("Arquivo CSV inválido ou vazio");
+      }
       
       // Extrai o cabeçalho
       const header = lines[0].split(',').map(h => h.trim());
@@ -308,46 +410,90 @@ export const PriceService = {
       // Processa linhas de dados
       const existingData = loadDataFromStorage();
       const mergedData: PriceData = { ...existingData };
+      let importedItems = 0;
+      let invalidItems = 0;
       
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue; // Ignora linhas vazias
         
         const values = lines[i].split(',').map(v => v.trim());
         
-        const categoryId = values[categoryIndex].toLowerCase().replace(/\s+/g, '-');
+        if (values.length < Math.max(categoryIndex, nameIndex, priceIndex) + 1) {
+          invalidItems++;
+          continue; // Linha não tem todas as colunas necessárias
+        }
+        
+        const categoryName = values[categoryIndex];
+        if (!categoryName) {
+          invalidItems++;
+          continue; // Categoria vazia
+        }
+        
+        const categoryId = categoryName.toLowerCase().replace(/\s+/g, '-');
         const name = values[nameIndex];
+        if (!name) {
+          invalidItems++;
+          continue; // Nome vazio
+        }
+        
         const description = descriptionIndex !== -1 ? values[descriptionIndex] : '';
         const price = parseFloat(values[priceIndex]);
         
         if (isNaN(price)) {
-          console.warn(`Ignorando linha ${i+1} devido a preço inválido: ${values[priceIndex]}`);
-          continue;
+          invalidItems++;
+          continue; // Preço inválido
         }
         
         // Cria a categoria se não existir
         if (!mergedData[categoryId]) {
           mergedData[categoryId] = {
             id: categoryId,
-            name: values[categoryIndex], // Usa o nome original da categoria com capitalização apropriada
+            name: categoryName, // Usa o nome original da categoria com capitalização apropriada
             items: [],
           };
         }
         
-        // Adiciona o item à categoria
-        mergedData[categoryId].items.push({
-          id: generateUniqueId(),
-          name,
-          description,
-          price,
-          specs: [],
-          type: categoryId,
-        });
+        // Verifica se já existe um item com o mesmo nome
+        const existingItem = mergedData[categoryId].items.find(
+          item => item.name.toLowerCase() === name.toLowerCase()
+        );
+        
+        if (existingItem) {
+          // Atualiza item existente
+          existingItem.description = description;
+          existingItem.price = price;
+        } else {
+          // Adiciona o item à categoria
+          mergedData[categoryId].items.push({
+            id: generateUniqueId(),
+            name,
+            description,
+            price,
+            specs: [],
+            type: categoryId,
+          });
+        }
+        
+        importedItems++;
       }
       
       saveDataToStorage(mergedData);
+      
+      if (invalidItems > 0) {
+        toast({
+          title: "Importação parcial",
+          description: `Importados ${importedItems} itens. ${invalidItems} itens foram ignorados por terem formato inválido.`
+        });
+      }
+      
       return mergedData;
     } catch (error) {
       console.error('Erro ao importar dados CSV:', error);
+      toast({
+        title: "Erro ao importar CSV",
+        description: error instanceof Error ? error.message : "Formato CSV inválido",
+        variant: "destructive"
+      });
       throw error;
     }
   },
@@ -369,6 +515,11 @@ export const PriceService = {
       }
     } catch (error) {
       console.error('Erro ao inicializar serviço de preços:', error);
+      toast({
+        title: "Erro na inicialização",
+        description: "Não foi possível inicializar o serviço de preços.",
+        variant: "destructive"
+      });
     }
   }
 };

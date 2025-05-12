@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCaption } from "@/components/ui/table";
@@ -87,18 +88,21 @@ export default function PriceTable() {
     try {
       const content = await file.text();
       
-      if (file.name.endsWith('.json')) {
+      if (file.name.toLowerCase().endsWith('.json')) {
         setPriceData(PriceService.importFromJSON(content));
-      } else if (file.name.endsWith('.csv')) {
+        toast({
+          title: "Dados importados com sucesso",
+          description: "Os dados JSON foram validados e carregados."
+        });
+      } else if (file.name.toLowerCase().endsWith('.csv')) {
         setPriceData(PriceService.importFromCSV(content));
+        toast({
+          title: "Dados importados com sucesso",
+          description: "Os dados CSV foram validados e carregados."
+        });
       } else {
         throw new Error("Formato de arquivo não suportado. Use JSON ou CSV.");
       }
-      
-      toast({
-        title: "Dados importados com sucesso",
-        description: "Os dados foram validados e carregados."
-      });
     } catch (error) {
       toast({
         title: "Erro ao importar",
@@ -162,8 +166,17 @@ export default function PriceTable() {
         metadata: {}
       };
       
-      // Apenas adiciona o item ao serviço, o listener já atualiza o estado
-      PriceService.addItem(activeTab, itemData);
+      // Adiciona o item ao serviço
+      const newItem = PriceService.addItem(activeTab, itemData);
+      
+      // Atualiza o estado local para feedback imediato
+      setPriceData(prev => ({
+        ...prev,
+        [activeTab]: {
+          ...prev[activeTab],
+          items: [...prev[activeTab].items, newItem]
+        }
+      }));
       
       // Fecha o modal
       setOpenAddItem(false);
@@ -201,10 +214,21 @@ export default function PriceTable() {
         specs: Array.isArray(values.specs) ? values.specs : [],
       };
       
-      // Update the item using the existing service method
-      PriceService.updateItem(activeTab, itemId, updatedItemData);
+      // Atualiza o item usando o método existente
+      const updatedItem = PriceService.updateItem(activeTab, itemId, updatedItemData);
       
-      // Close the edit dialog
+      // Atualiza o estado local para feedback imediato
+      setPriceData(prev => ({
+        ...prev,
+        [activeTab]: {
+          ...prev[activeTab],
+          items: prev[activeTab].items.map(item => 
+            item.id === itemId ? updatedItem : item
+          )
+        }
+      }));
+      
+      // Fecha o diálogo de edição
       setOpenEditItem(false);
       setItemToEdit(undefined);
       
@@ -265,6 +289,7 @@ export default function PriceTable() {
     try {
       PriceService.deleteItem(activeTab, itemId);
       
+      // Atualiza o estado local para feedback imediato
       setPriceData(prev => ({
         ...prev,
         [activeTab]: {
