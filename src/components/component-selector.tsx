@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HelpTooltip } from "./help-tooltip";
 import { formatCurrency } from "@/lib/utils";
@@ -39,6 +40,20 @@ export function ComponentSelector({
   highlightSelection,
   groupedOptions
 }: ComponentSelectorProps) {
+  const [localValue, setLocalValue] = useState(value);
+  
+  // Sync external value with internal state
+  useEffect(() => {
+    if (value !== localValue) {
+      setLocalValue(value);
+    }
+  }, [value]);
+
+  const handleValueChange = (newValue: string) => {
+    setLocalValue(newValue);
+    onChange(newValue);
+  };
+
   const shouldShowPrice = (option: Option) => {
     return option.type !== "DataCenter" && option.type !== "Contrato";
   };
@@ -49,7 +64,7 @@ export function ComponentSelector({
       value={option.id}
       className={cn(
         "flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white",
-        highlightSelection && option.id === value && "bg-primary/10 border-l-2 border-primary"
+        highlightSelection && option.id === localValue && "bg-primary/10 border-l-2 border-primary"
       )}
     >
       <div className="flex justify-between items-center w-full gap-4">
@@ -88,7 +103,7 @@ export function ComponentSelector({
         </label>
       </div>
 
-      <Select value={value} onValueChange={onChange}>
+      <Select value={localValue} onValueChange={handleValueChange}>
         <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
           <SelectValue placeholder={`Escolha o ${label.toLowerCase()} ideal para você`} />
         </SelectTrigger>

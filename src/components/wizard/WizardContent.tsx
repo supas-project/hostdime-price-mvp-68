@@ -4,10 +4,11 @@ import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
+import { findMatchingComponent } from "@/utils/component-matching";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -33,7 +34,16 @@ export function WizardContent() {
     // Find the component using the normalized type
     for (const key of Object.keys(selectedComponents)) {
       if (normalizeComponentType(key) === normalizedType) {
-        return selectedComponents[key];
+        const selectedOption = selectedComponents[key];
+        
+        // If we have options in this component and a selected option,
+        // try to find its matching representation in the options list
+        if (component.options.length > 0 && selectedOption) {
+          const matchingOption = findMatchingComponent(selectedOption, component.options);
+          return matchingOption || selectedOption;
+        }
+        
+        return selectedOption;
       }
     }
     

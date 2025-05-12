@@ -1,17 +1,23 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
+import { normalizeComponentType } from "./use-component-selection";
 
 /**
  * Hook para obter opções de componentes da tabela de preços
  * @param categoryId - ID da categoria na tabela de preços
- * @returns Array de opções de componentes
+ * @param selectedOption - Opção selecionada para sincronizar o visual com o estado global
+ * @returns Array de opções de componentes, estado de carregamento e erro
  */
-export function useComponentOptions(categoryId: string): {
+export function useComponentOptions(
+  categoryId: string, 
+  selectedOption?: ComponentOption | null
+): {
   options: ComponentOption[];
   isLoading: boolean;
   error: Error | null;
+  matchedSelectedOption: ComponentOption | null;
 } {
   const [options, setOptions] = useState<ComponentOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +43,7 @@ export function useComponentOptions(categoryId: string): {
             specs: Array.isArray(item.specs) ? item.specs : [],
             type: item.type,
             subtype: item.subtype,
+            isHardware: item.isHardware,
             metadata: item.metadata
           }));
           
@@ -73,5 +80,34 @@ export function useComponentOptions(categoryId: string): {
     };
   }, [categoryId]);
 
-  return { options, isLoading, error };
+  // Sincronizar e encontrar a opção selecionada no array de opções disponíveis
+  const matchedSelectedOption = useMemo(() => {
+    if (!selectedOption || options.length === 0) return null;
+    
+    // Normalizar tipo do componente para comparação consistente
+    const normalizedType = normalizeComponentType(selectedOption.type);
+    
+    // Tenta encontrar pelo ID exato primeiro
+    const exactIdMatch = options.find(opt => opt.id === selectedOption.id);
+    if (exactIdMatch) return exactIdMatch;
+    
+    // Tenta encontrar por nome exato
+    const nameMatch = options.find(opt => opt.name === selectedOption.name);
+    if (nameMatch) return nameMatch;
+    
+    // Tenta encontrar por nome normalizado (removendo caracteres especiais, etc)
+    const normalizedName = selectedOption.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedMatch = options.find(opt => 
+      opt.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedName
+    );
+    
+    return normalizedMatch || null;
+  }, [selectedOption, options]);
+
+  return { 
+    options, 
+    isLoading, 
+    error,
+    matchedSelectedOption 
+  };
 }

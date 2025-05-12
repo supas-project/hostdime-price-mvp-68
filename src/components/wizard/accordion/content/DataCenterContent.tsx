@@ -1,7 +1,9 @@
 
+import { useState, useEffect } from "react";
 import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
+import { findMatchingComponent } from "@/utils/component-matching";
 
 interface DataCenterContentProps {
   options: ComponentOption[];
@@ -14,16 +16,31 @@ export function DataCenterContent({
   selectedOption, 
   onSelectOption 
 }: DataCenterContentProps) {
+  // Find the matching selected option in the available options
+  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  // Synchronize selected option when it changes
+  useEffect(() => {
+    if (selectedOption) {
+      // Try to find a matching component in case the selectedOption came from elsewhere
+      const matchingComponent = findMatchingComponent(selectedOption, options);
+      setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+    }
+  }, [selectedOption, options]);
+  
+  const handleChange = (value: string) => {
+    setLocalSelectedId(value);
+    const option = options.find(opt => opt.id === value);
+    if (option) onSelectOption(option);
+  };
+
   return (
     <Card className="p-6">
       <ComponentSelector
         label="Data Center"
         options={options}
-        value={selectedOption?.id || ""}
-        onChange={(value) => {
-          const option = options.find(opt => opt.id === value);
-          if (option) onSelectOption(option);
-        }}
+        value={localSelectedId}
+        onChange={handleChange}
         tooltip="Escolha a localização ideal para seu servidor"
         highlightSelection={true}
       />

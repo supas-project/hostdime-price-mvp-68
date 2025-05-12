@@ -1,9 +1,11 @@
 
+import { useState, useEffect } from "react";
 import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
+import { findMatchingComponent } from "@/utils/component-matching";
 
 interface ContractContentProps {
   options: ComponentOption[];
@@ -16,7 +18,18 @@ export function ContractContent({
   selectedOption, 
   onSelectOption 
 }: ContractContentProps) {
+  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  // Synchronize selected option when it changes
+  useEffect(() => {
+    if (selectedOption) {
+      const matchingComponent = findMatchingComponent(selectedOption, options);
+      setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+    }
+  }, [selectedOption, options]);
+  
   const handleOptionChange = (value: string) => {
+    setLocalSelectedId(value);
     const option = options.find(opt => opt.id === value);
     if (option) {
       onSelectOption(option);
@@ -31,7 +44,7 @@ export function ContractContent({
       <ComponentSelector
         label="Duração do Contrato"
         options={options}
-        value={selectedOption?.id || ""}
+        value={localSelectedId}
         onChange={handleOptionChange}
         tooltip="Escolha o período do seu contrato"
         highlightSelection={true}

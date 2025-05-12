@@ -9,6 +9,7 @@ import { ConnectivityContent } from "./content/ConnectivityContent";
 import { StorageContent } from "./content/StorageContent";
 import { OSContent } from "./content/OSContent";
 import { CustomServicesContent } from "./content/CustomServicesContent";
+import { findMatchingComponent } from "@/utils/component-matching";
 
 interface AccordionContentProps {
   component: ServerComponent;
@@ -29,12 +30,17 @@ export function AccordionContent({
 }: AccordionContentProps) {
   const isSpecialComponentType = ["DataCenter", "Contrato", "Conectividade", "Armazenamento", "Memória", "SistemaOperacional", "ServiçosPersonalizados"].includes(component.type);
 
+  // Try to find a matching option in the component options if needed
+  const matchedSelectedOption = selectedOption && component.options.length > 0 
+    ? findMatchingComponent(selectedOption, component.options) || selectedOption 
+    : selectedOption;
+
   const renderComponentContent = () => {
     switch (component.type) {
       case "Processador":
         return (
           <ProcessorContent
-            selectedOption={selectedOption}
+            selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />
         );
@@ -42,7 +48,7 @@ export function AccordionContent({
       case "Memória":
         return (
           <MemoryContent
-            selectedOption={selectedOption}
+            selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />
         );
@@ -51,7 +57,7 @@ export function AccordionContent({
         return (
           <DataCenterContent
             options={component.options}
-            selectedOption={selectedOption}
+            selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />
         );
@@ -60,7 +66,7 @@ export function AccordionContent({
         return (
           <ContractContent
             options={component.options}
-            selectedOption={selectedOption}
+            selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />
         );
@@ -87,7 +93,7 @@ export function AccordionContent({
         return (
           <OSContent
             options={component.options}
-            selectedOption={selectedOption}
+            selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />
         );
@@ -105,7 +111,7 @@ export function AccordionContent({
       <StepHeader 
         description={component.description}
         isSpecialComponent={isSpecialComponentType}
-        hasSelectedOption={!!selectedOption}
+        hasSelectedOption={!!matchedSelectedOption}
       />
       {renderComponentContent()}
     </>

@@ -1,9 +1,10 @@
 
 import { ComponentOption } from "@/types/component";
 import { ComponentSelector } from "@/components/component-selector";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { useWizard } from "@/contexts/WizardContext";
+import { findMatchingComponent } from "@/utils/component-matching";
 
 interface OSSelectorProps {
   options: ComponentOption[];
@@ -19,6 +20,16 @@ export function OSSelector({
   const { selectedComponents } = useWizard();
   const processorInfo = selectedComponents["processador"];
   const coreCount = processorInfo?.metadata?.cores || 1;
+  
+  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  // Synchronize selected option when it changes
+  useEffect(() => {
+    if (selectedOption) {
+      const matchingComponent = findMatchingComponent(selectedOption, options);
+      setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+    }
+  }, [selectedOption, options]);
 
   const formattedOptions = useMemo(() => {
     const windowsOptions = options
@@ -53,6 +64,12 @@ export function OSSelector({
     ].filter(group => group.options.length > 0);
   }, [options, coreCount]);
 
+  const handleValueChange = (value: string) => {
+    setLocalSelectedId(value);
+    const option = options.find(opt => opt.id === value);
+    if (option) onSelectOption(option);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
@@ -66,11 +83,8 @@ export function OSSelector({
       <ComponentSelector
         label="Sistema Operacional"
         options={formattedOptions.flatMap(group => group.options)}
-        value={selectedOption?.id || ""}
-        onChange={(value) => {
-          const option = options.find(opt => opt.id === value);
-          if (option) onSelectOption(option);
-        }}
+        value={localSelectedId}
+        onChange={handleValueChange}
         tooltip="Escolha o sistema operacional ideal para seu servidor"
         highlightSelection={true}
         groupedOptions={formattedOptions}
