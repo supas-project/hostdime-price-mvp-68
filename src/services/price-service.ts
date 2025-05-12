@@ -1,4 +1,3 @@
-
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 
@@ -212,7 +211,7 @@ export const PriceService = {
       );
       
       if (duplicateName) {
-        throw new Error(`Já existe um item com o nome "${updates.name}" nesta categoria`);
+        throw new Error(`Não é possível renomear para "${updates.name}" pois já existe um item com este nome nesta categoria`);
       }
     }
     

@@ -28,6 +28,23 @@ export function useStandardComponents() {
     });
   };
 
+  const handleUpdateOption = (option: ComponentOption) => {
+    if (!validateOption(option)) return;
+
+    setSelectedComponents((prev) => {
+      const normalizedType = normalizeComponentType(option.type);
+      
+      // Only update if the component type already exists
+      if (prev[normalizedType]) {
+        return {
+          ...prev,
+          [normalizedType]: { ...option }
+        };
+      }
+      return prev;
+    });
+  };
+
   const handleRemoveStandardComponent = (type: string) => {
     const normalizedType = normalizeComponentType(type);
     
@@ -42,6 +59,7 @@ export function useStandardComponents() {
     selectedComponents,
     setSelectedComponents,
     handleSelectOption,
+    handleUpdateOption,
     handleRemoveStandardComponent
   };
 }

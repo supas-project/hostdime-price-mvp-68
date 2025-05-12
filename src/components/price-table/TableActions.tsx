@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CategoryForm } from "./forms/CategoryForm";
 import { ItemForm } from "./forms/ItemForm";
-import { Plus, Download, RefreshCw, FileUp } from "lucide-react";
-import { PriceCategory } from "@/types/pricing";
+import { Plus, Download, RefreshCw } from "lucide-react";
+import { PriceCategory, PriceItem } from "@/types/pricing";
 import { HelpTooltip } from "@/components/help-tooltip";
 
 interface TableActionsProps {
@@ -29,10 +29,15 @@ interface TableActionsProps {
   priceData: Record<string, PriceCategory>;
   openAddCategory: boolean;
   openAddItem: boolean;
+  openEditItem: boolean;
+  itemToEdit?: PriceItem;
   setOpenAddCategory: (open: boolean) => void;
   setOpenAddItem: (open: boolean) => void;
+  setOpenEditItem: (open: boolean) => void;
+  setItemToEdit: (item?: PriceItem) => void;
   onAddCategory: (values: any) => void;
   onAddItem: (values: any) => void;
+  onEditItem: (values: any, itemId?: string) => void;
   onExportData: () => void;
   onResetData: () => void;
 }
@@ -42,10 +47,15 @@ export function TableActions({
   priceData,
   openAddCategory,
   openAddItem,
+  openEditItem,
+  itemToEdit,
   setOpenAddCategory,
   setOpenAddItem,
+  setOpenEditItem,
+  setItemToEdit,
   onAddCategory,
   onAddItem,
+  onEditItem,
   onExportData,
   onResetData
 }: TableActionsProps) {
@@ -67,24 +77,47 @@ export function TableActions({
       </Dialog>
 
       {activeTab && (
-        <Dialog open={openAddItem} onOpenChange={setOpenAddItem}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Item
-              <HelpTooltip 
-                title="Adicionar item"
-                description={`Adiciona um novo item à categoria ${priceData[activeTab]?.name || ''}`}
-              />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Adicionar Item à {priceData[activeTab]?.name}</DialogTitle>
-            </DialogHeader>
-            <ItemForm onSubmit={onAddItem} defaultType={activeTab} />
-          </DialogContent>
-        </Dialog>
+        <>
+          <Dialog open={openAddItem} onOpenChange={setOpenAddItem}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Item
+                <HelpTooltip 
+                  title="Adicionar item"
+                  description={`Adiciona um novo item à categoria ${priceData[activeTab]?.name || ''}`}
+                />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Adicionar Item à {priceData[activeTab]?.name}</DialogTitle>
+              </DialogHeader>
+              <ItemForm onSubmit={onAddItem} defaultType={activeTab} />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog 
+            open={openEditItem} 
+            onOpenChange={(open) => {
+              setOpenEditItem(open);
+              if (!open) setItemToEdit(undefined);
+            }}
+          >
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Editar Item na {priceData[activeTab]?.name}</DialogTitle>
+              </DialogHeader>
+              {itemToEdit && (
+                <ItemForm 
+                  onSubmit={onEditItem} 
+                  item={itemToEdit} 
+                  isEditing={true} 
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
       )}
 
       <Button 

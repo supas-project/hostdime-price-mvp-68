@@ -23,6 +23,8 @@ export default function PriceTable() {
   const [activeTab, setActiveTab] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [openAddItem, setOpenAddItem] = useState(false);
+  const [openEditItem, setOpenEditItem] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "card">("table");
@@ -179,6 +181,51 @@ export default function PriceTable() {
     }
   };
 
+  const handleEditItem = (values: any, itemId?: string) => {
+    if (!activeTab || !itemId) {
+      toast({
+        title: "Erro ao editar item",
+        description: "Nenhuma categoria ou item selecionado.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const updatedItemData = {
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        type: values.type,
+        subtype: values.subtype,
+        specs: Array.isArray(values.specs) ? values.specs : [],
+      };
+      
+      // Update the item using the existing service method
+      PriceService.updateItem(activeTab, itemId, updatedItemData);
+      
+      // Close the edit dialog
+      setOpenEditItem(false);
+      setItemToEdit(undefined);
+      
+      toast({
+        title: "Item atualizado",
+        description: `O item ${values.name} foi atualizado com sucesso.`
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao editar item",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleInitiateEdit = (item: PriceItem) => {
+    setItemToEdit(item);
+    setOpenEditItem(true);
+  };
+
   const handleDeleteCategory = (categoryId: string) => {
     try {
       PriceService.deleteCategory(categoryId);
@@ -329,10 +376,15 @@ export default function PriceTable() {
                 priceData={priceData}
                 openAddCategory={openAddCategory}
                 openAddItem={openAddItem}
+                openEditItem={openEditItem}
+                itemToEdit={itemToEdit}
                 setOpenAddCategory={setOpenAddCategory}
                 setOpenAddItem={setOpenAddItem}
+                setOpenEditItem={setOpenEditItem}
+                setItemToEdit={setItemToEdit}
                 onAddCategory={handleAddCategory}
                 onAddItem={handleAddItem}
+                onEditItem={handleEditItem}
                 onExportData={handleExportData}
                 onResetData={handleResetData}
               />
@@ -392,7 +444,7 @@ export default function PriceTable() {
                             <TableContent 
                               category={{...category, items: filteredItems}} 
                               onDelete={isAdmin ? handleDeleteItem : undefined}
-                              onEdit={isAdmin ? handleAddItem : undefined}
+                              onEdit={isAdmin ? handleInitiateEdit : undefined}
                               displayMode="card"
                               sortOrder={sortOrder}
                             />
@@ -411,7 +463,7 @@ export default function PriceTable() {
                                   <TableContent 
                                     category={{...category, items: filteredItems}} 
                                     onDelete={isAdmin ? handleDeleteItem : undefined}
-                                    onEdit={isAdmin ? handleAddItem : undefined}
+                                    onEdit={isAdmin ? handleInitiateEdit : undefined}
                                     sortOrder={sortOrder}
                                   />
                                 </TableBody>

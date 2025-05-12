@@ -158,7 +158,13 @@ export function TableContent({
             <TableCell className="text-right">
               <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                 {onEdit && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(item)}>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    onClick={() => onEdit(item)}
+                    title="Editar item"
+                  >
                     <Edit className="h-4 w-4" />
                     <span className="sr-only">Editar</span>
                   </Button>

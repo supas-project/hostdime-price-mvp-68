@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +14,7 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
+import { PriceItem } from "@/types/pricing";
 
 // Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
@@ -36,14 +38,23 @@ const itemFormSchema = z.object({
 type FormValues = z.infer<typeof itemFormSchema>;
 
 type ItemFormProps = {
-  onSubmit: (values: FormValues) => void;
+  onSubmit: (values: FormValues, itemId?: string) => void;
   defaultType?: string;
+  item?: PriceItem; // Added to support editing existing items
+  isEditing?: boolean; // Flag to indicate if we're editing an item
 };
 
-export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
+export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues: {
+    defaultValues: item ? {
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      type: item.type,
+      subtype: item.subtype || "",
+      specs: item.specs || [],
+    } : {
       name: "",
       description: "",
       price: 0,
@@ -53,9 +64,14 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
     },
   });
 
+  const handleSubmit = (values: FormValues) => {
+    // Pass the item ID if we're in edit mode
+    onSubmit(values, isEditing ? item?.id : undefined);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
         <FormField
           control={form.control}
           name="name"
@@ -154,7 +170,9 @@ export function ItemForm({ onSubmit, defaultType }: ItemFormProps) {
         />
 
         <div className="flex justify-end pt-2">
-          <Button type="submit">Adicionar Item</Button>
+          <Button type="submit">
+            {isEditing ? "Salvar Alterações" : "Adicionar Item"}
+          </Button>
         </div>
       </form>
     </Form>
