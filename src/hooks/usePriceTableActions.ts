@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
@@ -14,6 +13,11 @@ export function usePriceTableActions(
   const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const { toast } = useToast();
+
+  const handleInitiateEdit = (item: PriceItem) => {
+    setItemToEdit(item);
+    setOpenEditItem(true);
+  };
 
   const handleAddCategory = (values: any) => {
     try {
