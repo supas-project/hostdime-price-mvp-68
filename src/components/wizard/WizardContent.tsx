@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 
 export function WizardContent() {
@@ -20,20 +21,16 @@ export function WizardContent() {
     handleSelectStorageItem 
   } = useWizard();
 
-  const getSelectedOption = (component: any) => {
+  const getSelectedOption = (component: ServerComponent): ComponentOption | null => {
     if (!component) return null;
     
-    const type = component.type;
-    const normalizedType = normalizeComponentType(type);
-    
-    console.log(`Getting selected option for ${type} (normalized: ${normalizedType})`);
-    console.log(`Available keys:`, Object.keys(selectedComponents).map(k => normalizeComponentType(k)));
+    const normalizedType = normalizeComponentType(component.type);
     
     if (normalizedType === "armazenamento") {
       return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
     }
     
-    // Procurar o componente usando o tipo normalizado
+    // Find the component using the normalized type
     for (const key of Object.keys(selectedComponents)) {
       if (normalizeComponentType(key) === normalizedType) {
         return selectedComponents[key];

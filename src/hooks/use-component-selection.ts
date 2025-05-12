@@ -32,7 +32,6 @@ export const normalizeComponentType = (type: string): string => {
     "serviçospersonalizados": "servicospersonalizados"
   };
   
-  console.log(`Normalizing type: ${type} -> lowercase: ${lowercase} -> normalized: ${typeMap[lowercase] || lowercase}`);
   return typeMap[lowercase] || lowercase;
 };
 
@@ -64,12 +63,8 @@ export function useComponentSelection() {
     removeCustomService
   } = useCustomServices();
 
-  // We're not calling useLocalStorage here anymore - each hook manages its own localStorage
-
   // Função principal para remover componentes
   const handleRemoveComponent = (type: string) => {
-    console.log("Removing component:", type);
-    
     if (type.startsWith("internal-disk-") || type.startsWith("external-storage-") ||
         type === "storage_internal" || type === "storage_external") {
       handleRemoveStorageItem(type);

@@ -16,8 +16,7 @@ const WizardContainer = () => {
     showFinalSummary,
     setShowFinalSummary,
     isStepComplete,
-    handleRestart,
-    beginnerMode
+    handleRestart
   } = useWizard();
 
   return (
@@ -30,7 +29,7 @@ const WizardContainer = () => {
           <p className="text-muted-foreground max-w-lg mx-auto">
             Selecione as opções ideais para seu servidor dedicado em poucos passos
           </p>
-          {/* Beginner mode toggle removed as requested */}
+          {/* BeginnerModeToggle completely removed */}
         </div>
 
         <ProgressIndicator 
