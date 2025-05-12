@@ -1,55 +1,44 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
+import { usePriceData } from "../use-component-options";
+import { useLocalStorage } from "./use-local-storage";
 import { normalizeComponentType } from "../use-component-selection";
+import { canSelectItem } from "@/utils/item-validation";
+import { toast } from "@/hooks/use-toast";
 
 export function useStandardComponents() {
-  const [selectedComponents, setSelectedComponents] = useState<{ [key: string]: ComponentOption }>({});
-
-  const validateOption = (option: ComponentOption): boolean => {
-    if (!option.type || !option.id || typeof option.price !== 'number') {
-      console.error('Invalid option format:', option);
-      return false;
-    }
-    return true;
-  };
+  const [selectedComponents, setSelectedComponents] = useLocalStorage<{[key: string]: ComponentOption}>(
+    'selectedComponents',
+    {}
+  );
 
   const handleSelectOption = (option: ComponentOption) => {
-    if (!validateOption(option)) return;
-
-    setSelectedComponents((prev) => {
-      const normalizedType = normalizeComponentType(option.type);
-      
-      // Always create a new object to ensure state is updated
-      return {
-        ...prev,
-        [normalizedType]: { ...option }
-      };
-    });
-  };
-
-  const handleUpdateOption = (option: ComponentOption) => {
-    if (!validateOption(option)) return;
-
-    setSelectedComponents((prev) => {
-      const normalizedType = normalizeComponentType(option.type);
-      
-      // Only update if the component type already exists
-      if (prev[normalizedType]) {
-        return {
-          ...prev,
-          [normalizedType]: { ...option }
-        };
-      }
-      return prev;
-    });
+    // Validação do item antes de selecionar
+    if (!canSelectItem(option)) {
+      console.warn(`Item não pode ser selecionado: ${option.name}`);
+      toast({
+        title: "Item não selecionável",
+        description: "Este item não pode ser selecionado devido a configuração inválida.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Normaliza o tipo do componente para consistência
+    const normalizedType = normalizeComponentType(option.type);
+    
+    setSelectedComponents(prev => ({
+      ...prev,
+      [normalizedType]: option
+    }));
   };
 
   const handleRemoveStandardComponent = (type: string) => {
     const normalizedType = normalizeComponentType(type);
     
-    setSelectedComponents((prev) => {
-      const updated = { ...prev };
+    setSelectedComponents(prev => {
+      const updated = {...prev};
       delete updated[normalizedType];
       return updated;
     });
@@ -59,7 +48,6 @@ export function useStandardComponents() {
     selectedComponents,
     setSelectedComponents,
     handleSelectOption,
-    handleUpdateOption,
     handleRemoveStandardComponent
   };
 }
