@@ -14,6 +14,7 @@ export const cpuComponents: ServerComponent = {
       name: "Intel Xeon E5-2620v3 (15 cores)",
       price: 450.00,
       description: "Processador ideal para cargas de trabalho moderadas",
+      isHardware: true,
       specs: [
         "Modelo: Intel Xeon E5-2620v3",
         "Clock Base: 2.4 GHz",
@@ -30,6 +31,7 @@ export const cpuComponents: ServerComponent = {
       name: "Intel Xeon Silver 4210 (10 cores)",
       price: 730.00,
       description: "Excelente para aplicações empresariais",
+      isHardware: true,
       specs: [
         "Modelo: Intel Xeon Silver 4210",
         "Clock Base: 2.2 GHz",
@@ -46,6 +48,7 @@ export const cpuComponents: ServerComponent = {
       name: "Intel Xeon Gold 6248R (24 cores)",
       price: 1600.00,
       description: "Alto desempenho para cargas intensivas",
+      isHardware: true,
       specs: [
         "Modelo: Intel Xeon Gold 6248R",
         "Clock Base: 3.0 GHz",
@@ -62,6 +65,7 @@ export const cpuComponents: ServerComponent = {
       name: "AMD EPYC 7352 (24 cores)",
       price: 1300.00,
       description: "Ótima relação custo-benefício",
+      isHardware: true,
       specs: [
         "Modelo: AMD EPYC 7352",
         "Clock Base: 2.3 GHz",
@@ -78,6 +82,7 @@ export const cpuComponents: ServerComponent = {
       name: "AMD EPYC 7502 (32 cores)",
       price: 2200.00,
       description: "Ideal para virtualização e cargas pesadas",
+      isHardware: true,
       specs: [
         "Modelo: AMD EPYC 7502",
         "Clock Base: 2.5 GHz",
@@ -94,6 +99,7 @@ export const cpuComponents: ServerComponent = {
       name: "AMD EPYC 7742 (64 cores)",
       price: 4300.00,
       description: "Máximo desempenho para aplicações críticas",
+      isHardware: true,
       specs: [
         "Modelo: AMD EPYC 7742",
         "Clock Base: 2.25 GHz",

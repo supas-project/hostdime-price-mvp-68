@@ -7,6 +7,8 @@ import { Check, Shield, Wifi } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { cn } from "@/lib/utils";
 import { CustomService } from "@/types/wizard";
+import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
+import { usePayBackCalculation } from "@/hooks/usePayBackCalculation";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -16,10 +18,12 @@ interface OrderDetailsProps {
 
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
+  const { calculatePriceWithPayBack } = usePayBackCalculation();
 
   // Separate DataCenter and Contract components
   const dataCenterComponent = selectedComponents["datacenter"];
   const contractComponent = selectedComponents["contrato"];
+  const contractDuration = contractComponent?.subtype || "0";
   
   // Filter non-storage components and handle OS price calculation
   const otherComponents = Object.values(selectedComponents).filter(
@@ -40,36 +44,58 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     }
   );
 
-  // Calculate prices (excluding DataCenter and Contract)
+  // Calculate prices with PayBack for hardware components
   const nonStoragePrice = otherComponents.reduce(
-    (sum, component) => sum + component.price,
+    (sum, component) => {
+      // Apply PayBack for hardware components
+      const price = component.isHardware 
+        ? calculatePriceWithPayBack(component, contractDuration)
+        : component.price;
+        
+      return sum + price;
+    },
     0
   );
   
+  // Apply PayBack to internal storage
   const internalStoragePrice = storageItems.internal
-    .filter(disk => disk && disk.price > 0) // Filtrar discos com preço zero
+    .filter(disk => disk && disk.price > 0)
     .reduce(
-      (sum, disk) => sum + disk.price,
+      (sum, disk) => {
+        const price = disk.isHardware 
+          ? calculatePriceWithPayBack(disk, contractDuration)
+          : disk.price;
+          
+        return sum + price;
+      },
       0
     );
   
+  // Apply PayBack to external storage
   const externalStoragePrice = storageItems.external
-    .filter(storage => storage && storage.price > 0) // Filtrar storages com preço zero
+    .filter(storage => storage && storage.price > 0)
     .reduce(
-      (sum, storage) => sum + storage.price,
+      (sum, storage) => {
+        const price = storage.isHardware 
+          ? calculatePriceWithPayBack(storage, contractDuration)
+          : storage.price;
+          
+        return sum + price;
+      },
       0
     );
   
+  // Calculate other prices normally (non-hardware components)
   const customServicesPrice = customServices.reduce(
     (sum, service) => sum + service.price,
     0
   );
   
-  // Calcular preço de conectividade
   const connectivityPrice = Object.values(connectivityItems)
     .filter(item => item && item.option)
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
   
+  // Calculate final totals
   const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice + connectivityPrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
@@ -81,6 +107,21 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     } else if (handleRemoveComponent) {
       handleRemoveComponent(type);
     }
+  };
+
+  // Helper function to render PayBack badge for hardware components
+  const renderPayBackBadge = (component: ComponentOption) => {
+    if (component.isHardware && contractComponent) {
+      const paybackValue = getPayBackValue(component, contractDuration);
+      if (paybackValue) {
+        return (
+          <span className="ml-1 text-xs bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full">
+            PayBack {formatPayBack(paybackValue)}
+          </span>
+        );
+      }
+    }
+    return null;
   };
 
   return (

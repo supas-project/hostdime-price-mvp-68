@@ -20,6 +20,7 @@ export interface ComponentOption {
   specs?: string[];
   type: string;
   subtype?: string;
+  isHardware?: boolean;
   metadata?: {
     discount?: number;
     features?: string[];

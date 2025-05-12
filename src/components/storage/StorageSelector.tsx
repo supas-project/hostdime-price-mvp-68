@@ -35,8 +35,16 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     handleSelectStorageItem
   });
 
+  // Modified to mark all storage components as hardware
+  const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    // Mark the disk as hardware before passing it
+    const diskWithHardwareFlag = { ...disk, isHardware: true };
+    handleSelectInternalDiskInternal(diskWithHardwareFlag, quantity);
+  };
+
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
-    handleSelectExternalStorageInternal(type, capacity, price, storageTypes);
+    // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
+    handleSelectExternalStorageInternal(type, capacity, price, storageTypes, true); // Added isHardware flag
   };
 
   const storageDescriptions = {
@@ -93,7 +101,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
         <div className="relative">
           <TabsContent value="internal" className="mt-0 relative z-10">
             <div className="animate-fade-in">
-              <InternalStoragePanel onSelectDisk={handleSelectInternalDiskInternal} />
+              <InternalStoragePanel onSelectDisk={handleSelectInternalDisk} />
             </div>
           </TabsContent>
           <TabsContent value="external" className="mt-0 relative z-10">

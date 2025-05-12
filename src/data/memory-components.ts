@@ -14,6 +14,7 @@ export const memoryComponents: ServerComponent = {
       name: "64GB RAM",
       description: "Memória RAM DDR4 ECC Registered",
       price: 480,
+      isHardware: true,
       specs: ["Memória RAM DDR4 de alta performance"]
     }
   ]

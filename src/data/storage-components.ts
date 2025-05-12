@@ -7,5 +7,5 @@ export const storageComponents: ServerComponent = {
   friendlyName: "Armazenamento",
   description: "Escolha o tipo e capacidade de armazenamento",
   icon: "HardDrive",
-  options: [] // As opções são dinâmicas
+  options: [] // As opções são dinâmicas e serão marcadas como hardware na seleção
 };

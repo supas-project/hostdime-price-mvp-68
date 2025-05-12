@@ -13,6 +13,7 @@ export function usePriceTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "card">("table");
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [contractDuration, setContractDuration] = useState<string>("0");
   
   const { toast } = useToast();
 
@@ -21,6 +22,19 @@ export function usePriceTable() {
     try {
       setIsLoading(true);
       const data = PriceService.getAllData();
+      
+      // Mark hardware components
+      Object.values(data).forEach(category => {
+        category.items = category.items.map(item => {
+          // Mark hardware components based on category or type
+          const isHardwareCategory = ["Processador", "Memória", "Armazenamento", "Chassi", "Interface de Rede"].includes(item.type);
+          if (isHardwareCategory) {
+            return { ...item, isHardware: true };
+          }
+          return item;
+        });
+      });
+      
       setPriceData(data);
       setLastSyncTime(new Date());
       
@@ -99,6 +113,8 @@ export function usePriceTable() {
     collapsedCategories,
     toggleCategoryCollapse,
     filterItems,
-    loadPriceData
+    loadPriceData,
+    contractDuration,
+    setContractDuration
   };
 }

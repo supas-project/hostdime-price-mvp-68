@@ -1,3 +1,4 @@
+
 import { ServerComponent } from "@/types/component";
 
 export const contractComponents: ServerComponent = {
@@ -15,7 +16,8 @@ export const contractComponents: ServerComponent = {
       price: 0,
       metadata: {
         discount: 0
-      }
+      },
+      subtype: "0" // Duração em meses
     },
     {
       id: "contract-12",
@@ -25,7 +27,8 @@ export const contractComponents: ServerComponent = {
       price: 0,
       metadata: {
         discount: 5
-      }
+      },
+      subtype: "12" // Duração em meses
     },
     {
       id: "contract-24",
@@ -35,7 +38,8 @@ export const contractComponents: ServerComponent = {
       price: 0,
       metadata: {
         discount: 10
-      }
+      },
+      subtype: "24" // Duração em meses
     },
     {
       id: "contract-36",
@@ -45,7 +49,8 @@ export const contractComponents: ServerComponent = {
       price: 0,
       metadata: {
         discount: 15
-      }
+      },
+      subtype: "36" // Duração em meses
     },
     {
       id: "contract-48",
@@ -55,7 +60,19 @@ export const contractComponents: ServerComponent = {
       price: 0,
       metadata: {
         discount: 20
-      }
+      },
+      subtype: "48" // Duração em meses
+    },
+    {
+      id: "contract-60",
+      type: "Contrato",
+      name: "60 meses",
+      description: "Contrato de cinco anos com desconto máximo",
+      price: 0,
+      metadata: {
+        discount: 25
+      },
+      subtype: "60" // Duração em meses
     }
   ]
 };
