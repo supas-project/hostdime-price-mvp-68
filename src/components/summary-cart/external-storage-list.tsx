@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
@@ -17,10 +18,10 @@ export function ExternalStorageList({ storageItems, onRemoveItem }: ExternalStor
   if (!filteredItems.length) return null;
   
   // Get badge variant based on storage type name
-  const getBadgeVariant = (name: string): "default" | "secondary" | "outline" | "success" | "warning" | "info" => {
+  const getBadgeVariant = (name: string): "default" | "secondary" | "outline" | "success" => {
     const typeName = name.toLowerCase();
-    if (typeName.includes('standard')) return "info";
-    if (typeName.includes('performance')) return "warning";
+    if (typeName.includes('standard')) return "secondary";
+    if (typeName.includes('performance')) return "default";
     if (typeName.includes('premium')) return "success";
     return "secondary";
   };

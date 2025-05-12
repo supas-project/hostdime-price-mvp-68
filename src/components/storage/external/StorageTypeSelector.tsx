@@ -27,7 +27,7 @@ export function StorageTypeSelector({
 }: StorageTypeSelectorProps) {
   // Get badge variant and icon based on storage type
   const getTypeVisuals = (type: string): {
-    variant: "default" | "secondary" | "outline" | "success" | "warning" | "info";
+    variant: "default" | "secondary" | "outline" | "success";
     icon: React.ReactNode;
     label: string;
     simpleDesc: string;
@@ -37,14 +37,14 @@ export function StorageTypeSelector({
     switch (lowerType) {
       case 'standard':
         return {
-          variant: "info",
+          variant: "secondary",
           icon: <CircleDashed className="h-4 w-4" />,
           label: "Básico",
           simpleDesc: "Econômico, para arquivos acessados com pouca frequência"
         };
       case 'performance':
         return {
-          variant: "warning",
+          variant: "default",
           icon: <Circle className="h-4 w-4" />,
           label: "Intermediário",
           simpleDesc: "Equilibrado, bom para a maioria dos sites e aplicativos"

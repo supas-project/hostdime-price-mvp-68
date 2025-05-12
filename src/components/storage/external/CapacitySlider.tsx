@@ -23,9 +23,9 @@ export function CapacitySlider({
   const [inputValue, setInputValue] = useState<string>(capacity.toString());
 
   // Get size classification based on capacity
-  const getSizeCategory = (): { label: string; variant: "info" | "warning" | "success" | "default" } => {
-    if (capacity <= 250) return { label: "Pequeno", variant: "info" };
-    if (capacity <= 800) return { label: "Médio", variant: "warning" };
+  const getSizeCategory = (): { label: string; variant: "secondary" | "success" | "default" } => {
+    if (capacity <= 250) return { label: "Pequeno", variant: "secondary" };
+    if (capacity <= 800) return { label: "Médio", variant: "default" };
     return { label: "Grande", variant: "success" };
   };
 

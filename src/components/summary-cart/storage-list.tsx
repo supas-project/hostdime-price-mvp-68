@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +26,10 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
     }, {} as Record<string, ComponentOption[]>);
 
   // Mapeamento explícito para tipos de variante do Badge
-  const diskTypeVariants: {[key: string]: "success" | "info" | "warning" | "default"} = {
+  const diskTypeVariants: {[key: string]: "success" | "secondary" | "default"} = {
     nvme: "success",
-    ssd: "info",
-    hdd: "warning"
+    ssd: "secondary",
+    hdd: "default"
   };
 
   if (Object.keys(groupedStorage).length === 0) return null;
