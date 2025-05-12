@@ -4,17 +4,7 @@ import { PricedDiskOption, StorageTier } from "@/types/storage";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { canSelectItem } from "@/utils/item-validation";
 import { toast } from "sonner";
-
-// Use StorageTier from types/storage.ts
-interface StorageType {
-  id?: string;
-  name: string;
-  pricePerGB: number;
-  iops: string;
-  throughput: string;
-  description: string;
-  performance?: string;
-}
+import { StorageType } from "@/components/storage/types";
 
 interface StorageHandlersProps {
   onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -50,9 +40,9 @@ export function useStorageHandlers({
         specs: {
           capacity: disk.capacity,
           // Safe type checking for specs
-          readSpeed: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.readSpeed : undefined,
-          writeSpeed: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.writeSpeed : undefined,
-          iops: typeof disk.specs === 'object' && !Array.isArray(disk.specs) ? disk.specs.iops : undefined
+          readSpeed: disk.specs && typeof disk.specs === 'object' && 'readSpeed' in disk.specs ? disk.specs.readSpeed : undefined,
+          writeSpeed: disk.specs && typeof disk.specs === 'object' && 'writeSpeed' in disk.specs ? disk.specs.writeSpeed : undefined,
+          iops: disk.specs && typeof disk.specs === 'object' && 'iops' in disk.specs ? disk.specs.iops : undefined
         }
       }
     };

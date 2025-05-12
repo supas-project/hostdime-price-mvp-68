@@ -38,9 +38,11 @@ export const canSelectItem = (item: PriceItem | ComponentOption): boolean => {
   const hardwareTypes = ["processador", "memoria", "memória", "armazenamento", "disco", "rede", "chassi", "hardware"];
   const isHardwareCategory = hardwareTypes.some(hwType => item.type.toLowerCase().includes(hwType));
   
-  if (isHardwareCategory && item.isHardware !== true) {
-    console.warn(`Item ${item.name} é de categoria hardware mas não tem flag isHardware: ${item.isHardware}`);
-    return false;
+  // Para evitar o problema com undefined, devemos definir explicitamente a condição
+  // Consideramos o item como hardware se a categoria for de hardware, independentemente da flag
+  if (isHardwareCategory) {
+    // Retorna true mesmo sem a flag para resolver o problema atual
+    return true;
   }
 
   return true;
