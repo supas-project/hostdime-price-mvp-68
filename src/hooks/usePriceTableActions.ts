@@ -46,7 +46,7 @@ export function usePriceTableActions(
   };
 
   const handleAddItem = async (values: any) => {
-    // Evitar submissões múltiplas
+    // Avoid multiple submissions
     if (isSubmittingItem) return;
     
     if (!activeTab) {
@@ -68,17 +68,20 @@ export function usePriceTableActions(
         type: values.type || activeTab,
         subtype: values.subtype,
         specs: Array.isArray(values.specs) ? values.specs : [],
+        tags: Array.isArray(values.tags) ? values.tags : [],
+        // Set isHardware based on tags for backwards compatibility
+        isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
         metadata: {}
       };
       
-      // Adiciona o item ao serviço
+      // Add item to service
       PriceService.addItem(activeTab, itemData);
       
-      // Recarrega todos os dados para garantir consistência
+      // Reload data for consistency
       const updatedData = PriceService.getAllData();
       setPriceData(updatedData);
       
-      // Fecha o modal
+      // Close modal
       setOpenAddItem(false);
       
       toast({
@@ -92,16 +95,11 @@ export function usePriceTableActions(
         variant: "destructive"
       });
     } finally {
-      // Reseta o estado após um período
+      // Reset state after a period
       setTimeout(() => {
         setIsSubmittingItem(false);
       }, 500);
     }
-  };
-
-  const handleInitiateEdit = (item: PriceItem) => {
-    setItemToEdit(item);
-    setOpenEditItem(true);
   };
 
   const handleEditItem = (values: any, itemId?: string) => {
@@ -122,12 +120,15 @@ export function usePriceTableActions(
         type: values.type,
         subtype: values.subtype,
         specs: Array.isArray(values.specs) ? values.specs : [],
+        tags: Array.isArray(values.tags) ? values.tags : [],
+        // Update isHardware based on tags for backwards compatibility
+        isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
       };
       
-      // Atualiza o item usando o método existente
+      // Update item using existing method
       const updatedItem = PriceService.updateItem(activeTab, itemId, updatedItemData);
       
-      // Atualiza o estado local para feedback imediato
+      // Update local state for immediate feedback
       setPriceData(prev => ({
         ...prev,
         [activeTab]: {
@@ -138,7 +139,7 @@ export function usePriceTableActions(
         }
       }));
       
-      // Fecha o diálogo de edição
+      // Close edit dialog
       setOpenEditItem(false);
       setItemToEdit(undefined);
       

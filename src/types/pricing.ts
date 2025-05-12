@@ -7,7 +7,8 @@ export interface PriceItem {
   specs?: string[];
   type: string;
   subtype?: string;
-  isHardware?: boolean; // Added isHardware property
+  isHardware?: boolean; // Keep for backwards compatibility
+  tags?: string[]; // New property for tag management
   metadata?: {
     discount?: number;
     features?: string[];
@@ -37,5 +38,6 @@ export interface PriceItemFormData {
   price: number;
   type: string;
   subtype?: string;
-  specs?: string[];  // Make sure this is defined as string[] to match PriceItem
+  specs?: string[];
+  tags?: string[]; // Added tags to form data
 }

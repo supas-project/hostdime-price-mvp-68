@@ -13,9 +13,9 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
+import { TagSelector } from "./TagSelector";
 import { PriceItem } from "@/types/pricing";
 import { useEffect, useState } from "react";
-import { debounce } from "@/lib/utils";
 
 // Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
@@ -47,6 +47,7 @@ const itemFormSchema = z.object({
     },
     z.array(z.string())
   ),
+  tags: z.array(z.string()).default([]), // Added tags field
 });
 
 type FormValues = z.infer<typeof itemFormSchema>;
@@ -61,6 +62,19 @@ type ItemFormProps = {
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Derive initial tags from isHardware for backwards compatibility
+  const getInitialTags = () => {
+    if (!item) return [];
+    
+    // If item has tags property, use it
+    if (item.tags && Array.isArray(item.tags)) {
+      return item.tags;
+    }
+    
+    // Otherwise, derive from isHardware for backwards compatibility
+    return item.isHardware ? ["Hardware"] : [];
+  };
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
@@ -70,6 +84,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       type: item?.type || defaultType || "",
       subtype: item?.subtype || "",
       specs: item?.specs || [],
+      tags: getInitialTags(),
     },
     mode: "onBlur", // Validar ao perder o foco
   });
@@ -84,13 +99,32 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
         type: item.type,
         subtype: item.subtype || "",
         specs: item.specs || [],
+        tags: getInitialTags(),
       });
     }
   }, [item, form]);
 
+  // Check if component is hardware based on type
+  const isHardwareCategory = () => {
+    const itemType = form.watch("type");
+    return ["cpu", "memory", "disk", "storage", "chassis", "network"].includes(itemType.toLowerCase());
+  };
+
   const handleSubmit = (values: FormValues) => {
     // Evita múltiplas submissões
     if (isSubmitting) return;
+    
+    // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
+    if (isHardwareCategory() && !values.tags.includes("Hardware")) {
+      const shouldAddHardware = confirm(
+        "Este item parece ser um componente de hardware, mas não tem a tag 'Hardware'. " +
+        "Deseja adicionar a tag 'Hardware' automaticamente?"
+      );
+      
+      if (shouldAddHardware) {
+        values.tags.push("Hardware");
+      }
+    }
     
     setIsSubmitting(true);
     // Passa o item ID se estamos em modo de edição
@@ -207,6 +241,28 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
               </FormControl>
               <FormDescription>
                 Cada linha será um item da lista de especificações
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Add Tags field */}
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tags</FormLabel>
+              <FormControl>
+                <TagSelector 
+                  value={field.value || []} 
+                  onChange={field.onChange}
+                  defaultTags={["Hardware"]}  
+                />
+              </FormControl>
+              <FormDescription>
+                Adicione tags para categorizar o item (ex: Hardware, Licenciado)
               </FormDescription>
               <FormMessage />
             </FormItem>

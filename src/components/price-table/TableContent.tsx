@@ -1,10 +1,10 @@
 
 import { PriceCategory, PriceItem } from "@/types/pricing";
-import { ComponentOption } from "@/types/component"; // Added import
+import { ComponentOption } from "@/types/component";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Tag } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import {
   AlertDialog,
@@ -21,13 +21,20 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPayBackValue, formatPayBack } from "@/utils/payback-utils";
 
+// Define tag colors for specific tags
+const TAG_COLORS: Record<string, string> = {
+  "Hardware": "bg-blue-500/10 text-blue-500 border-blue-200",
+  "Licenciado": "bg-green-500/10 text-green-500 border-green-200",
+  "Crítico": "bg-red-500/10 text-red-500 border-red-200"
+};
+
 interface TableContentProps {
   category: PriceCategory;
   onDelete?: (itemId: string) => void;
   onEdit?: (item: PriceItem) => void;
   displayMode?: "table" | "card";
   sortOrder?: "asc" | "desc" | null;
-  contractDuration?: string;  // Add contract duration prop
+  contractDuration?: string;
 }
 
 export function TableContent({ 
@@ -36,7 +43,7 @@ export function TableContent({
   onEdit, 
   displayMode = "table",
   sortOrder = null,
-  contractDuration = "0"  // Default to no contract
+  contractDuration = "0"
 }: TableContentProps) {
   if (category.items.length === 0) {
     return (
@@ -56,9 +63,17 @@ export function TableContent({
     sortedItems.sort((a, b) => b.price - a.price);
   }
 
+  // Helper function to get tag styles
+  const getTagStyle = (tag: string): string => {
+    return TAG_COLORS[tag] || ""; 
+  };
+
   // Helper function to calculate price with PayBack applied
   const getPriceWithPayBack = (item: PriceItem): { original: number, withPayback: number | null } => {
-    if (item.isHardware && contractDuration !== "0") {
+    // An item is hardware if it has the Hardware tag or isHardware is true
+    const isHardware = (item.tags && item.tags.includes("Hardware")) || Boolean(item.isHardware);
+    
+    if (isHardware && contractDuration !== "0") {
       const paybackValue = getPayBackValue(item as ComponentOption, contractDuration);
       if (paybackValue) {
         return {
@@ -113,8 +128,22 @@ export function TableContent({
                       </Badge>
                     )}
                     
-                    {item.isHardware && (
+                    {/* Display all tags */}
+                    {item.tags && item.tags.map(tag => (
+                      <Badge
+                        key={tag}
+                        variant="outline" 
+                        className={`self-start ${getTagStyle(tag)}`}
+                      >
+                        <Tag className="h-3 w-3 mr-1" />
+                        {tag}
+                      </Badge>
+                    ))}
+                    
+                    {/* Fallback for legacy items that don't have tags array but have isHardware */}
+                    {!item.tags && item.isHardware && (
                       <Badge variant="outline" className="self-start bg-blue-500/10 text-blue-500 border-blue-200">
+                        <Tag className="h-3 w-3 mr-1" />
                         Hardware
                       </Badge>
                     )}
@@ -182,8 +211,22 @@ export function TableContent({
                   </Badge>
                 )}
                 
-                {item.isHardware && (
+                {/* Display all tags */}
+                {item.tags && item.tags.map(tag => (
+                  <Badge
+                    key={tag}
+                    variant="outline" 
+                    className={`text-xs ${getTagStyle(tag)}`}
+                  >
+                    <Tag className="h-3 w-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+                
+                {/* Fallback for legacy items */}
+                {!item.tags && item.isHardware && (
                   <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-200">
+                    <Tag className="h-3 w-3 mr-1" />
                     Hardware
                   </Badge>
                 )}

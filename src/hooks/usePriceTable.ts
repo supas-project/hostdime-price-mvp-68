@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PriceData, PriceItem, PriceCategory } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
@@ -17,20 +16,28 @@ export function usePriceTable() {
   
   const { toast } = useToast();
 
-  // Carrega os dados iniciais
+  // Load initial data
   const loadPriceData = () => {
     try {
       setIsLoading(true);
       const data = PriceService.getAllData();
       
-      // Mark hardware components
+      // Process items to ensure they have the appropriate tags
       Object.values(data).forEach(category => {
         category.items = category.items.map(item => {
-          // Mark hardware components based on category or type
-          const isHardwareCategory = ["Processador", "Memória", "Armazenamento", "Chassi", "Interface de Rede"].includes(item.type);
-          if (isHardwareCategory) {
-            return { ...item, isHardware: true };
+          // Create tags array if it doesn't exist
+          if (!item.tags) {
+            item.tags = [];
           }
+          
+          // For backward compatibility: if isHardware is true but "Hardware" tag is missing, add it
+          const isHardwareCategory = ["cpu", "memory", "disk", "storage", "chassis", "network"].includes(item.type.toLowerCase());
+          
+          if ((isHardwareCategory || item.isHardware) && !item.tags.includes("Hardware")) {
+            item.tags.push("Hardware");
+            item.isHardware = true;
+          }
+          
           return item;
         });
       });
@@ -93,7 +100,8 @@ export function usePriceTable() {
       item.name.toLowerCase().includes(lowerSearch) || 
       item.description.toLowerCase().includes(lowerSearch) ||
       (item.subtype && item.subtype.toLowerCase().includes(lowerSearch)) ||
-      (item.specs && item.specs.some(spec => spec.toLowerCase().includes(lowerSearch)))
+      (item.specs && item.specs.some(spec => spec.toLowerCase().includes(lowerSearch))) ||
+      (item.tags && item.tags.some(tag => tag.toLowerCase().includes(lowerSearch))) // Add tag search
     );
   };
 
