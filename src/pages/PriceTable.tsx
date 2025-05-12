@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
-import { usePriceTableActions } from "@/hooks/usePriceTableActions";
+import { usePriceTableActions } from "@/hooks/price-table";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { PriceTableHeader } from "@/components/price-table/PriceTableHeader";
 import { TableControls } from "@/components/price-table/TableControls";
