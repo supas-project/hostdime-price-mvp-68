@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PriceItem } from "@/types/pricing";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { debounce } from "@/lib/utils";
 
 // Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
@@ -59,6 +59,8 @@ type ItemFormProps = {
 };
 
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
@@ -87,8 +89,17 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
   }, [item, form]);
 
   const handleSubmit = (values: FormValues) => {
+    // Evita múltiplas submissões
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     // Passa o item ID se estamos em modo de edição
     onSubmit(values, isEditing ? item?.id : undefined);
+    
+    // Reset o estado após um tempo, caso o componente ainda esteja montado
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   return (
@@ -203,7 +214,10 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
         />
 
         <div className="flex justify-end pt-2">
-          <Button type="submit">
+          <Button 
+            type="submit" 
+            disabled={form.formState.isSubmitting || isSubmitting}
+          >
             {isEditing ? "Salvar Alterações" : "Adicionar Item"}
           </Button>
         </div>

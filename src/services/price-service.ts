@@ -1,10 +1,12 @@
-
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 import { toast } from "@/hooks/use-toast";
 
 // Chave para armazenamento local
 const PRICE_DATA_KEY = 'priceData';
+
+// Flag para controlar operações concorrentes de gravação
+let isWriteLocked = false;
 
 // Dados iniciais carregados dos componentes do servidor
 const initialPriceData: PriceData = {
@@ -71,12 +73,24 @@ const loadDataFromStorage = (): PriceData => {
 // Salva dados no localStorage e notifica observadores
 const saveDataToStorage = (data: PriceData): void => {
   try {
+    // Verificar se há uma gravação em andamento
+    if (isWriteLocked) {
+      console.warn('Tentativa de gravação durante operação de gravação em andamento');
+      throw new Error("Operação em andamento. Tente novamente.");
+    }
+    
+    // Adquire o lock
+    isWriteLocked = true;
+    
     localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(data));
     notifyDataChangeListeners(data);
   } catch (error) {
     console.error('Erro ao salvar dados da tabela de preços:', error);
     toast.error("Não foi possível salvar os dados. Verifique o espaço disponível no navegador.");
     throw new Error("Falha ao salvar dados no armazenamento local");
+  } finally {
+    // Libera o lock sempre, mesmo em caso de erro
+    isWriteLocked = false;
   }
 };
 
@@ -226,9 +240,12 @@ export const PriceService = {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
-    // Verifica se já existe um item com o mesmo nome
+    // Normaliza o nome para uma verificação mais robusta de duplicidade
+    const normalizedItemName = item.name.trim().toLowerCase();
+    
+    // Verifica se já existe um item com o mesmo nome (normalizado)
     const existingItem = data[categoryId].items.find(i => 
-      i.name.toLowerCase() === item.name?.toLowerCase()
+      i.name.toLowerCase().trim() === normalizedItemName
     );
     
     if (existingItem) {
@@ -244,8 +261,17 @@ export const PriceService = {
       price: Number(item.price) // Garantir que o preço seja um número
     };
     
-    data[categoryId].items.push(newItem);
-    saveDataToStorage(data);
+    // Cria uma nova cópia dos dados para garantir atomicidade
+    const updatedData = {
+      ...data,
+      [categoryId]: {
+        ...data[categoryId],
+        items: [...data[categoryId].items, newItem]
+      }
+    };
+    
+    // Salva os dados atualizados
+    saveDataToStorage(updatedData);
     return newItem;
   },
   

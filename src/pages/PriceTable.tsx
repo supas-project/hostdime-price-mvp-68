@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCaption } from "@/components/ui/table";
@@ -32,6 +31,7 @@ export default function PriceTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, isAdmin } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +145,10 @@ export default function PriceTable() {
     }
   };
 
-  const handleAddItem = (values: any) => {
+  const handleAddItem = async (values: any) => {
+    // Evitar submissões múltiplas
+    if (isSubmittingItem) return;
+    
     if (!activeTab) {
       toast({
         title: "Erro ao adicionar item",
@@ -156,6 +159,8 @@ export default function PriceTable() {
     }
     
     try {
+      setIsSubmittingItem(true);
+      
       const itemData = {
         name: values.name,
         description: values.description,
@@ -167,16 +172,11 @@ export default function PriceTable() {
       };
       
       // Adiciona o item ao serviço
-      const newItem = PriceService.addItem(activeTab, itemData);
+      PriceService.addItem(activeTab, itemData);
       
-      // Atualiza o estado local para feedback imediato
-      setPriceData(prev => ({
-        ...prev,
-        [activeTab]: {
-          ...prev[activeTab],
-          items: [...prev[activeTab].items, newItem]
-        }
-      }));
+      // Recarrega todos os dados para garantir consistência
+      const updatedData = PriceService.getAllData();
+      setPriceData(updatedData);
       
       // Fecha o modal
       setOpenAddItem(false);
@@ -191,6 +191,11 @@ export default function PriceTable() {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"
       });
+    } finally {
+      // Reseta o estado após um período
+      setTimeout(() => {
+        setIsSubmittingItem(false);
+      }, 500);
     }
   };
 
