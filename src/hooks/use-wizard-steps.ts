@@ -21,7 +21,7 @@ export function useWizardSteps() {
 
     // Serviços Personalizados é o único passo opcional
     if (normalizedType === "servicospersonalizados") {
-      return true;
+      return true; // Sempre considerado completo, já que é opcional
     }
     
     if (normalizedType === "memoria") {

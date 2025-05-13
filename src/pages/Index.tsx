@@ -21,15 +21,14 @@ const WizardContainer = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="container max-w-4xl mx-auto py-12 px-4 space-y-8 animate-fade-in">
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-3xl font-bold tracking-tight">
+      <main className="container mx-auto py-6 md:py-12 px-3 md:px-4 space-y-6 md:space-y-8 animate-fade-in">
+        <div className="text-center space-y-3 md:space-y-4 mb-6 md:mb-12">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             Configure seu Servidor
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+          <p className="text-muted-foreground max-w-lg mx-auto text-sm md:text-base">
             Selecione as opções ideais para seu servidor dedicado em poucos passos
           </p>
-          {/* BeginnerModeToggle completely removed */}
         </div>
 
         <ProgressIndicator 
@@ -38,16 +37,21 @@ const WizardContainer = () => {
           completedSteps={serverData.componentes.map((_, index) => isStepComplete(index))}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <WizardContent />
-          <FloatingCart
-            selectedComponents={selectedComponents}
-            currentStep={currentStep}
-            totalSteps={serverData.componentes.length}
-            onPrevious={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-            onNext={() => setCurrentStep(prev => Math.min(serverData.componentes.length - 1, prev + 1))}
-            onComplete={() => setShowFinalSummary(true)}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
+          <div className="md:col-span-8">
+            <WizardContent />
+          </div>
+          
+          <div className="md:col-span-4">
+            <FloatingCart
+              selectedComponents={selectedComponents}
+              currentStep={currentStep}
+              totalSteps={serverData.componentes.length}
+              onPrevious={() => setCurrentStep(prev => Math.max(0, prev - 1))}
+              onNext={() => setCurrentStep(prev => Math.min(serverData.componentes.length - 1, prev + 1))}
+              onComplete={() => setShowFinalSummary(true)}
+            />
+          </div>
         </div>
 
         {showFinalSummary && (

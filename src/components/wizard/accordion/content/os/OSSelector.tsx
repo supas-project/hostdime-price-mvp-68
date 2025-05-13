@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { useWizard } from "@/contexts/WizardContext";
 import { findMatchingComponent } from "@/utils/component-matching";
+import { useToast } from "@/hooks/use-toast";
 
 interface OSSelectorProps {
   options: ComponentOption[];
@@ -18,10 +19,20 @@ export function OSSelector({
   onSelectOption
 }: OSSelectorProps) {
   const { selectedComponents } = useWizard();
+  const { toast } = useToast();
   const processorInfo = selectedComponents["processador"];
   const coreCount = processorInfo?.metadata?.cores || 1;
   
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  // Log information about options for debugging
+  useEffect(() => {
+    if (options.length === 0) {
+      console.info("No operating system options available in OSSelector");
+    } else {
+      console.info(`Found ${options.length} OS options`);
+    }
+  }, [options]);
   
   // Synchronize selected option when it changes
   useEffect(() => {
@@ -32,6 +43,10 @@ export function OSSelector({
   }, [selectedOption, options]);
 
   const formattedOptions = useMemo(() => {
+    if (options.length === 0) {
+      return [];
+    }
+    
     const windowsOptions = options
       .filter(opt => opt.subtype === "windows")
       .map(opt => ({
@@ -80,15 +95,21 @@ export function OSSelector({
         />
       </div>
       
-      <ComponentSelector
-        label="Sistema Operacional"
-        options={formattedOptions.flatMap(group => group.options)}
-        value={localSelectedId}
-        onChange={handleValueChange}
-        tooltip="Escolha o sistema operacional ideal para seu servidor"
-        highlightSelection={true}
-        groupedOptions={formattedOptions}
-      />
+      {options.length === 0 ? (
+        <div className="text-sm text-muted-foreground py-2">
+          Nenhuma opção de sistema operacional disponível. Entre em contato com o suporte.
+        </div>
+      ) : (
+        <ComponentSelector
+          label="Sistema Operacional"
+          options={formattedOptions.flatMap(group => group.options)}
+          value={localSelectedId}
+          onChange={handleValueChange}
+          tooltip="Escolha o sistema operacional ideal para seu servidor"
+          highlightSelection={true}
+          groupedOptions={formattedOptions}
+        />
+      )}
     </div>
   );
 }

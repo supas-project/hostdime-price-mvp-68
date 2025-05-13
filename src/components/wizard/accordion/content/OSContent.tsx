@@ -4,6 +4,7 @@ import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { OSSelector } from "./os/OSSelector";
 import { findMatchingComponent } from "@/utils/component-matching";
+import { useToast } from "@/hooks/use-toast";
 
 interface OSContentProps {
   options: ComponentOption[];
@@ -17,6 +18,19 @@ export function OSContent({
   onSelectOption 
 }: OSContentProps) {
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    // Log information about options for debugging
+    if (options.length === 0) {
+      console.warn("No OS options available. Check category mapping in price service.");
+      toast({
+        title: "Aviso",
+        description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração.",
+        variant: "destructive",
+      });
+    }
+  }, [options, toast]);
   
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {

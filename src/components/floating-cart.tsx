@@ -30,7 +30,7 @@ export function FloatingCart(props: FloatingCartProps) {
             <Button 
               size="lg" 
               className="rounded-full shadow-lg flex items-center gap-2"
-              style={{ zIndex: 100 }}
+              style={{ zIndex: 1030 }}
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Ver Resumo</span>
@@ -41,7 +41,7 @@ export function FloatingCart(props: FloatingCartProps) {
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] z-[100]" style={{ zIndex: 100 }}>
+          <SheetContent side="bottom" className="h-[80vh] z-[1050]" style={{ zIndex: 1050 }}>
             <div className="pt-4 max-h-[75vh] overflow-y-auto">
               <SummaryCart {...props} />
             </div>
@@ -52,7 +52,7 @@ export function FloatingCart(props: FloatingCartProps) {
   }
 
   return (
-    <div className="md:sticky md:top-24 h-fit animate-fade-in md:w-[380px] lg:w-[420px]">
+    <div className="w-full md:sticky md:top-24 h-fit animate-fade-in">
       <SummaryCart {...props} />
     </div>
   );

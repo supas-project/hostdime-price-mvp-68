@@ -53,7 +53,7 @@ export function WizardContent() {
   const currentComponent = serverData.componentes[currentStep];
 
   return (
-    <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6 w-full">
       <Button
         variant="outline"
         size="sm"

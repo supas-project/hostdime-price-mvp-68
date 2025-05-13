@@ -3,7 +3,6 @@ import { ServerComponent } from "@/data/server-components";
 import { Progress } from "@/components/ui/progress";
 import { Check, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Tooltip,
@@ -23,14 +22,17 @@ export function ProgressIndicator({
   currentStep,
   completedSteps = [] 
 }: ProgressIndicatorProps) {
+  // Ensure we count all completed steps correctly
   const completedCount = completedSteps.filter(Boolean).length;
-  const progress = (completedCount / components.length) * 100;
+  
+  // Calculate progress percentage based on completed steps
+  const progress = Math.min(100, (completedCount / components.length) * 100);
+  
   const currentComponent = components[currentStep];
-  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div className="space-y-3 mb-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
         <div className="flex items-center gap-2">
           <div className={cn(
             "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium",
