@@ -133,45 +133,60 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
-
-function toast({ ...props }: ExternalToast & { variant?: "default" | "destructive" | "success" }) {
-  const id = genId()
-
-  // Mapeie as variantes para cores apropriadas do sonner
-  let sonnerProps: ExternalToast = { ...props };
-  
-  if (props.variant === "destructive") {
-    sonnerProps.className = "destructive-toast";
-  } else if (props.variant === "success") {
-    sonnerProps.className = "success-toast";
-  }
-
-  sonnerToast(props.title as string, sonnerProps);
-
-  return {
-    id,
-    dismiss: () => {
-      sonnerToast.dismiss(id);
-      dispatch({
-        type: actionTypes.DISMISS_TOAST,
-        toastId: id,
-      });
-    },
-    update: (props: ExternalToast) => {
-      sonnerToast.message(id, {
-        ...props
-      });
-      dispatch({
-        type: actionTypes.UPDATE_TOAST,
-        toast: {
-          ...props,
-          id,
-        },
-      });
-    },
-  };
+// This interface matches Sonner's toast API more closely
+interface ToastProps extends Omit<ExternalToast, 'id'> {
+  description?: React.ReactNode
+  variant?: "default" | "destructive" | "success"
 }
+
+function toast(props: string | ToastProps) {
+  // Handle both formats: toast("Message") and toast({ title: "Title", ... })
+  if (typeof props === "string") {
+    return sonnerToast(props);
+  }
+  
+  const { description, variant, ...rest } = props as ToastProps;
+  
+  // Map variants to Sonner's styling
+  let className = "";
+  if (variant === "destructive") {
+    className = "destructive-toast";
+  } else if (variant === "success") {
+    className = "success-toast";
+  }
+  
+  // Sonner expects the message as first arg and options as second arg
+  // If no explicit message is provided, use description as the main message
+  if (description) {
+    return sonnerToast(description as string, {
+      ...rest,
+      className
+    });
+  }
+  
+  // For backward compatibility, if no description, use an empty string
+  return sonnerToast("", {
+    ...rest,
+    className
+  });
+}
+
+// Extend toast with variant helpers for convenience
+toast.error = (message: string, options: Omit<ToastProps, "variant"| "description"> = {}) => {
+  return sonnerToast.error(message, options);
+};
+
+toast.success = (message: string, options: Omit<ToastProps, "variant"| "description"> = {}) => {
+  return sonnerToast.success(message, options);
+};
+
+toast.info = (message: string, options: Omit<ToastProps, "variant"| "description"> = {}) => {
+  return sonnerToast(message, options);
+};
+
+toast.warning = (message: string, options: Omit<ToastProps, "variant"| "description"> = {}) => {
+  return sonnerToast.warning(message, options);
+};
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

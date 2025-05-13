@@ -15,8 +15,7 @@ export function CartFooter({
   const { toast } = useToast();
 
   const handleSave = () => {
-    toast({
-      title: "Configuração salva",
+    toast("Configuração salva", {
       description: "Sua configuração foi salva com sucesso."
     });
   };

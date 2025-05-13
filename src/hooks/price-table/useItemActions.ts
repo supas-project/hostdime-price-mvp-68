@@ -24,10 +24,8 @@ export function useItemActions(
     if (isSubmittingItem) return;
     
     if (!activeTab) {
-      toast({
-        title: "Erro ao adicionar item",
-        description: "Nenhuma categoria selecionada.",
-        variant: "destructive"
+      toast.error("Erro ao adicionar item", {
+        description: "Nenhuma categoria selecionada."
       });
       return;
     }
@@ -58,15 +56,12 @@ export function useItemActions(
       // Close modal
       setOpenAddItem(false);
       
-      toast({
-        title: "Item adicionado",
+      toast.success("Item adicionado", {
         description: `O item ${values.name} foi adicionado com sucesso.`
       });
     } catch (error) {
-      toast({
-        title: "Erro ao adicionar item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao adicionar item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
     } finally {
       // Reset state after a period
@@ -78,10 +73,8 @@ export function useItemActions(
 
   const handleEditItem = (values: any, itemId?: string) => {
     if (!activeTab || !itemId) {
-      toast({
-        title: "Erro ao editar item",
-        description: "Nenhuma categoria ou item selecionado.",
-        variant: "destructive"
+      toast.error("Erro ao editar item", {
+        description: "Nenhuma categoria ou item selecionado."
       });
       return;
     }
@@ -128,16 +121,13 @@ export function useItemActions(
       setOpenEditItem(false);
       setItemToEdit(undefined);
       
-      toast({
-        title: "Item atualizado",
+      toast.success("Item atualizado", {
         description: `O item ${values.name} foi atualizado com sucesso.`
       });
     } catch (error) {
       console.error("Erro ao atualizar item:", error);
-      toast({
-        title: "Erro ao editar item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao editar item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
     } finally {
       setIsSubmittingItem(false);
@@ -159,17 +149,14 @@ export function useItemActions(
         }
       }));
       
-      toast({
-        title: "Item excluído",
+      toast.success("Item excluído", {
         description: "O item foi excluído com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast({
-        title: "Erro ao excluir item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao excluir item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
       return false;
     }

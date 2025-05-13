@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
@@ -33,10 +32,8 @@ export function OSContent({
     
     if (finalOptions.length === 0 && !isLoading) {
       console.warn("No OS options available. Check category mapping in price service.");
-      toast({
-        title: "Aviso",
+      toast.warning("Aviso", {
         description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração.",
-        variant: "destructive",
       });
     }
   }, [finalOptions, toast, isLoading]);

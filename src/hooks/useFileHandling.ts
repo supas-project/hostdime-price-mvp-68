@@ -19,24 +19,20 @@ export function useFileHandling(setPriceData: (data: any) => void) {
       
       if (file.name.toLowerCase().endsWith('.json')) {
         setPriceData(PriceService.importFromJSON(content));
-        toast({
-          title: "Dados importados com sucesso",
+        toast.success("Dados importados com sucesso", {
           description: "Os dados JSON foram validados e carregados."
         });
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         setPriceData(PriceService.importFromCSV(content));
-        toast({
-          title: "Dados importados com sucesso",
+        toast.success("Dados importados com sucesso", {
           description: "Os dados CSV foram validados e carregados."
         });
       } else {
         throw new Error("Formato de arquivo não suportado. Use JSON ou CSV.");
       }
     } catch (error) {
-      toast({
-        title: "Erro ao importar",
-        description: error instanceof Error ? error.message : "Verifique se o arquivo está no formato correto.",
-        variant: "destructive"
+      toast.error("Erro ao importar", {
+        description: error instanceof Error ? error.message : "Verifique se o arquivo está no formato correto."
       });
     } finally {
       setIsLoading(false);

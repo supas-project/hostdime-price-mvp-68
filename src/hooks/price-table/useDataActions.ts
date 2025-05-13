@@ -23,15 +23,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-      toast({
-        title: "Exportação concluída",
+      toast.success("Exportação concluída", {
         description: "Dados exportados com sucesso."
       });
     } catch (error) {
-      toast({
-        title: "Erro ao exportar dados",
-        description: "Não foi possível exportar os dados.",
-        variant: "destructive"
+      toast.error("Erro ao exportar dados", {
+        description: "Não foi possível exportar os dados."
       });
     } finally {
       setIsExporting(false);
@@ -50,15 +47,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Update state with reset data
         setPriceData(resetData);
         
-        toast({
-          title: "Dados resetados",
+        toast.success("Dados resetados", {
           description: "Todos os dados foram redefinidos para o padrão inicial."
         });
       } catch (error) {
-        toast({
-          title: "Erro ao resetar dados",
-          description: "Não foi possível resetar os dados.",
-          variant: "destructive"
+        toast.error("Erro ao resetar dados", {
+          description: "Não foi possível resetar os dados."
         });
       } finally {
         setIsResetting(false);

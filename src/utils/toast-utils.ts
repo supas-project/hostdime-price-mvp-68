@@ -1,40 +1,25 @@
 
 import { toast as baseToast } from "@/hooks/use-toast";
-import { ToastProps } from "@/components/ui/toast";
 
 // Extended toast with variant methods
 export const toast = {
   // Base toast function
   ...baseToast,
   
-  // Variant helpers
+  // Variant helpers are already defined in the hook, but we'll redefine them here to match the expected API
   error: (message: string) => {
-    return baseToast({
-      title: "Error",
-      description: message,
-      variant: "destructive",
-    });
+    return baseToast.error(message);
   },
   
   info: (message: string) => {
-    return baseToast({
-      title: "Info",
-      description: message,
-    });
+    return baseToast.info(message);
   },
   
   success: (message: string) => {
-    return baseToast({
-      title: "Success",
-      description: message,
-    });
+    return baseToast.success(message);
   },
   
   warning: (message: string) => {
-    return baseToast({
-      title: "Warning",
-      description: message,
-      variant: "destructive",
-    });
+    return baseToast.warning(message);
   }
 };
