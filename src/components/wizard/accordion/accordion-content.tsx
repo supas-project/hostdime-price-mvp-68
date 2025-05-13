@@ -92,7 +92,6 @@ export function AccordionContent({
       case "SistemaOperacional":
         return (
           <OSContent
-            options={component.options}
             selectedOption={matchedSelectedOption}
             onSelectOption={onSelectOption}
           />

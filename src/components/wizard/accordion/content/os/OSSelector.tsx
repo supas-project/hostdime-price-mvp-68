@@ -40,6 +40,8 @@ export function OSSelector({
     if (selectedOption) {
       const matchingComponent = findMatchingComponent(selectedOption, options);
       setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+    } else {
+      setLocalSelectedId("");
     }
   }, [selectedOption, options]);
 
