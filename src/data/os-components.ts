@@ -14,6 +14,7 @@ export const osComponents: ServerComponent = {
       name: "Windows Server 2022 Standard",
       price: 140.00,
       description: "Sistema operacional Windows Server com suporte completo",
+      subtype: "windows",
       specs: [
         "Licença mensal",
         "Suporte incluído",
@@ -26,6 +27,7 @@ export const osComponents: ServerComponent = {
       name: "Ubuntu Server 22.04 LTS",
       price: 0,
       description: "Sistema operacional Linux Ubuntu Server LTS",
+      subtype: "linux",
       specs: [
         "Licença gratuita",
         "Suporte comunitário",
@@ -38,6 +40,7 @@ export const osComponents: ServerComponent = {
       name: "CentOS Stream 9",
       price: 0,
       description: "Sistema operacional Linux CentOS Stream",
+      subtype: "linux",
       specs: [
         "Licença gratuita",
         "Ciclo contínuo de atualizações",

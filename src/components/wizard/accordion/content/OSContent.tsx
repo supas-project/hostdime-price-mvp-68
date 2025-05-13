@@ -22,6 +22,8 @@ export function OSContent({
   
   useEffect(() => {
     // Log information about options for debugging
+    console.log("OSContent options:", options);
+    
     if (options.length === 0) {
       console.warn("No OS options available. Check category mapping in price service.");
       toast({

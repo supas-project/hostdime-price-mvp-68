@@ -27,6 +27,7 @@ export function OSSelector({
   
   // Log information about options for debugging
   useEffect(() => {
+    console.log("OSSelector received options:", options);
     if (options.length === 0) {
       console.info("No operating system options available in OSSelector");
     } else {
@@ -45,6 +46,14 @@ export function OSSelector({
   const formattedOptions = useMemo(() => {
     if (options.length === 0) {
       return [];
+    }
+    
+    // Exibe todos os itens se não estiverem agrupados por subtipo
+    if (!options.some(opt => opt.subtype)) {
+      return [{
+        group: "Sistemas Operacionais",
+        options: options
+      }];
     }
     
     const windowsOptions = options
