@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useEffect } from "react";
+import { createContext, useContext, ReactNode, useEffect, useCallback } from "react";
 import { WizardContextType, CustomService } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
 import { useWizardSteps } from "@/hooks/use-wizard-steps";
@@ -53,16 +53,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     baseRemoveCustomService(id);
   };
   
-  // Debug selected components
-  useEffect(() => {
-    console.log("Selected components updated:", selectedComponents);
-    // Calculate steps completion
-    serverData.componentes.forEach((_, index) => {
-      const isComplete = contextIsStepComplete(index);
-      console.log(`Step ${index + 1} complete:`, isComplete);
-    });
-  }, [selectedComponents, connectivityItems, storageItems]);
-  
   // Função para verificar se o componente é de seleção única - caso insensitivo
   const isSingleSelectionComponent = (type: string): boolean => {
     if (!type) return false;
@@ -86,90 +76,97 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     return isComplete;
   };
 
-  // Improve the auto-navigation with safety checks and better timing
+  // Memoized version of handleSelectOption to prevent unnecessary recreation
+  const handleSelectOption = useCallback((option: ComponentOption) => {
+    try {
+      if (!option) return;
+      
+      // Specially handle DataCenter component to prevent freezing
+      if (option.type === "DataCenter" || normalizeComponentType(option.type) === "datacenter") {
+        // Direct state update for data center to avoid race conditions
+        setSelectedComponents(prev => ({
+          ...prev,
+          [option.type]: option
+        }));
+        return;
+      }
+      
+      // Use the base handler for all other component types
+      baseHandleSelectOption(option);
+    } catch (error) {
+      console.error("Error in handleSelectOption:", error);
+      toast.error("Ocorreu um erro ao selecionar a opção. Tente novamente.");
+    }
+  }, [baseHandleSelectOption, setSelectedComponents]);
+
+  // Auto-advancement with protections against freezes
   useEffect(() => {
+    // Skip if no components selected
     if (Object.keys(selectedComponents).length === 0) return;
     
     const currentComponent = serverData.componentes[currentStep];
     if (!currentComponent) return;
     
+    // Skip auto-advancement if not in beginner mode
+    if (!beginnerMode) return;
+    
+    // Wait for a stable state before attempting auto-advancement
     const normalizedCurrentType = normalizeComponentType(currentComponent.type);
     
-    // Log component selection for debugging
-    console.log("Current step:", currentStep);
-    console.log("Current component type:", normalizedCurrentType);
-    console.log("Selected components:", selectedComponents);
+    // Check if component of current step is selected
+    const componentSelected = Object.keys(selectedComponents).some(key => 
+      normalizeComponentType(key) === normalizedCurrentType);
     
-    // Verifica se o componente atual foi selecionado
-    if (isSingleSelectionComponent(currentComponent.type)) {
-      const componentSelected = Object.keys(selectedComponents).some(key => 
-        normalizeComponentType(key) === normalizedCurrentType);
+    // Only try auto-advancement if this component has been selected
+    if (componentSelected) {
+      const isComplete = contextIsStepComplete(currentStep);
       
-      console.log("Component selected:", componentSelected);
-      
-      // Only auto-advance if we're in beginner mode
-      if (componentSelected && beginnerMode) {
-        const isComplete = contextIsStepComplete(currentStep);
-        console.log("Step complete:", isComplete);
+      // Conditions for auto-advancement
+      if (isComplete && 
+          !autoAdvancedSteps.includes(currentStep) && 
+          currentStep < serverData.componentes.length - 1) {
         
-        // Only advance if:
-        // 1. The step is complete
-        // 2. We haven't already auto-advanced this step before
-        // 3. We're not at the last step
-        if (isComplete && 
-            !autoAdvancedSteps.includes(currentStep) && 
-            currentStep < serverData.componentes.length - 1) {
-          // Add this step to the auto-advanced steps
-          setAutoAdvancedSteps(prev => [...prev, currentStep]);
-          // Increased timeout for better stability
-          setTimeout(() => {
-            console.log("Auto-advancing to next step");
-            setCurrentStep(currentStep + 1);
-          }, 1000);
-        }
+        // Record that we've auto-advanced this step
+        setAutoAdvancedSteps(prev => [...prev, currentStep]);
+        
+        // Increased timeout for better stability
+        const autoAdvanceTimeout = setTimeout(() => {
+          setCurrentStep(currentStep + 1);
+        }, 1000);
+        
+        // Clean up timeout if component unmounts or dependencies change
+        return () => clearTimeout(autoAdvanceTimeout);
       }
     }
-  }, [selectedComponents, currentStep, beginnerMode]);
-
-  // Improved select option handler with better debugging
-  const handleSelectOption = (option: ComponentOption) => {
-    // Debug for all component selection
-    console.log("Selecting option:", option.name, "Type:", option.type);
-    
-    // Special handling for DataCenter to prevent freezing
-    if (option.type === "DataCenter" || normalizeComponentType(option.type) === "datacenter") {
-      console.log("DataCenter selected:", option);
-      // Directly update the selectedComponents state to avoid race conditions
-      setSelectedComponents(prev => ({
-        ...prev,
-        [option.type]: option
-      }));
-      return;
-    }
-    
-    // Debug OS selection
-    if (option.type === "SistemaOperacional" || normalizeComponentType(option.type) === "sistemaoperacional") {
-      console.log("Selecting OS:", option);
-    }
-    
-    baseHandleSelectOption(option);
-  };
+  }, [
+    selectedComponents, 
+    currentStep, 
+    beginnerMode, 
+    autoAdvancedSteps, 
+    setAutoAdvancedSteps, 
+    setCurrentStep
+  ]);
 
   const handleRestart = () => {
-    setSelectedComponents({});
-    setConnectivityItems({});
-    setStorageItems({ internal: [], external: [] });
-    baseSetCustomServices([]);
-    setCurrentStep(0);
-    setShowFinalSummary(false);
-    
-    // Reset auto-advanced steps when restarting
-    setAutoAdvancedSteps([]);
-    
-    // Fix: Using the correct toast.success format for sonner
-    toast.success("Configuração reiniciada", {
-      description: "Você pode começar novamente a configuração do seu servidor."
-    });
+    try {
+      setSelectedComponents({});
+      setConnectivityItems({});
+      setStorageItems({ internal: [], external: [] });
+      baseSetCustomServices([]);
+      setCurrentStep(0);
+      setShowFinalSummary(false);
+      
+      // Reset auto-advanced steps when restarting
+      setAutoAdvancedSteps([]);
+      
+      // Show success message
+      toast.success("Configuração reiniciada", {
+        description: "Você pode começar novamente a configuração do seu servidor."
+      });
+    } catch (error) {
+      console.error("Error restarting configuration:", error);
+      toast.error("Erro ao reiniciar a configuração. Tente novamente.");
+    }
   };
 
   return (

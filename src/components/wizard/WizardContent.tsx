@@ -4,7 +4,7 @@ import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
@@ -22,43 +22,40 @@ export function WizardContent() {
     handleSelectStorageItem 
   } = useWizard();
 
-  const getSelectedOption = (component: ServerComponent): ComponentOption | null => {
+  // Memoize getSelectedOption to avoid unnecessary recalculations
+  const getSelectedOption = useCallback((component: ServerComponent): ComponentOption | null => {
     if (!component) return null;
     
-    const normalizedType = normalizeComponentType(component.type);
-    
-    if (normalizedType === "armazenamento") {
-      return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
-    }
-    
-    // Find the component using the normalized type
-    for (const key of Object.keys(selectedComponents)) {
-      if (normalizeComponentType(key) === normalizedType) {
-        const selectedOption = selectedComponents[key];
-        
-        // If we have options in this component and a selected option,
-        // try to find its matching representation in the options list
-        if (component.options.length > 0 && selectedOption) {
-          const matchingOption = findMatchingComponent(selectedOption, component.options);
-          return matchingOption || selectedOption;
-        }
-        
-        return selectedOption;
+    try {
+      const normalizedType = normalizeComponentType(component.type);
+      
+      if (normalizedType === "armazenamento") {
+        return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
       }
+      
+      // Find the component using the normalized type
+      for (const key of Object.keys(selectedComponents)) {
+        if (normalizeComponentType(key) === normalizedType) {
+          const selectedOption = selectedComponents[key];
+          
+          // If we have options in this component and a selected option,
+          // try to find its matching representation in the options list
+          if (component.options && component.options.length > 0 && selectedOption) {
+            const matchingOption = findMatchingComponent(selectedOption, component.options);
+            return matchingOption || selectedOption;
+          }
+          
+          return selectedOption;
+        }
+      }
+    } catch (error) {
+      console.error("Error getting selected option:", error);
     }
     
     return null;
-  };
+  }, [selectedComponents]);
 
   const currentComponent = serverData.componentes[currentStep];
-  
-  // Debug OS component
-  useEffect(() => {
-    if (currentComponent?.type === "SistemaOperacional") {
-      console.log("Current component is OS:", currentComponent);
-      console.log("OS Component options:", currentComponent.options);
-    }
-  }, [currentComponent]);
 
   return (
     <div className="space-y-6 w-full">
@@ -100,16 +97,18 @@ export function WizardContent() {
           </div>
         </ScrollArea>
       ) : (
-        <AccordionStep
-          component={currentComponent}
-          selectedOption={getSelectedOption(currentComponent)}
-          onSelectOption={handleSelectOption}
-          isActive={true}
-          isComplete={isStepComplete(currentStep)}
-          connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
-          onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? setConnectivityItems : undefined}
-          onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
-        />
+        currentComponent && (
+          <AccordionStep
+            component={currentComponent}
+            selectedOption={getSelectedOption(currentComponent)}
+            onSelectOption={handleSelectOption}
+            isActive={true}
+            isComplete={isStepComplete(currentStep)}
+            connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
+            onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? setConnectivityItems : undefined}
+            onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
+          />
+        )
       )}
     </div>
   );
