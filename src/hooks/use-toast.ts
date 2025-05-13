@@ -9,7 +9,16 @@ type ToastProps = {
   variant?: "default" | "destructive";
 };
 
+// Creating a wrapper around sonner toast functions
 const toast = {
+  // Direct toast function for basic usage
+  default: ({ title, description, action, variant }: ToastProps) => {
+    return sonnerToast(title as string, {
+      description,
+      action,
+      className: variant === "destructive" ? "group border-destructive" : "group",
+    });
+  },
   success: ({ title, description, action }: ToastProps) => {
     return sonnerToast.success(title as string, {
       description,
@@ -41,7 +50,12 @@ const toast = {
 };
 
 function useToast() {
-  return { toast };
+  const { toasts, dismiss } = useSonnerToast();
+  return { 
+    toast, 
+    toasts,
+    dismiss
+  };
 }
 
-export { useToast, toast };
+export { useToast, toast, type ToastProps };

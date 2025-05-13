@@ -19,13 +19,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
       link.click();
       document.body.removeChild(link);
       
-      toast({
+      toast.success({
         title: "Dados exportados",
         description: "Os dados foram exportados com sucesso."
       });
       return true;
     } catch (error) {
-      toast({
+      toast.error({
         title: "Erro ao exportar dados",
         description: "Não foi possível exportar os dados.",
         variant: "destructive"
@@ -38,7 +38,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     const data = PriceService.resetData();
     setPriceData(data);
     
-    toast({
+    toast.success({
       title: "Dados resetados",
       description: "A tabela de preços foi restaurada para o estado inicial."
     });

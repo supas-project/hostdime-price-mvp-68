@@ -1,5 +1,8 @@
+
 import { ComponentOption } from "./component";
 import { ReactNode } from "react";
+
+export type CustomService = ComponentOption;
 
 export type WizardContextType = {
   currentStep: number;
