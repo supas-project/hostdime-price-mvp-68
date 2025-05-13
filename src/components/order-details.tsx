@@ -91,9 +91,11 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     0
   );
   
+  // Make sure we have valid connectivity items before accessing their properties
   const connectivityPrice = Object.values(connectivityItems)
-    .filter(item => item && item.option)
-    .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
+    .filter(item => item && typeof item === 'object' && 'option' in item && 'quantity' in item)
+    .reduce((sum, item) => sum + ((item as {option: ComponentOption, quantity: number}).option.price * 
+                                  (item as {option: ComponentOption, quantity: number}).quantity), 0);
   
   // Calculate final totals
   const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice + connectivityPrice;
@@ -366,39 +368,46 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             {Object.keys(connectivityItems).length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Conectividade</h3>
-                {Object.entries(connectivityItems).map(([itemId, { option, quantity }]) => (
-                  <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium flex items-center gap-2">
-                          <Wifi className="h-4 w-4 text-primary" />
-                          {quantity > 1 ? `${quantity}x ${option.name}` : option.name}
-                          <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                            {option.subtype === "porta" ? "Porta de Rede" : "IP"}
-                          </span>
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{option.description}</p>
+                {Object.entries(connectivityItems)
+                  .filter(([_, item]) => item && typeof item === 'object' && 'option' in item)
+                  .map(([itemId, itemData]) => {
+                    // Type assertion to access option and quantity safely
+                    const item = itemData as {option: ComponentOption, quantity: number};
+                    
+                    return (
+                      <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium flex items-center gap-2">
+                              <Wifi className="h-4 w-4 text-primary" />
+                              {item.quantity > 1 ? `${item.quantity}x ${item.option.name}` : item.option.name}
+                              <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                                {item.option.subtype === "porta" ? "Porta de Rede" : "IP"}
+                              </span>
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{item.option.description}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-primary">{formatCurrency(item.option.price * item.quantity)}</span>
+                            
+                            {onRemoveItem && (
+                              <button
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoveItem(itemId)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                                  <path d="M18 6 6 18"></path>
+                                  <path d="m6 6 12 12"></path>
+                                </svg>
+                                <span className="sr-only">Remover item</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <Separator className="mt-4" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
-                        
-                        {onRemoveItem && (
-                          <button
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveItem(itemId)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                              <path d="M18 6 6 18"></path>
-                              <path d="m6 6 12 12"></path>
-                            </svg>
-                            <span className="sr-only">Remover item</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <Separator className="mt-4" />
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
             
@@ -406,46 +415,48 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             {customServices.length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Serviços Personalizados</h3>
-                {customServices.map((service) => (
-                  <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium flex items-center gap-2">
-                          {service.name}
-                          {service.metadata?.quantity && service.metadata.quantity > 1 && <span>({service.metadata.quantity}x)</span>}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
+                {customServices
+                  .filter(service => service && typeof service === 'object')
+                  .map((service) => (
+                    <div key={service.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium flex items-center gap-2">
+                            {service.name}
+                            {service.metadata?.quantity && service.metadata.quantity > 1 && <span>({service.metadata.quantity}x)</span>}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{service.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
+                          
+                          {onRemoveItem && (
+                            <button
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveItem(service.id)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                                <path d="M18 6 6 18"></path>
+                                <path d="m6 6 12 12"></path>
+                              </svg>
+                              <span className="sr-only">Remover serviço</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
-                        
-                        {onRemoveItem && (
-                          <button
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveItem(service.id)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                              <path d="M18 6 6 18"></path>
-                              <path d="m6 6 12 12"></path>
-                            </svg>
-                            <span className="sr-only">Remover serviço</span>
-                          </button>
-                        )}
-                      </div>
+                      {service.specs && (
+                        <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
+                          {service.specs.map((spec, index) => (
+                            <li key={index} className="flex items-center">
+                              <Check className="h-4 w-4 text-primary mr-2" />
+                              <span>{spec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <Separator className="mt-4" />
                     </div>
-                    {service.specs && (
-                      <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                        {service.specs.map((spec, index) => (
-                          <li key={index} className="flex items-center">
-                            <Check className="h-4 w-4 text-primary mr-2" />
-                            <span>{spec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <Separator className="mt-4" />
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>

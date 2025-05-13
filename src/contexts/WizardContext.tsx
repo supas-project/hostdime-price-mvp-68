@@ -70,7 +70,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   };
 
   // Função melhorada para verificar se o passo está completo
-  const contextIsStepComplete = (stepIndex: number) => {
+  const contextIsStepComplete = (stepIndex: number): boolean => {
     const isComplete = baseIsStepComplete(stepIndex, selectedComponents, connectivityItems, storageItems);
     return isComplete;
   };
