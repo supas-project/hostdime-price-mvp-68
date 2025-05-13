@@ -86,7 +86,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     return isComplete;
   };
 
-  // Efeito para monitorar mudanças nos componentes selecionados
+  // Improve the auto-navigation with safety checks and better timing
   useEffect(() => {
     if (Object.keys(selectedComponents).length === 0) return;
     
@@ -95,14 +95,22 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     
     const normalizedCurrentType = normalizeComponentType(currentComponent.type);
     
+    // Log component selection for debugging
+    console.log("Current step:", currentStep);
+    console.log("Current component type:", normalizedCurrentType);
+    console.log("Selected components:", selectedComponents);
+    
     // Verifica se o componente atual foi selecionado
     if (isSingleSelectionComponent(currentComponent.type)) {
       const componentSelected = Object.keys(selectedComponents).some(key => 
         normalizeComponentType(key) === normalizedCurrentType);
       
-      // Automatic navigation logic - only advance if step complete and we haven't already auto-advanced this step
-      if (componentSelected) {
+      console.log("Component selected:", componentSelected);
+      
+      // Only auto-advance if we're in beginner mode
+      if (componentSelected && beginnerMode) {
         const isComplete = contextIsStepComplete(currentStep);
+        console.log("Step complete:", isComplete);
         
         // Only advance if:
         // 1. The step is complete
@@ -113,17 +121,32 @@ export function WizardProvider({ children }: { children: ReactNode }) {
             currentStep < serverData.componentes.length - 1) {
           // Add this step to the auto-advanced steps
           setAutoAdvancedSteps(prev => [...prev, currentStep]);
-          // Reduced timeout for better performance
+          // Increased timeout for better stability
           setTimeout(() => {
+            console.log("Auto-advancing to next step");
             setCurrentStep(currentStep + 1);
-          }, 500);
+          }, 1000);
         }
       }
     }
-  }, [selectedComponents, currentStep]);
+  }, [selectedComponents, currentStep, beginnerMode]);
 
-  // Simplified function that removes the duplicate auto-navigation logic
+  // Improved select option handler with better debugging
   const handleSelectOption = (option: ComponentOption) => {
+    // Debug for all component selection
+    console.log("Selecting option:", option.name, "Type:", option.type);
+    
+    // Special handling for DataCenter to prevent freezing
+    if (option.type === "DataCenter" || normalizeComponentType(option.type) === "datacenter") {
+      console.log("DataCenter selected:", option);
+      // Directly update the selectedComponents state to avoid race conditions
+      setSelectedComponents(prev => ({
+        ...prev,
+        [option.type]: option
+      }));
+      return;
+    }
+    
     // Debug OS selection
     if (option.type === "SistemaOperacional" || normalizeComponentType(option.type) === "sistemaoperacional") {
       console.log("Selecting OS:", option);
