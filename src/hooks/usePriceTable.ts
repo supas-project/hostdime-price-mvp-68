@@ -49,10 +49,8 @@ export function usePriceTable() {
         setActiveTab(Object.keys(data)[0]);
       }
     } catch (error) {
-      toast({
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar a tabela de preços.",
-        variant: "destructive"
+      toast.error("Erro ao carregar dados", {
+        description: "Não foi possível carregar a tabela de preços."
       });
     } finally {
       setIsLoading(false);

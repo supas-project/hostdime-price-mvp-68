@@ -6,20 +6,20 @@ export const toast = {
   // Base toast function
   ...baseToast,
   
-  // Variant helpers are already defined in the hook, but we'll redefine them here to match the expected API
-  error: (message: string) => {
-    return baseToast.error(message);
+  // Variant helpers are already defined in the hook, but we'll redefine them here for clarity
+  error: (message: string, options?: any) => {
+    return baseToast.error(message, options);
   },
   
-  info: (message: string) => {
-    return baseToast.info(message);
+  info: (message: string, options?: any) => {
+    return baseToast.info(message, options);
   },
   
-  success: (message: string) => {
-    return baseToast.success(message);
+  success: (message: string, options?: any) => {
+    return baseToast.success(message, options);
   },
   
-  warning: (message: string) => {
-    return baseToast.warning(message);
+  warning: (message: string, options?: any) => {
+    return baseToast.warning(message, options);
   }
 };

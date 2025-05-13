@@ -33,7 +33,7 @@ export function OSContent({
     if (finalOptions.length === 0 && !isLoading) {
       console.warn("No OS options available. Check category mapping in price service.");
       toast.warning("Aviso", {
-        description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração.",
+        description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração."
       });
     }
   }, [finalOptions, toast, isLoading]);
