@@ -87,6 +87,8 @@ export function useItemActions(
     }
     
     try {
+      setIsSubmittingItem(true);
+      
       const updatedItemData = {
         name: values.name,
         description: values.description,
@@ -99,21 +101,30 @@ export function useItemActions(
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
       };
       
+      console.log("Atualizando item com dados:", updatedItemData);
+      
       // Update item using existing method
       const updatedItem = PriceService.updateItem(activeTab, itemId, updatedItemData);
       
       // Update local state for immediate feedback
-      setPriceData(prev => ({
-        ...prev,
-        [activeTab]: {
-          ...prev[activeTab],
-          items: prev[activeTab].items.map(item => 
-            item.id === itemId ? updatedItem : item
-          )
+      setPriceData(prev => {
+        // Create a deep copy to ensure we're not mutating the previous state
+        const newState = JSON.parse(JSON.stringify(prev));
+        
+        if (newState[activeTab] && Array.isArray(newState[activeTab].items)) {
+          const itemIndex = newState[activeTab].items.findIndex(
+            (item: PriceItem) => item.id === itemId
+          );
+          
+          if (itemIndex !== -1) {
+            newState[activeTab].items[itemIndex] = updatedItem;
+          }
         }
-      }));
+        
+        return newState;
+      });
       
-      // Close edit dialog
+      // Close edit dialog and reset state
       setOpenEditItem(false);
       setItemToEdit(undefined);
       
@@ -122,11 +133,14 @@ export function useItemActions(
         description: `O item ${values.name} foi atualizado com sucesso.`
       });
     } catch (error) {
+      console.error("Erro ao atualizar item:", error);
       toast({
         title: "Erro ao editar item",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmittingItem(false);
     }
   };
 

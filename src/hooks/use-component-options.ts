@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
 import { normalizeComponentType } from "./use-component-selection";
+import { toast } from "@/hooks/ui/use-toast";
 
 /**
  * Hook para obter opções de componentes da tabela de preços
@@ -35,7 +36,7 @@ export function useComponentOptions(
         
         if (category && Array.isArray(category.items)) {
           // Converter itens da categoria para ComponentOption
-          const componentOptions: ComponentOption[] = category.items.map(item => ({
+          let componentOptions: ComponentOption[] = category.items.map(item => ({
             id: item.id,
             name: item.name,
             description: item.description,
@@ -43,9 +44,20 @@ export function useComponentOptions(
             specs: Array.isArray(item.specs) ? item.specs : [],
             type: item.type,
             subtype: item.subtype,
-            isHardware: item.isHardware || false, // Added default value
+            isHardware: item.isHardware || false,
             metadata: item.metadata
           }));
+          
+          // Remove duplicatas baseadas no ID
+          const uniqueIds = new Set();
+          componentOptions = componentOptions.filter(option => {
+            if (uniqueIds.has(option.id)) {
+              console.log(`Removed duplicate option with ID: ${option.id}, name: ${option.name}`);
+              return false;
+            }
+            uniqueIds.add(option.id);
+            return true;
+          });
           
           setOptions(componentOptions);
         } else {

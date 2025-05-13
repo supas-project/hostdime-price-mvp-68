@@ -7,7 +7,7 @@ import { HelpTooltip } from "@/components/help-tooltip";
 import { ComponentSelector } from "@/components/component-selector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -38,8 +38,10 @@ export function ProcessorContent({
   // Notify about errors
   useEffect(() => {
     if (error) {
-      toast.error("Erro ao carregar processadores", {
-        description: "Não foi possível carregar a lista de processadores disponíveis."
+      toast({
+        title: "Erro ao carregar processadores", 
+        description: "Não foi possível carregar a lista de processadores disponíveis.",
+        variant: "destructive"
       });
     }
   }, [error]);
@@ -52,6 +54,31 @@ export function ProcessorContent({
       onSelectOption(option);
     }
   };
+
+  // Log options to debug duplications
+  useEffect(() => {
+    if (options.length > 0) {
+      console.log(`Rendering ${options.length} processor options`);
+      
+      // Check for potential duplicates
+      const idMap = new Map();
+      const nameMap = new Map();
+      
+      options.forEach(option => {
+        if (idMap.has(option.id)) {
+          console.warn(`Found processor with duplicate id: ${option.id}`);
+        } else {
+          idMap.set(option.id, true);
+        }
+        
+        if (nameMap.has(option.name)) {
+          console.warn(`Found processor with duplicate name: ${option.name}`);
+        } else {
+          nameMap.set(option.name, true);
+        }
+      });
+    }
+  }, [options]);
 
   // Show loading state
   if (isLoading) {

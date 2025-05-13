@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,6 +63,15 @@ type ItemFormProps = {
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Log the item being edited to debug
+  useEffect(() => {
+    if (isEditing && item) {
+      console.log("Editing item:", item);
+      console.log("Item specs:", item.specs);
+      console.log("Item tags:", item.tags);
+    }
+  }, [item, isEditing]);
+  
   // Derive initial tags from isHardware for backwards compatibility
   const getInitialTags = () => {
     if (!item) return [];
@@ -113,6 +123,19 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
   const handleSubmit = (values: FormValues) => {
     // Evita múltiplas submissões
     if (isSubmitting) return;
+    
+    // Ensure specs is always an array
+    if (!values.specs) {
+      values.specs = [];
+    }
+    
+    // Ensure tags is always an array
+    if (!values.tags) {
+      values.tags = [];
+    }
+    
+    // Log values before submission to debug
+    console.log("Form values to submit:", values);
     
     // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
     if (isHardwareCategory() && !values.tags.includes("Hardware")) {
@@ -236,7 +259,11 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
                   placeholder="Adicione especificações técnicas (uma por linha)" 
                   className="min-h-[100px]"
                   value={Array.isArray(field.value) ? field.value.join('\n') : ''}
-                  onChange={e => field.onChange(e.target.value)}
+                  onChange={e => {
+                    const specLines = e.target.value.split('\n').filter(Boolean).map(line => line.trim());
+                    field.onChange(specLines);
+                    console.log("Updated specs:", specLines);
+                  }}
                 />
               </FormControl>
               <FormDescription>
@@ -257,7 +284,10 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
               <FormControl>
                 <TagSelector 
                   value={field.value || []} 
-                  onChange={field.onChange}
+                  onChange={(newTags) => {
+                    field.onChange(newTags);
+                    console.log("Updated tags:", newTags);
+                  }}
                   defaultTags={["Hardware"]}  
                 />
               </FormControl>
