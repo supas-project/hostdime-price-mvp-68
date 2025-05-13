@@ -1,5 +1,6 @@
+
 import * as React from "react"
-import { toast as sonnerToast, Toast as SonnerToast, type ToastT, type ExternalToast } from "sonner";
+import { toast as sonnerToast, type ToastT, type ExternalToast } from "sonner";
 
 // Define a standard interface for toast functions to ensure consistent usage
 export interface ToastOptions {
@@ -14,11 +15,11 @@ function toast(message: string, options?: ToastOptions) {
   
   // Convert our variant to sonner styling
   if (variant === "destructive") {
-    return sonnerToast.error(message, { ...rest });
+    return sonnerToast.error(message, { ...rest, description });
   } else if (variant === "success") {
-    return sonnerToast.success(message, { ...rest });
+    return sonnerToast.success(message, { ...rest, description });
   } else {
-    return sonnerToast(message, { ...rest });
+    return sonnerToast(message, { ...rest, description });
   }
 }
 
