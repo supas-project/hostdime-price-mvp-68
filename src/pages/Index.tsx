@@ -21,16 +21,16 @@ const WizardContainer = () => {
   } = useWizard();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <main className={cn(
         "container mx-auto py-4 sm:py-6 md:py-8 lg:py-12 px-3 md:px-4",
-        "space-y-4 md:space-y-8 animate-fade-in"
+        "space-y-4 md:space-y-6 lg:space-y-8 animate-fade-in"
       )}>
-        <div className="text-center space-y-2 md:space-y-4 mb-4 md:mb-8 lg:mb-12">
+        <div className="text-center space-y-2 md:space-y-4 mb-4 md:mb-6 lg:mb-8">
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
             Configure seu Servidor
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto text-xs sm:text-sm md:text-base">
+          <p className="text-muted-foreground max-w-lg mx-auto text-xs sm:text-sm md:text-base px-2">
             Selecione as opções ideais para seu servidor dedicado em poucos passos
           </p>
         </div>
@@ -42,7 +42,7 @@ const WizardContainer = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-          <div className="md:col-span-8">
+          <div className="md:col-span-8 w-full overflow-x-hidden">
             <WizardContent />
           </div>
           

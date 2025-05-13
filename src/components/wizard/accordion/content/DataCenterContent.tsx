@@ -37,15 +37,17 @@ export function DataCenterContent({
   };
 
   return (
-    <Card className="p-6">
-      <ComponentSelector
-        label="Data Center"
-        options={options}
-        value={localSelectedId}
-        onChange={handleChange}
-        tooltip="Escolha a localização ideal para seu servidor"
-        highlightSelection={true}
-      />
+    <Card className="p-4 sm:p-6 overflow-hidden">
+      <div className="w-full overflow-x-hidden">
+        <ComponentSelector
+          label="Data Center"
+          options={options}
+          value={localSelectedId}
+          onChange={handleChange}
+          tooltip="Escolha a localização ideal para seu servidor"
+          highlightSelection={true}
+        />
+      </div>
     </Card>
   );
 }

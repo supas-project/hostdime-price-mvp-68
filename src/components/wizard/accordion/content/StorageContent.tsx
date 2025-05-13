@@ -7,5 +7,9 @@ interface StorageContentProps {
 }
 
 export function StorageContent({ onSelectStorageItem }: StorageContentProps) {
-  return <StorageStep onSelectStorageItem={onSelectStorageItem} />;
+  return (
+    <div className="w-full overflow-x-hidden">
+      <StorageStep onSelectStorageItem={onSelectStorageItem} />
+    </div>
+  );
 }

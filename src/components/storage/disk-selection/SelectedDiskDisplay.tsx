@@ -59,10 +59,10 @@ export function SelectedDiskDisplay({
   const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-4 animate-fade-in overflow-x-hidden">
       <div className={cn(
         "flex flex-col sm:flex-row sm:items-center justify-between",
-        "p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a]",
+        "p-2.5 sm:p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a]",
         "transition-all duration-300 gap-3"
       )}>
         <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export function SelectedDiskDisplay({
             <Badge variant="outline" className={diskTypeColors[disk.type]}>
               {disk.type.toUpperCase()}
             </Badge>
-            <span className="text-white">{normalizedCapacity}</span>
+            <span className="text-white text-sm">{normalizedCapacity}</span>
           </div>
         </div>
         
@@ -85,15 +85,15 @@ export function SelectedDiskDisplay({
               max={10} 
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[#f58220] font-medium text-sm sm:text-base whitespace-nowrap">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
               {formatCurrency(disk.price * quantity)}/mês
             </span>
             <Button
               variant="ghost"
               size="icon"
               onClick={onRemove}
-              className="text-destructive hover:text-destructive/90"
+              className="text-destructive hover:text-destructive/90 h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

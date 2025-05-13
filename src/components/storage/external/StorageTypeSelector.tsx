@@ -67,7 +67,7 @@ export function StorageTypeSelector({
   };
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <label className="text-xs sm:text-sm font-medium">Tipo de Storage</label>
@@ -97,7 +97,7 @@ export function StorageTypeSelector({
                 htmlFor={`storage-type-${key}`}
                 className={cn(
                   "flex flex-col gap-1 p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all text-center",
-                  "peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
+                  "peer-focus-visible:ring-2 peer-focus-visible:ring-primary min-h-[85px] touch-target",
                   selectedType === key 
                     ? "border-primary bg-primary/10" 
                     : "border-border hover:border-primary/30 hover:bg-primary/5"

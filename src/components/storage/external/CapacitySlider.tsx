@@ -71,9 +71,9 @@ export function CapacitySlider({
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <label className="text-xs sm:text-sm font-medium">Tamanho</label>
           <HelpTooltip
             title="Escolha o tamanho ideal"
@@ -91,7 +91,7 @@ export function CapacitySlider({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               onKeyPress={handleKeyPress}
-              className="w-20 sm:w-24 h-8 text-right pr-8 text-sm"
+              className="w-20 sm:w-24 h-8 text-right pr-8 text-xs sm:text-sm"
               min={min}
               max={max}
               step={step}

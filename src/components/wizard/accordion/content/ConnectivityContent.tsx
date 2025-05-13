@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
@@ -94,25 +95,25 @@ export function ConnectivityContent({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden w-full">
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-primary text-sm font-medium">
-          <EthernetPort className="h-4 w-4" />
-          Velocidade da Porta
+          <EthernetPort className="h-4 w-4 flex-shrink-0" />
+          <span className="break-words">Velocidade da Porta</span>
         </div>
         <div className="grid gap-4">
           <RadioGroup
             value={selectedPort?.option.id}
             onValueChange={handlePortSelect}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-3 sm:gap-4"
           >
             {portOptions.map((port) => (
-              <div key={port.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div key={port.id} className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 rounded-lg flex-wrap sm:flex-nowrap gap-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value={port.id} id={port.id} />
-                  <Label htmlFor={port.id} className="text-sm flex items-center gap-4">
-                    <span>{port.name}</span>
-                    <span className="text-primary font-medium">
+                  <Label htmlFor={port.id} className="text-xs sm:text-sm flex flex-wrap items-center gap-2 sm:gap-4">
+                    <span className="break-words">{port.name}</span>
+                    <span className="text-primary font-medium whitespace-nowrap">
                       {formatCurrency(port.price)}
                     </span>
                   </Label>
@@ -133,22 +134,22 @@ export function ConnectivityContent({
 
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-primary text-sm font-medium">
-          <Network className="h-4 w-4" />
-          Bloco de IPs
+          <Network className="h-4 w-4 flex-shrink-0" />
+          <span className="break-words">Bloco de IPs</span>
         </div>
         <Select 
           value={selectedIp?.option.id || ""} 
           onValueChange={handleIpSelect}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
             <SelectValue placeholder="Selecione um bloco de IPs" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[51]">
             {ipOptions.map((ip) => (
-              <SelectItem key={ip.id} value={ip.id}>
-                <div className="flex justify-between items-center w-full gap-4">
+              <SelectItem key={ip.id} value={ip.id} className="py-2 sm:py-2.5">
+                <div className="flex justify-between items-center w-full gap-2 sm:gap-4 text-xs sm:text-sm">
                   <span>{ip.name}</span>
-                  <span className="text-primary font-medium">
+                  <span className="text-primary font-medium whitespace-nowrap">
                     {formatCurrency(ip.price)}
                   </span>
                 </div>
@@ -157,7 +158,7 @@ export function ConnectivityContent({
           </SelectContent>
         </Select>
         {selectedIp && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">
             {selectedIp.option.description}
           </p>
         )}

@@ -54,7 +54,7 @@ export function WizardContent() {
   const currentComponent = serverData.componentes[currentStep];
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full">
+    <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
       <Button
         variant="outline"
         size="sm"
@@ -79,7 +79,7 @@ export function WizardContent() {
       </Button>
 
       {showAllSteps ? (
-        <ScrollArea className="max-h-[calc(100vh-200px)] pr-0 sm:pr-2">
+        <ScrollArea className="max-h-[calc(100vh-200px)] pr-0 sm:pr-2 overflow-x-hidden">
           <div className="space-y-3 sm:space-y-4 pr-2 sm:pr-4">
             {serverData.componentes.map((component, index) => (
               <AccordionStep
@@ -97,16 +97,18 @@ export function WizardContent() {
           </div>
         </ScrollArea>
       ) : (
-        <AccordionStep
-          component={currentComponent}
-          selectedOption={getSelectedOption(currentComponent)}
-          onSelectOption={handleSelectOption}
-          isActive={true}
-          isComplete={isStepComplete(currentStep)}
-          connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
-          onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? setConnectivityItems : undefined}
-          onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
-        />
+        <div className="overflow-x-hidden">
+          <AccordionStep
+            component={currentComponent}
+            selectedOption={getSelectedOption(currentComponent)}
+            onSelectOption={handleSelectOption}
+            isActive={true}
+            isComplete={isStepComplete(currentStep)}
+            connectivityItems={currentComponent.type === "Conectividade" ? connectivityItems : undefined}
+            onUpdateConnectivityItems={currentComponent.type === "Conectividade" ? setConnectivityItems : undefined}
+            onSelectStorageItem={currentComponent.type === "Armazenamento" ? handleSelectStorageItem : undefined}
+          />
+        </div>
       )}
     </div>
   );

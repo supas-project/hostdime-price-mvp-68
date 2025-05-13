@@ -40,33 +40,35 @@ export function ContractContent({
   const paybackValue = selectedOption ? getPayBackValue({ isHardware: true } as ComponentOption, selectedOption.subtype || "0") : null;
 
   return (
-    <Card className="p-6">
-      <ComponentSelector
-        label="Duração do Contrato"
-        options={options}
-        value={localSelectedId}
-        onChange={handleOptionChange}
-        tooltip="Escolha o período do seu contrato"
-        highlightSelection={true}
-      />
+    <Card className="p-4 sm:p-6 overflow-hidden">
+      <div className="w-full overflow-x-hidden">
+        <ComponentSelector
+          label="Duração do Contrato"
+          options={options}
+          value={localSelectedId}
+          onChange={handleOptionChange}
+          tooltip="Escolha o período do seu contrato"
+          highlightSelection={true}
+        />
+      </div>
       
       {selectedOption && (
-        <div className="mt-4 p-3 bg-primary/5 rounded-md">
+        <div className="mt-4 p-3 bg-primary/5 rounded-md overflow-x-auto">
           <div className="flex flex-wrap gap-2 items-center">
             {selectedOption.metadata?.discount && selectedOption.metadata?.discount > 0 ? (
-              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 whitespace-nowrap">
                 {selectedOption.metadata.discount}% de desconto
               </Badge>
             ) : null}
             
             {paybackValue && (
-              <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+              <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200 whitespace-nowrap">
                 PayBack: {formatPayBack(paybackValue)} para hardware
               </Badge>
             )}
           </div>
           
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-2 break-words">
             {paybackValue ? 
               `Com este contrato, você obtém ${formatPayBack(paybackValue)} de PayBack em componentes de hardware.` : 
               "Selecione um contrato para ver os benefícios."}

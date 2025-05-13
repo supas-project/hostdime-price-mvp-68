@@ -15,23 +15,25 @@ export function TabHeader({ activeTab, onTabChange }: TabHeaderProps) {
         value="internal"
         onClick={() => onTabChange("internal")}
         className={cn(
-          "relative py-2.5 sm:py-3 text-sm sm:text-base transition-all duration-300",
-          "data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
+          "relative py-2.5 sm:py-3 px-2 sm:px-3 text-sm sm:text-base transition-all duration-300",
+          "data-[state=active]:bg-[#f58220] data-[state=active]:text-white",
+          "min-h-[44px] touch-target"
         )}
       >
-        <HardDrive className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-        <span className="whitespace-nowrap">Discos Internos</span>
+        <HardDrive className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+        <span className="whitespace-nowrap text-xs sm:text-sm">Discos Internos</span>
       </TabsTrigger>
       <TabsTrigger 
         value="external"
         onClick={() => onTabChange("external")}
         className={cn(
-          "relative py-2.5 sm:py-3 text-sm sm:text-base transition-all duration-300",
-          "data-[state=active]:bg-[#f58220] data-[state=active]:text-white"
+          "relative py-2.5 sm:py-3 px-2 sm:px-3 text-sm sm:text-base transition-all duration-300",
+          "data-[state=active]:bg-[#f58220] data-[state=active]:text-white",
+          "min-h-[44px] touch-target"
         )}
       >
-        <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-        <span className="whitespace-nowrap">Storage Externo</span>
+        <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+        <span className="whitespace-nowrap text-xs sm:text-sm">Storage Externo</span>
       </TabsTrigger>
     </TabsList>
   );

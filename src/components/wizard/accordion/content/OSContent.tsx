@@ -55,7 +55,7 @@ export function OSContent({
   // Show loading state
   if (isLoading && !propOptions) {
     return (
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <div className="text-base font-medium text-white">Sistema Operacional</div>
@@ -68,12 +68,14 @@ export function OSContent({
   }
   
   return (
-    <Card className="p-6">
-      <OSSelector
-        options={finalOptions}
-        selectedOption={finalOptions.find(opt => opt.id === localSelectedId) || null}
-        onSelectOption={onSelectOption}
-      />
+    <Card className="p-4 sm:p-6 overflow-hidden">
+      <div className="w-full overflow-x-hidden">
+        <OSSelector
+          options={finalOptions}
+          selectedOption={finalOptions.find(opt => opt.id === localSelectedId) || null}
+          onSelectOption={onSelectOption}
+        />
+      </div>
     </Card>
   );
 }
