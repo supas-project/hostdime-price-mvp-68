@@ -22,14 +22,14 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
       
       setOpenAddCategory(false);
       
-      toast.success({
+      toast({
         title: "Categoria adicionada",
         description: `A categoria ${newCategory.name} foi adicionada com sucesso.`
       });
       
       return newCategory.id;
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao adicionar categoria",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"
@@ -48,14 +48,14 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
         return updatedData;
       });
       
-      toast.success({
+      toast({
         title: "Categoria excluída",
         description: "A categoria foi excluída com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao excluir categoria",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"

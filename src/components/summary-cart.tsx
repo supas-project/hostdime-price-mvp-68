@@ -50,7 +50,6 @@ export function SummaryCart({
     .filter(storage => storage && storage.price > 0)
     .reduce((sum, storage) => sum + storage.price, 0);
 
-  // Make sure we have valid connectivity items before accessing their properties
   const connectivityPrice = Object.values(connectivityItems)
     .filter(item => item && item.option)
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);

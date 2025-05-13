@@ -16,31 +16,6 @@ export function normalizeComponentName(name: string): string {
 }
 
 /**
- * Normaliza o tipo do componente para permitir correspondência entre diferentes
- * representações do mesmo tipo (ex: "SistemaOperacional" e "Sistemas Operacionais")
- */
-export function normalizeComponentType(type: string): string {
-  if (!type) return "";
-  
-  const normalized = type
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")  // Remove acentos
-    .replace(/[^a-z0-9]/g, "");       // Remove caracteres especiais
-  
-  // Mapeamento de tipos comumente usados com nomenclaturas diferentes
-  const typeMap: Record<string, string> = {
-    "sistemaoperacional": "sistemaoperacional",
-    "sistemasoperacionais": "sistemaoperacional",
-    "sistemaoperacionais": "sistemaoperacional",
-    "so": "sistemaoperacional",
-    "os": "sistemaoperacional"
-  };
-  
-  return typeMap[normalized] || normalized;
-}
-
-/**
  * Verifica se dois componentes representam o mesmo item,
  * mesmo que tenham sido obtidos de fontes de dados diferentes
  */
@@ -53,26 +28,16 @@ export function isSameComponent(comp1: ComponentOption, comp2: ComponentOption):
   // Verificar se os nomes são idênticos
   if (comp1.name === comp2.name) return true;
   
-  // Verificar se os tipos normalizados são idênticos
-  const type1 = normalizeComponentType(comp1.type);
-  const type2 = normalizeComponentType(comp2.type);
+  // Verificar se os nomes normalizados são idênticos
+  const name1 = normalizeComponentName(comp1.name);
+  const name2 = normalizeComponentName(comp2.name);
   
-  if (type1 === type2 && type1 !== "") {
-    // Verificar se os nomes normalizados são idênticos
-    const name1 = normalizeComponentName(comp1.name);
-    const name2 = normalizeComponentName(comp2.name);
-    
-    if (name1 === name2 && name1 !== "") return true;
-    
-    // Se os nomes normalizados são semelhantes (um contém o outro)
-    if ((name1.includes(name2) || name2.includes(name1)) && 
-        name1.length > 3 && name2.length > 3) {
-      return true;
-    }
-  }
+  if (name1 === name2 && name1 !== "") return true;
   
-  // Se ambos têm o mesmo tipo e subtipo
-  if (comp1.type === comp2.type && comp1.subtype === comp2.subtype) {
+  // Se ambos têm o mesmo tipo e subtipo, e seus nomes normalizados são semelhantes
+  if (comp1.type === comp2.type && 
+      comp1.subtype === comp2.subtype && 
+      name1.includes(name2) || name2.includes(name1)) {
     return true;
   }
   
@@ -104,21 +69,13 @@ export function findMatchingComponent(
   
   if (normalizedMatch) return normalizedMatch;
   
-  // Tenta encontrar correspondência por tipo normalizado
-  const refType = normalizeComponentType(reference.type);
-  const typeMatch = options.find(option => 
-    normalizeComponentType(option.type) === refType
-  );
-  
-  if (typeMatch) return typeMatch;
-  
   // Tenta encontrar correspondência por tipo e subtipo se disponíveis
   if (reference.type && reference.subtype) {
-    const typeSubtypeMatch = options.find(option => 
+    const typeMatch = options.find(option => 
       option.type === reference.type && 
       option.subtype === reference.subtype
     );
-    if (typeSubtypeMatch) return typeSubtypeMatch;
+    if (typeMatch) return typeMatch;
   }
   
   return null;

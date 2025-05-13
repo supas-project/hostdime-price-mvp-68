@@ -18,7 +18,6 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CustomService } from "@/types/wizard";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -39,12 +38,12 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     try {
       // Simular uma operação de salvamento
       await new Promise(resolve => setTimeout(resolve, 800));
-      toast.success({
+      toast({
         title: "Cotação salva",
         description: "Sua cotação foi salva com sucesso."
       });
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao salvar cotação",
         description: "Não foi possível salvar sua cotação. Tente novamente.",
         variant: "destructive"
@@ -59,28 +58,23 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     
     try {
       // Exibir toast de início da geração do PDF
-      toast.info({
+      toast({
         title: "Preparando PDF",
         description: "Aguarde enquanto geramos seu documento..."
       });
-      
-      // Convert customServices to ComponentOption[] for PDF generation compatibility
-      const customServicesAsComponents: ComponentOption[] = customServices.map(service => ({
-        ...service
-      }));
       
       // Ensure we're passing all arguments with correct types
       await generateQuotePDF(
         selectedComponents,
         storageItems,
-        customServicesAsComponents,
+        customServices,
         profitMargin,
         connectivityItems,
         pdfPreviewOption === "preview" // Passar true para abrir em nova aba, false para download direto
       );
       
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro na exportação",
         description: "Não foi possível gerar o PDF. Verifique os dados e tente novamente.",
         variant: "destructive"
@@ -97,12 +91,12 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       // Simular o processamento do pedido
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast.success({
+      toast({
         title: "Pedido finalizado",
         description: "Obrigado por escolher a HostDime! Em breve entraremos em contato."
       });
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao finalizar pedido",
         description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
         variant: "destructive" 

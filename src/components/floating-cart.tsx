@@ -24,12 +24,13 @@ export function FloatingCart(props: FloatingCartProps) {
 
   if (isMobile) {
     return (
-      <div className="fixed bottom-4 right-4 z-[100] animate-fade-in">
+      <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
         <Sheet>
           <SheetTrigger asChild>
             <Button 
               size="lg" 
               className="rounded-full shadow-lg flex items-center gap-2"
+              style={{ zIndex: 100 }}
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Ver Resumo</span>
@@ -40,8 +41,8 @@ export function FloatingCart(props: FloatingCartProps) {
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] z-[100] p-0 overflow-hidden">
-            <div className="pt-4 max-h-[75vh] overflow-y-auto px-4">
+          <SheetContent side="bottom" className="h-[80vh] z-[100]" style={{ zIndex: 100 }}>
+            <div className="pt-4 max-h-[75vh] overflow-y-auto">
               <SummaryCart {...props} />
             </div>
           </SheetContent>
@@ -51,7 +52,7 @@ export function FloatingCart(props: FloatingCartProps) {
   }
 
   return (
-    <div className="md:sticky md:top-24 h-fit animate-fade-in w-full md:w-auto lg:max-w-[400px]">
+    <div className="md:sticky md:top-24 h-fit animate-fade-in md:w-[380px] lg:w-[420px]">
       <SummaryCart {...props} />
     </div>
   );

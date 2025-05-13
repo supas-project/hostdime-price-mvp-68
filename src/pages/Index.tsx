@@ -16,32 +16,30 @@ const WizardContainer = () => {
     showFinalSummary,
     setShowFinalSummary,
     isStepComplete,
-    handleRestart,
-    completedSteps
+    handleRestart
   } = useWizard();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="container max-w-6xl mx-auto py-6 md:py-12 px-4 space-y-6 md:space-y-8 animate-fade-in">
-        <div className="text-center space-y-4 mb-8 md:mb-12">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+      <main className="container max-w-4xl mx-auto py-12 px-4 space-y-8 animate-fade-in">
+        <div className="text-center space-y-4 mb-12">
+          <h1 className="text-3xl font-bold tracking-tight">
             Configure seu Servidor
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
             Selecione as opções ideais para seu servidor dedicado em poucos passos
           </p>
+          {/* BeginnerModeToggle completely removed */}
         </div>
 
         <ProgressIndicator 
           components={serverData.componentes} 
           currentStep={currentStep}
-          completedSteps={completedSteps || serverData.componentes.map((_, index) => isStepComplete(index))}
+          completedSteps={serverData.componentes.map((_, index) => isStepComplete(index))}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-          <div className="lg:col-span-2">
-            <WizardContent />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <WizardContent />
           <FloatingCart
             selectedComponents={selectedComponents}
             currentStep={currentStep}

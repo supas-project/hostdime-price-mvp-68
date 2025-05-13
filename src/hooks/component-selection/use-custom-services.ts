@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { CustomService } from "@/types/wizard";
+import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 
 export function useCustomServices() {
-  const [customServices, setCustomServices] = useState<CustomService[]>([]);
+  const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
 
-  const addCustomService = (service: CustomService) => {
+  const addCustomService = (service: ComponentOption) => {
     setCustomServices(prev => {
       const updated = [...prev, service];
       // Mantido apenas este toast por ser uma ação menos frequente

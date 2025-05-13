@@ -3,7 +3,7 @@ import { ServerComponent } from "@/data/server-components";
 import { Progress } from "@/components/ui/progress";
 import { Check, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Tooltip,
@@ -23,37 +23,23 @@ export function ProgressIndicator({
   currentStep,
   completedSteps = [] 
 }: ProgressIndicatorProps) {
-  // Ensure completedSteps has same length as components
-  const normalizedCompletedSteps = completedSteps.length === components.length 
-    ? completedSteps 
-    : Array(components.length).fill(false);
-
-  const completedCount = normalizedCompletedSteps.filter(Boolean).length;
-  const progress = Math.round((completedCount / components.length) * 100);
+  const completedCount = completedSteps.filter(Boolean).length;
+  const progress = (completedCount / components.length) * 100;
   const currentComponent = components[currentStep];
-
-  // Debug progress calculations
-  useEffect(() => {
-    console.log("Progress calculation:", { 
-      completedCount, 
-      totalSteps: components.length,
-      progress,
-      completedSteps: normalizedCompletedSteps
-    });
-  }, [completedCount, components.length, normalizedCompletedSteps]);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div className="space-y-3 mb-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className={cn(
             "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium",
-            normalizedCompletedSteps[currentStep] ? "bg-primary/20 text-primary" : "bg-muted text-foreground"
+            completedSteps[currentStep] ? "bg-primary/20 text-primary" : "bg-muted text-foreground"
           )}>
             {currentStep + 1}
           </div>
           <div>
-            <p className="font-medium flex items-center">
+            <p className="font-medium">
               {currentComponent.friendlyName}
               <TooltipProvider>
                 <Tooltip>
@@ -62,8 +48,8 @@ export function ProgressIndicator({
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[300px] z-[200]">
-                    <p className="text-xs">{currentComponent.description}</p>
+                  <TooltipContent>
+                    <p className="text-xs max-w-[250px]">{currentComponent.description}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -79,7 +65,7 @@ export function ProgressIndicator({
             "text-xs px-2 py-0.5 rounded",
             progress === 100 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
           )}>
-            {progress}%
+            {Math.round(progress)}%
             {progress === 100 && <Check className="h-3 w-3 inline ml-1" />}
           </span>
         </div>
@@ -99,7 +85,7 @@ export function ProgressIndicator({
             >
               <div className={cn(
                 "w-2 h-2 rounded-full -mt-3",
-                normalizedCompletedSteps[idx] ? "bg-primary" : 
+                completedSteps[idx] ? "bg-primary" : 
                 currentStep === idx ? "bg-primary-hover" : "bg-muted"
               )}></div>
               {(idx === 0 || idx === components.length - 1 || idx === Math.floor(components.length / 2)) && (

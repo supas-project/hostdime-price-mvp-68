@@ -24,7 +24,7 @@ export function useItemActions(
     if (isSubmittingItem) return;
     
     if (!activeTab) {
-      toast.error({
+      toast({
         title: "Erro ao adicionar item",
         description: "Nenhuma categoria selecionada.",
         variant: "destructive"
@@ -58,12 +58,12 @@ export function useItemActions(
       // Close modal
       setOpenAddItem(false);
       
-      toast.success({
+      toast({
         title: "Item adicionado",
         description: `O item ${values.name} foi adicionado com sucesso.`
       });
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao adicionar item",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"
@@ -78,7 +78,7 @@ export function useItemActions(
 
   const handleEditItem = (values: any, itemId?: string) => {
     if (!activeTab || !itemId) {
-      toast.error({
+      toast({
         title: "Erro ao editar item",
         description: "Nenhuma categoria ou item selecionado.",
         variant: "destructive"
@@ -117,12 +117,12 @@ export function useItemActions(
       setOpenEditItem(false);
       setItemToEdit(undefined);
       
-      toast.success({
+      toast({
         title: "Item atualizado",
         description: `O item ${values.name} foi atualizado com sucesso.`
       });
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao editar item",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"
@@ -145,14 +145,14 @@ export function useItemActions(
         }
       }));
       
-      toast.success({
+      toast({
         title: "Item excluído",
         description: "O item foi excluído com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao excluir item",
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive"

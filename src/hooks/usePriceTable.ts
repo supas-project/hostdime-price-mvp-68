@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PriceData, PriceItem, PriceCategory } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
@@ -50,9 +49,10 @@ export function usePriceTable() {
         setActiveTab(Object.keys(data)[0]);
       }
     } catch (error) {
-      toast.error({
+      toast({
         title: "Erro ao carregar dados",
-        description: "Não foi possível carregar a tabela de preços."
+        description: "Não foi possível carregar a tabela de preços.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
