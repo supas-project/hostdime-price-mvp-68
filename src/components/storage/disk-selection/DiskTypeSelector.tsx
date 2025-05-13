@@ -1,5 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface DiskTypeSelectorProps {
   selectedType: "nvme" | "ssd" | "hdd" | undefined;
@@ -12,7 +13,10 @@ export function DiskTypeSelector({ selectedType, onTypeSelect }: DiskTypeSelecto
       value={selectedType} 
       onValueChange={onTypeSelect}
     >
-      <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
+      <SelectTrigger className={cn(
+        "w-full bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors",
+        "hover:border-[#f58220] text-sm sm:text-base py-2 px-3 sm:py-2.5 sm:px-4"
+      )}>
         <SelectValue placeholder="Tipo de disco" />
       </SelectTrigger>
       <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">

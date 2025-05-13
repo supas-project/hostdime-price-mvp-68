@@ -6,6 +6,7 @@ import { CartHeader } from "./summary-cart/cart-header";
 import { CartContent } from "./summary-cart/cart-content";
 import { CartFooter } from "./summary-cart/cart-footer";
 import { CartNavigation } from "./summary-cart/cart-navigation";
+import { cn } from "@/lib/utils";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -76,7 +77,11 @@ export function SummaryCart({
   };
   
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-lg flex flex-col max-h-[calc(100vh-200px)]">
+    <div className={cn(
+      "bg-card rounded-xl sm:rounded-2xl border border-border",
+      "shadow-lg flex flex-col max-h-[calc(100vh-180px)]",
+      "transition-all duration-300 hover:shadow-xl"
+    )}>
       <CartHeader 
         onClearAll={handleClearAll}
         hasItems={hasItems}

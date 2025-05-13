@@ -9,6 +9,7 @@ import { StorageTypeSelector } from "./external/StorageTypeSelector";
 import { StorageSpecs } from "./external/StorageSpecs";
 import { HardDrive } from "lucide-react";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { cn } from "@/lib/utils";
 
 interface ExternalStoragePanelProps {
   onSelect?: (option: StorageTier) => void;
@@ -96,14 +97,17 @@ export function ExternalStoragePanel({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <HardDrive className="h-5 w-5 text-primary" />
+    <Card className={cn(
+      "w-full border-[#2a2a2a]",
+      "shadow-md hover:shadow-lg transition-shadow duration-300"
+    )}>
+      <CardHeader className="pb-2 pt-3 px-3 sm:pb-2 sm:pt-4 sm:px-4">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <HardDrive className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Storage Externo
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4 sm:space-y-5 pt-2 px-3 sm:pt-2 sm:px-4">
         {/* Storage Type Selector */}
         <StorageTypeSelector
           storageTypes={availableStorageTypes}
@@ -124,17 +128,18 @@ export function ExternalStoragePanel({
         <CapacitySlider capacity={capacity} onCapacityChange={setCapacity} />
         
         {/* Price and Add Button */}
-        <div className="pt-3 border-t border-border flex items-center justify-between">
+        <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="text-sm text-muted-foreground">Preço mensal</p>
-            <p className="text-xl font-semibold text-primary">{formatCurrency(calculatePrice())}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Preço mensal</p>
+            <p className="text-lg sm:text-xl font-semibold text-primary">{formatCurrency(calculatePrice())}</p>
           </div>
           <Button 
             onClick={handleAddStorage}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
+            size="sm"
           >
             <HardDrive className="h-4 w-4" />
-            Adicionar ao Servidor
+            <span className="whitespace-nowrap">Adicionar ao Servidor</span>
           </Button>
         </div>
       </CardContent>

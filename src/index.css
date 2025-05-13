@@ -38,42 +38,114 @@
     --z-tooltip: 1070;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Spacing System */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    
+    /* Typography Scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
   }
 
   * {
-    @apply border-border selection:bg-primary/10 selection:text-primary;
+    @apply border-border selection:bg-primary/20 selection:text-primary;
+  }
+
+  html {
+    @apply scroll-smooth;
   }
 
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden font-sans;
     font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .component-card {
     @apply bg-card text-card-foreground border border-border rounded-xl transition-all duration-300;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow);
   }
 
   .component-card:hover {
     @apply border-primary/30;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
+  }
+  
+  /* Improved responsive container */
+  .responsive-container {
+    @apply w-full px-3 sm:px-6 md:px-8 lg:px-10 mx-auto;
+    max-width: 1400px;
+  }
+  
+  /* Card system with consistent elevation */
+  .card-elevated-1 {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .card-elevated-2 {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-elevated-3 {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Better form inputs for touchscreens */
+  .touch-input {
+    @apply min-h-10 px-3 py-2;
   }
 }
 
 @layer components {
-  /* Definindo classes de animação sem uso de @apply */
+  /* Animation classes */
   .fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
 
   .slide-in {
     animation: slideInBottom 0.5s ease-out forwards;
+  }
+  
+  /* Button system with consistent sizes */
+  .btn-xs {
+    @apply py-0.5 px-2 text-xs rounded;
+  }
+  
+  .btn-sm {
+    @apply py-1 px-3 text-sm rounded-md;
+  }
+  
+  .btn-md {
+    @apply py-2 px-4 text-base rounded-lg;
+  }
+  
+  .btn-lg {
+    @apply py-2.5 px-5 text-lg rounded-lg;
+  }
+  
+  /* Input system for better touch */
+  .input-touch {
+    @apply py-2.5 px-3 min-h-11;
   }
 }
 
@@ -82,7 +154,7 @@
     @apply bg-background/80 backdrop-blur-lg border border-border/50;
   }
   
-  /* Definindo as animações para keyframes */
+  /* Animation keyframes */
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -103,5 +175,38 @@
       transform: translateY(0);
       opacity: 1;
     }
+  }
+  
+  /* Hover interactions */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    @apply shadow-lg;
+  }
+  
+  .hover-glow:hover {
+    @apply shadow-md shadow-primary/20;
+  }
+  
+  /* Touch target size utilities */
+  .touch-target-sm {
+    @apply min-h-[36px] min-w-[36px];
+  }
+  
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .touch-target-lg {
+    @apply min-h-[52px] min-w-[52px];
+  }
+  
+  /* Better spacing utilities */
+  .h-screen-dvh {
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Modern browsers */
   }
 }

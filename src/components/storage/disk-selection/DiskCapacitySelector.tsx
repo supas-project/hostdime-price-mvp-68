@@ -26,6 +26,7 @@ export function DiskCapacitySelector({
       <SelectTrigger 
         className={cn(
           "bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors",
+          "text-sm sm:text-base py-2 px-3 sm:py-2.5 sm:px-4",
           !disabled ? "hover:border-[#f58220]" : "opacity-50"
         )}
       >
@@ -33,10 +34,10 @@ export function DiskCapacitySelector({
       </SelectTrigger>
       <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a]">
         {availableDisks.map((disk) => (
-          <SelectItem key={disk.id} value={disk.capacity}>
-            <div className="flex justify-between items-center gap-4">
+          <SelectItem key={disk.id} value={disk.capacity} className="sm:py-1.5">
+            <div className="flex justify-between items-center gap-2 sm:gap-4 w-full">
               <span>{disk.capacity}</span>
-              <span className="text-[#f58220] font-medium">
+              <span className="text-[#f58220] text-xs sm:text-sm font-medium">
                 {formatCurrency(disk.price)}/mês
               </span>
             </div>

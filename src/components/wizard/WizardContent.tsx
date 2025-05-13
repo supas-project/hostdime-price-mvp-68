@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { findMatchingComponent } from "@/utils/component-matching";
+import { cn } from "@/lib/utils";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -53,29 +54,33 @@ export function WizardContent() {
   const currentComponent = serverData.componentes[currentStep];
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-4 sm:space-y-6 w-full">
       <Button
         variant="outline"
         size="sm"
         onClick={() => setShowAllSteps(!showAllSteps)}
-        className="flex items-center gap-1 mb-4"
+        className={cn(
+          "flex items-center gap-1 mb-2 sm:mb-4",
+          "text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3",
+          "h-auto transition-colors"
+        )}
       >
         {showAllSteps ? (
           <>
-            <ChevronUp className="h-4 w-4" />
-            Mostrar apenas ativo
+            <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="whitespace-nowrap">Mostrar apenas ativo</span>
           </>
         ) : (
           <>
-            <ChevronDown className="h-4 w-4" />
-            Mostrar todos
+            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="whitespace-nowrap">Mostrar todos</span>
           </>
         )}
       </Button>
 
       {showAllSteps ? (
-        <ScrollArea className="max-h-[calc(100vh-200px)]">
-          <div className="space-y-4 pr-4">
+        <ScrollArea className="max-h-[calc(100vh-200px)] pr-0 sm:pr-2">
+          <div className="space-y-3 sm:space-y-4 pr-2 sm:pr-4">
             {serverData.componentes.map((component, index) => (
               <AccordionStep
                 key={component.id}

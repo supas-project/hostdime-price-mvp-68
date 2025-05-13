@@ -21,6 +21,7 @@ export function Sidebar({ className, children, ...props }: SidebarProps) {
           side="left"
           className={cn(
             "fixed inset-y-0 left-0 z-20 flex h-full flex-col p-0",
+            "border-r border-border shadow-lg",
             className
           )}
           {...props}
@@ -38,7 +39,8 @@ export function Sidebar({ className, children, ...props }: SidebarProps) {
     <aside
       data-state={isCollapsed ? "collapsed" : "expanded"}
       className={cn(
-        "bg-sidebar-background text-sidebar-foreground relative z-30 flex h-full flex-col overflow-hidden border-r transition-all duration-300 ease-in-out",
+        "bg-sidebar-background text-sidebar-foreground relative z-30 flex h-full flex-col",
+        "overflow-hidden border-r transition-all duration-300 ease-in-out shadow-md",
         isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded",
         className
       )}

@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
+import { cn } from "@/lib/utils";
 
 interface SelectedDiskDisplayProps {
   disk: PricedDiskOption;
@@ -59,9 +60,13 @@ export function SelectedDiskDisplay({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a] transition-all duration-300">
+      <div className={cn(
+        "flex flex-col sm:flex-row sm:items-center justify-between",
+        "p-3 rounded-lg bg-[#1e1e1e] border border-[#2a2a2a]",
+        "transition-all duration-300 gap-3"
+      )}>
         <div className="flex items-center gap-3">
-          <CircleDot className="w-4 h-4 text-[#f58220]" />
+          <CircleDot className="w-4 h-4 text-[#f58220] flex-shrink-0" />
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={diskTypeColors[disk.type]}>
               {disk.type.toUpperCase()}
@@ -69,9 +74,10 @@ export function SelectedDiskDisplay({
             <span className="text-white">{normalizedCapacity}</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-white">Quantidade:</span>
+            <span className="text-xs sm:text-sm text-white">Qtd:</span>
             <QuantitySelector 
               value={quantity} 
               onChange={handleQuantityChange} 
@@ -79,17 +85,19 @@ export function SelectedDiskDisplay({
               max={10} 
             />
           </div>
-          <span className="text-[#f58220] font-medium">
-            {formatCurrency(disk.price * quantity)}/mês
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onRemove}
-            className="ml-2 text-destructive hover:text-destructive/90"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-[#f58220] font-medium text-sm sm:text-base whitespace-nowrap">
+              {formatCurrency(disk.price * quantity)}/mês
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+              className="text-destructive hover:text-destructive/90"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

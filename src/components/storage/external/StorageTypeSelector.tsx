@@ -38,28 +38,28 @@ export function StorageTypeSelector({
       case 'standard':
         return {
           variant: "secondary",
-          icon: <CircleDashed className="h-4 w-4" />,
+          icon: <CircleDashed className="h-3.5 w-3.5 sm:h-4 sm:w-4" />,
           label: "Básico",
           simpleDesc: "Econômico, para arquivos acessados com pouca frequência"
         };
       case 'performance':
         return {
           variant: "default",
-          icon: <Circle className="h-4 w-4" />,
+          icon: <Circle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />,
           label: "Intermediário",
           simpleDesc: "Equilibrado, bom para a maioria dos sites e aplicativos"
         };
       case 'premium':
         return {
           variant: "success",
-          icon: <CircleDot className="h-4 w-4" />,
+          icon: <CircleDot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />,
           label: "Avançado",
           simpleDesc: "Mais rápido, para aplicações que exigem alta velocidade"
         };
       default:
         return {
           variant: "secondary",
-          icon: <Circle className="h-4 w-4" />,
+          icon: <Circle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />,
           label: type.charAt(0).toUpperCase() + type.slice(1),
           simpleDesc: "Armazenamento externo"
         };
@@ -69,8 +69,8 @@ export function StorageTypeSelector({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Tipo de Storage</label>
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs sm:text-sm font-medium">Tipo de Storage</label>
           <HelpTooltip
             title="Escolha o tipo ideal"
             description="O tipo determina a velocidade e desempenho do seu armazenamento externo."
@@ -81,7 +81,7 @@ export function StorageTypeSelector({
       <RadioGroup 
         value={selectedType} 
         onValueChange={onTypeChange} 
-        className="grid grid-cols-3 gap-2"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-2"
       >
         {Object.entries(storageTypes).map(([key, type]) => {
           const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
@@ -96,18 +96,18 @@ export function StorageTypeSelector({
               <Label
                 htmlFor={`storage-type-${key}`}
                 className={cn(
-                  "flex flex-col gap-1 p-3 rounded-lg border cursor-pointer transition-all text-center",
+                  "flex flex-col gap-1 p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all text-center",
                   "peer-focus-visible:ring-2 peer-focus-visible:ring-primary",
                   selectedType === key 
                     ? "border-primary bg-primary/10" 
                     : "border-border hover:border-primary/30 hover:bg-primary/5"
                 )}
               >
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                   {icon}
-                  <span className="font-medium text-sm">{type.name}</span>
+                  <span className="font-medium text-xs sm:text-sm">{type.name}</span>
                 </div>
-                <Badge variant={variant} className="w-fit mx-auto">
+                <Badge variant={variant} className="w-fit mx-auto text-xs">
                   {label}
                 </Badge>
                 <div className="text-xs text-muted-foreground mt-1">

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -43,7 +44,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
     // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
-    handleSelectExternalStorageInternal(type, capacity, price, true); // Fixed: removed the 5th argument
+    handleSelectExternalStorageInternal(type, capacity, price, true);
   };
 
   const storageDescriptions = {
@@ -63,8 +64,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       />
       
       {showHelp && (
-        <Alert className="mb-4 bg-primary/5 border-primary/20 text-foreground">
-          <AlertDescription className="text-sm">
+        <Alert className="mb-3 sm:mb-4 bg-primary/5 border-primary/20 text-foreground">
+          <AlertDescription className="text-xs sm:text-sm">
             <strong>Dica:</strong> Para a maioria dos sites e aplicações, recomendamos 2 discos SSD (um para sistema e outro para dados) 
             ou 1 disco NVMe para máximo desempenho.
             <button 

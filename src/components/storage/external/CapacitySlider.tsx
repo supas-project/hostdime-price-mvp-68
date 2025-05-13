@@ -4,6 +4,7 @@ import { HelpTooltip } from "@/components/help-tooltip";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface CapacitySliderProps {
   capacity: number;
@@ -71,9 +72,9 @@ export function CapacitySlider({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Tamanho</label>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs sm:text-sm font-medium">Tamanho</label>
           <HelpTooltip
             title="Escolha o tamanho ideal"
             description="Defina quanto espaço de armazenamento você precisa."
@@ -90,7 +91,7 @@ export function CapacitySlider({
               onChange={handleInputChange}
               onBlur={handleInputBlur}
               onKeyPress={handleKeyPress}
-              className="w-24 h-8 text-right pr-8"
+              className="w-20 sm:w-24 h-8 text-right pr-8 text-sm"
               min={min}
               max={max}
               step={step}
@@ -108,18 +109,20 @@ export function CapacitySlider({
         min={min}
         max={max}
         step={step}
+        className="py-1"
       />
       
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {quickCapacityOptions.map((option) => (
           <button 
             key={option.value}
             type="button"
-            className={`text-xs py-1.5 px-2 rounded-md border transition-all duration-200 ${
+            className={cn(
+              "text-xs py-1.5 px-2 rounded-md border transition-all duration-200",
               capacity === option.value 
                 ? 'border-primary bg-primary/10 text-primary' 
                 : 'border-border hover:border-primary/30 hover:bg-primary/5'
-            }`}
+            )}
             onClick={() => onCapacityChange(option.value)}
           >
             {option.label}

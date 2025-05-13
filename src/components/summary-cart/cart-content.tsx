@@ -8,6 +8,7 @@ import { StorageList } from "./storage-list";
 import { ExternalStorageList } from "./external-storage-list";
 import { ConnectivityList } from "./connectivity-list";
 import { StorageItems } from "@/types/component";
+import { cn } from "@/lib/utils";
 
 interface CartContentProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -46,14 +47,17 @@ export function CartContent({
   
   if (!hasItems && !dataCenterComponent && !contractComponent) {
     return (
-      <div className="px-4 py-6 text-center text-muted-foreground">
+      <div className="px-3 sm:px-4 py-4 sm:py-6 text-center text-muted-foreground">
         Nenhum componente selecionado
       </div>
     );
   }
   
   return (
-    <div className="p-3 space-y-3 overflow-y-auto flex-1 text-sm">
+    <div className={cn(
+      "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
+      "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
+    )}>
       {/* Data Center */}
       <DataCenterItem component={dataCenterComponent} />
       
