@@ -36,7 +36,7 @@ export function AccordionStep({
 
   return (
     <div className={cn(
-      "wizard-step space-y-2 border border-border rounded-xl transition-all",
+      "wizard-step border border-border rounded-xl transition-all overflow-hidden",
       isActive && "ring-1 ring-primary",
       isComplete && !isActive && "bg-card/50"
     )}>
@@ -60,7 +60,7 @@ export function AccordionStep({
             />
           </AccordionTrigger>
           
-          <AccordionContent className="px-4 pb-6 pt-2">
+          <AccordionContent className="px-4 pb-6 pt-2 overflow-x-hidden">
             <StepContent
               component={component}
               selectedOption={selectedOption}

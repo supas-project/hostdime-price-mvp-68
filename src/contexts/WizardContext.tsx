@@ -6,6 +6,7 @@ import { useWizardSteps } from "@/hooks/use-wizard-steps";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
+import { toast } from "@/hooks/use-toast";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
@@ -31,13 +32,25 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setCurrentStep,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete: baseIsStepComplete
+    isStepComplete: baseIsStepComplete,
+    completedSteps,
+    calculateProgress
   } = useWizardSteps();
   
   // Use the correct hook format - default to false to disable beginner mode
   const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', false);
   // Remove unused seenSteps state
   const [autoAdvancedSteps, setAutoAdvancedSteps] = useLocalStorage<number[]>('autoAdvancedSteps', []);
+  
+  // Debug selected components
+  useEffect(() => {
+    console.log("Selected components updated:", selectedComponents);
+    // Calculate steps completion
+    serverData.componentes.forEach((_, index) => {
+      const isComplete = contextIsStepComplete(index);
+      console.log(`Step ${index + 1} complete:`, isComplete);
+    });
+  }, [selectedComponents, connectivityItems, storageItems]);
   
   // Função para verificar se o componente é de seleção única - caso insensitivo
   const isSingleSelectionComponent = (type: string): boolean => {
@@ -100,6 +113,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   // Simplified function that removes the duplicate auto-navigation logic
   const handleSelectOption = (option: ComponentOption) => {
+    // Debug OS selection
+    if (option.type === "SistemaOperacional" || normalizeComponentType(option.type) === "sistemaoperacional") {
+      console.log("Selecting OS:", option);
+    }
+    
     baseHandleSelectOption(option);
   };
 
@@ -113,6 +131,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     
     // Reset auto-advanced steps when restarting
     setAutoAdvancedSteps([]);
+    
+    toast.info({
+      title: "Configuração reiniciada",
+      description: "Você pode começar novamente a configuração do seu servidor."
+    });
   };
 
   return (
@@ -136,7 +159,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         addCustomService,
         removeCustomService,
         beginnerMode,
-        setBeginnerMode // Direct function reference, no wrapper needed
+        setBeginnerMode,
+        completedSteps,
+        calculateProgress
       }}
     >
       {children}

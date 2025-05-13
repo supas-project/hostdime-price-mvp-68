@@ -1,34 +1,30 @@
-
 import { ComponentOption } from "./component";
+import { ReactNode } from "react";
 
-export interface StorageItems {
-  internal: ComponentOption[];
-  external: ComponentOption[];
-}
-
-// Update CustomService to extend ComponentOption to ensure type compatibility
-export interface CustomService extends ComponentOption {
-  // Additional fields specific to CustomService can be added here
-}
-
-export interface WizardContextType {
+export type WizardContextType = {
   currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  selectedComponents: { [key: string]: ComponentOption };
-  setSelectedComponents: React.Dispatch<React.SetStateAction<{ [key: string]: ComponentOption }>>;
-  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } };
-  setConnectivityItems: React.Dispatch<React.SetStateAction<{ [key: string]: { option: ComponentOption, quantity: number } }>>;
-  storageItems: StorageItems;
+  setCurrentStep: (step: number | ((prev: number) => number)) => void;
+  selectedComponents: Record<string, ComponentOption>;
+  setSelectedComponents: (components: Record<string, ComponentOption>) => void;
+  connectivityItems: Record<string, { option: ComponentOption, quantity: number }>;
+  setConnectivityItems: (items: Record<string, { option: ComponentOption, quantity: number }>) => void;
   showFinalSummary: boolean;
-  setShowFinalSummary: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowFinalSummary: (show: boolean) => void;
   handleSelectOption: (option: ComponentOption) => void;
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
-  handleRemoveComponent: (id: string, type?: string) => void;
-  customServices: ComponentOption[]; // Changed from CustomService[] to ComponentOption[]
+  handleRemoveComponent: (typeOrId: string) => void;
+  storageItems: {
+    internal: ComponentOption[];
+    external: ComponentOption[];
+  };
+  customServices: ComponentOption[];
   addCustomService: (service: ComponentOption) => void;
-  removeCustomService: (id: string) => void;
+  removeCustomService: (serviceId: string) => void;
   beginnerMode: boolean;
-  setBeginnerMode: (value: boolean) => void; // Add the setter function
-}
+  setBeginnerMode: (enabled: boolean) => void;
+  // Added new properties for progress tracking
+  completedSteps?: boolean[];
+  calculateProgress?: () => number;
+};

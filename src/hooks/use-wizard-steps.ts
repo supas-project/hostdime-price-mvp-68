@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { serverData } from "@/data/server-components";
 import { normalizeComponentType } from "./use-component-selection";
 import { ComponentOption } from "@/types/component";
@@ -7,6 +7,13 @@ import { ComponentOption } from "@/types/component";
 export function useWizardSteps() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<boolean[]>([]);
+
+  // Update completed steps for better tracking
+  useEffect(() => {
+    const initialCompletedSteps = Array(serverData.componentes.length).fill(false);
+    setCompletedSteps(initialCompletedSteps);
+  }, []);
 
   const isStepComplete = (
     stepIndex: number, 
@@ -18,18 +25,19 @@ export function useWizardSteps() {
     if (!component) return false;
 
     const normalizedType = normalizeComponentType(component.type);
+    
+    // Compute step completion
+    let isComplete = false;
 
     // Serviços Personalizados é o único passo opcional
     if (normalizedType === "servicospersonalizados") {
-      return true;
-    }
-    
-    if (normalizedType === "memoria") {
-      return Object.keys(selectedComponents).some(
+      isComplete = true;
+    } else if (normalizedType === "memoria") {
+      isComplete = Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "memoria"
       );
     } else if (normalizedType === "contrato") {
-      return Object.keys(selectedComponents).some(
+      isComplete = Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "contrato"
       );
     } else if (normalizedType === "conectividade") {
@@ -39,20 +47,38 @@ export function useWizardSteps() {
       const hasIp = Object.values(connectivityItems).some(
         item => item.option.subtype === "ip"
       );
-      return hasPort && hasIp;
+      isComplete = hasPort && hasIp;
     } else if (normalizedType === "armazenamento") {
       // Modificado para exigir pelo menos um armazenamento interno
-      return storageItems.internal.length > 0;
+      isComplete = storageItems.internal.length > 0;
     } else if (normalizedType === "sistemaoperacional") {
-      return Object.keys(selectedComponents).some(
+      isComplete = Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "sistemaoperacional"
       );
     } else {
       // Caso padrão, usando o tipo normalizado para verificar
-      return Object.keys(selectedComponents).some(
+      isComplete = Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === normalizedType
       );
     }
+
+    // Update the completed steps array
+    setCompletedSteps(prev => {
+      const newCompletedSteps = [...prev];
+      newCompletedSteps[stepIndex] = isComplete;
+      return newCompletedSteps;
+    });
+
+    return isComplete;
+  };
+
+  // Calculate overall progress percentage
+  const calculateProgress = (): number => {
+    const totalSteps = serverData.componentes.length;
+    if (totalSteps === 0) return 0;
+    
+    const completedCount = completedSteps.filter(Boolean).length;
+    return (completedCount / totalSteps) * 100;
   };
 
   return {
@@ -60,6 +86,8 @@ export function useWizardSteps() {
     setCurrentStep,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete
+    isStepComplete,
+    completedSteps,
+    calculateProgress
   };
 }

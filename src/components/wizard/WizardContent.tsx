@@ -51,9 +51,17 @@ export function WizardContent() {
   };
 
   const currentComponent = serverData.componentes[currentStep];
+  
+  // Debug OS component
+  useEffect(() => {
+    if (currentComponent?.type === "SistemaOperacional") {
+      console.log("Current component is OS:", currentComponent);
+      console.log("OS Component options:", currentComponent.options);
+    }
+  }, [currentComponent]);
 
   return (
-    <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6 w-full">
       <Button
         variant="outline"
         size="sm"
@@ -74,8 +82,8 @@ export function WizardContent() {
       </Button>
 
       {showAllSteps ? (
-        <ScrollArea className="max-h-[calc(100vh-200px)]">
-          <div className="space-y-4 pr-4">
+        <ScrollArea className="max-h-[calc(100vh-200px)] pr-4 rounded-lg border">
+          <div className="space-y-4 p-4">
             {serverData.componentes.map((component, index) => (
               <AccordionStep
                 key={component.id}
