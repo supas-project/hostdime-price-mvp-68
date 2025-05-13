@@ -106,13 +106,13 @@ export function AccordionContent({
   };
 
   return (
-    <>
+    <div className="animate-fade-in">
       <StepHeader 
         description={component.description}
         isSpecialComponent={isSpecialComponentType}
         hasSelectedOption={!!matchedSelectedOption}
       />
       {renderComponentContent()}
-    </>
+    </div>
   );
 }

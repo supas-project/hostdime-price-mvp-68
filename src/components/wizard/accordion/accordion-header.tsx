@@ -28,25 +28,25 @@ export function AccordionHeader({
   return (
     <div className="flex flex-1 items-center space-x-3">
       <div className={cn(
-        "p-2.5 rounded-full",
+        "p-2.5 rounded-full transition-colors duration-200",
         isExpanded || isActive ? "bg-primary/10" : "bg-muted"
       )}>
         <IconComponent className={cn(
-          "h-5 w-5",
+          "h-5 w-5 transition-colors duration-200",
           isExpanded || isActive ? "text-primary" : "text-muted-foreground"
         )} />
       </div>
       <div className="text-left">
         <div className="flex items-center gap-2">
           <h3 className={cn(
-            "font-medium text-lg",
+            "font-medium text-lg transition-colors duration-200",
             !isExpanded && !isActive && "text-muted-foreground"
           )}>
             {title}
           </h3>
           
           {isComplete && (
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1 animate-fade-in">
               <Check className="h-3 w-3" />
               <span>Concluído</span>
             </Badge>

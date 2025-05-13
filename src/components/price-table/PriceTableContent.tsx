@@ -44,7 +44,7 @@ export function PriceTableContent({
   
   if (Object.keys(priceData).length === 0) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-8 text-center animate-fade-in">
         <h3 className="text-lg font-medium mb-2">Nenhuma categoria cadastrada</h3>
         <p className="text-muted-foreground mb-4">
           {isAdmin 
@@ -64,55 +64,59 @@ export function PriceTableContent({
         onDeleteCategory={onDeleteCategory}
       />
 
-      {Object.values(priceData).map((category) => {
-        const filteredItems = filterItems(category.items);
-        const isCollapsed = collapsedCategories[category.id] || false;
-        
-        return (
-          <TabsContent key={category.id} value={category.id}>
-            <Collapsible open={!isCollapsed}>
-              <CategoryHeader 
-                category={{...category, items: filteredItems}}
-                isCollapsed={isCollapsed}
-                onToggleCollapse={() => toggleCategoryCollapse(category.id)}
-              />
-              
-              <CollapsibleContent>
-                {displayMode === "card" ? (
-                  <TableContent 
-                    category={{...category, items: filteredItems}} 
-                    onDelete={isAdmin ? onDeleteItem : undefined}
-                    onEdit={isAdmin ? onEditItem : undefined}
-                    displayMode="card"
-                    sortOrder={sortOrder}
-                  />
-                ) : (
-                  <div className="rounded-xl overflow-hidden border border-border">
-                    <Table>
-                      {filteredItems.length === 0 && (
-                        <TableCaption>
-                          {searchTerm 
-                            ? "Nenhum resultado encontrado para a busca" 
-                            : "Nenhum item cadastrado nesta categoria"}
-                        </TableCaption>
-                      )}
-                      <PriceTableHeader showActions={isAdmin} />
-                      <TableBody>
-                        <TableContent 
-                          category={{...category, items: filteredItems}} 
-                          onDelete={isAdmin ? onDeleteItem : undefined}
-                          onEdit={isAdmin ? onEditItem : undefined}
-                          sortOrder={sortOrder}
-                        />
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </TabsContent>
-        );
-      })}
+      <div className="mt-4 space-y-4 animate-fade-in">
+        {Object.values(priceData).map((category) => {
+          const filteredItems = filterItems(category.items);
+          const isCollapsed = collapsedCategories[category.id] || false;
+          
+          return (
+            <TabsContent key={category.id} value={category.id} className="space-y-4">
+              <Collapsible open={!isCollapsed} className="border border-border rounded-xl overflow-hidden bg-card/50">
+                <CategoryHeader 
+                  category={{...category, items: filteredItems}}
+                  isCollapsed={isCollapsed}
+                  onToggleCollapse={() => toggleCategoryCollapse(category.id)}
+                />
+                
+                <CollapsibleContent className="animate-accordion-down">
+                  {displayMode === "card" ? (
+                    <div className="p-4">
+                      <TableContent 
+                        category={{...category, items: filteredItems}} 
+                        onDelete={isAdmin ? onDeleteItem : undefined}
+                        onEdit={isAdmin ? onEditItem : undefined}
+                        displayMode="card"
+                        sortOrder={sortOrder}
+                      />
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden">
+                      <Table>
+                        {filteredItems.length === 0 && (
+                          <TableCaption>
+                            {searchTerm 
+                              ? "Nenhum resultado encontrado para a busca" 
+                              : "Nenhum item cadastrado nesta categoria"}
+                          </TableCaption>
+                        )}
+                        <PriceTableHeader showActions={isAdmin} />
+                        <TableBody>
+                          <TableContent 
+                            category={{...category, items: filteredItems}} 
+                            onDelete={isAdmin ? onDeleteItem : undefined}
+                            onEdit={isAdmin ? onEditItem : undefined}
+                            sortOrder={sortOrder}
+                          />
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </TabsContent>
+          );
+        })}
+      </div>
     </Tabs>
   );
 }

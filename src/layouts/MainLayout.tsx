@@ -83,7 +83,7 @@ export default function MainLayout() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden p-1.5"
+              className="md:hidden p-1.5 touch-target-sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -91,7 +91,7 @@ export default function MainLayout() {
           </div>
         </div>
         
-        {/* Mobile menu */}
+        {/* Menu para dispositivos móveis */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border animate-slide-in">
             <nav className="container py-2 sm:py-4 flex flex-col space-y-1">

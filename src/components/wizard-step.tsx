@@ -4,6 +4,7 @@ import * as Icons from "lucide-react";
 import { ComponentSelector } from "./component-selector";
 import { HelpTooltip } from "./help-tooltip";
 import { formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface WizardStepProps {
   component: ServerComponent;
@@ -18,7 +19,7 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
   };
   
   return (
-    <div className="wizard-step space-y-6">
+    <div className="wizard-step space-y-6 animate-fade-in">
       <div className="flex items-center space-x-3">
         <div className="bg-primary/10 p-2 rounded-full">
           <IconComponent className="h-6 w-6 text-primary" />
@@ -31,6 +32,10 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
               description={component.description}
             />
           </h2>
+          <p className="text-sm text-muted-foreground">
+            {component.description.slice(0, 100)}
+            {component.description.length > 100 && '...'}
+          </p>
         </div>
       </div>
 
@@ -49,15 +54,19 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
         )}
         
         {component.type !== "Processador" && (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-4">
             {component.options.map((option) => (
               <div 
                 key={option.id}
-                className="bg-[#1e1e1e] p-4 rounded-lg cursor-pointer border border-transparent hover:border-[#f58220] transition-colors"
+                className={cn(
+                  "bg-card p-4 rounded-lg cursor-pointer border border-transparent transition-all duration-200 hover-lift",
+                  "hover:border-primary hover:border-opacity-50",
+                  selectedOption?.id === option.id && "border-primary shadow-md shadow-primary/15"
+                )}
                 onClick={() => onSelectOption(option)}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <IconComponent className="h-5 w-5 text-[#f58220]" />
+                  <IconComponent className="h-5 w-5 text-primary" />
                   <div className="font-medium text-white">{option.name}</div>
                   <HelpTooltip 
                     title="Mais detalhes"
@@ -69,14 +78,16 @@ export function WizardStep({ component, selectedOption, onSelectOption }: Wizard
                 <div className="flex items-center justify-between bg-black/30 p-2 rounded">
                   <span className="text-sm text-white truncate">{option.name}</span>
                   {shouldShowPrice(option) && (
-                    <span className="text-[#f58220] font-medium whitespace-nowrap">
+                    <span className="text-primary font-medium whitespace-nowrap">
                       {formatCurrency(option.price)}
                     </span>
                   )}
                 </div>
                 
                 {option.description && (
-                  <p className="text-sm text-gray-400 mt-2">{option.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                    {option.description}
+                  </p>
                 )}
               </div>
             ))}
