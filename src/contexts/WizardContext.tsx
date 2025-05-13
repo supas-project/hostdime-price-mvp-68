@@ -1,12 +1,12 @@
 
 import { createContext, useContext, ReactNode, useEffect } from "react";
-import { WizardContextType } from "@/types/wizard";
+import { WizardContextType, CustomService } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
 import { useWizardSteps } from "@/hooks/use-wizard-steps";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
@@ -18,13 +18,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setConnectivityItems,
     storageItems,
     setStorageItems,
-    customServices,
-    setCustomServices,
+    customServices: baseCustomServices,
+    setCustomServices: baseSetCustomServices,
     handleSelectOption: baseHandleSelectOption,
     handleSelectStorageItem,
     handleRemoveComponent,
-    addCustomService,
-    removeCustomService
+    addCustomService: baseAddCustomService,
+    removeCustomService: baseRemoveCustomService
   } = useComponentSelection();
 
   const {
@@ -41,6 +41,17 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [beginnerMode, setBeginnerMode] = useLocalStorage('beginnerMode', false);
   // Remove unused seenSteps state
   const [autoAdvancedSteps, setAutoAdvancedSteps] = useLocalStorage<number[]>('autoAdvancedSteps', []);
+  
+  // Type-safe custom services handlers
+  const customServices = baseCustomServices as CustomService[];
+  
+  const addCustomService = (service: CustomService) => {
+    baseAddCustomService(service as any);
+  };
+  
+  const removeCustomService = (id: string) => {
+    baseRemoveCustomService(id);
+  };
   
   // Debug selected components
   useEffect(() => {
@@ -125,14 +136,14 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setSelectedComponents({});
     setConnectivityItems({});
     setStorageItems({ internal: [], external: [] });
-    setCustomServices([]);
+    baseSetCustomServices([]);
     setCurrentStep(0);
     setShowFinalSummary(false);
     
     // Reset auto-advanced steps when restarting
     setAutoAdvancedSteps([]);
     
-    toast.info({
+    toast.success({
       title: "Configuração reiniciada",
       description: "Você pode começar novamente a configuração do seu servidor."
     });

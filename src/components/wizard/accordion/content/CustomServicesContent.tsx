@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,13 +8,13 @@ import { formatCurrency } from "@/lib/utils";
 import { Plus, Trash, Server, DollarSign, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { useWizard } from "@/contexts/WizardContext";
-import { ComponentOption } from "@/types/component";
+import { CustomService } from "@/types/wizard";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
 interface CustomServicesContentProps {
-  onAddCustomService?: (service: ComponentOption) => void;
+  onAddCustomService?: (service: CustomService) => void;
 }
 
 export function CustomServicesContent({ onAddCustomService }: CustomServicesContentProps) {
@@ -34,7 +35,7 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
       return;
     }
 
-    const newService: ComponentOption = {
+    const newService: CustomService = {
       id: `custom-service-${Date.now()}`,
       type: "ServicoPersonalizado",
       name,
@@ -49,7 +50,9 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
       metadata: {
         unitPrice,
         quantity
-      }
+      },
+      quantity,
+      selected: true
     };
 
     if (onAddCustomService) {

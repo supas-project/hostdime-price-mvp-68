@@ -1,17 +1,13 @@
 
 import { ComponentOption } from "@/types/component";
 
-export interface CustomService {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  quantity: number;
+export interface CustomService extends ComponentOption {
   selected: boolean;
+  quantity: number;
   metadata?: {
     quantity?: number;
+    unitPrice?: number;
   };
-  specs?: string[];
 }
 
 export interface WizardContextType {

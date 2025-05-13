@@ -18,6 +18,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CustomService } from "@/types/wizard";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -63,11 +64,16 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         description: "Aguarde enquanto geramos seu documento..."
       });
       
+      // Convert customServices to ComponentOption[] for PDF generation compatibility
+      const customServicesAsComponents: ComponentOption[] = customServices.map(service => ({
+        ...service
+      }));
+      
       // Ensure we're passing all arguments with correct types
       await generateQuotePDF(
         selectedComponents,
         storageItems,
-        customServices,
+        customServicesAsComponents,
         profitMargin,
         connectivityItems,
         pdfPreviewOption === "preview" // Passar true para abrir em nova aba, false para download direto
