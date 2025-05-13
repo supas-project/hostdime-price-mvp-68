@@ -7,7 +7,7 @@ import { HelpTooltip } from "@/components/help-tooltip";
 import { ComponentSelector } from "@/components/component-selector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/utils/toast-utils";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -38,11 +38,7 @@ export function ProcessorContent({
   // Notify about errors
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Erro ao carregar processadores", 
-        description: "Não foi possível carregar a lista de processadores disponíveis.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível carregar a lista de processadores disponíveis.");
     }
   }, [error]);
 
