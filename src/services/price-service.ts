@@ -1,6 +1,6 @@
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toast-utils";
 
 // Chave para armazenamento local
 const PRICE_DATA_KEY = 'priceData';
