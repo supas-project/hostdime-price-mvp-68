@@ -62,7 +62,10 @@ const loadDataFromStorage = (): PriceData => {
   } catch (error) {
     console.error('Erro ao carregar dados da tabela de preços:', error);
     // Notificar o usuário sobre o erro de carregamento
-    toast.error("Não foi possível carregar os dados salvos. Usando dados padrão.");
+    toast.error({
+      title: "Erro de carregamento",
+      description: "Não foi possível carregar os dados salvos. Usando dados padrão."
+    });
   }
   
   // Salva dados iniciais no localStorage se não existirem
@@ -86,7 +89,10 @@ const saveDataToStorage = (data: PriceData): void => {
     notifyDataChangeListeners(data);
   } catch (error) {
     console.error('Erro ao salvar dados da tabela de preços:', error);
-    toast.error("Não foi possível salvar os dados. Verifique o espaço disponível no navegador.");
+    toast.error({
+      title: "Erro ao salvar",
+      description: "Não foi possível salvar os dados. Verifique o espaço disponível no navegador."
+    });
     throw new Error("Falha ao salvar dados no armazenamento local");
   } finally {
     // Libera o lock sempre, mesmo em caso de erro
@@ -394,7 +400,10 @@ export const PriceService = {
       return mergedData;
     } catch (error) {
       console.error('Erro ao importar dados JSON:', error);
-      toast.error(error instanceof Error ? error.message : "Formato JSON inválido");
+      toast.error({
+        title: "Erro de importação",
+        description: error instanceof Error ? error.message : "Formato JSON inválido"
+      });
       throw error;
     }
   },
@@ -494,13 +503,19 @@ export const PriceService = {
       saveDataToStorage(mergedData);
       
       if (invalidItems > 0) {
-        toast.info(`Importados ${importedItems} itens. ${invalidItems} itens foram ignorados por terem formato inválido.`);
+        toast.info({
+          title: "Importação parcial",
+          description: `Importados ${importedItems} itens. ${invalidItems} itens foram ignorados por terem formato inválido.`
+        });
       }
       
       return mergedData;
     } catch (error) {
       console.error('Erro ao importar dados CSV:', error);
-      toast.error(error instanceof Error ? error.message : "Formato CSV inválido");
+      toast.error({
+        title: "Erro de importação",
+        description: error instanceof Error ? error.message : "Formato CSV inválido"
+      });
       throw error;
     }
   },
@@ -522,7 +537,10 @@ export const PriceService = {
       }
     } catch (error) {
       console.error('Erro ao inicializar serviço de preços:', error);
-      toast.error("Não foi possível inicializar o serviço de preços.");
+      toast.error({
+        title: "Erro de inicialização",
+        description: "Não foi possível inicializar o serviço de preços."
+      });
     }
   }
 };

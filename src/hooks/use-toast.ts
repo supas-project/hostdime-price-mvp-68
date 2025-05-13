@@ -1,5 +1,5 @@
 
-import { toast as sonnerToast, Toast, useToast as useSonnerToast } from "sonner";
+import { toast as sonnerToast, ToastT } from "sonner";
 import { ReactNode } from "react";
 
 type ToastProps = {
@@ -50,11 +50,11 @@ const toast = {
 };
 
 function useToast() {
-  const { toasts, dismiss } = useSonnerToast();
+  // We don't use sonner's useToast since we're implementing our own
   return { 
-    toast, 
-    toasts,
-    dismiss
+    toast,
+    toasts: [], // Empty array for compatibility with toaster.tsx
+    dismiss: sonnerToast.dismiss,
   };
 }
 
