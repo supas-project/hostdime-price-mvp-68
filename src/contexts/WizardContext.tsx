@@ -143,8 +143,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // Reset auto-advanced steps when restarting
     setAutoAdvancedSteps([]);
     
-    toast.success({
-      title: "Configuração reiniciada",
+    // Fix: Using the correct toast.success format for sonner
+    toast.success("Configuração reiniciada", {
       description: "Você pode começar novamente a configuração do seu servidor."
     });
   };
