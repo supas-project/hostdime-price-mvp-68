@@ -9,24 +9,29 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface OSContentProps {
-  options: ComponentOption[];
+  // Make options optional by adding the ? modifier
+  options?: ComponentOption[];
   selectedOption: ComponentOption | null;
   onSelectOption: (option: ComponentOption) => void;
 }
 
 export function OSContent({ 
+  options: propOptions, // Rename to avoid conflict with the hook's options
   selectedOption, 
   onSelectOption 
 }: OSContentProps) {
+  // Use propOptions if provided, otherwise fetch from the price service
   const { options, isLoading, error, matchedSelectedOption } = useComponentOptions('os', selectedOption);
+  const finalOptions = propOptions || options; // Use propOptions if available, fall back to fetched options
+  
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   const { toast } = useToast();
   
   useEffect(() => {
     // Log information about options for debugging
-    console.log("OSContent options from useComponentOptions:", options);
+    console.log("OSContent options from useComponentOptions:", finalOptions);
     
-    if (options.length === 0 && !isLoading) {
+    if (finalOptions.length === 0 && !isLoading) {
       console.warn("No OS options available. Check category mapping in price service.");
       toast({
         title: "Aviso",
@@ -34,21 +39,21 @@ export function OSContent({
         variant: "destructive",
       });
     }
-  }, [options, toast, isLoading]);
+  }, [finalOptions, toast, isLoading]);
   
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {
     if (selectedOption) {
       // Find the matching option in available options
-      const matchingOption = findMatchingComponent(selectedOption, options);
+      const matchingOption = findMatchingComponent(selectedOption, finalOptions);
       setLocalSelectedId(matchingOption?.id || selectedOption.id);
     } else {
       setLocalSelectedId("");
     }
-  }, [selectedOption, options]);
+  }, [selectedOption, finalOptions]);
   
   // Show loading state
-  if (isLoading) {
+  if (isLoading && !propOptions) {
     return (
       <Card className="p-6">
         <div className="flex flex-col gap-4">
@@ -65,8 +70,8 @@ export function OSContent({
   return (
     <Card className="p-6">
       <OSSelector
-        options={options}
-        selectedOption={options.find(opt => opt.id === localSelectedId) || null}
+        options={finalOptions}
+        selectedOption={finalOptions.find(opt => opt.id === localSelectedId) || null}
         onSelectOption={onSelectOption}
       />
     </Card>
