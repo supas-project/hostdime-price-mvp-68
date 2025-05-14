@@ -2,6 +2,7 @@
 import { useCategoryActions } from "./useCategoryActions";
 import { useItemActions } from "./useItemActions";
 import { useDataActions } from "./useDataActions";
+import { usePayBackActions } from "./usePayBackActions";
 
 export function usePriceTableActions(
   activeTab: string, 
@@ -11,6 +12,7 @@ export function usePriceTableActions(
   const categoryActions = useCategoryActions(setPriceData);
   const itemActions = useItemActions(activeTab, setPriceData);
   const dataActions = useDataActions(setPriceData);
+  const payBackActions = usePayBackActions(setPriceData);
   
   // Return combined actions from all hooks
   return {
@@ -36,5 +38,10 @@ export function usePriceTableActions(
     // Data actions
     handleExportData: dataActions.handleExportData,
     handleResetData: dataActions.handleResetData,
+    
+    // PayBack actions
+    selectedContract: payBackActions.selectedContract,
+    setSelectedContract: payBackActions.setSelectedContract,
+    applyPayBackDiscount: payBackActions.applyPayBackDiscount,
   };
 }

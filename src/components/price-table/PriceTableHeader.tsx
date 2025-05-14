@@ -1,6 +1,5 @@
 
 import { HardDrive } from "lucide-react";
-import { LoginDialog } from "@/components/login-dialog";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 
 interface PriceTableHeaderProps {
@@ -22,7 +21,6 @@ export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
       
       <div className="flex items-center gap-4">
         <SyncIndicator lastSyncTime={lastSyncTime} />
-        <LoginDialog />
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const isOnPriceTablePage = location.pathname === "/price-table";
 
   // Verificar se há uma mensagem de redirecionamento
   useEffect(() => {

@@ -61,6 +61,12 @@ export default function PriceTable() {
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading;
 
+  // Filtrar categorias para remover a categoria de contratos
+  const filteredPriceData = {...priceData};
+  if (filteredPriceData.contract) {
+    delete filteredPriceData.contract;
+  }
+
   return (
     <div className="container py-8 animate-fade-in">
       <PriceTableHeader lastSyncTime={lastSyncTime} />
@@ -71,7 +77,7 @@ export default function PriceTable() {
             {isAdmin && (
               <TableActions
                 activeTab={activeTab}
-                priceData={priceData}
+                priceData={filteredPriceData}
                 openAddCategory={openAddCategory}
                 openAddItem={openAddItem}
                 openEditItem={openEditItem}
@@ -110,7 +116,7 @@ export default function PriceTable() {
           />
 
           <PriceTableContent
-            priceData={priceData}
+            priceData={filteredPriceData}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isAdmin={isAdmin}

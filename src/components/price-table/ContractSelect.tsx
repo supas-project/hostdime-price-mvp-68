@@ -7,9 +7,14 @@ import { contractComponents } from "@/data/contract-components";
 interface ContractSelectProps {
   value: string;
   onChange: (value: string) => void;
+  hidden?: boolean; // Nova propriedade para controlar a visibilidade
 }
 
-export function ContractSelect({ value, onChange }: ContractSelectProps) {
+export function ContractSelect({ value, onChange, hidden = false }: ContractSelectProps) {
+  if (hidden) {
+    return null;
+  }
+  
   return (
     <div className="flex items-center gap-2">
       <label className="text-sm text-muted-foreground whitespace-nowrap flex items-center">
