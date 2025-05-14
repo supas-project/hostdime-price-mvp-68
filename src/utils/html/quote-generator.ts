@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { formatCurrency } from "@/utils/number-formatter";
@@ -380,7 +379,7 @@ export function openQuoteInNewTab(
   customServices: ComponentOption[],
   margin: number,
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
-  quoteVariables?: Partial<QuoteVariables}
+  quoteVariables?: Partial<QuoteVariables>
 ): void {
   try {
     // Gera o HTML da cotação
