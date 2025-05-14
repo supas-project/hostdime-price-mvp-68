@@ -1,14 +1,7 @@
+
 import { ComponentOption } from "@/types/component";
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
-import { formatCurrency } from "@/utils/number-formatter";
-
-// Função para converter o valor numérico para o formato de moeda brasileiro
-function formatCurrency(value: number): string {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
+import { formatCurrency as formatCurrencyUtil } from "@/utils/number-formatter";
 
 // Função para converter componentes para HTML de tabela
 function generateComponentsRows(components: { [key: string]: ComponentOption }): string {
@@ -22,7 +15,7 @@ function generateComponentsRows(components: { [key: string]: ComponentOption }):
       <tr>
         <td>${component.type}</td>
         <td>${component.name}</td>
-        <td>${formatCurrency(component.price)}</td>
+        <td>${formatCurrencyUtil(component.price)}</td>
       </tr>
     `).join('');
 }
@@ -39,7 +32,7 @@ function generateStorageRows(internalStorage: ComponentOption[], externalStorage
           <tr>
             <td>Armazenamento interno</td>
             <td>${disk.name}</td>
-            <td>${formatCurrency(disk.price)}</td>
+            <td>${formatCurrencyUtil(disk.price)}</td>
           </tr>
         `;
       }
@@ -54,7 +47,7 @@ function generateStorageRows(internalStorage: ComponentOption[], externalStorage
           <tr>
             <td>Armazenamento externo</td>
             <td>${disk.name}</td>
-            <td>${formatCurrency(disk.price)}</td>
+            <td>${formatCurrencyUtil(disk.price)}</td>
           </tr>
         `;
       }
@@ -76,7 +69,7 @@ function generateConnectivityRows(connectivityItems: { [key: string]: { option: 
       <tr>
         <td>Conectividade</td>
         <td>${item.option.name} x ${item.quantity}</td>
-        <td>${formatCurrency(item.option.price * item.quantity)}</td>
+        <td>${formatCurrencyUtil(item.option.price * item.quantity)}</td>
       </tr>
     `).join('');
 }
@@ -91,7 +84,7 @@ function generateCustomServicesRows(customServices: ComponentOption[]): string {
     <tr>
       <td>Serviço personalizado</td>
       <td>${service.name}</td>
-      <td>${formatCurrency(service.price)}</td>
+      <td>${formatCurrencyUtil(service.price)}</td>
     </tr>
   `).join('');
 }
@@ -349,7 +342,7 @@ export function generateQuoteHTML(
         
         <div class="total-section">
           <h2>Resumo Financeiro</h2>
-          <p class="total">Total Mensal: ${formatCurrency(total)}</p>
+          <p class="total">Total Mensal: ${formatCurrencyUtil(total)}</p>
           ${margin > 0 ? `<p>*Incluindo ${margin}% de margem</p>` : ''}
         </div>
         
@@ -408,3 +401,4 @@ export function openQuoteInNewTab(
     throw error;
   }
 }
+
