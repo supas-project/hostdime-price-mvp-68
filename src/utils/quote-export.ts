@@ -22,40 +22,51 @@ export const openQuoteInNewTab = (
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
   quoteVariables?: Partial<QuoteVariables>
 ) => {
-  // Calculate total price
-  const total = calculateQuoteTotal(
-    selectedComponents, 
-    storageItems, 
-    customServices, 
-    margin, 
-    connectivityItems
-  );
-  
-  // Generate HTML rows for each component type
-  const componentsRows = generateComponentsRows(selectedComponents);
-  const storageRows = generateStorageRows(storageItems.internal, storageItems.external);
-  const connectivityRows = generateConnectivityRows(connectivityItems);
-  const customServicesRows = generateCustomServicesRows(customServices);
-  
-  // Generate the complete HTML template
-  const htmlContent = generateQuoteTemplate(
-    componentsRows,
-    storageRows,
-    connectivityRows,
-    customServicesRows,
-    total,
-    margin,
-    quoteVariables
-  );
-  
-  // Open in a new tab
-  const newTab = window.open();
-  if (newTab) {
+  try {
+    // Calculate total price
+    const total = calculateQuoteTotal(
+      selectedComponents, 
+      storageItems, 
+      customServices, 
+      margin, 
+      connectivityItems
+    );
+    
+    // Generate HTML rows for each component type
+    const componentsRows = generateComponentsRows(selectedComponents);
+    const storageRows = generateStorageRows(storageItems.internal, storageItems.external);
+    const connectivityRows = generateConnectivityRows(connectivityItems);
+    const customServicesRows = generateCustomServicesRows(customServices);
+    
+    // Generate the complete HTML template
+    const htmlContent = generateQuoteTemplate(
+      componentsRows,
+      storageRows,
+      connectivityRows,
+      customServicesRows,
+      total,
+      margin,
+      quoteVariables
+    );
+    
+    // Open in a new tab
+    const newTab = window.open('', '_blank');
+    if (!newTab) {
+      throw new Error('Não foi possível abrir uma nova aba. Verifique se o navegador está bloqueando popups.');
+    }
+    
     newTab.document.open();
     newTab.document.write(htmlContent);
     newTab.document.close();
+    
+    return newTab;
+  } catch (error) {
+    console.error("Erro ao abrir cotação em nova aba:", error);
+    toast.error("Falha ao abrir a visualização", {
+      description: "Verifique se o navegador permite popups neste site"
+    });
+    throw error;
   }
-  return newTab;
 };
 
 export const generateQuotePDF = async (
