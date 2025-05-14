@@ -9,6 +9,7 @@ import { TableContent } from "@/components/price-table/TableContent";
 import { PriceTableHeader } from "@/components/price-table/TableHeader";
 import { CategoryHeader } from "@/components/price-table/CategoryHeader";
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PriceTableContentProps {
   priceData: PriceData;
@@ -64,14 +65,17 @@ export function PriceTableContent({
         onDeleteCategory={onDeleteCategory}
       />
 
-      <div className="mt-4 space-y-4 animate-fade-in">
+      <div className="mt-6 space-y-5 animate-fade-in">
         {Object.values(priceData).map((category) => {
           const filteredItems = filterItems(category.items);
           const isCollapsed = collapsedCategories[category.id] || false;
           
           return (
-            <TabsContent key={category.id} value={category.id} className="space-y-4">
-              <Collapsible open={!isCollapsed} className="border border-border rounded-xl overflow-hidden bg-card/50">
+            <TabsContent key={category.id} value={category.id} className="space-y-5">
+              <Collapsible 
+                open={!isCollapsed} 
+                className="border border-border rounded-xl overflow-hidden bg-card/50 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
                 <CategoryHeader 
                   category={{...category, items: filteredItems}}
                   isCollapsed={isCollapsed}
@@ -80,7 +84,7 @@ export function PriceTableContent({
                 
                 <CollapsibleContent className="animate-accordion-down">
                   {displayMode === "card" ? (
-                    <div className="p-4">
+                    <div className="p-5">
                       <TableContent 
                         category={{...category, items: filteredItems}} 
                         onDelete={isAdmin ? onDeleteItem : undefined}
@@ -100,7 +104,7 @@ export function PriceTableContent({
                           </TableCaption>
                         )}
                         <PriceTableHeader showActions={isAdmin} />
-                        <TableBody>
+                        <TableBody className="bg-background/50">
                           <TableContent 
                             category={{...category, items: filteredItems}} 
                             onDelete={isAdmin ? onDeleteItem : undefined}

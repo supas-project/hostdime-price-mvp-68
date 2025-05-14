@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { PriceData, PriceItem, PriceCategory } from "@/types/pricing";
+import { PriceData, PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +13,6 @@ export function usePriceTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "card">("table");
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  const [contractDuration, setContractDuration] = useState<string>("0");
   
   const { toast } = useToast();
 
@@ -57,11 +57,11 @@ export function usePriceTable() {
     }
   };
 
-  // Configura listeners para mudanças nos dados
+  // Configure listeners for data changes
   useEffect(() => {
     loadPriceData();
     
-    // Adicionar listener para mudanças de dados
+    // Add listener for data changes
     const handleDataChange = (data: PriceData) => {
       setPriceData(data);
       setLastSyncTime(new Date());
@@ -74,14 +74,14 @@ export function usePriceTable() {
     };
   }, []);
 
-  // Garante que uma tab esteja ativa quando os dados são carregados
+  // Ensure that a tab is active when data is loaded
   useEffect(() => {
     if (Object.keys(priceData).length > 0 && !activeTab) {
       setActiveTab(Object.keys(priceData)[0]);
     }
   }, [priceData, activeTab]);
 
-  // Toggle para colapsar/expandir categorias
+  // Toggle to collapse/expand categories
   const toggleCategoryCollapse = (categoryId: string) => {
     setCollapsedCategories(prev => ({
       ...prev,
@@ -89,7 +89,7 @@ export function usePriceTable() {
     }));
   };
 
-  // Filtrar itens com base no termo de busca
+  // Filter items based on search term
   const filterItems = (items: PriceItem[]): PriceItem[] => {
     if (!searchTerm) return items;
     const lowerSearch = searchTerm.toLowerCase();
@@ -119,8 +119,6 @@ export function usePriceTable() {
     collapsedCategories,
     toggleCategoryCollapse,
     filterItems,
-    loadPriceData,
-    contractDuration,
-    setContractDuration
+    loadPriceData
   };
 }

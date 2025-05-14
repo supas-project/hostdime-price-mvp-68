@@ -46,14 +46,15 @@ export function TableControls({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center">
+    <div className="flex flex-col sm:flex-row gap-3 mb-6 items-center">
       <div className="relative flex-1 w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar componentes..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="pl-9 w-full"
+          className="pl-9 w-full h-10 text-base border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20"
+          aria-label="Buscar componentes"
         />
       </div>
       

@@ -11,7 +11,7 @@ import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ImportButton } from "@/components/price-table/ImportButton";
 
 export default function PriceTable() {
-  // Hooks personalizados
+  // Custom hooks
   const {
     priceData,
     setPriceData,
@@ -27,9 +27,7 @@ export default function PriceTable() {
     setDisplayMode,
     collapsedCategories,
     toggleCategoryCollapse,
-    filterItems,
-    contractDuration,
-    setContractDuration
+    filterItems
   } = usePriceTable();
 
   const {
@@ -57,19 +55,15 @@ export default function PriceTable() {
     handleFileUpload
   } = useFileHandling(setPriceData);
 
-  // Autenticação
+  // Authentication
   const { isAuthenticated, isAdmin } = useAuth();
 
-  // Indicador de carregamento combinado
+  // Combined loading indicator
   const isLoading = dataLoading || fileLoading;
 
   return (
     <div className="container py-8 animate-fade-in">
-      <PriceTableHeader 
-        lastSyncTime={lastSyncTime} 
-        contractDuration={contractDuration}
-        onContractChange={setContractDuration}
-      />
+      <PriceTableHeader lastSyncTime={lastSyncTime} />
 
       <Card className="border border-border rounded-xl shadow-lg overflow-hidden">
         <CardHeader className="pb-0">
