@@ -9,6 +9,7 @@ import { TableControls } from "@/components/price-table/TableControls";
 import { TableActions } from "@/components/price-table/TableActions";
 import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ImportButton } from "@/components/price-table/ImportButton";
+import { ContractSelect } from "@/components/price-table/ContractSelect";
 
 export default function PriceTable() {
   // Custom hooks
@@ -27,7 +28,9 @@ export default function PriceTable() {
     setDisplayMode,
     collapsedCategories,
     toggleCategoryCollapse,
-    filterItems
+    filterItems,
+    contractDuration,
+    setContractDuration
   } = usePriceTable();
 
   const {
@@ -68,12 +71,12 @@ export default function PriceTable() {
   }
 
   return (
-    <div className="container py-8 animate-fade-in">
+    <div className="container py-6 md:py-8 animate-fade-in">
       <PriceTableHeader lastSyncTime={lastSyncTime} />
 
-      <Card className="border border-border rounded-xl shadow-lg overflow-hidden">
+      <Card className="border border-border rounded-xl shadow-lg overflow-hidden mt-6">
         <CardHeader className="pb-0">
-          <div className="flex flex-wrap justify-between items-center gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-4">
             {isAdmin && (
               <TableActions
                 activeTab={activeTab}
@@ -95,6 +98,11 @@ export default function PriceTable() {
             )}
 
             <div className="flex gap-2 ml-auto">
+              <ContractSelect 
+                value={contractDuration}
+                onChange={setContractDuration}
+              />
+              
               {isAdmin && (
                 <ImportButton 
                   isLoading={isLoading}
@@ -129,6 +137,7 @@ export default function PriceTable() {
             onDeleteCategory={handleDeleteCategory}
             onDeleteItem={handleDeleteItem}
             onEditItem={handleInitiateEdit}
+            contractDuration={contractDuration}
           />
         </CardContent>
       </Card>

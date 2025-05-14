@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, LayoutGrid, List } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface TableControlsProps {
   displayMode: "table" | "card";
@@ -63,10 +64,14 @@ export function TableControls({
           variant="outline"
           size="icon"
           onClick={handleSortClick}
-          className={cn(sortOrder !== null && "bg-accent")}
-          title={sortOrder === "asc" ? "Ordenar por preço (maior para menor)" : 
-                 sortOrder === "desc" ? "Remover ordenação" : 
-                 "Ordenar por preço (menor para maior)"}
+          className={cn("transition-all", 
+            sortOrder !== null && "bg-accent text-accent-foreground border-primary/30"
+          )}
+          title={
+            sortOrder === "asc" ? "Ordenar por preço (maior para menor)" : 
+            sortOrder === "desc" ? "Remover ordenação" : 
+            "Ordenar por preço (menor para maior)"
+          }
         >
           {sortOrder === "asc" ? (
             <ArrowUp className="h-4 w-4" />
@@ -77,18 +82,37 @@ export function TableControls({
           )}
         </Button>
         
-        <Select
-          value={displayMode}
-          onValueChange={(value) => onDisplayModeChange(value as "table" | "card")}
-        >
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Visualização" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="table">Lista</SelectItem>
-            <SelectItem value="card">Cartões</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex border border-input rounded-md overflow-hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-10 px-3 rounded-none border-r border-input",
+              displayMode === "table" && "bg-accent text-accent-foreground"
+            )}
+            onClick={() => onDisplayModeChange("table")}
+            title="Visualização em lista"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-10 px-3 rounded-none",
+              displayMode === "card" && "bg-accent text-accent-foreground"
+            )}
+            onClick={() => onDisplayModeChange("card")}
+            title="Visualização em cartões"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <HelpTooltip
+          title="Visualização da Tabela"
+          description="Escolha entre visualização em lista ou cartões, e ordene os itens por preço."
+        />
       </div>
     </div>
   );

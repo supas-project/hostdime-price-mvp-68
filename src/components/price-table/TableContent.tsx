@@ -93,12 +93,15 @@ export function TableContent({
           const priceInfo = getPriceWithPayBack(item);
           
           return (
-            <Card key={item.id} className="overflow-hidden border-border hover:border-primary/30 transition-all duration-300">
+            <Card 
+              key={item.id} 
+              className="overflow-hidden border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md"
+            >
               <CardContent className="p-0">
                 <div className="p-4 flex flex-col h-full">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-lg">{item.name}</h3>
-                    <div className="text-lg font-bold text-primary">
+                  <div className="flex justify-between items-start mb-2 flex-wrap gap-2">
+                    <h3 className="font-medium text-base sm:text-lg">{item.name}</h3>
+                    <div className="text-base sm:text-lg font-bold text-primary">
                       {formatCurrency(item.price)}
                       
                       {priceInfo.withPayback !== null && (
@@ -109,9 +112,9 @@ export function TableContent({
                     </div>
                   </div>
                   
-                  <div className="flex-1 text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center gap-1">
-                      {item.description}
+                  <div className="flex-1 text-xs sm:text-sm text-muted-foreground mb-3">
+                    <div className="flex items-start sm:items-center gap-1 flex-wrap">
+                      <span className="break-words">{item.description}</span>
                       {item.specs && item.specs.length > 0 && (
                         <HelpTooltip 
                           title="Ver detalhes"
@@ -123,7 +126,7 @@ export function TableContent({
                   
                   <div className="flex flex-wrap gap-1 mb-3">
                     {item.subtype && (
-                      <Badge variant="outline" className="self-start">
+                      <Badge variant="outline" className="self-start text-xs">
                         {item.subtype}
                       </Badge>
                     )}
@@ -133,16 +136,16 @@ export function TableContent({
                       <Badge
                         key={tag}
                         variant="outline" 
-                        className={`self-start ${getTagStyle(tag)}`}
+                        className={`self-start text-xs ${getTagStyle(tag)}`}
                       >
                         <Tag className="h-3 w-3 mr-1" />
                         {tag}
                       </Badge>
                     ))}
                     
-                    {/* Fallback for legacy items that don't have tags array but have isHardware */}
+                    {/* Fallback for legacy items */}
                     {!item.tags && item.isHardware && (
-                      <Badge variant="outline" className="self-start bg-blue-500/10 text-blue-500 border-blue-200">
+                      <Badge variant="outline" className="self-start text-xs bg-blue-500/10 text-blue-500 border-blue-200">
                         <Tag className="h-3 w-3 mr-1" />
                         Hardware
                       </Badge>
@@ -154,7 +157,7 @@ export function TableContent({
                       {onEdit && (
                         <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
                           <Edit className="h-4 w-4 mr-1" />
-                          <span>Editar</span>
+                          <span className="text-xs sm:text-sm">Editar</span>
                         </Button>
                       )}
                       
@@ -162,7 +165,7 @@ export function TableContent({
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4 mr-1" />
-                            <span>Excluir</span>
+                            <span className="text-xs sm:text-sm">Excluir</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -203,7 +206,7 @@ export function TableContent({
         return (
           <TableRow key={item.id} className="group hover:bg-muted/70">
             <TableCell className="font-medium">
-              {item.name}
+              <div className="line-clamp-2">{item.name}</div>
               <div className="flex flex-wrap gap-1 mt-1">
                 {item.subtype && (
                   <Badge variant="outline" className="text-xs">
@@ -234,8 +237,8 @@ export function TableContent({
             </TableCell>
             
             <TableCell>
-              <div className="flex items-center gap-1">
-                {item.description}
+              <div className="flex items-start sm:items-center gap-1 flex-wrap">
+                <span className="line-clamp-2">{item.description}</span>
                 {item.specs && item.specs.length > 0 && (
                   <HelpTooltip 
                     title="Ver detalhes"
@@ -245,7 +248,7 @@ export function TableContent({
               </div>
             </TableCell>
             
-            <TableCell className="font-bold text-primary">
+            <TableCell className="font-bold text-primary whitespace-nowrap">
               {formatCurrency(item.price)}
               
               {priceInfo.withPayback !== null && (
@@ -257,7 +260,7 @@ export function TableContent({
             
             {onDelete && (
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {onEdit && (
                     <Button 
                       variant="ghost" 

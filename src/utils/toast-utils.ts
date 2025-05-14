@@ -1,61 +1,99 @@
 
-import { toast as baseToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
-// Configure default toast durations
-const TOAST_DURATIONS = {
-  default: 4000, // 4 seconds for regular notifications
-  success: 3000, // 3 seconds for success messages
-  error: 8000,   // 8 seconds for errors (more important)
-  warning: 5000, // 5 seconds for warnings
-  info: 4000     // 4 seconds for info messages
+type ToastOptions = {
+  description?: string;
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 };
 
-// Maximum number of simultaneous toasts
-const MAX_TOASTS = 3;
-
-// Extended toast with variant methods and improved configuration
+/**
+ * Sistema de notificações padronizado para a aplicação
+ * 
+ * Implementa uma camada sobre o sistema de toast para garantir
+ * consistência visual e de comportamento em todas as notificações.
+ */
 export const toast = {
-  // Base toast function with improved defaults
-  ...baseToast,
-  
-  // Re-export the variant helpers with better defaults
-  error: (message: string, options?: any) => {
-    return baseToast.error(message, {
-      duration: TOAST_DURATIONS.error,
-      position: "top-right",
-      important: true, // Mark error toasts as important
-      dismissible: true, // Allow manual dismissal
-      ...options
+  /**
+   * Notificação de sucesso
+   */
+  success: (title: string, options?: ToastOptions) => {
+    return sonnerToast.success(title, {
+      ...options,
+      className: "hostdime-toast hostdime-toast-success",
     });
   },
-  
-  info: (message: string, options?: any) => {
-    return baseToast.info(message, {
-      duration: TOAST_DURATIONS.info,
-      position: "top-right",
-      important: false,
-      dismissible: true,
-      ...options
+
+  /**
+   * Notificação de erro
+   */
+  error: (title: string, options?: ToastOptions) => {
+    return sonnerToast.error(title, {
+      ...options,
+      className: "hostdime-toast hostdime-toast-error",
     });
   },
-  
-  success: (message: string, options?: any) => {
-    return baseToast.success(message, {
-      duration: TOAST_DURATIONS.success,
-      position: "top-right",
-      important: false,
-      dismissible: true,
-      ...options
+
+  /**
+   * Notificação de informação
+   */
+  info: (title: string, options?: ToastOptions) => {
+    return sonnerToast.info(title, {
+      ...options,
+      className: "hostdime-toast hostdime-toast-info",
     });
   },
-  
-  warning: (message: string, options?: any) => {
-    return baseToast.warning(message, {
-      duration: TOAST_DURATIONS.warning,
-      position: "top-right",
-      important: true, // Mark warnings as somewhat important
-      dismissible: true,
-      ...options
+
+  /**
+   * Notificação de aviso
+   */
+  warning: (title: string, options?: ToastOptions) => {
+    return sonnerToast.warning(title, {
+      ...options,
+      className: "hostdime-toast hostdime-toast-warning",
     });
-  }
+  },
+
+  /**
+   * Notificação personalizada
+   */
+  custom: (title: string, options?: ToastOptions) => {
+    return sonnerToast(title, {
+      ...options,
+      className: "hostdime-toast",
+    });
+  },
+
+  /**
+   * Exibe notificação de carregamento com possibilidade de atualizar o estado
+   */
+  promise: <T,>(
+    promise: Promise<T>,
+    {
+      loading,
+      success,
+      error,
+    }: {
+      loading: string;
+      success: string | ((data: T) => string);
+      error: string | ((err: any) => string);
+    },
+    options?: ToastOptions
+  ) => {
+    return sonnerToast.promise(promise, {
+      loading,
+      success,
+      error,
+      ...options,
+      className: "hostdime-toast",
+    });
+  },
+
+  /**
+   * Remove todas as notificações ativas
+   */
+  dismiss: () => sonnerToast.dismiss(),
 };

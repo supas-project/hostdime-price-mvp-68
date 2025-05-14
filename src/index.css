@@ -6,13 +6,14 @@
 
 @layer base {
   :root {
+    /* Cores principais HostDime */
     --background: 0 0% 12%;
     --foreground: 0 0% 100%;
     --card: 220 2% 18%;
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 100%;
-    --primary: 29 91% 54%;
+    --primary: 29 91% 54%; /* Laranja HostDime */
     --primary-hover: 29 91% 48%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 18%;
@@ -28,7 +29,7 @@
     --ring: 29 91% 54%;
     --radius: 0.75rem;
 
-    /* Z-index System */
+    /* Sistema de Z-index */
     --z-dropdown: 1000;
     --z-sticky: 1020;
     --z-fixed: 1030;
@@ -37,14 +38,14 @@
     --z-popover: 1060;
     --z-tooltip: 1070;
 
-    /* Shadows */
+    /* Sistema de sombras */
     --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     
-    /* Spacing System */
+    /* Sistema de espaçamento */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
     --space-3: 0.75rem;
@@ -54,7 +55,7 @@
     --space-12: 3rem;
     --space-16: 4rem;
     
-    /* Typography Scale */
+    /* Sistema tipográfico */
     --text-xs: 0.75rem;
     --text-sm: 0.875rem;
     --text-base: 1rem;
@@ -72,12 +73,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased overflow-x-hidden font-sans;
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-family: 'Inter', sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Melhorar cards com sombras e transições */
+  /* Estilo dos components com sombras e transições */
   .component-card {
     @apply bg-card text-card-foreground border border-border rounded-xl transition-all duration-300;
     box-shadow: var(--shadow);
@@ -89,7 +90,7 @@
     transform: translateY(-2px);
   }
   
-  /* Melhorar container responsivo */
+  /* Container responsivo aprimorado */
   .responsive-container {
     @apply w-full px-3 sm:px-6 md:px-8 lg:px-10 mx-auto;
     max-width: 1400px;
@@ -111,9 +112,30 @@
     box-shadow: var(--shadow-lg);
   }
   
-  /* Melhorar inputs para telas sensíveis ao toque */
+  /* Inputs otimizados para telas touchscreen */
   .touch-input {
     @apply min-h-10 px-3 py-2;
+  }
+
+  /* Sistema de toasts padronizados */
+  .hostdime-toast {
+    @apply bg-background border border-border;
+  }
+  
+  .hostdime-toast-success {
+    @apply border-l-4 border-l-green-500;
+  }
+  
+  .hostdime-toast-error {
+    @apply border-l-4 border-l-red-500;
+  }
+  
+  .hostdime-toast-warning {
+    @apply border-l-4 border-l-amber-500;
+  }
+  
+  .hostdime-toast-info {
+    @apply border-l-4 border-l-blue-500;
   }
 }
 
@@ -144,9 +166,49 @@
     @apply py-2.5 px-5 text-lg rounded-lg;
   }
   
-  /* Sistema de inputs para melhor toque */
+  /* Inputs com melhor experiência tátil */
   .input-touch {
     @apply py-2.5 px-3 min-h-11;
+  }
+  
+  /* Novos componentes padronizados */
+  .hostdime-card {
+    @apply bg-card rounded-xl border border-border shadow-md p-4 sm:p-6 transition-all duration-300 hover:shadow-lg;
+  }
+  
+  .hostdime-panel {
+    @apply bg-card rounded-xl border border-border shadow-sm p-4 sm:p-6;
+  }
+  
+  .hostdime-button {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-1;
+  }
+  
+  .hostdime-button-primary {
+    @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/30;
+  }
+  
+  .hostdime-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 focus:ring-secondary/30;
+  }
+  
+  .hostdime-button-outline {
+    @apply border border-input bg-transparent hover:bg-accent hover:text-accent-foreground focus:ring-primary/30;
+  }
+  
+  .hostdime-input {
+    @apply rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors 
+           focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .hostdime-label {
+    @apply text-sm font-medium mb-2 block;
+  }
+  
+  .hostdime-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors;
   }
 }
 
@@ -178,7 +240,7 @@
     }
   }
   
-  /* Interações de hover */
+  /* Interações de hover aprimoradas */
   .hover-lift {
     @apply transition-all duration-300;
   }
@@ -192,7 +254,7 @@
     @apply shadow-md shadow-primary/20;
   }
   
-  /* Utilitários de tamanho de toque */
+  /* Utilitários para alvos de toque */
   .touch-target-sm {
     @apply min-h-[36px] min-w-[36px];
   }
@@ -205,9 +267,40 @@
     @apply min-h-[52px] min-w-[52px];
   }
   
-  /* Melhores utilitários de espaçamento */
+  /* Utilitários responsivos aprimorados */
   .h-screen-dvh {
     height: 100vh; /* Fallback */
     height: 100dvh; /* Navegadores modernos */
+  }
+  
+  /* Novos utilitários para acessibilidade */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* Melhorias para rolagem */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
   }
 }
