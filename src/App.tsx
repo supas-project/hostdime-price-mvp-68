@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./hooks/use-toast";
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
@@ -34,33 +35,35 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Routes>
-            {/* Public route */}
-            <Route path="/login" element={<LoginPage />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <MainLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Navigate to="/configure" replace />} />
+          <ToastProvider>
+            <Toaster />
+            <Routes>
+              {/* Public route */}
+              <Route path="/login" element={<LoginPage />} />
               
-              {/* Admin protected route */}
-              <Route path="price-table" element={
-                <AdminProtectedRoute>
-                  <PriceTable />
-                </AdminProtectedRoute>
-              } />
+              {/* Protected routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Navigate to="/configure" replace />} />
+                
+                {/* Admin protected route */}
+                <Route path="price-table" element={
+                  <AdminProtectedRoute>
+                    <PriceTable />
+                  </AdminProtectedRoute>
+                } />
+                
+                <Route path="configure" element={<Index />} />
+                <Route path="home" element={<Home />} />
+                <Route path="notification-demo" element={<NotificationDemo />} />
+              </Route>
               
-              <Route path="configure" element={<Index />} />
-              <Route path="home" element={<Home />} />
-              <Route path="notification-demo" element={<NotificationDemo />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ToastProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>

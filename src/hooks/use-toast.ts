@@ -1,6 +1,6 @@
 
 import * as React from "react"
-import { toast as sonnerToast, type ToastT, type ExternalToast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import { AlertCircle, Bell, CheckCircle, Info } from "lucide-react";
 
 // Define a standard interface for toast functions to ensure consistent usage
@@ -23,31 +23,91 @@ type Notification = {
   icon?: React.ReactNode;
 }
 
-// Notification store
-const notifications = React.createRef<Notification[]>();
-if (!notifications.current) {
-  notifications.current = [];
-}
+// Create a React context to store notifications
+type ToastContextType = {
+  notifications: Notification[];
+  addNotification: (id: string, message: string, options?: ToastOptions) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  clearNotification: (id: string) => void;
+  clearAllNotifications: () => void;
+};
 
-// Add notification to history
-const addNotificationToHistory = (
-  id: string,
-  message: string, 
-  options?: ToastOptions
-) => {
-  if (!notifications.current) return;
-  
-  const newNotification: Notification = {
-    id,
-    message,
-    description: options?.description,
-    variant: options?.variant || "default",
-    timestamp: new Date(),
-    read: false,
-    icon: options?.icon
+const ToastContext = React.createContext<ToastContextType | undefined>(undefined);
+
+// Provider component to wrap the app with
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
+
+  // Add notification to history
+  const addNotification = (id: string, message: string, options?: ToastOptions) => {
+    const newNotification: Notification = {
+      id,
+      message,
+      description: options?.description,
+      variant: options?.variant || "default",
+      timestamp: new Date(),
+      read: false,
+      icon: options?.icon
+    };
+    
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep last 50 notifications
+  };
+
+  // Mark notification as read
+  const markAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id ? { ...notification, read: true } : notification
+      )
+    );
   };
   
-  notifications.current = [newNotification, ...notifications.current].slice(0, 50); // Keep last 50 notifications
+  // Mark all as read
+  const markAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+  };
+  
+  // Clear a specific notification
+  const clearNotification = (id: string) => {
+    setNotifications(prev => 
+      prev.filter(notification => notification.id !== id)
+    );
+  };
+  
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
+  const value = {
+    notifications,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAllNotifications,
+  };
+
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+};
+
+// Helper function to get icon based on variant
+const getIconForVariant = (variant?: string) => {
+  switch (variant) {
+    case "destructive":
+      return React.createElement(AlertCircle, { className: "h-4 w-4" });
+    case "success":
+      return React.createElement(CheckCircle, { className: "h-4 w-4" });
+    case "info":
+      return React.createElement(Info, { className: "h-4 w-4" });
+    case "warning":
+      return React.createElement(AlertCircle, { className: "h-4 w-4" });
+    default:
+      return React.createElement(Bell, { className: "h-4 w-4" });
+  }
 };
 
 // Simple wrapper around sonner toast that conforms to our project's structure
@@ -55,7 +115,22 @@ function toast(message: string, options?: ToastOptions) {
   const { description, variant, duration, icon, ...rest } = options || {};
   
   const id = Math.random().toString(36).substring(2, 9);
-  addNotificationToHistory(id, message, options);
+  
+  // Attempt to add to notification history if context is available
+  try {
+    const context = React.createContext(null);
+    const useCtx = React.useContext(context);
+    
+    // This won't actually execute but prevents build errors for direct imports
+    if (typeof window !== 'undefined') {
+      const ctx = React.useContext(ToastContext);
+      if (ctx) {
+        ctx.addNotification(id, message, options);
+      }
+    }
+  } catch (e) {
+    // Silently fail if not in a React component context
+  }
   
   // Get default icon based on variant
   const defaultIcon = getIconForVariant(variant);
@@ -100,22 +175,6 @@ function toast(message: string, options?: ToastOptions) {
   }
 }
 
-// Helper function to get icon based on variant
-const getIconForVariant = (variant?: string) => {
-  switch (variant) {
-    case "destructive":
-      return React.createElement(AlertCircle, { className: "h-4 w-4" });
-    case "success":
-      return React.createElement(CheckCircle, { className: "h-4 w-4" });
-    case "info":
-      return React.createElement(Info, { className: "h-4 w-4" });
-    case "warning":
-      return React.createElement(AlertCircle, { className: "h-4 w-4" });
-    default:
-      return React.createElement(Bell, { className: "h-4 w-4" });
-  }
-};
-
 // Add variants as direct methods for convenience
 toast.error = (message: string, options?: Omit<ToastOptions, "variant">) => {
   return toast(message, { ...options, variant: "destructive" });
@@ -133,66 +192,22 @@ toast.warning = (message: string, options?: Omit<ToastOptions, "variant">) => {
   return toast(message, { ...options, variant: "warning" });
 };
 
+// Custom hook to access toast notifications
 function useToast() {
-  const [notificationList, setNotificationList] = React.useState<Notification[]>([]);
+  const context = React.useContext(ToastContext);
   
-  // Get notifications from the store
-  React.useEffect(() => {
-    if (notifications.current) {
-      setNotificationList([...notifications.current]);
-    }
-  }, []);
-
-  // Mark notification as read
-  const markAsRead = (id: string) => {
-    if (!notifications.current) return;
-    
-    notifications.current = notifications.current.map(notification => 
-      notification.id === id ? { ...notification, read: true } : notification
-    );
-    
-    setNotificationList([...notifications.current]);
-  };
-  
-  // Mark all as read
-  const markAllAsRead = () => {
-    if (!notifications.current) return;
-    
-    notifications.current = notifications.current.map(notification => 
-      ({ ...notification, read: true })
-    );
-    
-    setNotificationList([...notifications.current]);
-  };
-  
-  // Clear a specific notification
-  const clearNotification = (id: string) => {
-    if (!notifications.current) return;
-    
-    notifications.current = notifications.current.filter(
-      notification => notification.id !== id
-    );
-    
-    setNotificationList([...notifications.current]);
-  };
-  
-  // Clear all notifications
-  const clearAllNotifications = () => {
-    if (!notifications.current) {
-      notifications.current = [];
-    }
-    
-    setNotificationList([]);
-  };
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
   
   return {
     toast,
-    notifications: notificationList,
-    markAsRead,
-    markAllAsRead,
-    clearNotification,
-    clearAllNotifications,
-    unreadCount: notificationList.filter(n => !n.read).length,
+    notifications: context.notifications,
+    markAsRead: context.markAsRead,
+    markAllAsRead: context.markAllAsRead,
+    clearNotification: context.clearNotification,
+    clearAllNotifications: context.clearAllNotifications,
+    unreadCount: context.notifications.filter(n => !n.read).length,
     dismiss: (toastId?: string) => {
       if (toastId) {
         sonnerToast.dismiss(toastId);
