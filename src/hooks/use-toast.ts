@@ -104,15 +104,15 @@ function toast(message: string, options?: ToastOptions) {
 const getIconForVariant = (variant?: string) => {
   switch (variant) {
     case "destructive":
-      return <AlertCircle className="h-4 w-4" />;
+      return React.createElement(AlertCircle, { className: "h-4 w-4" });
     case "success":
-      return <CheckCircle className="h-4 w-4" />;
+      return React.createElement(CheckCircle, { className: "h-4 w-4" });
     case "info":
-      return <Info className="h-4 w-4" />;
+      return React.createElement(Info, { className: "h-4 w-4" });
     case "warning":
-      return <AlertCircle className="h-4 w-4" />;
+      return React.createElement(AlertCircle, { className: "h-4 w-4" });
     default:
-      return <Bell className="h-4 w-4" />;
+      return React.createElement(Bell, { className: "h-4 w-4" });
   }
 };
 
