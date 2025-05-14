@@ -8,6 +8,9 @@ const PRICE_DATA_KEY = 'priceData';
 // Flag para controlar operações concorrentes de gravação
 let isWriteLocked = false;
 
+// Timestamp da última atualização para controle de versão
+let lastUpdateTimestamp = Date.now();
+
 // Dados iniciais carregados dos componentes do servidor
 const initialPriceData: PriceData = {
   cpu: { 
@@ -52,21 +55,59 @@ const initialPriceData: PriceData = {
 type DataChangeListener = (data: PriceData) => void;
 let dataChangeListeners: DataChangeListener[] = [];
 
+// Sistema de controle de versão para detecção de conflitos
+interface VersionedData {
+  data: PriceData;
+  version: number;
+}
+
+// Controle de sessão para diagnóstico multiusuário
+const SESSION_ID = `user_${Math.random().toString(36).substring(2, 10)}`;
+const sessionStartTime = Date.now();
+
 // Carrega dados do localStorage ou usa dados iniciais
 const loadDataFromStorage = (): PriceData => {
   try {
     const storedData = localStorage.getItem(PRICE_DATA_KEY);
     if (storedData) {
-      return JSON.parse(storedData);
+      try {
+        // Tenta fazer parse dos dados, que podem incluir controle de versão
+        const parsedData = JSON.parse(storedData);
+        
+        // Verifica se os dados têm o formato versionado
+        if (parsedData && parsedData.version && parsedData.data) {
+          // Atualiza o timestamp de última atualização
+          lastUpdateTimestamp = parsedData.version;
+          return parsedData.data;
+        }
+        
+        // Compatibilidade com dados antigos (sem versão)
+        return parsedData;
+      } catch (parseError) {
+        console.error('Erro ao fazer parse dos dados:', parseError);
+        // Registra erro de sessão para diagnóstico
+        logSessionEvent('error', 'parse_data_error', { error: String(parseError) });
+        
+        toast.error("Erro ao processar dados armazenados");
+        return initialPriceData;
+      }
     }
   } catch (error) {
     console.error('Erro ao carregar dados da tabela de preços:', error);
     // Notificar o usuário sobre o erro de carregamento
     toast.error("Não foi possível carregar os dados salvos. Usando dados padrão.");
+    
+    // Registra erro de sessão para diagnóstico
+    logSessionEvent('error', 'load_data_error', { error: String(error) });
   }
   
   // Salva dados iniciais no localStorage se não existirem
-  localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(initialPriceData));
+  const versionedData: VersionedData = {
+    data: initialPriceData,
+    version: Date.now()
+  };
+  
+  localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
   return initialPriceData;
 };
 
@@ -82,15 +123,117 @@ const saveDataToStorage = (data: PriceData): void => {
     // Adquire o lock
     isWriteLocked = true;
     
-    localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(data));
+    // Verifica se há atualizações concorrentes
+    const currentData = localStorage.getItem(PRICE_DATA_KEY);
+    if (currentData) {
+      try {
+        const parsedData = JSON.parse(currentData);
+        if (parsedData && parsedData.version && parsedData.version > lastUpdateTimestamp) {
+          // Detectou atualização concorrente
+          console.warn("Conflito de dados detectado: outro usuário modificou os dados");
+          logSessionEvent('warn', 'concurrent_update_detected', {
+            localTimestamp: lastUpdateTimestamp,
+            remoteTimestamp: parsedData.version
+          });
+          
+          toast.warning("Alterações feitas por outro usuário detectadas. Atualizando dados.");
+          
+          // Atualiza localmente com os dados mais recentes
+          lastUpdateTimestamp = parsedData.version;
+          isWriteLocked = false;
+          
+          // Notifica sobre dados atualizados, mas não salva os dados atuais (evita sobreposição)
+          notifyDataChangeListeners(parsedData.data);
+          
+          throw new Error("Dados modificados por outro usuário. Por favor, tente novamente após atualização.");
+        }
+      } catch (parseError) {
+        // Erro ao analisar dados existentes, continua com a gravação
+        console.warn('Erro ao verificar versão de dados existentes:', parseError);
+      }
+    }
+    
+    // Atualiza a versão para esta gravação
+    const newTimestamp = Date.now();
+    lastUpdateTimestamp = newTimestamp;
+    
+    // Prepara dados versionados
+    const versionedData: VersionedData = {
+      data,
+      version: newTimestamp
+    };
+    
+    // Salva no localStorage
+    localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
+    
+    // Registra evento de atualização
+    logSessionEvent('info', 'data_updated', { timestamp: newTimestamp });
+    
     notifyDataChangeListeners(data);
   } catch (error) {
     console.error('Erro ao salvar dados da tabela de preços:', error);
     toast.error("Não foi possível salvar os dados. Verifique o espaço disponível no navegador.");
+    
+    // Registra erro para diagnóstico
+    logSessionEvent('error', 'save_data_error', { error: String(error) });
+    
     throw new Error("Falha ao salvar dados no armazenamento local");
   } finally {
     // Libera o lock sempre, mesmo em caso de erro
     isWriteLocked = false;
+  }
+};
+
+// Log de eventos de sessão para diagnóstico multiusuário
+type LogLevel = 'info' | 'warn' | 'error';
+interface SessionEvent {
+  sessionId: string;
+  timestamp: number;
+  level: LogLevel;
+  event: string;
+  details?: any;
+}
+
+// Armazenamento de eventos de sessão para diagnóstico
+const SESSION_EVENTS_KEY = 'session_events';
+const MAX_SESSION_EVENTS = 100;
+
+// Função para registrar eventos de sessão
+const logSessionEvent = (level: LogLevel, event: string, details?: any) => {
+  try {
+    // Criar novo evento de sessão
+    const newEvent: SessionEvent = {
+      sessionId: SESSION_ID,
+      timestamp: Date.now(),
+      level,
+      event,
+      details
+    };
+    
+    // Recuperar eventos existentes ou inicializar array vazio
+    let events: SessionEvent[] = [];
+    const storedEvents = localStorage.getItem(SESSION_EVENTS_KEY);
+    
+    if (storedEvents) {
+      try {
+        events = JSON.parse(storedEvents);
+      } catch (e) {
+        console.warn('Erro ao processar eventos de sessão armazenados');
+        events = [];
+      }
+    }
+    
+    // Adicionar novo evento e limitar o tamanho do histórico
+    events.push(newEvent);
+    if (events.length > MAX_SESSION_EVENTS) {
+      events = events.slice(-MAX_SESSION_EVENTS); // Manter apenas os mais recentes
+    }
+    
+    // Salvar eventos atualizados
+    localStorage.setItem(SESSION_EVENTS_KEY, JSON.stringify(events));
+  } catch (e) {
+    // Falha silenciosa em caso de erro no log (não deve interromper a operação principal)
+    console.warn('Falha ao registrar evento de sessão:', e);
   }
 };
 
@@ -101,6 +244,7 @@ const notifyDataChangeListeners = (data: PriceData): void => {
       listener(data);
     } catch (error) {
       console.error('Erro ao notificar listener sobre mudança de dados:', error);
+      logSessionEvent('error', 'listener_notification_error', { error: String(error) });
     }
   });
 };
@@ -511,18 +655,101 @@ export const PriceService = {
     return initialPriceData;
   },
   
+  // Nova funcionalidade: obter informações de diagnóstico multiusuário
+  getDiagnosticInfo: () => {
+    try {
+      // Recuperar eventos de sessão
+      const storedEvents = localStorage.getItem(SESSION_EVENTS_KEY) || '[]';
+      const events = JSON.parse(storedEvents) as SessionEvent[];
+      
+      return {
+        sessionId: SESSION_ID,
+        sessionStartTime,
+        sessionDuration: Date.now() - sessionStartTime,
+        lastUpdateTimestamp,
+        isWriteLocked,
+        activeListeners: dataChangeListeners.length,
+        recentEvents: events.slice(-20) // Retornar apenas os 20 eventos mais recentes
+      };
+    } catch (e) {
+      console.error('Erro ao obter informações de diagnóstico:', e);
+      return {
+        sessionId: SESSION_ID,
+        error: 'Falha ao obter informações de diagnóstico'
+      };
+    }
+  },
+  
+  // Nova funcionalidade: verificar se há conflitos de dados com outras sessões
+  checkForDataConflicts: () => {
+    try {
+      const storedData = localStorage.getItem(PRICE_DATA_KEY);
+      if (!storedData) return false;
+      
+      const parsedData = JSON.parse(storedData);
+      if (parsedData && parsedData.version && parsedData.version > lastUpdateTimestamp) {
+        // Conflito detectado: dados mais recentes disponíveis
+        logSessionEvent('info', 'conflict_check_detected_newer_data', { 
+          localTimestamp: lastUpdateTimestamp,
+          remoteTimestamp: parsedData.version 
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Erro ao verificar conflitos de dados:', e);
+      logSessionEvent('error', 'conflict_check_error', { error: String(e) });
+      return false;
+    }
+  },
+  
+  // Nova funcionalidade: forçar atualização de dados da fonte mais recente
+  forceRefreshFromLatestSource: (): PriceData => {
+    logSessionEvent('info', 'manual_refresh_requested');
+    const data = loadDataFromStorage();
+    notifyDataChangeListeners(data);
+    return data;
+  },
+  
   // Inicialização do serviço
   initialize: () => {
+    // Registrar início de sessão
+    logSessionEvent('info', 'session_started', {
+      userAgent: navigator.userAgent,
+      timestamp: sessionStartTime
+    });
+    
     // Verificar se existem dados armazenados
     try {
       const storedData = localStorage.getItem(PRICE_DATA_KEY);
       if (!storedData) {
         console.log('Inicializando dados da tabela de preços...');
         saveDataToStorage(initialPriceData);
+      } else {
+        // Verifica a versão dos dados existentes
+        try {
+          const parsedData = JSON.parse(storedData);
+          if (parsedData && parsedData.version) {
+            lastUpdateTimestamp = parsedData.version;
+            logSessionEvent('info', 'loaded_versioned_data', { version: parsedData.version });
+          } else {
+            // Dados antigos sem versão - atualizar para o novo formato
+            const versionedData: VersionedData = {
+              data: parsedData,
+              version: Date.now()
+            };
+            localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
+            logSessionEvent('info', 'migrated_to_versioned_data');
+          }
+        } catch (e) {
+          console.warn('Erro ao verificar versão dos dados:', e);
+        }
       }
     } catch (error) {
       console.error('Erro ao inicializar serviço de preços:', error);
       toast.error("Não foi possível inicializar o serviço de preços.");
+      
+      logSessionEvent('error', 'initialization_error', { error: String(error) });
     }
   }
 };

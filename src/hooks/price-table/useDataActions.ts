@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   // Handle exporting data as JSON
@@ -60,10 +61,41 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
 
+  // Nova função para forçar atualização dos dados quando houver conflitos multiusuário
+  const handleRefreshData = () => {
+    try {
+      setIsRefreshing(true);
+      
+      // Força recarregar dados do localStorage (possivelmente atualizados por outro usuário)
+      const refreshedData = PriceService.forceRefreshFromLatestSource();
+      
+      // Atualiza o estado com os dados atualizados
+      setPriceData(refreshedData);
+      
+      toast.success("Dados atualizados", {
+        description: "Os dados foram sincronizados com a fonte mais recente."
+      });
+    } catch (error) {
+      toast.error("Erro ao atualizar dados", {
+        description: "Não foi possível sincronizar os dados."
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Verifica se há conflitos de dados e notifica se necessário
+  const checkForDataConflicts = (): boolean => {
+    return PriceService.checkForDataConflicts();
+  };
+
   return {
     isExporting,
     isResetting,
+    isRefreshing,
     handleExportData,
-    handleResetData
+    handleResetData,
+    handleRefreshData,
+    checkForDataConflicts
   };
 }
