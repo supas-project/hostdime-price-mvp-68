@@ -45,12 +45,20 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
             // Normalizar para garantir que a capacidade tenha unidade
             capacity = normalizeStorageCapacity(capacity);
             
+            // Create properly formatted specs object
+            const specsObj = {
+              readSpeed: item.specs?.find(s => s.toLowerCase().includes('leitura'))?.split(':')[1]?.trim() || "N/A",
+              writeSpeed: item.specs?.find(s => s.toLowerCase().includes('escrita'))?.split(':')[1]?.trim() || "N/A",
+              iops: item.specs?.find(s => s.toLowerCase().includes('iops'))?.split(':')[1]?.trim() || "N/A",
+              recommended: item.specs?.filter(s => s.toLowerCase().includes('recomendado')) || []
+            };
+            
             return {
               id: item.id,
               type: item.subtype as "nvme" | "ssd" | "hdd",
               capacity,
               price: item.price,
-              specs: item.specs || []
+              specs: specsObj
             };
           });
         
@@ -100,12 +108,20 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               else if (capacityMatches[3]) capacity = `${capacityMatches[3]}GB`;
             }
             
+            // Create properly formatted specs object
+            const specsObj = {
+              readSpeed: item.specs?.find(s => s.toLowerCase().includes('leitura'))?.split(':')[1]?.trim() || "N/A",
+              writeSpeed: item.specs?.find(s => s.toLowerCase().includes('escrita'))?.split(':')[1]?.trim() || "N/A",
+              iops: item.specs?.find(s => s.toLowerCase().includes('iops'))?.split(':')[1]?.trim() || "N/A",
+              recommended: item.specs?.filter(s => s.toLowerCase().includes('recomendado')) || []
+            };
+            
             return {
               id: item.id,
               type: item.subtype as "nvme" | "ssd" | "hdd",
               capacity,
               price: item.price,
-              specs: item.specs || []
+              specs: specsObj
             };
           });
         
