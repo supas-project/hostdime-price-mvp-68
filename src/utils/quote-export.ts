@@ -4,7 +4,59 @@ import { toast } from "sonner";
 import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
 import { QuoteVariables } from "./pdf/dynamic-variables";
 import { sanitizeText } from "./pdf/drawing-utils";
-import { openQuoteInNewTab } from "./html/quote-generator";
+import { generateQuoteTemplate } from "./html/template-generator";
+import { calculateQuoteTotal } from "./html/price-calculator";
+import { 
+  generateComponentsRows, 
+  generateStorageRows, 
+  generateConnectivityRows, 
+  generateCustomServicesRows 
+} from "./html/component-renderers";
+
+// Function to open the quote in a new tab with the HTML template
+export const openQuoteInNewTab = (
+  selectedComponents: { [key: string]: ComponentOption },
+  storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
+  customServices: ComponentOption[],
+  margin: number,
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
+  quoteVariables?: Partial<QuoteVariables>
+) => {
+  // Calculate total price
+  const total = calculateQuoteTotal(
+    selectedComponents, 
+    storageItems, 
+    customServices, 
+    margin, 
+    connectivityItems
+  );
+  
+  // Generate HTML rows for each component type
+  const componentsRows = generateComponentsRows(selectedComponents);
+  const storageRows = generateStorageRows(storageItems.internal, storageItems.external);
+  const connectivityRows = generateConnectivityRows(connectivityItems);
+  const customServicesRows = generateCustomServicesRows(customServices);
+  
+  // Generate the complete HTML template
+  const htmlContent = generateQuoteTemplate(
+    componentsRows,
+    storageRows,
+    connectivityRows,
+    customServicesRows,
+    total,
+    margin,
+    quoteVariables
+  );
+  
+  // Open in a new tab
+  const newTab = window.open();
+  if (newTab) {
+    newTab.document.open();
+    newTab.document.write(htmlContent);
+    newTab.document.close();
+  }
+  return newTab;
+};
 
 export const generateQuotePDF = async (
   selectedComponents: { [key: string]: ComponentOption },
