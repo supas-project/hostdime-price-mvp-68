@@ -28,12 +28,12 @@ export async function renderHeaderSection(
   const randomPart = Math.floor(Math.random() * 90000) + 10000;
   const quoteNumber = `HD-${randomPart}-${monthYear}`;
   
-  // Create an elegant quote info box
+  // CORREÇÃO: Ajustar a posição e tamanho do box de informações para melhor alinhamento
   page.drawRectangle({
-    x: width - marginX - 200,
-    y: height - 140,
-    width: 190,
-    height: 115,
+    x: width - marginX - 250, // Mais à esquerda para caber todo o conteúdo
+    y: height - 130, // Ajuste de posição para não se sobrepor
+    width: 240, // Aumentado para acomodar textos mais longos
+    height: 120,
     color: COLOR.HIGHLIGHT,
     borderColor: COLOR.PRIMARY_LIGHT,
     borderWidth: 1,
@@ -41,20 +41,20 @@ export async function renderHeaderSection(
     borderOpacity: 0.7
   });
   
-  // Draw quote header with proper HostDime branding
+  // CORREÇÃO: Melhor posicionamento do número da cotação
   drawTextCell(
     page,
     `Cotação #${quoteNumber}`,
-    width - marginX - 190,
-    height - 30,
-    180,
+    width - marginX - 240, // Alinhado com o box
+    height - 110, // Agora posicionado dentro do box
+    230,
     helveticaBold,
     12,
     COLOR.PRIMARY,
     'left'
   );
   
-  // Draw customer info fields with improved spacing and alignment
+  // CORREÇÃO: Melhor espaçamento e alinhamento dos campos de informação
   const infoFields = [
     { label: "Data:", value: quoteVars.dataEmissao || today.toLocaleDateString('pt-BR') },
     { label: "Responsável:", value: quoteVars.responsavelComercial },
@@ -63,9 +63,9 @@ export async function renderHeaderSection(
     { label: "Contato:", value: quoteVars.numeroContato }
   ];
   
-  let infoY = height - 45;
-  const labelX = width - marginX - 190;
-  const valueX = width - marginX - 105;
+  let infoY = height - 90; // Ajustado para começar após o título da cotação
+  const labelX = width - marginX - 240; // Alinhado com o início do box
+  const valueX = width - marginX - 150; // Posição para os valores
   
   infoFields.forEach((field, index) => {
     // Draw the label

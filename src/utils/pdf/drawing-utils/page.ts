@@ -69,12 +69,15 @@ export const drawHeader = async (
   currentY: number,
   helveticaBold: PDFFont
 ): Promise<number> => {
-  // Draw header background with HostDime orange
+  // CORREÇÃO: Ampliando a altura do cabeçalho para melhor visualização
+  const headerHeight = 70; // Aumentado para dar mais espaço
+  
+  // Draw header background with HostDime orange - CORREÇÃO: Ajuste de posicionamento
   page.drawRectangle({
     x: 0,
-    y: currentY - 60,
+    y: currentY - headerHeight + 10,
     width: width,
-    height: 60,
+    height: headerHeight,
     color: COLOR.PRIMARY,
     opacity: 1
   });
@@ -82,7 +85,7 @@ export const drawHeader = async (
   // Draw dark secondary color accent
   page.drawRectangle({
     x: 0,
-    y: currentY - 64,
+    y: currentY - headerHeight - 4 + 10,
     width: width,
     height: 4,
     color: COLOR.SECONDARY,
@@ -90,47 +93,47 @@ export const drawHeader = async (
   });
   
   try {
-    // Use embedded logo with proper error handling
+    // CORREÇÃO: Ajustando posicionamento e tamanho do logo
     const logoImageBytes = Uint8Array.from(atob(hostDimeLogoBase64), c => c.charCodeAt(0));
     
-    // Use the helper function for image embedding with white background for the logo
+    // Ajustando a posição do retângulo branco para o logo
     page.drawRectangle({
       x: 50,
-      y: currentY - 50,
-      width: 140,
-      height: 40,
+      y: currentY - headerHeight + 15,
+      width: 180, // Aumentado para melhor visualização
+      height: 50, // Aumentado para melhor visualização
       color: COLOR.WHITE,
       borderWidth: 0,
-      opacity: 0.95
+      opacity: 1
     });
     
+    // CORREÇÃO: Ajustando o posicionamento do logo
     const logoEmbedded = await embedAndDrawImage(
       pdfDoc,
       page,
       logoImageBytes,
       {
-        x: 55,
-        y: currentY - 5,
-        width: 130,
-        height: 40
+        x: 60, // Ligeiramente ajustado para centralizar no retângulo branco
+        y: currentY - 10,
+        width: 160, // Ajustado para melhor proporção
+        height: 50  // Ajustado para melhor proporção
       },
       "HostDime Brasil",
       helveticaBold
     );
     
-    // If logo failed to embed, the fallback is handled in embedAndDrawImage
-    
   } catch (error) {
     console.error("Falha ao carregar logo:", error);
     // Draw text fallback
     page.drawText("HostDime Brasil", {
-      x: 50,
+      x: 80,
       y: currentY - 30,
-      size: 18,
+      size: 20, // Aumentado para melhor visualização
       font: helveticaBold,
       color: COLOR.WHITE
     });
   }
   
-  return currentY - 70; // Return slightly more space for better layout
+  // CORREÇÃO: Retornando mais espaço para evitar sobreposição com a seção seguinte
+  return currentY - (headerHeight + 10);
 };

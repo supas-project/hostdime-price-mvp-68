@@ -90,7 +90,7 @@ export function renderComponentsSection(
     25
   );
   
-  // Draw header text
+  // CORREÇÃO: Ajuste na posição do cabeçalho da tabela para melhorar alinhamento
   page.drawText("Componente", {
     x: marginX + 5,
     y: currentY - 20,
@@ -99,8 +99,9 @@ export function renderComponentsSection(
     color: COLOR.WHITE
   });
   
+  // CORREÇÃO: Ajuste na palavra "Valor" para melhor alinhamento com o valor monetário
   page.drawText("Valor", {
-    x: marginRight - helveticaBold.widthOfTextAtSize("Valor", 12) - 5,
+    x: marginRight - helveticaBold.widthOfTextAtSize("Valor", 12) - 10,
     y: currentY - 20,
     size: 12,
     font: helveticaBold,
@@ -129,10 +130,15 @@ export function renderComponentsSection(
       color: COLOR.TEXT
     });
     
-    // Draw component price with HostDime styling
-    const price = formatCurrency(component.price);
+    // CORREÇÃO: Verificar que o preço não é zero antes de formatar e exibir
+    // e melhorar o alinhamento do valor
+    let price = "R$ 0,00";
+    if (component.price && component.price > 0) {
+      price = formatCurrency(component.price);
+    }
+    
     page.drawText(price, {
-      x: marginRight - helvetica.widthOfTextAtSize(price, 12),
+      x: marginRight - helvetica.widthOfTextAtSize(price, 12) - 5, // Melhor alinhamento
       y: currentY,
       size: 12,
       font: helvetica,

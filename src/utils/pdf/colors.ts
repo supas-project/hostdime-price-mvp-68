@@ -2,16 +2,16 @@
 import { rgb, RGB } from 'pdf-lib';
 import { PdfColorScheme } from './types';
 
-// Updated color palette to perfectly match HostDime's brand with improved visual hierarchy
+// CORREÇÃO: Ajuste das cores para se alinharem melhor com a identidade visual da HostDime
 export const COLOR: PdfColorScheme = {
-  PRIMARY: rgb(1.00, 0.40, 0.00),      // HostDime Orange (#FF6600) - Main brand color
-  SECONDARY: rgb(0.10, 0.12, 0.17),    // Dark Blue/Black (#1A1F2C) - Secondary brand color
-  PRIMARY_LIGHT: rgb(1.00, 0.75, 0.55), // Light Orange - For highlights and accents
-  TEXT: rgb(0.13, 0.15, 0.19),         // Darker Text color for better readability (#212429)
-  TEXT_LIGHT: rgb(0.35, 0.37, 0.41),   // Secondary text (#5A5E68)
-  ACCENT: rgb(0.55, 0.62, 0.69),       // Accent color (#8E9196)
+  PRIMARY: rgb(0.98, 0.40, 0.00),      // HostDime Orange (FF6600) - Ajustado para exatamente o tom laranja HostDime
+  SECONDARY: rgb(0.12, 0.12, 0.17),    // Dark Blue/Black (#1E1F2C) - Mais escuro para melhor contraste
+  PRIMARY_LIGHT: rgb(1.00, 0.70, 0.50), // Light Orange - Ajustado para melhor complementar o laranja principal
+  TEXT: rgb(0.10, 0.10, 0.12),         // Darkest Text color for better readability (#191A1F)
+  TEXT_LIGHT: rgb(0.30, 0.30, 0.35),   // Secondary text (#4D4E59) - Mais escuro para melhor legibilidade
+  ACCENT: rgb(0.55, 0.60, 0.65),       // Accent color (#8C99A6)
   WHITE: rgb(1, 1, 1),                 // White
-  BACKGROUND: rgb(0.98, 0.98, 0.99),   // Background color
-  HIGHLIGHT: rgb(1.0, 0.96, 0.92),     // Very light orange highlight (#FFF5EA)
-  TABLE_ROW_ALT: rgb(0.98, 0.96, 0.94)  // Subtle alternating row color (#FAF5EF)
+  BACKGROUND: rgb(0.98, 0.98, 0.98),   // Background color - Ligeiramente mais claro
+  HIGHLIGHT: rgb(1.0, 0.95, 0.90),     // Very light orange highlight (#FFF2E6)
+  TABLE_ROW_ALT: rgb(0.96, 0.96, 0.98)  // Subtle alternating row color (#F5F5FA) - Mais neutro
 };

@@ -59,25 +59,28 @@ export function renderFinancialSection(
     margin
   );
 
-  // Determine payment condition from contract
+  // CORREÇÃO: Melhor detecção de contrato e condição de pagamento
   let paymentCondition = "Pagamento Mensal";
   if (selectedComponents.contract) {
-    if (selectedComponents.contract.name.toLowerCase().includes("anual")) {
+    const contractName = selectedComponents.contract.name.toLowerCase();
+    if (contractName.includes("anual")) {
       paymentCondition = "Pagamento Anual";
-    } else if (selectedComponents.contract.name.toLowerCase().includes("semestral")) {
+    } else if (contractName.includes("semestral")) {
       paymentCondition = "Pagamento Semestral";
-    } else if (selectedComponents.contract.name.toLowerCase().includes("trimestral")) {
+    } else if (contractName.includes("trimestral")) {
       paymentCondition = "Pagamento Trimestral";
+    } else if (contractName.includes("24 meses") || contractName.includes("dois anos")) {
+      paymentCondition = "Pagamento Bianual";
     }
   }
 
-  // Draw financial information box with HostDime styling
+  // CORREÇÃO: Melhor estruturação visual da caixa de informações financeiras
   drawHighlightBox(
     page, 
     marginX, 
     y, 
     width - (marginX * 2), 
-    130,
+    140, // Aumentado para acomodar informações
     COLOR.BACKGROUND,
     COLOR.PRIMARY,
     1,
@@ -120,7 +123,8 @@ export function renderFinancialSection(
     color: COLOR.TEXT
   });
 
-  // Subtotal
+  // CORREÇÃO: Garantir que o subtotal seja exibido com formatação correta
+  let subtotalFormatted = formatCurrency(subtotal);
   page.drawText("Subtotal:", {
     x: marginX + 15,
     y: y - 75,
@@ -129,7 +133,7 @@ export function renderFinancialSection(
     color: COLOR.TEXT
   });
   
-  page.drawText(formatCurrency(subtotal), {
+  page.drawText(subtotalFormatted, {
     x: marginX + 150,
     y: y - 75,
     size: 11,
@@ -137,32 +141,35 @@ export function renderFinancialSection(
     color: COLOR.TEXT
   });
 
-  // Total with HostDime highlight
+  // CORREÇÃO: Melhorar destaque e legibilidade do total
   page.drawRectangle({
     x: marginX + 10,
-    y: y - 95,
+    y: y - 105,
     width: width - (marginX * 2) - 20,
-    height: 25,
+    height: 35, // Aumentado para melhor visualização
     color: COLOR.HIGHLIGHT,
-    borderColor: COLOR.PRIMARY_LIGHT,
+    borderColor: COLOR.PRIMARY,
     borderWidth: 1
   });
   
+  // CORREÇÃO: Texto do total mais visível e melhor posicionado
   page.drawText("Total Mensal:", {
     x: marginX + 15,
-    y: y - 105,
-    size: 14,
+    y: y - 115, // Ajustado para centralizar no retângulo
+    size: 16, // Aumentado para destaque
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
   
-  page.drawText(formatCurrency(total), {
-    x: width - marginX - 15 - helveticaBold.widthOfTextAtSize(formatCurrency(total), 14),
-    y: y - 105,
-    size: 14,
+  // CORREÇÃO: Garantir que o total seja formatado corretamente e bem posicionado
+  let totalFormatted = formatCurrency(total);
+  page.drawText(totalFormatted, {
+    x: width - marginX - 15 - helveticaBold.widthOfTextAtSize(totalFormatted, 16),
+    y: y - 115, // Ajustado para alinhar com o texto "Total Mensal"
+    size: 16, // Aumentado para destaque
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
   
-  return { page, y: y - 140 };
+  return { page, y: y - 150 }; // Aumentado o espaço após a seção financeira
 }
