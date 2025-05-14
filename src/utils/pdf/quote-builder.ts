@@ -1,3 +1,4 @@
+
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
@@ -11,29 +12,6 @@ import { renderBenefitsSection } from './section-renderers/benefits-section';
 import { renderTermsSection } from './section-renderers/terms-section';
 import { QuoteVariables } from './dynamic-variables';
 import { sanitizeText } from './drawing-utils';
-
-// Função para sanitizar texto, removendo caracteres problemáticos
-function sanitizeText(text: string): string {
-  if (!text) return '';
-  
-  // Substituir caracteres problemáticos com alternativas seguras
-  return String(text)
-    .replace(/[√✓✔]/g, 'x') // Substitui caracteres de marca de verificação por 'x'
-    .replace(/[^\x00-\x7F]/g, '') // Remove caracteres não ASCII
-    .replace(/[^\w\s.,;:!?()[\]{}\-+*/&%$#@='"]/g, ''); // Mantém apenas caracteres básicos
-}
-
-// Função para sanitizar objeto de componente
-function sanitizeComponent(component: ComponentOption): ComponentOption {
-  if (!component) return component;
-  
-  return {
-    ...component,
-    name: sanitizeText(component.name),
-    description: sanitizeText(component.description || ''),
-    details: component.details?.map(d => sanitizeText(d)) || [],
-  };
-}
 
 export async function buildQuotePDF(
   selectedComponents: { [key: string]: ComponentOption },
