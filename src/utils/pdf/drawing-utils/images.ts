@@ -1,71 +1,61 @@
+import { PDFDocument } from 'pdf-lib';
+import { hostDimeLogoBase64 } from '../../pdf-assets';
 
-import { PDFDocument, PDFImage, PDFPage } from 'pdf-lib';
-import { QuoteBoxDimensions } from '../types';
-
-// Helper to safely embed and draw images with fallback
-export const embedAndDrawImage = async (
-  pdfDoc: PDFDocument,
-  page: PDFPage,
-  imageBytes: Uint8Array,
-  dimensions: QuoteBoxDimensions,
-  fallbackText?: string,
-  fallbackFont?: any
-): Promise<boolean> => {
+export async function embeddedImage(doc: PDFDocument, base64Image: string) {
   try {
-    let image: PDFImage;
-    
-    // Determine image type and embed accordingly
-    try {
-      // Try as PNG first
-      image = await pdfDoc.embedPng(imageBytes);
-    } catch (error) {
-      // Fall back to JPG if PNG fails
-      try {
-        image = await pdfDoc.embedJpg(imageBytes);
-      } catch (jpgError) {
-        throw new Error('Failed to embed image: Unsupported format');
-      }
-    }
-    
-    // Calculate aspect ratio and resize image while maintaining proportions
-    const originalWidth = image.width;
-    const originalHeight = image.height;
-    const aspectRatio = originalWidth / originalHeight;
-    
-    let drawWidth = dimensions.width;
-    let drawHeight = drawWidth / aspectRatio;
-    
-    // If height exceeds available space, recalculate dimensions
-    if (drawHeight > dimensions.height) {
-      drawHeight = dimensions.height;
-      drawWidth = drawHeight * aspectRatio;
-    }
-    
-    // Center the image in the allocated space
-    const xOffset = (dimensions.width - drawWidth) / 2;
-    const yOffset = (dimensions.height - drawHeight) / 2;
-    
-    page.drawImage(image, {
-      x: dimensions.x + xOffset,
-      y: dimensions.y - drawHeight + yOffset,
-      width: drawWidth,
-      height: drawHeight
-    });
-    
-    return true;
+    // Here's the fix: Change embedJpeg to embedJpg
+    const image = await doc.embedJpg(base64Image);
+    return image;
   } catch (error) {
-    console.error('Error embedding image:', error);
-    
-    // Draw fallback text if image fails and fallback is provided
-    if (fallbackText && fallbackFont) {
-      page.drawText(fallbackText, {
-        x: dimensions.x + 10,
-        y: dimensions.y - dimensions.height / 2,
-        size: 12,
-        font: fallbackFont
-      });
-    }
-    
-    return false;
+    console.error("Error embedding image:", error);
+    throw new Error(`Failed to embed image: ${error}`);
   }
-};
+}
+
+export async function embedHostDimeLogo(doc: PDFDocument) {
+  try {
+    return await embeddedImage(doc, hostDimeLogoBase64);
+  } catch (error) {
+    console.error("Failed to embed HostDime logo:", error);
+    throw new Error("Could not embed company logo in document");
+  }
+}
+
+export async function embedCustomerLogo(doc: PDFDocument, logoBase64?: string) {
+  if (!logoBase64) {
+    return null;
+  }
+  
+  try {
+    return await embeddedImage(doc, logoBase64);
+  } catch (error) {
+    console.error("Failed to embed customer logo:", error);
+    // Don't throw here, just return null to continue without customer logo
+    return null;
+  }
+}
+
+export function calculateImageDimensions(
+  originalWidth: number, 
+  originalHeight: number, 
+  maxWidth: number, 
+  maxHeight: number
+) {
+  // Calculate aspect ratio
+  const aspectRatio = originalWidth / originalHeight;
+  
+  // Start with maximum dimensions
+  let width = maxWidth;
+  let height = maxHeight;
+  
+  // Adjust dimensions to maintain aspect ratio
+  if (width / height > aspectRatio) {
+    // Height is the limiting factor
+    width = height * aspectRatio;
+  } else {
+    // Width is the limiting factor
+    height = width / aspectRatio;
+  }
+  
+  return { width, height };
+}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
 import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { OrderDetails } from "./order-details";
 import { generateQuotePDF } from "@/utils/quote-export";
 import { useWizard } from "@/contexts/WizardContext";
@@ -63,14 +63,9 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     try {
       // Simulate a save operation
       await new Promise(resolve => setTimeout(resolve, 800));
-      toast({
-        description: "Sua cotação foi salva com sucesso."
-      });
+      toast("Sua cotação foi salva com sucesso.");
     } catch (error) {
-      toast({
-        description: "Não foi possível salvar sua cotação. Tente novamente.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível salvar sua cotação. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -82,9 +77,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     
     try {
       // Show toast for PDF generation start
-      toast({
-        description: "Aguarde enquanto geramos seu documento..."
-      });
+      toast("Aguarde enquanto geramos seu documento...");
       
       // Generate PDF with all required parameters
       await generateQuotePDF(
@@ -105,10 +98,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       setPdfError(errorMessage);
       setShowPdfErrorDialog(true);
       
-      toast({
-        description: "Não foi possível gerar o PDF. Clique para mais detalhes.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível gerar o PDF. Clique para mais detalhes.");
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -120,15 +110,9 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       // Simulate order processing
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast({
-        description: "Obrigado por escolher a HostDime! Em breve entraremos em contato.",
-        variant: "success"
-      });
+      toast.success("Obrigado por escolher a HostDime! Em breve entraremos em contato.");
     } catch (error) {
-      toast({
-        description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
-        variant: "destructive"
-      });
+      toast.error("Ocorreu um erro ao processar seu pedido. Tente novamente.");
     } finally {
       setIsFinishing(false);
     }

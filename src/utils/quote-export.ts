@@ -1,6 +1,6 @@
 
 import { ComponentOption } from "@/types/component";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
 import { QuoteVariables } from "./pdf/dynamic-variables";
 
@@ -15,10 +15,7 @@ export const generateQuotePDF = async (
 ) => {
   try {
     // Notify user that process has started
-    toast({
-      description: "Aguarde enquanto preparamos seu documento",
-      duration: 3000,
-    });
+    toast("Aguarde enquanto preparamos seu documento");
     
     // Generate PDF with dynamic variables
     const pdfBytes = await buildQuotePDF(
@@ -50,23 +47,11 @@ export const generateQuotePDF = async (
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("encode") || errorMessage.includes("0x")) {
-      toast({
-        description: "Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast.error("Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos.");
     } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
-      toast({
-        description: "Não foi possível incluir as imagens no documento.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast.error("Não foi possível incluir as imagens no documento.");
     } else {
-      toast({
-        description: "Tente novamente mais tarde ou contate o suporte técnico.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast.error("Tente novamente mais tarde ou contate o suporte técnico.");
     }
     
     throw error;
