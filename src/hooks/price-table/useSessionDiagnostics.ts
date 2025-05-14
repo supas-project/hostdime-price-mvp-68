@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { PriceService } from '@/services/price-service';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/utils/toast-utils';
 
 interface SessionEvent {
   sessionId: string;
@@ -53,10 +53,8 @@ export function useSessionDiagnostics() {
       });
       
       // Notificar o usuário sobre o erro
-      toast({
-        title: "Erro de diagnóstico",
-        description: "Não foi possível obter informações de diagnóstico da sessão.",
-        variant: "destructive"
+      toast.error("Erro de diagnóstico", {
+        description: "Não foi possível obter informações de diagnóstico da sessão."
       });
       
       setIsLoading(false);
