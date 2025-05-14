@@ -11,6 +11,29 @@ import { renderFinancialSection } from './section-renderers/financial-section';
 import { renderBenefitsSection } from './section-renderers/benefits-section';
 import { renderTermsSection } from './section-renderers/terms-section';
 
+// Função para sanitizar texto, removendo caracteres problemáticos
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  
+  // Substituir caracteres problemáticos com alternativas seguras
+  return text
+    .replace(/[√✓✔]/g, 'x') // Substitui caracteres de marca de verificação por 'x'
+    .replace(/[^\x00-\x7F]/g, '') // Remove caracteres não ASCII
+    .replace(/[^\w\s.,;:!?()[\]{}\-+*/&%$#@='"]/g, ''); // Mantém apenas caracteres básicos
+}
+
+// Função para sanitizar objeto de componente
+function sanitizeComponent(component: ComponentOption): ComponentOption {
+  if (!component) return component;
+  
+  return {
+    ...component,
+    name: sanitizeText(component.name),
+    description: sanitizeText(component.description || ''),
+    details: component.details?.map(d => sanitizeText(d)) || [],
+  };
+}
+
 export async function buildQuotePDF(
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
@@ -22,6 +45,31 @@ export async function buildQuotePDF(
     toast.info("Gerando PDF...", {
       description: "Aguarde enquanto preparamos seu documento"
     });
+    
+    // Sanitizar dados de entrada para evitar problemas de codificação
+    const sanitizedComponents: { [key: string]: ComponentOption } = {};
+    for (const key in selectedComponents) {
+      if (selectedComponents[key]) {
+        sanitizedComponents[key] = sanitizeComponent(selectedComponents[key]);
+      }
+    }
+    
+    const sanitizedStorageItems = {
+      internal: storageItems.internal.map(item => sanitizeComponent(item)),
+      external: storageItems.external.map(item => sanitizeComponent(item))
+    };
+    
+    const sanitizedCustomServices = customServices.map(service => sanitizeComponent(service));
+    
+    const sanitizedConnectivityItems: typeof connectivityItems = {};
+    for (const key in connectivityItems) {
+      if (connectivityItems[key]) {
+        sanitizedConnectivityItems[key] = {
+          option: sanitizeComponent(connectivityItems[key].option),
+          quantity: connectivityItems[key].quantity
+        };
+      }
+    }
     
     const pdfDoc = await PDFDocument.create();
     
@@ -52,27 +100,27 @@ export async function buildQuotePDF(
     
     // 3. Components Section
     let pageContext = renderComponentsSection(
-      pdfDoc, { page, y: newY }, selectedComponents, width, marginX, 
+      pdfDoc, { page, y: newY }, sanitizedComponents, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 4. Storage Section
     pageContext = renderStorageSection(
-      pdfDoc, pageContext, storageItems, width, marginX, 
+      pdfDoc, pageContext, sanitizedStorageItems, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 5. Services Section
     pageContext = renderServicesSection(
-      pdfDoc, pageContext, customServices, width, marginX, 
+      pdfDoc, pageContext, sanitizedCustomServices, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 6. Financial Summary
     pageContext = renderFinancialSection(
-      pdfDoc, pageContext, selectedComponents, storageItems, customServices, 
+      pdfDoc, pageContext, sanitizedComponents, sanitizedStorageItems, sanitizedCustomServices, 
       margin, width, marginX, marginRight, helvetica, helveticaBold,
-      connectivityItems
+      sanitizedConnectivityItems
     );
     
     // 7. Benefits Section
@@ -114,30 +162,47 @@ export function downloadPDF(pdfBytes: Uint8Array, fileName: string): void {
 
 // Nova função para abrir o PDF em uma nova aba
 export function openPDFInNewTab(pdfBytes: Uint8Array, fileName: string): void {
-  // Criar blob e URL para visualização
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const blobUrl = URL.createObjectURL(blob);
-  
-  // Abrir em nova aba
-  const newTab = window.open(blobUrl, '_blank');
-  
-  if (newTab) {
-    newTab.focus();
-    toast.success("PDF Gerado com Sucesso", {
-      description: "O documento foi aberto em uma nova aba"
-    });
-  } else {
-    // Fallback se o navegador bloquear popups
-    toast.warning("Popup bloqueado pelo navegador", {
-      description: "Tente permitir popups para este site ou faça o download diretamente"
+  try {
+    // Criar blob e URL para visualização
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Abrir em nova aba
+    const newTab = window.open(blobUrl, '_blank');
+    
+    if (newTab) {
+      newTab.focus();
+      toast.success("PDF Gerado com Sucesso", {
+        description: "O documento foi aberto em uma nova aba"
+      });
+    } else {
+      // Fallback se o navegador bloquear popups
+      toast.warning("Popup bloqueado pelo navegador", {
+        description: "Tente permitir popups para este site ou faça o download direto"
+      });
+      
+      // Fallback para download direto
+      downloadPDF(pdfBytes, fileName);
+    }
+    
+    // Limpar URL após um tempo para liberar memória
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 30000);
+  } catch (error) {
+    console.error("Erro ao abrir PDF:", error);
+    toast.error("Falha ao abrir PDF", {
+      description: "Tentando fazer o download direto como alternativa"
     });
     
-    // Fallback para download direto
-    downloadPDF(pdfBytes, fileName);
+    // Tentar fazer o download como fallback
+    try {
+      downloadPDF(pdfBytes, fileName);
+    } catch (downloadError) {
+      console.error("Erro no fallback de download:", downloadError);
+      toast.error("Falha completa na geração do PDF", {
+        description: "Contate o suporte técnico"
+      });
+    }
   }
-  
-  // Limpar URL após um tempo para liberar memória
-  setTimeout(() => {
-    URL.revokeObjectURL(blobUrl);
-  }, 30000);
 }

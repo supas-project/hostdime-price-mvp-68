@@ -18,6 +18,17 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -32,6 +43,8 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [isSaving, setIsSaving] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [pdfPreviewOption, setPdfPreviewOption] = useState("preview");
+  const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
+  const [pdfError, setPdfError] = useState("");
   
   const handleSaveQuote = async () => {
     setIsSaving(true);
@@ -52,6 +65,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
 
   const handleExportPDF = async () => {
     setIsGeneratingPDF(true);
+    setPdfError("");
     
     try {
       // Exibir toast de início da geração do PDF
@@ -70,10 +84,16 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       );
       
     } catch (error) {
-      toast.error("Erro na exportação", {
-        description: "Não foi possível gerar o PDF. Verifique os dados e tente novamente."
-      });
       console.error("Erro detalhado:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Armazenar mensagem para exibição no diálogo
+      setPdfError(errorMessage);
+      setShowPdfErrorDialog(true);
+      
+      toast.error("Erro na exportação", {
+        description: "Não foi possível gerar o PDF. Clique para mais detalhes."
+      });
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -162,6 +182,36 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         margin={profitMargin}
         onRemoveItem={handleRemoveComponent}
       />
+      
+      {/* Diálogo de erro detalhado para PDF */}
+      <AlertDialog open={showPdfErrorDialog} onOpenChange={setShowPdfErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Erro na geração do PDF</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="text-sm text-destructive mt-2 mb-3">
+                Ocorreu um erro ao gerar o PDF. Isso pode ser causado por:
+              </div>
+              <ul className="list-disc pl-5 mb-3 space-y-1 text-sm">
+                <li>Caracteres especiais incompatíveis</li>
+                <li>Problemas de formatação nos dados</li>
+                <li>Falha ao renderizar elementos gráficos</li>
+              </ul>
+              
+              <div className="bg-muted p-2 rounded text-xs font-mono my-2 max-h-24 overflow-auto">
+                {pdfError || "Erro desconhecido"}
+              </div>
+              
+              <p className="text-sm mt-3">
+                Recomendação: tente simplificar os dados ou remover caracteres especiais e símbolos.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Entendi</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <div className="flex flex-col md:flex-row gap-4">
         <Button 

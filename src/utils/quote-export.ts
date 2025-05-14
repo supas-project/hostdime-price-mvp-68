@@ -40,9 +40,18 @@ export const generateQuotePDF = async (
     return pdfBytes;
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
-    toast.error("Falha ao gerar PDF", {
-      description: "Tente novamente mais tarde"
-    });
+    // Melhorando a mensagem de erro para ser mais específica
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage.includes("encode") || errorMessage.includes("0x")) {
+      toast.error("Erro de codificação no PDF", {
+        description: "Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos."
+      });
+    } else {
+      toast.error("Falha ao gerar PDF", {
+        description: "Tente novamente mais tarde ou contate o suporte técnico."
+      });
+    }
     throw error;
   }
 };
