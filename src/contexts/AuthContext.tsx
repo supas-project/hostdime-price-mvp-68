@@ -25,8 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSupabaseReady, setIsSupabaseReady] = useState(true);
-
+  
   // Função para criar o usuário admin padrão
   const createAdminUser = async () => {
     try {
@@ -97,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (error) {
           console.error("Erro ao verificar sessão:", error);
+          setLoading(false);
           return;
         }
         
@@ -110,9 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                               false;
           setIsAdmin(isUserAdmin);
         }
+        
+        setLoading(false);
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
-      } finally {
         setLoading(false);
       }
     };
@@ -175,11 +176,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
-      // Limpar os estados antes de fazer o logout
-      setIsAuthenticated(false);
-      setIsAdmin(false);
-      setUser(null);
-      
       // Fazer o logout no Supabase
       const { error } = await supabase.auth.signOut();
       
@@ -191,10 +187,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
+      // Limpar os estados após o logout bem-sucedido
+      setIsAuthenticated(false);
+      setIsAdmin(false);
+      setUser(null);
+      
       toast.success("Logout realizado com sucesso");
       
-      // Forçar redirecionamento para a página de login após o logout
-      window.location.href = "/login";
+      // Não vamos forçar redirecionamento aqui para evitar loops
       
     } catch (error) {
       console.error("Erro ao fazer logout:", error);

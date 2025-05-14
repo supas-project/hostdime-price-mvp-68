@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Lock, Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,13 +35,14 @@ export default function LoginPage() {
     },
   });
 
-  // Redirect if already authenticated
+  // Redirect only once if authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !redirectAttempted && !loading) {
+      setRedirectAttempted(true); // Prevent multiple redirects
       const from = location.state?.from?.pathname || "/configure";
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, location, redirectAttempted, loading]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoginError(null);
@@ -49,10 +51,11 @@ export default function LoginPage() {
     try {
       const success = await login(values.email, values.password);
       if (success) {
+        setRedirectAttempted(true);
         const from = location.state?.from?.pathname || "/configure";
         navigate(from, { replace: true });
         form.reset();
-        toast.success("Login realizado com sucesso");
+        toast("Login realizado com sucesso");
       } else {
         setLoginError("Credenciais inválidas. Tente novamente.");
       }
