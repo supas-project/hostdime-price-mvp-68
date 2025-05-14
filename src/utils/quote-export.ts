@@ -3,6 +3,7 @@ import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
 import { QuoteVariables } from "./pdf/dynamic-variables";
+import { sanitizeText } from "./pdf/drawing-utils";
 
 export const generateQuotePDF = async (
   selectedComponents: { [key: string]: ComponentOption },
@@ -10,21 +11,73 @@ export const generateQuotePDF = async (
   customServices: ComponentOption[],
   margin: number,
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
-  openInNewTab: boolean = true, // Changed default to true for new tab opening
+  openInNewTab: boolean = true,
   quoteVariables?: Partial<QuoteVariables>
 ) => {
   try {
     // Notify user that process has started
     toast("Aguarde enquanto preparamos seu documento");
     
+    // Sanitizar variáveis dinâmicas
+    const sanitizedVariables = quoteVariables ? {
+      ...quoteVariables,
+      responsavelComercial: sanitizeText(quoteVariables.responsavelComercial),
+      clientName: sanitizeText(quoteVariables.clientName),
+      dataValidade: sanitizeText(quoteVariables.dataValidade),
+      observacoes: sanitizeText(quoteVariables.observacoes),
+      dataEmissao: sanitizeText(quoteVariables.dataEmissao),
+      numeroContato: sanitizeText(quoteVariables.numeroContato),
+      emailContato: sanitizeText(quoteVariables.emailContato)
+    } : undefined;
+    
+    // Sanitizar itens de armazenamento
+    const sanitizedStorageItems = {
+      internal: storageItems.internal.map(item => ({
+        ...item,
+        name: sanitizeText(item.name),
+        description: sanitizeText(item.description),
+        details: item.details?.map(sanitizeText) || []
+      })),
+      external: storageItems.external.map(item => ({
+        ...item,
+        name: sanitizeText(item.name),
+        description: sanitizeText(item.description),
+        details: item.details?.map(sanitizeText) || []
+      }))
+    };
+    
+    // Sanitizar serviços personalizados
+    const sanitizedCustomServices = customServices.map(service => ({
+      ...service,
+      name: sanitizeText(service.name),
+      description: sanitizeText(service.description),
+      details: service.details?.map(sanitizeText) || []
+    }));
+    
+    // Sanitizar itens de conectividade
+    const sanitizedConnectivityItems: typeof connectivityItems = {};
+    for (const key in connectivityItems) {
+      if (connectivityItems[key]) {
+        sanitizedConnectivityItems[key] = {
+          option: {
+            ...connectivityItems[key].option,
+            name: sanitizeText(connectivityItems[key].option.name),
+            description: sanitizeText(connectivityItems[key].option.description),
+            details: connectivityItems[key].option.details?.map(sanitizeText) || []
+          },
+          quantity: connectivityItems[key].quantity
+        };
+      }
+    }
+    
     // Generate PDF with dynamic variables
     const pdfBytes = await buildQuotePDF(
       selectedComponents,
-      storageItems,
-      customServices,
+      sanitizedStorageItems,
+      sanitizedCustomServices,
       margin,
-      connectivityItems,
-      quoteVariables
+      sanitizedConnectivityItems,
+      sanitizedVariables
     );
     
     // Generate unique filename with timestamp
@@ -46,12 +99,18 @@ export const generateQuotePDF = async (
     // Enhanced error handling with more specific messages
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes("encode") || errorMessage.includes("0x")) {
-      toast.error("Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos.");
+    if (errorMessage.includes("encode") || errorMessage.includes("0x") || errorMessage.includes("WinAnsi")) {
+      toast.error("Foram encontrados caracteres especiais incompatíveis", {
+        description: "Caracteres especiais foram removidos automaticamente"
+      });
     } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
-      toast.error("Não foi possível incluir as imagens no documento.");
+      toast.error("Não foi possível incluir as imagens no documento", {
+        description: "Tente novamente com outras imagens"
+      });
     } else {
-      toast.error("Tente novamente mais tarde ou contate o suporte técnico.");
+      toast.error("Falha ao gerar o PDF", {
+        description: "Tente novamente mais tarde ou contate o suporte técnico"
+      });
     }
     
     throw error;

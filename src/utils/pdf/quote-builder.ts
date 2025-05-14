@@ -1,4 +1,3 @@
-
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
@@ -17,7 +16,7 @@ function sanitizeText(text: string): string {
   if (!text) return '';
   
   // Substituir caracteres problemáticos com alternativas seguras
-  return text
+  return String(text)
     .replace(/[√✓✔]/g, 'x') // Substitui caracteres de marca de verificação por 'x'
     .replace(/[^\x00-\x7F]/g, '') // Remove caracteres não ASCII
     .replace(/[^\w\s.,;:!?()[\]{}\-+*/&%$#@='"]/g, ''); // Mantém apenas caracteres básicos
@@ -44,9 +43,7 @@ export async function buildQuotePDF(
   quoteVariables?: Partial<QuoteVariables>
 ): Promise<Uint8Array> {
   try {
-    toast.info("Gerando PDF...", {
-      description: "Aguarde enquanto preparamos seu documento"
-    });
+    toast.info("Gerando PDF...");
     
     // Sanitizar dados de entrada para evitar problemas de codificação
     const sanitizedComponents: { [key: string]: ComponentOption } = {};
@@ -73,7 +70,7 @@ export async function buildQuotePDF(
       }
     }
     
-    // Criar documento PDF
+    // Criar documento PDF com tratamento de erros adicional
     const pdfDoc = await PDFDocument.create();
     
     // Carregar fontes
@@ -141,9 +138,7 @@ export async function buildQuotePDF(
     
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
-    toast.error("Falha ao gerar PDF", {
-      description: (error as Error).message
-    });
+    toast.error("Falha ao gerar PDF");
     throw new Error("Falha na geração do PDF: " + (error as Error).message);
   }
 }
