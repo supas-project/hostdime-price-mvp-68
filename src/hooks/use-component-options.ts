@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
 import { normalizeComponentType } from "./use-component-selection";
-import { toast } from "@/hooks/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Hook para obter opções de componentes da tabela de preços
