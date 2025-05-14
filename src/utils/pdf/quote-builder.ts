@@ -2,14 +2,6 @@
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
-import { renderHeaderSection } from './section-renderers/header-section';
-import { renderSummarySection } from './section-renderers/summary-section';
-import { renderComponentsSection } from './section-renderers/components-section';
-import { renderStorageSection } from './section-renderers/storage-section';
-import { renderServicesSection } from './section-renderers/services-section';
-import { renderFinancialSection } from './section-renderers/financial-section';
-import { renderBenefitsSection } from './section-renderers/benefits-section';
-import { renderTermsSection } from './section-renderers/terms-section';
 import { QuoteVariables } from './dynamic-variables';
 import { sanitizeText } from './drawing-utils';
 
@@ -24,73 +16,157 @@ export async function buildQuotePDF(
   try {
     toast.info("Gerando PDF...");
     
-    // Os componentes já devem ter sido sanitizados pelos métodos chamadores
-    // Não precisamos mais fazer sanitização aqui
-    
-    // Criar documento PDF com tratamento de erros adicional
+    // Criar documento PDF simples
     const pdfDoc = await PDFDocument.create();
     
-    // Carregar fontes
+    // Carregar fontes básicas
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-    const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     
-    // Configurar primeira página do PDF
-    let page = pdfDoc.addPage([595.276, 841.890]); // Dimensões A4
+    // Configurar primeira página
+    let page = pdfDoc.addPage([595.276, 841.890]); // A4
     const { width, height } = page.getSize();
     
     // Definir margens
     const marginX = 50;
-    const marginRight = width - marginX;
     
-    // 1. Seção de cabeçalho - redesenhada
-    const { currentY, quoteNumber } = await renderHeaderSection(
-      pdfDoc, page, width, height, helvetica, helveticaBold, marginX, quoteVariables
-    );
+    // Cabeçalho simples
+    page.drawText("HostDime Brasil", {
+      x: marginX,
+      y: height - 50,
+      size: 24,
+      font: helveticaBold,
+    });
     
-    // 2. Seção de resumo - com estilo moderno
-    let newY = renderSummarySection(
-      page, currentY, width, marginX, helveticaBold, helvetica
-    );
+    // Número da cotação simples
+    const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
+    page.drawText(`Cotação #${quoteNumber}`, {
+      x: marginX,
+      y: height - 80,
+      size: 14,
+      font: helveticaBold,
+    });
     
-    // 3. Seção de componentes
-    let pageContext = renderComponentsSection(
-      pdfDoc, { page, y: newY }, selectedComponents, width, marginX, 
-      marginRight, helvetica, helveticaBold, helveticaOblique
-    );
+    // Data da cotação
+    const today = new Date().toLocaleDateString('pt-BR');
+    page.drawText(`Data: ${today}`, {
+      x: marginX,
+      y: height - 100,
+      size: 12,
+      font: helvetica,
+    });
     
-    // 4. Seção de armazenamento
-    pageContext = renderStorageSection(
-      pdfDoc, pageContext, storageItems, width, marginX, 
-      marginRight, helvetica, helveticaBold, helveticaOblique
-    );
+    // Cliente
+    if (quoteVariables?.clientName) {
+      page.drawText(`Cliente: ${quoteVariables.clientName}`, {
+        x: marginX,
+        y: height - 120,
+        size: 12,
+        font: helvetica,
+      });
+    }
     
-    // 5. Seção de serviços
-    pageContext = renderServicesSection(
-      pdfDoc, pageContext, customServices, width, marginX, 
-      marginRight, helvetica, helveticaBold, helveticaOblique
-    );
+    // Título de componentes
+    page.drawText("Componentes do Servidor", {
+      x: marginX,
+      y: height - 160,
+      size: 16,
+      font: helveticaBold,
+    });
     
-    // 6. Resumo financeiro
-    pageContext = renderFinancialSection(
-      pdfDoc, pageContext, selectedComponents, storageItems, customServices, 
-      margin, width, marginX, marginRight, helvetica, helveticaBold,
-      connectivityItems
-    );
+    // Lista simples de componentes
+    let yPos = height - 190;
+    const componentKeys = Object.keys(selectedComponents).filter(key => selectedComponents[key] != null);
     
-    // 7. Seção de benefícios
-    pageContext = renderBenefitsSection(
-      pdfDoc, pageContext, marginX, helvetica, helveticaBold
-    );
+    for (const key of componentKeys) {
+      const component = selectedComponents[key];
+      if (component) {
+        page.drawText(`${component.name}: R$ ${component.price.toFixed(2).replace('.', ',')}`, {
+          x: marginX,
+          y: yPos,
+          size: 12,
+          font: helvetica,
+        });
+        yPos -= 20;
+      }
+    }
     
-    // 8. Termos e condições
-    renderTermsSection(
-      pdfDoc, pageContext, marginX, helvetica, helveticaBold, quoteVariables?.observacoes
-    );
+    // Resumo financeiro simples
+    yPos -= 30;
+    page.drawText("Resumo Financeiro", {
+      x: marginX,
+      y: yPos,
+      size: 16,
+      font: helveticaBold,
+    });
     
-    // Finalizar e retornar bytes do PDF
+    yPos -= 30;
+    
+    // Calcular valor total
+    let total = 0;
+    for (const key of componentKeys) {
+      if (selectedComponents[key]) {
+        total += selectedComponents[key].price || 0;
+      }
+    }
+    
+    // Aplicar margem
+    if (margin > 0) {
+      total = total * (1 + (margin / 100));
+    }
+    
+    page.drawText(`Total Mensal: R$ ${total.toFixed(2).replace('.', ',')}`, {
+      x: marginX,
+      y: yPos,
+      size: 14,
+      font: helveticaBold,
+    });
+    
+    // Observações
+    if (quoteVariables?.observacoes) {
+      yPos -= 50;
+      page.drawText("Observações:", {
+        x: marginX,
+        y: yPos,
+        size: 14,
+        font: helveticaBold,
+      });
+      
+      yPos -= 20;
+      page.drawText(quoteVariables.observacoes, {
+        x: marginX,
+        y: yPos,
+        size: 12,
+        font: helvetica,
+      });
+    }
+    
+    // Contato
+    yPos -= 50;
+    page.drawText("Para mais informações:", {
+      x: marginX,
+      y: yPos,
+      size: 12,
+      font: helveticaBold,
+    });
+    
+    yPos -= 20;
+    page.drawText("Telefone: (11) 4766-4840", {
+      x: marginX,
+      y: yPos,
+      size: 12,
+      font: helvetica,
+    });
+    
+    yPos -= 20;
+    page.drawText("Email: vendas@hostdime.com.br", {
+      x: marginX,
+      y: yPos,
+      size: 12,
+      font: helvetica,
+    });
+    
+    // Finalizar PDF
     return await pdfDoc.save();
     
   } catch (error) {
@@ -102,27 +178,23 @@ export async function buildQuotePDF(
 
 // Helper function to trigger PDF download
 export function downloadPDF(pdfBytes: Uint8Array, fileName: string): void {
-  // Create blob and trigger download
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = fileName;
   link.click();
   
-  // Success notification
   toast.success("PDF Gerado com Sucesso", {
     description: "Seu documento foi baixado automaticamente"
   });
 }
 
-// Nova função para abrir o PDF em uma nova aba
+// Função para abrir o PDF em uma nova aba
 export function openPDFInNewTab(pdfBytes: Uint8Array, fileName: string): void {
   try {
-    // Criar blob e URL para visualização
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const blobUrl = URL.createObjectURL(blob);
     
-    // Abrir em nova aba
     const newTab = window.open(blobUrl, '_blank');
     
     if (newTab) {
@@ -131,16 +203,13 @@ export function openPDFInNewTab(pdfBytes: Uint8Array, fileName: string): void {
         description: "O documento foi aberto em uma nova aba"
       });
     } else {
-      // Fallback se o navegador bloquear popups
       toast.warning("Popup bloqueado pelo navegador", {
         description: "Tente permitir popups para este site ou faça o download direto"
       });
       
-      // Fallback para download direto
       downloadPDF(pdfBytes, fileName);
     }
     
-    // Limpar URL após um tempo para liberar memória
     setTimeout(() => {
       URL.revokeObjectURL(blobUrl);
     }, 30000);
@@ -150,7 +219,6 @@ export function openPDFInNewTab(pdfBytes: Uint8Array, fileName: string): void {
       description: "Tentando fazer o download direto como alternativa"
     });
     
-    // Tentar fazer o download como fallback
     try {
       downloadPDF(pdfBytes, fileName);
     } catch (downloadError) {
