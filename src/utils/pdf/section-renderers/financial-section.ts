@@ -2,7 +2,7 @@
 import { PDFDocument, PDFPage, PDFFont } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../colors";
-import { checkAndCreateNewPage, drawHighlightBox, drawSectionHeader, drawTableRow } from "../drawing-utils";
+import { checkAndCreateNewPage, drawHighlightBox, drawSectionHeader, drawTableRow, drawTableHeader } from "../drawing-utils";
 import { PageContext } from "../types";
 import { calculateTotalValue, formatCurrency } from "../dynamic-variables";
 
@@ -27,7 +27,7 @@ export function renderFinancialSection(
     pdfDoc, 
     page, 
     y, 
-    200, 
+    220, 
     marginX, 
     50, 
     helvetica
@@ -36,19 +36,21 @@ export function renderFinancialSection(
   page = context.page;
   y = context.y;
 
-  // Draw section header
+  // Draw section header with HostDime styling
   y = drawSectionHeader(
     page, 
     "Resumo Financeiro", 
     marginX, 
     y, 
     300, 
-    helveticaBold
+    helveticaBold,
+    18,
+    COLOR.PRIMARY
   );
   
-  y -= 20;
+  y -= 25;
 
-  // Calcular valores totais
+  // Calculate values
   const { subtotal, total } = calculateTotalValue(
     selectedComponents,
     storageItems,
@@ -69,76 +71,98 @@ export function renderFinancialSection(
     }
   }
 
-  // Draw financial information box
+  // Draw financial information box with HostDime styling
   drawHighlightBox(
     page, 
     marginX, 
     y, 
     width - (marginX * 2), 
-    120,
-    COLOR.HIGHLIGHT,
-    COLOR.PRIMARY_LIGHT
+    130,
+    COLOR.BACKGROUND,
+    COLOR.PRIMARY,
+    1,
+    0.7
   );
 
-  // Title
+  // Draw header bar for financial section
+  page.drawRectangle({
+    x: marginX,
+    y: y,
+    width: width - (marginX * 2),
+    height: 30,
+    color: COLOR.PRIMARY,
+    borderWidth: 0
+  });
+
+  // Title on orange background
   page.drawText("Condições Comerciais", {
-    x: marginX + 10,
+    x: marginX + 15,
     y: y - 20,
     size: 14,
     font: helveticaBold,
-    color: COLOR.PRIMARY
+    color: COLOR.WHITE
   });
 
   // Payment method
   page.drawText("Forma de Pagamento:", {
-    x: marginX + 10,
-    y: y - 45,
-    size: 10,
+    x: marginX + 15,
+    y: y - 50,
+    size: 11,
     font: helveticaBold,
     color: COLOR.TEXT
   });
   
   page.drawText(paymentCondition, {
     x: marginX + 150,
-    y: y - 45,
-    size: 10,
+    y: y - 50,
+    size: 11,
     font: helvetica,
     color: COLOR.TEXT
   });
 
   // Subtotal
   page.drawText("Subtotal:", {
-    x: marginX + 10,
-    y: y - 70,
-    size: 10,
+    x: marginX + 15,
+    y: y - 75,
+    size: 11,
     font: helveticaBold,
     color: COLOR.TEXT
   });
   
   page.drawText(formatCurrency(subtotal), {
     x: marginX + 150,
-    y: y - 70,
-    size: 10,
+    y: y - 75,
+    size: 11,
     font: helvetica,
     color: COLOR.TEXT
   });
 
-  // Total
-  page.drawText("Total Mensal:", {
+  // Total with HostDime highlight
+  page.drawRectangle({
     x: marginX + 10,
     y: y - 95,
-    size: 12,
+    width: width - (marginX * 2) - 20,
+    height: 25,
+    color: COLOR.HIGHLIGHT,
+    borderColor: COLOR.PRIMARY_LIGHT,
+    borderWidth: 1
+  });
+  
+  page.drawText("Total Mensal:", {
+    x: marginX + 15,
+    y: y - 105,
+    size: 14,
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
   
   page.drawText(formatCurrency(total), {
-    x: marginX + 150,
-    y: y - 95,
-    size: 12,
+    x: width - marginX - 15 - helveticaBold.widthOfTextAtSize(formatCurrency(total), 14),
+    y: y - 105,
+    size: 14,
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
   
-  return { page, y: y - 130 };
+  return { page, y: y - 140 };
 }

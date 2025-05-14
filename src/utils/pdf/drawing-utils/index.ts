@@ -6,12 +6,12 @@ export * from './section';
 export * from './text';
 export * from './images';
 
-// Helper para sanitização de textos no PDF - versão mais robusta
+// Enhanced text sanitization function for PDF generation
 export function sanitizeText(text: string | undefined): string {
   if (!text) return '';
   
   try {
-    // Primeiro passo: substituições diretas para caracteres problemáticos comuns em português
+    // Direct replacements for common problematic Portuguese characters
     const replacements: Record<string, string> = {
       'á': 'a', 'à': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a',
       'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
@@ -27,27 +27,27 @@ export function sanitizeText(text: string | undefined): string {
       '©': '(c)',
       '®': '(r)',
       '™': '(tm)',
-      '✓': 'x',
-      '✔': 'x',
-      '√': 'x'
+      '✓': 'v',
+      '✔': 'v',
+      '√': 'v'
     };
 
-    // Aplicar substituições diretas
+    // Apply direct replacements
     let result = String(text);
     for (const [special, replacement] of Object.entries(replacements)) {
       result = result.replace(new RegExp(special, 'g'), replacement);
     }
     
-    // Segundo passo: remover caracteres não-ASCII que não foram tratados nas substituições
+    // Remove non-ASCII characters not handled in replacements
     result = result.replace(/[^\x00-\x7F]/g, '');
     
-    // Terceiro passo: remover caracteres de controle e outros potencialmente problemáticos
+    // Remove control characters and other potentially problematic ones
     result = result.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
     
     return result;
   } catch (err) {
     console.error("Erro ao sanitizar texto:", err);
-    // Fallback mais agressivo em caso de erro: apenas ASCII básico
+    // More aggressive fallback in case of error: only basic ASCII
     return String(text).replace(/[^\x20-\x7E]/g, '');
   }
 }

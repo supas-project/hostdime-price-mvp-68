@@ -18,21 +18,21 @@ export async function renderHeaderSection(
   // Get dynamic variables
   const quoteVars = getQuoteVariables(variables);
   
-  // 1. Draw the header
+  // Draw the header with improved HostDime branding
   let currentY = height - 40;
   currentY = await drawHeader(pdfDoc, page, width, currentY, helveticaBold);
   
-  // 2. Generate quote number with random component for uniqueness
+  // Generate quote number with structured format
   const today = new Date();
   const monthYear = `${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getFullYear()}`;
   const randomPart = Math.floor(Math.random() * 90000) + 10000;
   const quoteNumber = `HD-${randomPart}-${monthYear}`;
   
-  // Draw quote info section with enhanced layout
+  // Create an elegant quote info box
   page.drawRectangle({
-    x: width - marginX - 180,
+    x: width - marginX - 200,
     y: height - 140,
-    width: 170,
+    width: 190,
     height: 115,
     color: COLOR.HIGHLIGHT,
     borderColor: COLOR.PRIMARY_LIGHT,
@@ -41,20 +41,20 @@ export async function renderHeaderSection(
     borderOpacity: 0.7
   });
   
-  // Draw quote header
+  // Draw quote header with proper HostDime branding
   drawTextCell(
     page,
     `Cotação #${quoteNumber}`,
-    width - marginX - 170,
+    width - marginX - 190,
     height - 30,
-    150,
+    180,
     helveticaBold,
     12,
     COLOR.PRIMARY,
     'left'
   );
   
-  // Draw all info fields with consistent spacing
+  // Draw customer info fields with improved spacing and alignment
   const infoFields = [
     { label: "Data:", value: quoteVars.dataEmissao || today.toLocaleDateString('pt-BR') },
     { label: "Responsável:", value: quoteVars.responsavelComercial },
@@ -64,8 +64,8 @@ export async function renderHeaderSection(
   ];
   
   let infoY = height - 45;
-  const labelX = width - marginX - 170;
-  const valueX = width - marginX - 85;
+  const labelX = width - marginX - 190;
+  const valueX = width - marginX - 105;
   
   infoFields.forEach((field, index) => {
     // Draw the label

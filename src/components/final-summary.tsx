@@ -47,9 +47,9 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
   const [pdfError, setPdfError] = useState("");
   
-  // State for dynamic PDF variables
+  // Enhanced state for dynamic PDF variables with HostDime branding defaults
   const [quoteVariables, setQuoteVariables] = useState<QuoteVariables>({
-    responsavelComercial: "Equipe HostDime",
+    responsavelComercial: "Equipe Comercial HostDime",
     clientName: "Cliente",
     dataValidade: "30 dias",
     observacoes: "",
@@ -79,7 +79,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       // Show toast for PDF generation start
       toast("Aguarde enquanto geramos seu documento...");
       
-      // Generate PDF with all required parameters
+      // Generate PDF with all required parameters and HostDime branding
       await generateQuotePDF(
         selectedComponents,
         storageItems,
@@ -364,7 +364,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       
       <div className="text-center">
         <Button variant="link" onClick={onRestart}>
-          Recomeçar configuração
+          Recomeçar configuraç��o
         </Button>
       </div>
     </div>

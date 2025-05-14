@@ -7,18 +7,18 @@ export interface GroupedDisk {
   quantity: number;
 }
 
-// Updated PdfColorScheme interface with refined color palette
+// Updated PdfColorScheme interface with refined HostDime branding colors
 export interface PdfColorScheme {
-  PRIMARY: RGB;
-  SECONDARY: RGB;
-  PRIMARY_LIGHT: RGB;
-  TEXT: RGB;
-  TEXT_LIGHT: RGB;
-  ACCENT: RGB;
-  WHITE: RGB;
-  BACKGROUND: RGB;
-  HIGHLIGHT: RGB;
-  TABLE_ROW_ALT: RGB;
+  PRIMARY: RGB;        // HostDime Orange
+  SECONDARY: RGB;      // Dark color for contrast
+  PRIMARY_LIGHT: RGB;  // Light orange for accents
+  TEXT: RGB;           // Main text color
+  TEXT_LIGHT: RGB;     // Secondary text color
+  ACCENT: RGB;         // Subtle accent color
+  WHITE: RGB;          // White for backgrounds and contrasting text
+  BACKGROUND: RGB;     // Page background color
+  HIGHLIGHT: RGB;      // Highlight background
+  TABLE_ROW_ALT: RGB;  // Alternating table row color
 }
 
 export interface PageContext {
@@ -33,25 +33,38 @@ export interface QuoteBoxDimensions {
   height: number;
 }
 
-// New interfaces for enhanced components
+// Enhanced text options for better typography
 export interface TextOptions {
   fontSize?: number;
   lineHeight?: number;
   maxWidth?: number;
   color?: RGB;
   align?: 'left' | 'center' | 'right';
+  bold?: boolean;
+  italic?: boolean;
 }
 
+// Enhanced image options for better layout
 export interface ImageOptions {
   maxWidth?: number;
   maxHeight?: number;
   preserveAspectRatio?: boolean;
   fallbackText?: string;
+  backgroundColor?: RGB;
+  border?: boolean;
+  borderColor?: RGB;
+  borderRadius?: number;
 }
 
+// Enhanced table options for better data display
 export interface TableColumn {
   header: string;
   key: string;
   width: number;
   align?: 'left' | 'center' | 'right';
+  format?: (value: any) => string;
+  style?: {
+    fontColor?: RGB;
+    bold?: boolean;
+  };
 }

@@ -3,7 +3,7 @@ import { PDFDocument, PDFPage, RGB } from 'pdf-lib';
 import { COLOR } from '../colors';
 import { PageContext } from '../types';
 
-// Enhanced highlight box with more subtle styling
+// Enhanced highlight box with HostDime styling
 export const drawHighlightBox = (
   page: PDFPage,
   x: number,
@@ -15,7 +15,7 @@ export const drawHighlightBox = (
   borderWidth: number = 1,
   borderOpacity: number = 0.5
 ) => {
-  // Add solid background with subtle border
+  // Add solid background with subtle HostDime-styled border
   page.drawRectangle({
     x: x,
     y: y - height,
@@ -29,7 +29,7 @@ export const drawHighlightBox = (
   });
 };
 
-// Enhanced separator with gradient-like effect
+// Enhanced separator with HostDime accent
 export const drawSeparator = (
   page: PDFPage,
   x: number,
@@ -37,12 +37,12 @@ export const drawSeparator = (
   width: number,
   opacity: number = 0.7
 ) => {
-  // Draw main separator line
+  // Draw main separator line with HostDime orange
   page.drawLine({
     start: { x, y },
     end: { x: x + width, y },
     thickness: 1,
-    color: COLOR.PRIMARY_LIGHT,
+    color: COLOR.PRIMARY,
     opacity: opacity
   });
   
@@ -56,7 +56,7 @@ export const drawSeparator = (
   });
 };
 
-// Enhanced table row drawing with subtle hover effect
+// Enhanced table row drawing with improved styling
 export const drawTableRow = (
   page: PDFPage,
   x: number,
@@ -67,7 +67,7 @@ export const drawTableRow = (
   isHighlighted: boolean = false
 ) => {
   if (isHighlighted) {
-    // Highlighted row (for totals or important items)
+    // Highlighted row (for totals or important items) with HostDime orange accent
     page.drawRectangle({
       x,
       y: y - height,
@@ -100,7 +100,7 @@ export const drawTableRow = (
   }
 };
 
-// New function to draw table header with proper styling
+// Enhanced table header with HostDime branding
 export const drawTableHeader = (
   page: PDFPage,
   x: number,
@@ -108,7 +108,7 @@ export const drawTableHeader = (
   width: number,
   height: number
 ) => {
-  // Draw header background
+  // Draw header background with HostDime dark color
   page.drawRectangle({
     x,
     y: y - height,
@@ -119,7 +119,7 @@ export const drawTableHeader = (
     opacity: 0.9
   });
   
-  // Add subtle orange accent
+  // Add HostDime orange accent bar
   page.drawRectangle({
     x,
     y: y,
@@ -130,7 +130,7 @@ export const drawTableHeader = (
   });
 };
 
-// Function to draw a progress/status indicator (for payment status, etc)
+// Enhanced progress indicator with HostDime styling
 export const drawProgressIndicator = (
   page: PDFPage,
   x: number,
@@ -155,7 +155,7 @@ export const drawProgressIndicator = (
     opacity: 0.3
   });
   
-  // Draw progress fill
+  // Draw progress fill with HostDime orange
   if (safeProgress > 0) {
     page.drawRectangle({
       x,

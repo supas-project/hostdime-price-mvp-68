@@ -6,12 +6,12 @@ export interface QuoteVariables {
   clientName: string;
   dataValidade: string;
   observacoes: string;
-  dataEmissao?: string; // New: date of quote issue
-  numeroContato?: string; // New: contact number
-  emailContato?: string; // New: contact email
+  dataEmissao?: string;
+  numeroContato?: string;
+  emailContato?: string;
 }
 
-// Function to get quote variables with defaults
+// Enhanced function to get quote variables with HostDime defaults
 export function getQuoteVariables(defaultValues?: Partial<QuoteVariables>): QuoteVariables {
   // Get current date in Brazilian format
   const today = new Date();
@@ -21,9 +21,9 @@ export function getQuoteVariables(defaultValues?: Partial<QuoteVariables>): Quot
     year: 'numeric'
   });
   
-  // Default values with fallbacks
+  // Default values with HostDime branding
   return {
-    responsavelComercial: defaultValues?.responsavelComercial || "Equipe HostDime",
+    responsavelComercial: defaultValues?.responsavelComercial || "Equipe Comercial HostDime",
     clientName: defaultValues?.clientName || "Cliente",
     dataValidade: defaultValues?.dataValidade || "30 dias",
     observacoes: defaultValues?.observacoes || "",
@@ -33,7 +33,7 @@ export function getQuoteVariables(defaultValues?: Partial<QuoteVariables>): Quot
   };
 }
 
-// Calculate total value of components with improved accuracy
+// Enhanced function to calculate totals with improved accuracy
 export function calculateTotalValue(
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
@@ -50,38 +50,32 @@ export function calculateTotalValue(
     }
   });
 
-  // Sum internal storage
+  // Sum storage items
   storageItems.internal.forEach((item) => {
-    if (item && item.price) {
-      subtotal += item.price;
-    }
+    if (item?.price) subtotal += item.price;
   });
-
-  // Sum external storage
+  
   storageItems.external.forEach((item) => {
-    if (item && item.price) {
-      subtotal += item.price;
-    }
+    if (item?.price) subtotal += item.price;
   });
 
-  // Sum custom services
+  // Sum custom services with quantity
   customServices.forEach((service) => {
-    if (service && service.price) {
-      // Account for quantity if present
+    if (service?.price) {
       const quantity = service.metadata?.quantity || 1;
       subtotal += service.price * quantity;
     }
   });
 
-  // Sum connectivity items with quantity handling
+  // Sum connectivity items with quantity
   Object.values(connectivityItems).forEach((item) => {
-    if (item.option && item.option.price) {
+    if (item.option?.price) {
       subtotal += item.option.price * (item.quantity || 1);
     }
   });
 
-  // Calculate profit based on margin
-  const profit = subtotal * (margin / 100);
+  // Calculate profit based on margin with precise rounding
+  const profit = Number((subtotal * (margin / 100)).toFixed(2));
   
   // Calculate total with profit margin
   const total = subtotal + profit;
@@ -89,7 +83,7 @@ export function calculateTotalValue(
   return { subtotal, total, profit };
 }
 
-// Format currency with improved locale handling
+// Enhanced currency formatter for Brazilian Real
 export function formatCurrency(value: number): string {
   if (isNaN(value)) return "R$ 0,00";
   
@@ -101,35 +95,32 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Build detailed server description with better formatting
+// Enhanced function to build detailed server descriptions
 export function buildServerDescription(
   selectedComponents: { [key: string]: ComponentOption }
 ): string {
   const parts = [];
   
-  // Add CPU with better formatting
+  // Add components with better formatting
   if (selectedComponents.cpu) {
     parts.push(`Processador ${selectedComponents.cpu.name}`);
   }
   
-  // Add memory with better formatting
   if (selectedComponents.memory) {
     parts.push(`${selectedComponents.memory.name}`);
   }
   
-  // Add OS with better formatting
   if (selectedComponents.os) {
     parts.push(`${selectedComponents.os.name}`);
   }
   
-  // Add datacenter if present
   if (selectedComponents.datacenter) {
     parts.push(`Localizado no ${selectedComponents.datacenter.name}`);
   }
   
-  // If no components selected, return default description
+  // If no components selected, return default description with HostDime branding
   if (parts.length === 0) {
-    return "Servidor dedicado personalizado com configuração avançada";
+    return "Servidor dedicado personalizado HostDime com configuração avançada";
   }
   
   return parts.join(", ") + ".";

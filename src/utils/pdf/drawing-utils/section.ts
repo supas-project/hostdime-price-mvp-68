@@ -3,7 +3,7 @@ import { PDFPage, PDFFont, RGB } from 'pdf-lib';
 import { COLOR } from '../colors';
 import { drawWrappedText } from './text';
 
-// Enhanced section header with improved styling
+// Enhanced section header with improved HostDime branding
 export const drawSectionHeader = (
   page: PDFPage, 
   text: string,
@@ -16,7 +16,7 @@ export const drawSectionHeader = (
   useHighlightStyle: boolean = true
 ): number => {
   if (useHighlightStyle) {
-    // Draw background with a subtle gradient-like effect
+    // Draw background with HostDime styling
     page.drawRectangle({
       x: x - 5,
       y: y - 5,
@@ -26,18 +26,18 @@ export const drawSectionHeader = (
       borderWidth: 0,
     });
     
-    // Add a subtle orange line on the left for visual separation
+    // Add accent bar with HostDime orange
     page.drawRectangle({
       x: x - 5,
       y: y - 5,
-      width: 3,
+      width: 4,
       height: size + 10,
       color: COLOR.PRIMARY,
       borderWidth: 0,
     });
   }
   
-  // Draw the actual text
+  // Draw the section title
   page.drawText(text, {
     x: x,
     y: y,
@@ -49,7 +49,7 @@ export const drawSectionHeader = (
   return y - (size + 20); // Return new Y position after the header
 };
 
-// New function to draw a subsection header with different styling
+// Enhanced subsection header with HostDime styling
 export const drawSubsectionHeader = (
   page: PDFPage,
   text: string,
@@ -60,12 +60,12 @@ export const drawSubsectionHeader = (
   size: number = 14,
   color: RGB = COLOR.SECONDARY
 ): number => {
-  // Draw a subtle bottom border
+  // Draw a subtle bottom border with HostDime accent
   page.drawLine({
     start: { x, y: y - size - 5 },
     end: { x: x + width - 10, y: y - size - 5 },
     thickness: 1,
-    color: COLOR.ACCENT,
+    color: COLOR.PRIMARY,
     opacity: 0.5
   });
   
@@ -81,7 +81,7 @@ export const drawSubsectionHeader = (
   return y - (size + 15);
 };
 
-// Function to draw a section with long text that may need wrapping
+// Enhanced text section with improved typography
 export const drawTextSection = (
   page: PDFPage,
   title: string,
@@ -93,8 +93,8 @@ export const drawTextSection = (
   regularFont: PDFFont,
   titleSize: number = 12,
   contentSize: number = 10,
-  titleColor: RGB = COLOR.TEXT,
-  contentColor: RGB = COLOR.TEXT_LIGHT
+  titleColor: RGB = COLOR.PRIMARY,
+  contentColor: RGB = COLOR.TEXT
 ): number => {
   // Draw the title
   page.drawText(title, {
