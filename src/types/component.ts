@@ -21,6 +21,7 @@ export interface ComponentOption {
   type: string;
   subtype?: string;
   isHardware?: boolean;
+  details?: string[]; // Add this field to fix the error
   metadata?: {
     discount?: number;
     features?: string[];
