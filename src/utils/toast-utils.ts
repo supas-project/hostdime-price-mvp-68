@@ -6,7 +6,7 @@ export const toast = {
   // Base toast function
   ...baseToast,
   
-  // Variant helpers are already defined in the hook, but we'll redefine them here for clarity
+  // Re-export the variant helpers for consistency
   error: (message: string, options?: any) => {
     return baseToast.error(message, options);
   },

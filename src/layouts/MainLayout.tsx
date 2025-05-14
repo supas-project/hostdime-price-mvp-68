@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Home, FileText, Server, Menu, X, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { NotificationCenter } from "@/components/notification-center";
 
 export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -78,6 +79,7 @@ export default function MainLayout() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationCenter />
             <LoginDialog />
             
             <Button

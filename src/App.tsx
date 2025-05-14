@@ -1,6 +1,5 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -15,6 +14,7 @@ import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminProtectedRoute from "./components/auth/AdminProtectedRoute";
+import { NotificationDemo } from "./components/notification-demo";
 
 // Configuração do cliente de consulta com retry e stale time
 const queryClient = new QueryClient({
@@ -35,7 +35,6 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <Toaster />
-          <Sonner />
           <Routes>
             {/* Public route */}
             <Route path="/login" element={<LoginPage />} />
@@ -57,6 +56,7 @@ const App = () => (
               
               <Route path="configure" element={<Index />} />
               <Route path="home" element={<Home />} />
+              <Route path="notification-demo" element={<NotificationDemo />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
