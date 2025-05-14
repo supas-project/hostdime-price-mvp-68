@@ -94,7 +94,6 @@ export const drawHeader = async (
     const logoImageBytes = Uint8Array.from(atob(hostDimeLogoBase64), c => c.charCodeAt(0));
     
     // Use the helper function for image embedding with white background for the logo
-    // Remove the borderRadius property as it's not supported by PDFPageDrawRectangleOptions
     page.drawRectangle({
       x: 50,
       y: currentY - 50,

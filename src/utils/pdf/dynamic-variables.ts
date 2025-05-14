@@ -83,18 +83,6 @@ export function calculateTotalValue(
   return { subtotal, total, profit };
 }
 
-// Enhanced currency formatter for Brazilian Real
-export function formatCurrency(value: number): string {
-  if (isNaN(value)) return "R$ 0,00";
-  
-  return new Intl.NumberFormat('pt-BR', { 
-    style: 'currency', 
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
-}
-
 // Enhanced function to build detailed server descriptions
 export function buildServerDescription(
   selectedComponents: { [key: string]: ComponentOption }
