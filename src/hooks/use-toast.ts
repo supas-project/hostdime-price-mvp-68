@@ -120,24 +120,14 @@ function toast(message: string, options?: ToastOptions) {
   try {
     if (typeof window !== 'undefined') {
       // This is a workaround to allow the toast function to be called outside of React components
-      // It will be picked up by the ToastProvider context when it's available
       setTimeout(() => {
         try {
-          const element = document.createElement('div');
-          const root = document.createElement('div');
-          element.appendChild(root);
-          
-          // Try to create a mini React app to access context
-          const MiniApp = () => {
-            const ctx = React.useContext(ToastContext);
-            if (ctx) {
-              ctx.addNotification(id, message, options);
-            }
-            return null;
-          };
-          
-          // This won't actually render but might help with context access
-          React.createElement(MiniApp, null);
+          // Access ToastContext if available in the current React tree
+          // This is a best-effort approach that may work in some cases
+          const toastContextValue = (window as any).__TOAST_CONTEXT_VALUE__;
+          if (toastContextValue && typeof toastContextValue.addNotification === 'function') {
+            toastContextValue.addNotification(id, message, options);
+          }
         } catch (innerError) {
           // Silently fail for non-React environments
         }
@@ -213,6 +203,11 @@ function useToast() {
   
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");
+  }
+  
+  // Store the context in a global variable to allow access from outside React components
+  if (typeof window !== 'undefined') {
+    (window as any).__TOAST_CONTEXT_VALUE__ = context;
   }
   
   return {
