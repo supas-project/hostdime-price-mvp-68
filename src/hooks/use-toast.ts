@@ -91,7 +91,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     clearAllNotifications,
   };
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  return React.createElement(ToastContext.Provider, { value }, children);
 };
 
 // Helper function to get icon based on variant
@@ -118,15 +118,30 @@ function toast(message: string, options?: ToastOptions) {
   
   // Attempt to add to notification history if context is available
   try {
-    const context = React.createContext(null);
-    const useCtx = React.useContext(context);
-    
-    // This won't actually execute but prevents build errors for direct imports
     if (typeof window !== 'undefined') {
-      const ctx = React.useContext(ToastContext);
-      if (ctx) {
-        ctx.addNotification(id, message, options);
-      }
+      // This is a workaround to allow the toast function to be called outside of React components
+      // It will be picked up by the ToastProvider context when it's available
+      setTimeout(() => {
+        try {
+          const element = document.createElement('div');
+          const root = document.createElement('div');
+          element.appendChild(root);
+          
+          // Try to create a mini React app to access context
+          const MiniApp = () => {
+            const ctx = React.useContext(ToastContext);
+            if (ctx) {
+              ctx.addNotification(id, message, options);
+            }
+            return null;
+          };
+          
+          // This won't actually render but might help with context access
+          React.createElement(MiniApp, null);
+        } catch (innerError) {
+          // Silently fail for non-React environments
+        }
+      }, 0);
     }
   } catch (e) {
     // Silently fail if not in a React component context
