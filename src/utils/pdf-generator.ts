@@ -25,19 +25,23 @@ export async function generateQuoteFromTemplate(
           name: sanitizeText(component.name),
           description: sanitizeText(component.description || ''),
           details: component.details?.map(detail => sanitizeText(detail)) || [],
-          metadata: component.metadata // Manter metadados intactos
+          metadata: component.metadata, // Manter metadados intactos
+          // Certificar que valores numéricos estão intactos
+          price: component.price,
+          type: sanitizeText(component.type),
+          subtype: component.subtype ? sanitizeText(component.subtype) : undefined
         };
       }
     }
     
-    // Sanitizar variáveis do PDF
+    // Sanitizar variáveis do PDF com tratamento especial para datas
     const sanitizedVariables = quoteVariables ? {
       ...quoteVariables,
       responsavelComercial: sanitizeText(quoteVariables.responsavelComercial || ''),
       clientName: sanitizeText(quoteVariables.clientName || ''),
-      dataValidade: sanitizeText(quoteVariables.dataValidade || ''),
+      dataValidade: sanitizeText(quoteVariables.dataValidade || '').replace(/\//g, '-'),
       observacoes: sanitizeText(quoteVariables.observacoes || ''),
-      dataEmissao: sanitizeText(quoteVariables.dataEmissao || ''),
+      dataEmissao: sanitizeText(quoteVariables.dataEmissao || '').replace(/\//g, '-'),
       numeroContato: sanitizeText(quoteVariables.numeroContato || ''),
       emailContato: sanitizeText(quoteVariables.emailContato || '')
     } : undefined;

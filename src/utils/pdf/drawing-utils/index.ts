@@ -29,7 +29,9 @@ export function sanitizeText(text: string | undefined): string {
       '™': '(tm)',
       '✓': 'v',
       '✔': 'v',
-      '√': 'v'
+      '√': 'v',
+      '/': '-', // Adicionar substituição específica para a barra "/" que está causando o erro
+      '\\': '-' // Também substituir a contrabarra por segurança
     };
 
     // Apply direct replacements
