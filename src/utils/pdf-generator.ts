@@ -15,7 +15,7 @@ export async function generateQuoteFromTemplate(
     // Show processing toast
     toast("Preparando os dados para visualização");
     
-    // Sanitizar todas as strings nos componentes para evitar problemas de codificação
+    // Sanitização mais robusta para componentes
     const sanitizedComponents: { [key: string]: ComponentOption } = {};
     for (const key in selectedComponents) {
       if (selectedComponents[key]) {
@@ -23,11 +23,24 @@ export async function generateQuoteFromTemplate(
         sanitizedComponents[key] = {
           ...component,
           name: sanitizeText(component.name),
-          description: sanitizeText(component.description),
-          details: component.details?.map(sanitizeText) || []
+          description: sanitizeText(component.description || ''),
+          details: component.details?.map(detail => sanitizeText(detail)) || [],
+          metadata: component.metadata // Manter metadados intactos
         };
       }
     }
+    
+    // Sanitizar variáveis do PDF
+    const sanitizedVariables = quoteVariables ? {
+      ...quoteVariables,
+      responsavelComercial: sanitizeText(quoteVariables.responsavelComercial || ''),
+      clientName: sanitizeText(quoteVariables.clientName || ''),
+      dataValidade: sanitizeText(quoteVariables.dataValidade || ''),
+      observacoes: sanitizeText(quoteVariables.observacoes || ''),
+      dataEmissao: sanitizeText(quoteVariables.dataEmissao || ''),
+      numeroContato: sanitizeText(quoteVariables.numeroContato || ''),
+      emailContato: sanitizeText(quoteVariables.emailContato || '')
+    } : undefined;
     
     // Generate PDF with all required parameters
     const pdfBytes = await generateQuotePDF(
@@ -37,7 +50,7 @@ export async function generateQuoteFromTemplate(
       margin,
       {}, // Empty connectivity items
       openInNewTab,
-      quoteVariables
+      sanitizedVariables
     );
     
     return pdfBytes;

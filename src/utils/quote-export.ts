@@ -18,43 +18,43 @@ export const generateQuotePDF = async (
     // Notify user that process has started
     toast("Aguarde enquanto preparamos seu documento");
     
-    // Sanitizar variáveis dinâmicas
+    // Sanitizar variáveis dinâmicas mais completamente
     const sanitizedVariables = quoteVariables ? {
       ...quoteVariables,
-      responsavelComercial: sanitizeText(quoteVariables.responsavelComercial),
-      clientName: sanitizeText(quoteVariables.clientName),
-      dataValidade: sanitizeText(quoteVariables.dataValidade),
-      observacoes: sanitizeText(quoteVariables.observacoes),
-      dataEmissao: sanitizeText(quoteVariables.dataEmissao),
-      numeroContato: sanitizeText(quoteVariables.numeroContato),
-      emailContato: sanitizeText(quoteVariables.emailContato)
+      responsavelComercial: sanitizeText(quoteVariables.responsavelComercial || ''),
+      clientName: sanitizeText(quoteVariables.clientName || ''),
+      dataValidade: sanitizeText(quoteVariables.dataValidade || ''),
+      observacoes: sanitizeText(quoteVariables.observacoes || ''),
+      dataEmissao: sanitizeText(quoteVariables.dataEmissao || ''),
+      numeroContato: sanitizeText(quoteVariables.numeroContato || ''),
+      emailContato: sanitizeText(quoteVariables.emailContato || '')
     } : undefined;
     
-    // Sanitizar itens de armazenamento
+    // Sanitizar itens de armazenamento com método melhorado
     const sanitizedStorageItems = {
       internal: storageItems.internal.map(item => ({
         ...item,
         name: sanitizeText(item.name),
-        description: sanitizeText(item.description),
-        details: item.details?.map(sanitizeText) || []
+        description: sanitizeText(item.description || ''),
+        details: item.details?.map(detail => sanitizeText(detail)) || []
       })),
       external: storageItems.external.map(item => ({
         ...item,
         name: sanitizeText(item.name),
-        description: sanitizeText(item.description),
-        details: item.details?.map(sanitizeText) || []
+        description: sanitizeText(item.description || ''),
+        details: item.details?.map(detail => sanitizeText(detail)) || []
       }))
     };
     
-    // Sanitizar serviços personalizados
+    // Sanitizar serviços personalizados com método melhorado
     const sanitizedCustomServices = customServices.map(service => ({
       ...service,
       name: sanitizeText(service.name),
-      description: sanitizeText(service.description),
-      details: service.details?.map(sanitizeText) || []
+      description: sanitizeText(service.description || ''),
+      details: service.details?.map(detail => sanitizeText(detail)) || []
     }));
     
-    // Sanitizar itens de conectividade
+    // Sanitizar itens de conectividade com método melhorado
     const sanitizedConnectivityItems: typeof connectivityItems = {};
     for (const key in connectivityItems) {
       if (connectivityItems[key]) {
@@ -62,8 +62,8 @@ export const generateQuotePDF = async (
           option: {
             ...connectivityItems[key].option,
             name: sanitizeText(connectivityItems[key].option.name),
-            description: sanitizeText(connectivityItems[key].option.description),
-            details: connectivityItems[key].option.details?.map(sanitizeText) || []
+            description: sanitizeText(connectivityItems[key].option.description || ''),
+            details: connectivityItems[key].option.details?.map(detail => sanitizeText(detail)) || []
           },
           quantity: connectivityItems[key].quantity
         };
@@ -100,8 +100,8 @@ export const generateQuotePDF = async (
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("encode") || errorMessage.includes("0x") || errorMessage.includes("WinAnsi")) {
-      toast.error("Foram encontrados caracteres especiais incompatíveis", {
-        description: "Caracteres especiais foram removidos automaticamente"
+      toast.error("Caracteres especiais foram removidos automaticamente", {
+        description: "Documento gerado com texto simplificado"
       });
     } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
       toast.error("Não foi possível incluir as imagens no documento", {

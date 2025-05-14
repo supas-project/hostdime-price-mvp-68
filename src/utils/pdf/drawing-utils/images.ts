@@ -4,12 +4,18 @@ import { hostDimeLogoBase64 } from '../../pdf-assets';
 
 export async function embeddedImage(doc: PDFDocument, base64Image: string) {
   try {
-    // Here's the fix: Change embedJpeg to embedJpg
-    const image = await doc.embedJpg(base64Image);
-    return image;
+    // Melhor tratamento de erros para evitar quebras no documento
+    if (!base64Image || base64Image.trim() === '') {
+      console.warn("Base64 image is empty");
+      return null;
+    }
+    
+    // Corrigido para usar embedJpg
+    return await doc.embedJpg(base64Image);
   } catch (error) {
     console.error("Error embedding image:", error);
-    throw new Error(`Failed to embed image: ${error}`);
+    // Em vez de jogar o erro, retornamos null para tratamento gracioso
+    return null;
   }
 }
 
@@ -18,7 +24,8 @@ export async function embedHostDimeLogo(doc: PDFDocument) {
     return await embeddedImage(doc, hostDimeLogoBase64);
   } catch (error) {
     console.error("Failed to embed HostDime logo:", error);
-    throw new Error("Could not embed company logo in document");
+    // Não lançamos o erro para evitar quebrar a geração do PDF
+    return null;
   }
 }
 
@@ -31,7 +38,6 @@ export async function embedCustomerLogo(doc: PDFDocument, logoBase64?: string) {
     return await embeddedImage(doc, logoBase64);
   } catch (error) {
     console.error("Failed to embed customer logo:", error);
-    // Don't throw here, just return null to continue without customer logo
     return null;
   }
 }
@@ -61,7 +67,7 @@ export function calculateImageDimensions(
   return { width, height };
 }
 
-// Adding the embedAndDrawImage function that was missing
+// Função melhorada para incorporar e desenhar imagem com tratamento de erros robusto
 export async function embedAndDrawImage(
   pdfDoc: PDFDocument,
   page: PDFPage, 
@@ -71,10 +77,26 @@ export async function embedAndDrawImage(
   font: PDFFont
 ) {
   try {
-    // Try to embed the image
-    const image = await pdfDoc.embedJpg(imageBytes);
+    // Verificar se os bytes são válidos
+    if (!imageBytes || imageBytes.length === 0) {
+      throw new Error("Image data is empty");
+    }
     
-    // Draw it on the page
+    // Try to embed the image
+    let image;
+    try {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } catch (jpgError) {
+      // Se falhar como JPG, tente como PNG
+      try {
+        image = await pdfDoc.embedPng(imageBytes);
+      } catch (pngError) {
+        // Se ambos falharem, use o texto de fallback
+        throw new Error("Failed to embed as JPG or PNG");
+      }
+    }
+    
+    // Se chegou aqui, temos uma imagem válida
     page.drawImage(image, {
       x: dimensions.x,
       y: dimensions.y - dimensions.height,

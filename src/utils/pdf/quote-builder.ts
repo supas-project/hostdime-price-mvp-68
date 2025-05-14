@@ -10,6 +10,7 @@ import { renderFinancialSection } from './section-renderers/financial-section';
 import { renderBenefitsSection } from './section-renderers/benefits-section';
 import { renderTermsSection } from './section-renderers/terms-section';
 import { QuoteVariables } from './dynamic-variables';
+import { sanitizeText } from './drawing-utils';
 
 // Função para sanitizar texto, removendo caracteres problemáticos
 function sanitizeText(text: string): string {
@@ -45,30 +46,8 @@ export async function buildQuotePDF(
   try {
     toast.info("Gerando PDF...");
     
-    // Sanitizar dados de entrada para evitar problemas de codificação
-    const sanitizedComponents: { [key: string]: ComponentOption } = {};
-    for (const key in selectedComponents) {
-      if (selectedComponents[key]) {
-        sanitizedComponents[key] = sanitizeComponent(selectedComponents[key]);
-      }
-    }
-    
-    const sanitizedStorageItems = {
-      internal: storageItems.internal.map(item => sanitizeComponent(item)),
-      external: storageItems.external.map(item => sanitizeComponent(item))
-    };
-    
-    const sanitizedCustomServices = customServices.map(service => sanitizeComponent(service));
-    
-    const sanitizedConnectivityItems: typeof connectivityItems = {};
-    for (const key in connectivityItems) {
-      if (connectivityItems[key]) {
-        sanitizedConnectivityItems[key] = {
-          option: sanitizeComponent(connectivityItems[key].option),
-          quantity: connectivityItems[key].quantity
-        };
-      }
-    }
+    // Os componentes já devem ter sido sanitizados pelos métodos chamadores
+    // Não precisamos mais fazer sanitização aqui
     
     // Criar documento PDF com tratamento de erros adicional
     const pdfDoc = await PDFDocument.create();
@@ -100,27 +79,27 @@ export async function buildQuotePDF(
     
     // 3. Seção de componentes
     let pageContext = renderComponentsSection(
-      pdfDoc, { page, y: newY }, sanitizedComponents, width, marginX, 
+      pdfDoc, { page, y: newY }, selectedComponents, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 4. Seção de armazenamento
     pageContext = renderStorageSection(
-      pdfDoc, pageContext, sanitizedStorageItems, width, marginX, 
+      pdfDoc, pageContext, storageItems, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 5. Seção de serviços
     pageContext = renderServicesSection(
-      pdfDoc, pageContext, sanitizedCustomServices, width, marginX, 
+      pdfDoc, pageContext, customServices, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
     // 6. Resumo financeiro
     pageContext = renderFinancialSection(
-      pdfDoc, pageContext, sanitizedComponents, sanitizedStorageItems, sanitizedCustomServices, 
+      pdfDoc, pageContext, selectedComponents, storageItems, customServices, 
       margin, width, marginX, marginRight, helvetica, helveticaBold,
-      sanitizedConnectivityItems
+      connectivityItems
     );
     
     // 7. Seção de benefícios
