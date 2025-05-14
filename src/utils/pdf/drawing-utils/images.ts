@@ -1,4 +1,5 @@
-import { PDFDocument } from 'pdf-lib';
+
+import { PDFDocument, PDFImage, PDFPage, PDFFont } from 'pdf-lib';
 import { hostDimeLogoBase64 } from '../../pdf-assets';
 
 export async function embeddedImage(doc: PDFDocument, base64Image: string) {
@@ -58,4 +59,41 @@ export function calculateImageDimensions(
   }
   
   return { width, height };
+}
+
+// Adding the embedAndDrawImage function that was missing
+export async function embedAndDrawImage(
+  pdfDoc: PDFDocument,
+  page: PDFPage, 
+  imageBytes: Uint8Array,
+  dimensions: { x: number, y: number, width: number, height: number },
+  fallbackText: string,
+  font: PDFFont
+) {
+  try {
+    // Try to embed the image
+    const image = await pdfDoc.embedJpg(imageBytes);
+    
+    // Draw it on the page
+    page.drawImage(image, {
+      x: dimensions.x,
+      y: dimensions.y - dimensions.height,
+      width: dimensions.width,
+      height: dimensions.height
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Failed to embed image:", error);
+    
+    // Fallback: draw text instead
+    page.drawText(fallbackText, {
+      x: dimensions.x,
+      y: dimensions.y - dimensions.height / 2,
+      font,
+      size: 12
+    });
+    
+    return false;
+  }
 }
