@@ -5,7 +5,8 @@ import { toast } from "sonner";
 
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
-  margin: number
+  margin: number,
+  openInNewTab: boolean = false
 ): Promise<Uint8Array> {
   try {
     // Mostrar toast de processamento
@@ -20,7 +21,7 @@ export async function generateQuoteFromTemplate(
       [], 
       margin,
       {}, // Adicionando connectivityItems vazio
-      true // Novo parâmetro para abrir em nova aba
+      openInNewTab // Passamos o parâmetro para abrir em nova aba
     );
     
     return pdfBytes;

@@ -4,7 +4,7 @@ import { PdfColorScheme } from './types';
 
 // Paleta de cores modernizada para um visual mais profissional e contemporâneo
 export const COLOR: PdfColorScheme = {
-  PRIMARY: rgb(0.96, 0.51, 0.13),      // HostDime Orange - mantido (#f58220)
+  PRIMARY: rgb(0.96, 0.51, 0.13),      // HostDime Orange (#f58220)
   SECONDARY: rgb(0.08, 0.10, 0.14),    // Dark Blue - mais escuro e moderno (#141923)
   PRIMARY_LIGHT: rgb(0.99, 0.70, 0.45), // Light Orange - mais suave (#fd9972)
   TEXT: rgb(0.15, 0.17, 0.21),         // Texto mais escuro para melhor leitura (#262A36)
