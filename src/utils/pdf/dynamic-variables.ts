@@ -2,24 +2,38 @@
 import { ComponentOption } from "@/types/component";
 
 export interface QuoteVariables {
-  responsavelComercial?: string;
-  clientName?: string;
-  dataValidade?: string;
-  observacoes?: string;
+  responsavelComercial: string;
+  clientName: string;
+  dataValidade: string;
+  observacoes: string;
+  dataEmissao?: string; // New: date of quote issue
+  numeroContato?: string; // New: contact number
+  emailContato?: string; // New: contact email
 }
 
-// Função para obter as variáveis dinâmicas da cotação
+// Function to get quote variables with defaults
 export function getQuoteVariables(defaultValues?: Partial<QuoteVariables>): QuoteVariables {
-  // Valores padrão caso não sejam fornecidos
+  // Get current date in Brazilian format
+  const today = new Date();
+  const dateString = today.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  
+  // Default values with fallbacks
   return {
     responsavelComercial: defaultValues?.responsavelComercial || "Equipe HostDime",
     clientName: defaultValues?.clientName || "Cliente",
     dataValidade: defaultValues?.dataValidade || "30 dias",
     observacoes: defaultValues?.observacoes || "",
+    dataEmissao: defaultValues?.dataEmissao || dateString,
+    numeroContato: defaultValues?.numeroContato || "(11) 4766-4840",
+    emailContato: defaultValues?.emailContato || "vendas@hostdime.com.br",
   };
 }
 
-// Função para calcular o valor total dos componentes selecionados
+// Calculate total value of components with improved accuracy
 export function calculateTotalValue(
   selectedComponents: { [key: string]: ComponentOption },
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
@@ -29,52 +43,56 @@ export function calculateTotalValue(
 ): { subtotal: number; total: number; profit: number } {
   let subtotal = 0;
 
-  // Somar componentes selecionados
+  // Sum selected components
   Object.values(selectedComponents).forEach((component) => {
     if (component && component.price) {
       subtotal += component.price;
     }
   });
 
-  // Somar armazenamento interno
+  // Sum internal storage
   storageItems.internal.forEach((item) => {
     if (item && item.price) {
       subtotal += item.price;
     }
   });
 
-  // Somar armazenamento externo
+  // Sum external storage
   storageItems.external.forEach((item) => {
     if (item && item.price) {
       subtotal += item.price;
     }
   });
 
-  // Somar serviços personalizados
+  // Sum custom services
   customServices.forEach((service) => {
     if (service && service.price) {
-      subtotal += service.price;
+      // Account for quantity if present
+      const quantity = service.metadata?.quantity || 1;
+      subtotal += service.price * quantity;
     }
   });
 
-  // Somar itens de conectividade
+  // Sum connectivity items with quantity handling
   Object.values(connectivityItems).forEach((item) => {
     if (item.option && item.option.price) {
       subtotal += item.option.price * (item.quantity || 1);
     }
   });
 
-  // Calcular lucro com base na margem
+  // Calculate profit based on margin
   const profit = subtotal * (margin / 100);
   
-  // Calcular total com margem de lucro
+  // Calculate total with profit margin
   const total = subtotal + profit;
 
   return { subtotal, total, profit };
 }
 
-// Função para formatar valores monetários
+// Format currency with improved locale handling
 export function formatCurrency(value: number): string {
+  if (isNaN(value)) return "R$ 0,00";
+  
   return new Intl.NumberFormat('pt-BR', { 
     style: 'currency', 
     currency: 'BRL',
@@ -83,28 +101,33 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Função para construir descrição detalhada do servidor
+// Build detailed server description with better formatting
 export function buildServerDescription(
   selectedComponents: { [key: string]: ComponentOption }
 ): string {
   const parts = [];
   
-  // Adicionar CPU
+  // Add CPU with better formatting
   if (selectedComponents.cpu) {
     parts.push(`Processador ${selectedComponents.cpu.name}`);
   }
   
-  // Adicionar memória
+  // Add memory with better formatting
   if (selectedComponents.memory) {
     parts.push(`${selectedComponents.memory.name}`);
   }
   
-  // Adicionar sistema operacional
+  // Add OS with better formatting
   if (selectedComponents.os) {
     parts.push(`${selectedComponents.os.name}`);
   }
   
-  // Se não houver componentes selecionados, retornar descrição padrão
+  // Add datacenter if present
+  if (selectedComponents.datacenter) {
+    parts.push(`Localizado no ${selectedComponents.datacenter.name}`);
+  }
+  
+  // If no components selected, return default description
   if (parts.length === 0) {
     return "Servidor dedicado personalizado com configuração avançada";
   }

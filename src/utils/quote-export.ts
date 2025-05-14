@@ -1,6 +1,6 @@
 
 import { ComponentOption } from "@/types/component";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
 import { QuoteVariables } from "./pdf/dynamic-variables";
 
@@ -10,16 +10,18 @@ export const generateQuotePDF = async (
   customServices: ComponentOption[],
   margin: number,
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
-  openInNewTab: boolean = false,
+  openInNewTab: boolean = true, // Changed default to true for new tab opening
   quoteVariables?: Partial<QuoteVariables>
 ) => {
   try {
-    // Notificar o usuário que o processo começou
-    toast.info("Gerando PDF...", {
-      description: "Aguarde enquanto preparamos seu documento"
+    // Notify user that process has started
+    toast({
+      title: "Gerando PDF...",
+      description: "Aguarde enquanto preparamos seu documento",
+      duration: 3000,
     });
     
-    // Gerar o PDF com as variáveis dinâmicas
+    // Generate PDF with dynamic variables
     const pdfBytes = await buildQuotePDF(
       selectedComponents,
       storageItems,
@@ -29,11 +31,12 @@ export const generateQuotePDF = async (
       quoteVariables
     );
     
-    // Gerar nome do arquivo com número aleatório e data
+    // Generate unique filename with timestamp
+    const timestamp = new Date().getTime();
     const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
     const fileName = `HostDime_Cotacao_${quoteNumber}.pdf`;
     
-    // Abrir em nova aba ou fazer download dependendo do parâmetro
+    // Open in new tab or download based on parameter
     if (openInNewTab) {
       openPDFInNewTab(pdfBytes, fileName);
     } else {
@@ -43,18 +46,33 @@ export const generateQuotePDF = async (
     return pdfBytes;
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
-    // Melhorando a mensagem de erro para ser mais específica
+    
+    // Enhanced error handling with more specific messages
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("encode") || errorMessage.includes("0x")) {
-      toast.error("Erro de codificação no PDF", {
-        description: "Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos."
+      toast({
+        title: "Erro de codificação no PDF",
+        description: "Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
+      toast({
+        title: "Erro ao carregar imagens",
+        description: "Não foi possível incluir as imagens no documento.",
+        variant: "destructive",
+        duration: 5000,
       });
     } else {
-      toast.error("Falha ao gerar PDF", {
-        description: "Tente novamente mais tarde ou contate o suporte técnico."
+      toast({
+        title: "Falha ao gerar PDF",
+        description: "Tente novamente mais tarde ou contate o suporte técnico.",
+        variant: "destructive",
+        duration: 5000,
       });
     }
+    
     throw error;
   }
 };

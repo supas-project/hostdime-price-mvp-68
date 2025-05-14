@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { PDFPage, PDFFont, RGB } from "pdf-lib";
 
@@ -6,7 +7,7 @@ export interface GroupedDisk {
   quantity: number;
 }
 
-// Atualizar interface PdfColorScheme para adicionar nova cor
+// Updated PdfColorScheme interface with refined color palette
 export interface PdfColorScheme {
   PRIMARY: RGB;
   SECONDARY: RGB;
@@ -30,4 +31,27 @@ export interface QuoteBoxDimensions {
   y: number;
   width: number;
   height: number;
+}
+
+// New interfaces for enhanced components
+export interface TextOptions {
+  fontSize?: number;
+  lineHeight?: number;
+  maxWidth?: number;
+  color?: RGB;
+  align?: 'left' | 'center' | 'right';
+}
+
+export interface ImageOptions {
+  maxWidth?: number;
+  maxHeight?: number;
+  preserveAspectRatio?: boolean;
+  fallbackText?: string;
+}
+
+export interface TableColumn {
+  header: string;
+  key: string;
+  width: number;
+  align?: 'left' | 'center' | 'right';
 }

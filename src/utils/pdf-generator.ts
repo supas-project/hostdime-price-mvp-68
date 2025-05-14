@@ -1,38 +1,58 @@
 
 import { ComponentOption } from "@/types/component";
 import { generateQuotePDF } from "./quote-export";
-import { toast } from "sonner"; 
+import { toast } from "@/components/ui/use-toast"; 
 import { QuoteVariables } from "./pdf/dynamic-variables";
 
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number,
-  openInNewTab: boolean = false,
+  openInNewTab: boolean = true, // Changed default to true for new tab opening
   quoteVariables?: Partial<QuoteVariables>
 ): Promise<Uint8Array> {
   try {
-    // Mostrar toast de processamento
-    toast.info("Iniciando geração do PDF...", {
-      description: "Preparando os dados para visualização"
+    // Show processing toast
+    toast({
+      title: "Gerando PDF...",
+      description: "Preparando os dados para visualização",
+      duration: 3000,
     });
     
-    // Passando objetos vazios para os parâmetros adicionais requeridos
+    // Generate PDF with all required parameters
     const pdfBytes = await generateQuotePDF(
       selectedComponents, 
       { internal: [], external: [] }, 
       [], 
       margin,
-      {}, // Adicionando connectivityItems vazio
-      openInNewTab, // Passamos o parâmetro para abrir em nova aba
-      quoteVariables // Passando as variáveis dinâmicas
+      {}, // Empty connectivity items
+      openInNewTab, // Pass parameter to open in new tab
+      quoteVariables // Pass dynamic variables
     );
     
     return pdfBytes;
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
-    toast.error("Falha na geração do PDF", {
-      description: "Verifique se todos os dados estão corretos e tente novamente"
+    
+    // Enhanced error messaging with more specific information
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    let description = "Verifique se todos os dados estão corretos e tente novamente";
+    
+    // Provide more specific error message based on error type
+    if (errorMessage.includes("encode") || errorMessage.includes("character")) {
+      description = "Foram encontrados caracteres especiais incompatíveis no documento";
+    } else if (errorMessage.includes("font") || errorMessage.includes("text")) {
+      description = "Problema ao renderizar o texto no documento";
+    } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
+      description = "Não foi possível carregar imagens no documento";
+    }
+    
+    toast({
+      title: "Falha na geração do PDF",
+      description,
+      variant: "destructive",
+      duration: 5000,
     });
-    throw new Error("Falha na geração do PDF: " + (error instanceof Error ? error.message : String(error)));
+    
+    throw new Error("Falha na geração do PDF: " + errorMessage);
   }
 }

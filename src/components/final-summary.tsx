@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { OrderDetails } from "./order-details";
 import { generateQuotePDF } from "@/utils/quote-export";
 import { useWizard } from "@/contexts/WizardContext";
@@ -39,7 +39,6 @@ interface FinalSummaryProps {
 }
 
 export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
-  const { toast } = useToast();
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
   const [profitMargin, setProfitMargin] = useState(25);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -49,25 +48,31 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
   const [pdfError, setPdfError] = useState("");
   
-  // Estado para variáveis dinâmicas do PDF
+  // State for dynamic PDF variables
   const [quoteVariables, setQuoteVariables] = useState<QuoteVariables>({
     responsavelComercial: "Equipe HostDime",
     clientName: "Cliente",
     dataValidade: "30 dias",
-    observacoes: ""
+    observacoes: "",
+    dataEmissao: new Date().toLocaleDateString('pt-BR'),
+    numeroContato: "(11) 4766-4840",
+    emailContato: "vendas@hostdime.com.br"
   });
   
   const handleSaveQuote = async () => {
     setIsSaving(true);
     try {
-      // Simular uma operação de salvamento
+      // Simulate a save operation
       await new Promise(resolve => setTimeout(resolve, 800));
-      toast("Cotação salva", {
+      toast({
+        title: "Cotação salva",
         description: "Sua cotação foi salva com sucesso."
       });
     } catch (error) {
-      toast.error("Erro ao salvar cotação", {
-        description: "Não foi possível salvar sua cotação. Tente novamente."
+      toast({
+        title: "Erro ao salvar cotação",
+        description: "Não foi possível salvar sua cotação. Tente novamente.",
+        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
@@ -79,32 +84,35 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     setPdfError("");
     
     try {
-      // Exibir toast de início da geração do PDF
-      toast("Preparando PDF", {
+      // Show toast for PDF generation start
+      toast({
+        title: "Preparando PDF",
         description: "Aguarde enquanto geramos seu documento..."
       });
       
-      // Ensure we're passing all arguments with correct types
+      // Generate PDF with all required parameters
       await generateQuotePDF(
         selectedComponents,
         storageItems,
         customServices,
         profitMargin,
         connectivityItems,
-        pdfPreviewOption === "preview", // Passar true para abrir em nova aba, false para download direto
-        quoteVariables // Passar variáveis dinâmicas
+        pdfPreviewOption === "preview", // Use preview option to determine opening mode
+        quoteVariables // Pass dynamic variables
       );
       
     } catch (error) {
       console.error("Erro detalhado:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      // Armazenar mensagem para exibição no diálogo
+      // Store message for display in dialog
       setPdfError(errorMessage);
       setShowPdfErrorDialog(true);
       
-      toast.error("Erro na exportação", {
-        description: "Não foi possível gerar o PDF. Clique para mais detalhes."
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível gerar o PDF. Clique para mais detalhes.",
+        variant: "destructive"
       });
     } finally {
       setIsGeneratingPDF(false);
@@ -114,22 +122,26 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const handleFinishOrder = async () => {
     setIsFinishing(true);
     try {
-      // Simular o processamento do pedido
+      // Simulate order processing
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast.success("Pedido finalizado", {
-        description: "Obrigado por escolher a HostDime! Em breve entraremos em contato."
+      toast({
+        title: "Pedido finalizado",
+        description: "Obrigado por escolher a HostDime! Em breve entraremos em contato.",
+        variant: "success"
       });
     } catch (error) {
-      toast.error("Erro ao finalizar pedido", {
-        description: "Ocorreu um erro ao processar seu pedido. Tente novamente."
+      toast({
+        title: "Erro ao finalizar pedido",
+        description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
+        variant: "destructive"
       });
     } finally {
       setIsFinishing(false);
     }
   };
   
-  // Manipuladores para atualizar variáveis dinâmicas
+  // Handlers for updating dynamic variables
   const handleVariableChange = (key: keyof QuoteVariables, value: string) => {
     setQuoteVariables(prev => ({
       ...prev,
@@ -232,6 +244,36 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="contato">
+                    <div className="flex items-center gap-1">
+                      <Phone className="h-3.5 w-3.5" />
+                      <span>Número de Contato</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="contato"
+                    value={quoteVariables.numeroContato}
+                    onChange={(e) => handleVariableChange('numeroContato', e.target.value)}
+                    placeholder="Ex: (11) 4766-4840"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    <div className="flex items-center gap-1">
+                      <Mail className="h-3.5 w-3.5" />
+                      <span>Email de Contato</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="email"
+                    value={quoteVariables.emailContato}
+                    onChange={(e) => handleVariableChange('emailContato', e.target.value)}
+                    placeholder="Ex: vendas@hostdime.com.br"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="observacoes">Observações</Label>
                   <Textarea
                     id="observacoes"
@@ -263,7 +305,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         onRemoveItem={handleRemoveComponent}
       />
       
-      {/* Diálogo de erro detalhado para PDF */}
+      {/* Detailed error dialog for PDF */}
       <AlertDialog open={showPdfErrorDialog} onOpenChange={setShowPdfErrorDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
