@@ -15,6 +15,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       expand={false}
       closeButton={true}
       richColors
+      visibleToasts={3} // Limit to 3 visible toasts at once
       toastOptions={{
         classNames: {
           toast:

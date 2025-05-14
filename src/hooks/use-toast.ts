@@ -12,7 +12,11 @@ export type Notification = {
   read: boolean;
   variant?: 'default' | 'destructive' | 'success' | 'info' | 'warning';
   icon?: ReactNode;
+  important?: boolean;
 };
+
+// Maximum number of stored notifications
+const MAX_STORED_NOTIFICATIONS = 50;
 
 // Re-export the toast function
 export const toast = sonnerToast;
@@ -29,6 +33,22 @@ const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | '
     read: false,
     ...notification
   };
+  
+  // Limit the number of stored notifications by removing oldest ones
+  if (notifications.length >= MAX_STORED_NOTIFICATIONS) {
+    // Find oldest read notification to remove first
+    const oldestReadIndex = notifications.findIndex(n => n.read);
+    
+    if (oldestReadIndex >= 0) {
+      notifications = [
+        ...notifications.slice(0, oldestReadIndex),
+        ...notifications.slice(oldestReadIndex + 1)
+      ];
+    } else {
+      // If no read notifications, remove the oldest one
+      notifications = notifications.slice(1);
+    }
+  }
   
   notifications = [newNotification, ...notifications];
   notifyListeners();
@@ -64,57 +84,94 @@ const notifyListeners = () => {
 
 // Extend the toast function to track notifications
 const originalToast = sonnerToast;
+
+// Configure toast to limit the number of simultaneous notifications
+const toastConfig = {
+  visibleToasts: 3, // Limit to 3 visible toasts at once
+};
+
+// Configure and extend sonner toast
 const extendedToast = Object.assign(
   (message: string, data?: any) => {
-    const id = originalToast(message, data);
+    const id = originalToast(message, {
+      ...toastConfig,
+      ...data
+    });
+    
     addNotification({ 
       message, 
       description: data?.description,
       variant: 'default',
-      icon: data?.icon
+      icon: data?.icon,
+      important: data?.important
     });
+    
     return id;
   },
   {
     ...originalToast,
     success: (message: string, data?: any) => {
-      const id = originalToast.success(message, data);
+      const id = originalToast.success(message, {
+        ...toastConfig,
+        ...data
+      });
+      
       addNotification({ 
         message, 
         description: data?.description,
         variant: 'success',
-        icon: data?.icon
+        icon: data?.icon,
+        important: data?.important
       });
+      
       return id;
     },
     error: (message: string, data?: any) => {
-      const id = originalToast.error(message, data);
+      const id = originalToast.error(message, {
+        ...toastConfig,
+        ...data
+      });
+      
       addNotification({ 
         message, 
         description: data?.description,
         variant: 'destructive',
-        icon: data?.icon
+        icon: data?.icon,
+        important: data?.important || true // Errors are important by default
       });
+      
       return id;
     },
     info: (message: string, data?: any) => {
-      const id = originalToast.info(message, data);
+      const id = originalToast.info(message, {
+        ...toastConfig,
+        ...data
+      });
+      
       addNotification({ 
         message, 
         description: data?.description,
         variant: 'info',
-        icon: data?.icon
+        icon: data?.icon,
+        important: data?.important
       });
+      
       return id;
     },
     warning: (message: string, data?: any) => {
-      const id = originalToast.warning(message, data);
+      const id = originalToast.warning(message, {
+        ...toastConfig,
+        ...data
+      });
+      
       addNotification({ 
         message, 
         description: data?.description,
         variant: 'warning',
-        icon: data?.icon
+        icon: data?.icon,
+        important: data?.important || true // Warnings are important by default
       });
+      
       return id;
     }
   }

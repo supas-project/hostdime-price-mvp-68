@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { AuthProvider } from "./contexts/AuthContext";
-// Remove the ToastProvider import as it doesn't exist
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
@@ -35,7 +34,6 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <AuthProvider>
-          {/* Remove the ToastProvider wrapper as it doesn't exist */}
           <Toaster />
           <Routes>
             {/* Public route */}
