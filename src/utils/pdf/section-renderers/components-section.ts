@@ -1,4 +1,5 @@
-import { PDFDocument, PDFFont } from "pdf-lib";
+
+import { PDFDocument, PDFFont, PDFPage } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../colors";
 import { checkAndCreateNewPage, drawSectionHeader, drawTableRow } from "../drawing-utils";
