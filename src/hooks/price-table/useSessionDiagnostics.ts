@@ -31,10 +31,11 @@ export function useSessionDiagnostics() {
       const info = PriceService.getDiagnosticInfo();
       const hasConflicts = PriceService.checkForDataConflicts();
       
+      // Garantir que o objeto info satisfaz a interface SessionDiagnostics
       setDiagnostics({
         ...info,
         hasDataConflicts: hasConflicts
-      });
+      } as SessionDiagnostics);
       
       setIsLoading(false);
     } catch (e) {
