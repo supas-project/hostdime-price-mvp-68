@@ -29,6 +29,80 @@ export function generateQuoteTemplate(
       <title>Cotação HostDime #${quoteNumber}</title>
       <style>
         ${quoteStyles}
+        /* Estilos adicionais para specs */
+        .specs-list {
+          margin-top: 5px;
+        }
+        .specs-list ul {
+          list-style-type: none;
+          padding-left: 5px;
+          margin: 0;
+        }
+        .specs-list li {
+          font-size: 12px;
+          color: #555;
+          margin-bottom: 3px;
+          display: flex;
+          align-items: center;
+        }
+        .component-name {
+          font-weight: bold;
+        }
+        .component-description {
+          font-size: 13px;
+          color: #666;
+          margin-top: 2px;
+        }
+        .check-icon {
+          color: #FF6600;
+          margin-right: 5px;
+          font-weight: bold;
+        }
+        .datacenter-info, .contract-info {
+          background-color: #f8f8f8;
+          border-left: 4px solid #FF6600;
+          padding: 10px 15px;
+          margin-bottom: 15px;
+          border-radius: 0 4px 4px 0;
+        }
+        .datacenter-info h3, .contract-info h3 {
+          margin-top: 0;
+          color: #FF6600;
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+        }
+        .badge {
+          font-size: 11px;
+          background-color: rgba(255, 102, 0, 0.1);
+          color: #FF6600;
+          padding: 2px 6px;
+          border-radius: 10px;
+          margin-left: 8px;
+          font-weight: normal;
+        }
+        .info-list {
+          list-style-type: none;
+          padding-left: 0;
+          margin: 10px 0 0;
+        }
+        .info-list li {
+          display: flex;
+          align-items: center;
+          font-size: 13px;
+          color: #444;
+          margin-bottom: 6px;
+        }
+        .table th {
+          background-color: #FF6600;
+          color: white;
+          font-weight: bold;
+          padding: 10px;
+        }
+        .table td {
+          padding: 10px;
+          vertical-align: top;
+        }
       </style>
     </head>
     <body>
@@ -65,6 +139,24 @@ export function generateQuoteTemplate(
         <p>Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir 
         uma proposta personalizada para atender às suas necessidades de infraestrutura, com servidores 
         de alta performance e total suporte técnico.</p>
+        
+        <div class="datacenter-info">
+          <h3>Data Center <span class="badge">Localização</span></h3>
+          <p>Data center localizado no Nordeste do Brasil</p>
+          <ul class="info-list">
+            <li><span class="check-icon">✓</span> Certificação Tier III</li>
+            <li><span class="check-icon">✓</span> Green Data Center</li>
+            <li><span class="check-icon">✓</span> Baixa latência regional</li>
+          </ul>
+        </div>
+        
+        <div class="contract-info">
+          <h3>Contrato <span class="badge">Duração</span></h3>
+          <p>Contrato com desconto por fidelidade</p>
+          <ul class="info-list">
+            <li><span class="check-icon">✓</span> Desconto de 15% incluído</li>
+          </ul>
+        </div>
         
         <h2>Componentes do Servidor</h2>
         <table class="table">
