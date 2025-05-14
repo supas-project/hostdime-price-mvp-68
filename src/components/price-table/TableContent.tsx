@@ -1,32 +1,11 @@
-
-import { PriceCategory, PriceItem } from "@/types/pricing";
-import { ComponentOption } from "@/types/component";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { HelpTooltip } from "@/components/help-tooltip";
+import React from 'react';
+import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Tag } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { PriceCategory, PriceItem } from "@/types/pricing";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { getPayBackValue, formatPayBack } from "@/utils/payback-utils";
-
-// Define tag colors for specific tags
-const TAG_COLORS: Record<string, string> = {
-  "Hardware": "bg-blue-500/10 text-blue-500 border-blue-200",
-  "Licenciado": "bg-green-500/10 text-green-500 border-green-200",
-  "Crítico": "bg-red-500/10 text-red-500 border-red-200"
-};
 
 interface TableContentProps {
   category: PriceCategory;
@@ -34,277 +13,110 @@ interface TableContentProps {
   onEdit?: (item: PriceItem) => void;
   displayMode?: "table" | "card";
   sortOrder?: "asc" | "desc" | null;
-  contractDuration?: string;
+  contractDuration?: string; // Added contractDuration as optional prop
 }
 
-export function TableContent({ 
-  category, 
-  onDelete, 
-  onEdit, 
+export function TableContent({
+  category,
+  onDelete,
+  onEdit,
   displayMode = "table",
   sortOrder = null,
-  contractDuration = "0"
+  contractDuration = "0" // Default to no contract
 }: TableContentProps) {
-  if (category.items.length === 0) {
-    return (
-      <TableRow>
-        <TableCell colSpan={onDelete ? 4 : 3} className="text-center py-6 text-muted-foreground">
-          Nenhum item cadastrado nesta categoria
-        </TableCell>
-      </TableRow>
-    );
-  }
-
-  // Apply sorting if needed
-  const sortedItems = [...category.items];
+  // Sort items if needed
+  let items = [...category.items];
+  
   if (sortOrder === "asc") {
-    sortedItems.sort((a, b) => a.price - b.price);
+    items = items.sort((a, b) => a.price - b.price);
   } else if (sortOrder === "desc") {
-    sortedItems.sort((a, b) => b.price - a.price);
+    items = items.sort((a, b) => b.price - a.price);
   }
-
-  // Helper function to get tag styles
-  const getTagStyle = (tag: string): string => {
-    return TAG_COLORS[tag] || ""; 
-  };
-
-  // Helper function to calculate price with PayBack applied
-  const getPriceWithPayBack = (item: PriceItem): { original: number, withPayback: number | null } => {
-    // An item is hardware if it has the Hardware tag or isHardware is true
-    const isHardware = (item.tags && item.tags.includes("Hardware")) || Boolean(item.isHardware);
-    
-    if (isHardware && contractDuration !== "0") {
-      const paybackValue = getPayBackValue(item as ComponentOption, contractDuration);
-      if (paybackValue) {
-        return {
-          original: item.price,
-          withPayback: item.price / paybackValue
-        };
-      }
+  
+  // Calculate price with possible contract discount
+  const calculatePrice = (item: PriceItem): number => {
+    // If this is hardware and we have a contract, apply discount
+    if ((item.isHardware || item.tags?.includes('Hardware')) && contractDuration !== "0") {
+      // Map contract duration to discount percentage
+      const discountMap: Record<string, number> = {
+        "12": 5,
+        "24": 10,
+        "36": 15,
+        "48": 20,
+        "60": 25,
+      };
+      
+      const discount = discountMap[contractDuration] || 0;
+      return item.price * (1 - discount / 100);
     }
-    return { original: item.price, withPayback: null };
+    
+    return item.price;
   };
 
-  // Card display mode
   if (displayMode === "card") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
-        {sortedItems.map(item => {
-          const priceInfo = getPriceWithPayBack(item);
-          
-          return (
-            <Card 
-              key={item.id} 
-              className="overflow-hidden border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md"
-            >
-              <CardContent className="p-0">
-                <div className="p-4 flex flex-col h-full">
-                  <div className="flex justify-between items-start mb-2 flex-wrap gap-2">
-                    <h3 className="font-medium text-base sm:text-lg">{item.name}</h3>
-                    <div className="text-base sm:text-lg font-bold text-primary">
-                      {formatCurrency(item.price)}
-                      
-                      {priceInfo.withPayback !== null && (
-                        <div className="text-xs font-normal text-blue-500 text-right">
-                          {formatCurrency(priceInfo.withPayback)} com PayBack ({formatPayBack(getPayBackValue(item as ComponentOption, contractDuration))})
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 text-xs sm:text-sm text-muted-foreground mb-3">
-                    <div className="flex items-start sm:items-center gap-1 flex-wrap">
-                      <span className="break-words">{item.description}</span>
-                      {item.specs && item.specs.length > 0 && (
-                        <HelpTooltip 
-                          title="Ver detalhes"
-                          description={item.specs.join('\n') || 'Sem especificações adicionais'}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {item.subtype && (
-                      <Badge variant="outline" className="self-start text-xs">
-                        {item.subtype}
-                      </Badge>
-                    )}
-                    
-                    {/* Display all tags */}
-                    {item.tags && item.tags.map(tag => (
-                      <Badge
-                        key={tag}
-                        variant="outline" 
-                        className={`self-start text-xs ${getTagStyle(tag)}`}
-                      >
-                        <Tag className="h-3 w-3 mr-1" />
-                        {tag}
-                      </Badge>
-                    ))}
-                    
-                    {/* Fallback for legacy items */}
-                    {!item.tags && item.isHardware && (
-                      <Badge variant="outline" className="self-start text-xs bg-blue-500/10 text-blue-500 border-blue-200">
-                        <Tag className="h-3 w-3 mr-1" />
-                        Hardware
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {onDelete && (
-                    <div className="flex justify-end gap-1 pt-2 border-t border-border">
-                      {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(item)}>
-                          <Edit className="h-4 w-4 mr-1" />
-                          <span className="text-xs sm:text-sm">Editar</span>
-                        </Button>
-                      )}
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            <span className="text-xs sm:text-sm">Excluir</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir item?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta ação não pode ser desfeita. O item será permanentemente removido.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => onDelete(item.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((item) => (
+          <Card key={item.id} className="border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <h4 className="text-sm font-medium">{item.name}</h4>
+              {item.tags && item.tags.length > 0 && (
+                <div className="flex items-center space-x-1">
+                  {item.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary">{tag}</Badge>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              )}
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{item.description}</p>
+              <div className="flex items-center mt-2">
+                <span className="text-lg font-bold">{formatCurrency(calculatePrice(item))}</span>
+                <span className="text-sm text-muted-foreground ml-1">/mês</span>
+              </div>
+            </CardContent>
+            {onDelete || onEdit ? (
+              <CardFooter className="flex justify-end gap-2">
+                {onEdit && (
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(item.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </CardFooter>
+            ) : null}
+          </Card>
+        ))}
       </div>
     );
   }
 
-  // Default table display mode
   return (
     <>
-      {sortedItems.map(item => {
-        const priceInfo = getPriceWithPayBack(item);
-        
-        return (
-          <TableRow key={item.id} className="group hover:bg-muted/70">
-            <TableCell className="font-medium">
-              <div className="line-clamp-2">{item.name}</div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {item.subtype && (
-                  <Badge variant="outline" className="text-xs">
-                    {item.subtype}
-                  </Badge>
-                )}
-                
-                {/* Display all tags */}
-                {item.tags && item.tags.map(tag => (
-                  <Badge
-                    key={tag}
-                    variant="outline" 
-                    className={`text-xs ${getTagStyle(tag)}`}
-                  >
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-                
-                {/* Fallback for legacy items */}
-                {!item.tags && item.isHardware && (
-                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-200">
-                    <Tag className="h-3 w-3 mr-1" />
-                    Hardware
-                  </Badge>
-                )}
-              </div>
-            </TableCell>
-            
-            <TableCell>
-              <div className="flex items-start sm:items-center gap-1 flex-wrap">
-                <span className="line-clamp-2">{item.description}</span>
-                {item.specs && item.specs.length > 0 && (
-                  <HelpTooltip 
-                    title="Ver detalhes"
-                    description={item.specs.join('\n') || 'Sem especificações adicionais'}
-                  />
-                )}
-              </div>
-            </TableCell>
-            
-            <TableCell className="font-bold text-primary whitespace-nowrap">
-              {formatCurrency(item.price)}
-              
-              {priceInfo.withPayback !== null && (
-                <div className="text-xs font-normal text-blue-500">
-                  {formatCurrency(priceInfo.withPayback)} com PayBack ({formatPayBack(getPayBackValue(item as ComponentOption, contractDuration))})
-                </div>
-              )}
-            </TableCell>
-            
-            {onDelete && (
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {onEdit && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8" 
-                      onClick={() => onEdit(item)}
-                      title="Editar item"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Editar</span>
-                    </Button>
-                  )}
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                        <span className="sr-only">Excluir</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir item?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta ação não pode ser desfeita. O item será permanentemente removido.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => onDelete(item.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </TableCell>
+      {items.map((item) => (
+        <TableRow key={item.id}>
+          <TableCell className="font-medium">{item.name}</TableCell>
+          <TableCell>{item.description}</TableCell>
+          <TableCell>{item.subtype}</TableCell>
+          <TableCell>{formatCurrency(calculatePrice(item))}</TableCell>
+          <TableCell className="flex justify-end gap-2">
+            {onEdit && (
+              <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
             )}
-          </TableRow>
-        );
-      })}
+            {onDelete && (
+              <Button variant="ghost" size="icon" onClick={() => onDelete(item.id)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
+          </TableCell>
+        </TableRow>
+      ))}
     </>
   );
 }

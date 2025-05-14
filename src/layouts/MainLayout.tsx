@@ -14,8 +14,8 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const isOnPriceTablePage = location.pathname === "/price-table";
-
+  const { toast } = useToast(); // Properly destructure toast from useToast
+  
   // Verificar se há uma mensagem de redirecionamento
   useEffect(() => {
     if (location.state && location.state.message) {
@@ -27,7 +27,7 @@ export default function MainLayout() {
       // Limpar a mensagem para evitar que ela seja exibida novamente
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location, navigate]);
+  }, [location, navigate, toast]);
 
   // Páginas disponíveis para todos os usuários autenticados
   const commonNavigationItems = [

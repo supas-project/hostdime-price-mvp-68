@@ -25,6 +25,7 @@ interface PriceTableContentProps {
   onDeleteCategory: (categoryId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (item: PriceItem) => void;
+  contractDuration?: string; // Added contractDuration as an optional prop
 }
 
 export function PriceTableContent({
@@ -40,7 +41,8 @@ export function PriceTableContent({
   filterItems,
   onDeleteCategory,
   onDeleteItem,
-  onEditItem
+  onEditItem,
+  contractDuration
 }: PriceTableContentProps) {
   
   if (Object.keys(priceData).length === 0) {
@@ -91,6 +93,7 @@ export function PriceTableContent({
                         onEdit={isAdmin ? onEditItem : undefined}
                         displayMode="card"
                         sortOrder={sortOrder}
+                        contractDuration={contractDuration}
                       />
                     </div>
                   ) : (
@@ -110,6 +113,7 @@ export function PriceTableContent({
                             onDelete={isAdmin ? onDeleteItem : undefined}
                             onEdit={isAdmin ? onEditItem : undefined}
                             sortOrder={sortOrder}
+                            contractDuration={contractDuration}
                           />
                         </TableBody>
                       </Table>
