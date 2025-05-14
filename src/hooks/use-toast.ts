@@ -110,31 +110,18 @@ const getIconForVariant = (variant?: string) => {
   }
 };
 
+// Global storage for notifications outside of React context
+let toastContextValue: ToastContextType | undefined;
+
 // Simple wrapper around sonner toast that conforms to our project's structure
 function toast(message: string, options?: ToastOptions) {
   const { description, variant, duration, icon, ...rest } = options || {};
   
   const id = Math.random().toString(36).substring(2, 9);
   
-  // Attempt to add to notification history if context is available
-  try {
-    if (typeof window !== 'undefined') {
-      // This is a workaround to allow the toast function to be called outside of React components
-      setTimeout(() => {
-        try {
-          // Access ToastContext if available in the current React tree
-          // This is a best-effort approach that may work in some cases
-          const toastContextValue = (window as any).__TOAST_CONTEXT_VALUE__;
-          if (toastContextValue && typeof toastContextValue.addNotification === 'function') {
-            toastContextValue.addNotification(id, message, options);
-          }
-        } catch (innerError) {
-          // Silently fail for non-React environments
-        }
-      }, 0);
-    }
-  } catch (e) {
-    // Silently fail if not in a React component context
+  // Use the global toast context if available
+  if (toastContextValue) {
+    toastContextValue.addNotification(id, message, options);
   }
   
   // Get default icon based on variant
@@ -205,10 +192,8 @@ function useToast() {
     throw new Error("useToast must be used within a ToastProvider");
   }
   
-  // Store the context in a global variable to allow access from outside React components
-  if (typeof window !== 'undefined') {
-    (window as any).__TOAST_CONTEXT_VALUE__ = context;
-  }
+  // Store the context in the global variable for non-component access
+  toastContextValue = context;
   
   return {
     toast,

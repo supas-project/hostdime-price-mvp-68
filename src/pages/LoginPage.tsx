@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Lock, Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 
 const formSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
