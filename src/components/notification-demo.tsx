@@ -38,7 +38,8 @@ export function NotificationDemo() {
   };
 
   const showCustomToast = () => {
-    toast("Processando seu pedido", {
+    // Fix: Using the toast.info method instead of calling toast directly as a function
+    toast.info("Processando seu pedido", {
       description: "Isso pode levar alguns instantes...",
       duration: 3000
     });
