@@ -2,11 +2,13 @@
 import { ComponentOption } from "@/types/component";
 import { generateQuotePDF } from "./quote-export";
 import { toast } from "sonner"; 
+import { QuoteVariables } from "./pdf/dynamic-variables";
 
 export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number,
-  openInNewTab: boolean = false
+  openInNewTab: boolean = false,
+  quoteVariables?: Partial<QuoteVariables>
 ): Promise<Uint8Array> {
   try {
     // Mostrar toast de processamento
@@ -21,7 +23,8 @@ export async function generateQuoteFromTemplate(
       [], 
       margin,
       {}, // Adicionando connectivityItems vazio
-      openInNewTab // Passamos o parâmetro para abrir em nova aba
+      openInNewTab, // Passamos o parâmetro para abrir em nova aba
+      quoteVariables // Passando as variáveis dinâmicas
     );
     
     return pdfBytes;

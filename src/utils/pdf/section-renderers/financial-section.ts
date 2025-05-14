@@ -1,9 +1,10 @@
-import { PDFDocument, PDFFont } from "pdf-lib";
+
+import { PDFDocument, PDFPage, PDFFont } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../colors";
-import { checkAndCreateNewPage, drawHighlightBox } from "../drawing-utils";
-import { formatCurrency } from "@/lib/utils";
+import { checkAndCreateNewPage, drawHighlightBox, drawSectionHeader, drawTableRow } from "../drawing-utils";
 import { PageContext } from "../types";
+import { calculateTotalValue, formatCurrency } from "../dynamic-variables";
 
 export function renderFinancialSection(
   pdfDoc: PDFDocument,
@@ -19,87 +20,125 @@ export function renderFinancialSection(
   helveticaBold: PDFFont,
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
 ): PageContext {
-  let { page, y: currentY } = pageContext;
-  
-  // Check if we need to add a new page
-  const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
-  page = result.page;
-  currentY = result.y;
-  
-  // Function to calculate subtotal
-  const calculateSubtotal = (): number => {
-    let subtotal = 0;
-    
-    // Add prices of selected components
-    for (const key in selectedComponents) {
-      if (selectedComponents[key]) {
-        subtotal += selectedComponents[key].price;
-      }
-    }
-    
-    // Add prices of storage items
-    storageItems.internal.forEach(item => subtotal += item.price);
-    storageItems.external.forEach(item => subtotal += item.price);
-    
-    // Add prices of custom services
-    customServices.forEach(service => {
-      const quantity = service.metadata?.quantity || 1;
-      subtotal += service.price * quantity;
-    });
+  let { page, y } = pageContext;
 
-    // Add prices of connectivity items
-    for (const key in connectivityItems) {
-      if (connectivityItems[key]) {
-        subtotal += connectivityItems[key].option.price * connectivityItems[key].quantity;
-      }
+  // Verify if we need a new page - need at least 200 points for financial summary
+  const context = checkAndCreateNewPage(
+    pdfDoc, 
+    page, 
+    y, 
+    200, 
+    marginX, 
+    50, 
+    helvetica
+  );
+  
+  page = context.page;
+  y = context.y;
+
+  // Draw section header
+  y = drawSectionHeader(
+    page, 
+    "Resumo Financeiro", 
+    marginX, 
+    y, 
+    300, 
+    helveticaBold
+  );
+  
+  y -= 20;
+
+  // Calcular valores totais
+  const { subtotal, total } = calculateTotalValue(
+    selectedComponents,
+    storageItems,
+    customServices,
+    connectivityItems,
+    margin
+  );
+
+  // Determine payment condition from contract
+  let paymentCondition = "Pagamento Mensal";
+  if (selectedComponents.contract) {
+    if (selectedComponents.contract.name.toLowerCase().includes("anual")) {
+      paymentCondition = "Pagamento Anual";
+    } else if (selectedComponents.contract.name.toLowerCase().includes("semestral")) {
+      paymentCondition = "Pagamento Semestral";
+    } else if (selectedComponents.contract.name.toLowerCase().includes("trimestral")) {
+      paymentCondition = "Pagamento Trimestral";
     }
-    
-    return subtotal;
-  };
-  
-  // Function to calculate total with margin
-  const calculateTotalWithMargin = (subtotal: number, margin: number): number => {
-    const marginValue = subtotal * (margin / 100);
-    return subtotal + marginValue;
-  };
-  
-  // Calculate totals
-  const subtotal = calculateSubtotal();
-  const totalWithMargin = calculateTotalWithMargin(subtotal, margin);
-  
-  // Add financial summary section
-  currentY -= 20;
-  drawHighlightBox(page, marginX - 10, currentY + 10, width - (marginX * 2) + 20, 80);
-  
-  page.drawText("4. Resumo Financeiro", {
-    x: marginX,
-    y: currentY,
+  }
+
+  // Draw financial information box
+  drawHighlightBox(
+    page, 
+    marginX, 
+    y, 
+    width - (marginX * 2), 
+    120,
+    COLOR.HIGHLIGHT,
+    COLOR.PRIMARY_LIGHT
+  );
+
+  // Title
+  page.drawText("Condições Comerciais", {
+    x: marginX + 10,
+    y: y - 20,
     size: 14,
     font: helveticaBold,
     color: COLOR.PRIMARY
   });
-  
-  currentY -= 25;
-  
-  // Display subtotal
-  page.drawText(`Subtotal: ${formatCurrency(subtotal)}`, {
-    x: marginX,
-    y: currentY,
-    size: 12,
-    font: helvetica,
-    color: COLOR.TEXT
-  });
-  
-  currentY -= 20;
-  
-  // Display total with margin
-  page.drawText(`Total (com margem de ${margin}%): ${formatCurrency(totalWithMargin)}`, {
-    x: marginX,
-    y: currentY,
-    size: 12,
+
+  // Payment method
+  page.drawText("Forma de Pagamento:", {
+    x: marginX + 10,
+    y: y - 45,
+    size: 10,
     font: helveticaBold,
     color: COLOR.TEXT
   });
   
-  return { page, y: currentY - 30 };
+  page.drawText(paymentCondition, {
+    x: marginX + 150,
+    y: y - 45,
+    size: 10,
+    font: helvetica,
+    color: COLOR.TEXT
+  });
+
+  // Subtotal
+  page.drawText("Subtotal:", {
+    x: marginX + 10,
+    y: y - 70,
+    size: 10,
+    font: helveticaBold,
+    color: COLOR.TEXT
+  });
+  
+  page.drawText(formatCurrency(subtotal), {
+    x: marginX + 150,
+    y: y - 70,
+    size: 10,
+    font: helvetica,
+    color: COLOR.TEXT
+  });
+
+  // Total
+  page.drawText("Total Mensal:", {
+    x: marginX + 10,
+    y: y - 95,
+    size: 12,
+    font: helveticaBold,
+    color: COLOR.PRIMARY
+  });
+  
+  page.drawText(formatCurrency(total), {
+    x: marginX + 150,
+    y: y - 95,
+    size: 12,
+    font: helveticaBold,
+    color: COLOR.PRIMARY
+  });
+  
+  return { page, y: y - 130 };
 }

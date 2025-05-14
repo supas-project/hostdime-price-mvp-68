@@ -2,9 +2,9 @@
 import { rgb, RGB } from 'pdf-lib';
 import { PdfColorScheme } from './types';
 
-// Updated color palette to match the screenshot design
+// Updated color palette to match HostDime's brand
 export const COLOR: PdfColorScheme = {
-  PRIMARY: rgb(0.92, 0.52, 0.22),      // HostDime Orange (#eb8538)
+  PRIMARY: rgb(0.97, 0.45, 0.09),      // HostDime Orange (#F97316)
   SECONDARY: rgb(0.10, 0.12, 0.17),    // Dark Blue/Black (#1A1F2C)
   PRIMARY_LIGHT: rgb(0.99, 0.70, 0.45), // Light Orange 
   TEXT: rgb(0.15, 0.17, 0.21),         // Text color (#262A36)

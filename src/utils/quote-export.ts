@@ -2,6 +2,7 @@
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 import { buildQuotePDF, downloadPDF, openPDFInNewTab } from "./pdf/quote-builder";
+import { QuoteVariables } from "./pdf/dynamic-variables";
 
 export const generateQuotePDF = async (
   selectedComponents: { [key: string]: ComponentOption },
@@ -9,7 +10,8 @@ export const generateQuotePDF = async (
   customServices: ComponentOption[],
   margin: number,
   connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
-  openInNewTab: boolean = false
+  openInNewTab: boolean = false,
+  quoteVariables?: Partial<QuoteVariables>
 ) => {
   try {
     // Notificar o usuário que o processo começou
@@ -17,13 +19,14 @@ export const generateQuotePDF = async (
       description: "Aguarde enquanto preparamos seu documento"
     });
     
-    // Gerar o PDF
+    // Gerar o PDF com as variáveis dinâmicas
     const pdfBytes = await buildQuotePDF(
       selectedComponents,
       storageItems,
       customServices,
       margin,
-      connectivityItems
+      connectivityItems,
+      quoteVariables
     );
     
     // Gerar nome do arquivo com número aleatório e data

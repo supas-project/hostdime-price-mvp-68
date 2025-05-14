@@ -10,6 +10,7 @@ import { renderServicesSection } from './section-renderers/services-section';
 import { renderFinancialSection } from './section-renderers/financial-section';
 import { renderBenefitsSection } from './section-renderers/benefits-section';
 import { renderTermsSection } from './section-renderers/terms-section';
+import { QuoteVariables } from './dynamic-variables';
 
 // Função para sanitizar texto, removendo caracteres problemáticos
 function sanitizeText(text: string): string {
@@ -39,7 +40,8 @@ export async function buildQuotePDF(
   storageItems: { internal: ComponentOption[]; external: ComponentOption[] },
   customServices: ComponentOption[],
   margin: number,
-  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {}
+  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } } = {},
+  quoteVariables?: Partial<QuoteVariables>
 ): Promise<Uint8Array> {
   try {
     toast.info("Gerando PDF...", {
@@ -71,69 +73,70 @@ export async function buildQuotePDF(
       }
     }
     
+    // Criar documento PDF
     const pdfDoc = await PDFDocument.create();
     
-    // Load the standardized fonts - adicionando fontes mais modernas
+    // Carregar fontes
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
     const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
     
-    // Set up the first page of the PDF
-    let page = pdfDoc.addPage([595.276, 841.890]); // A4 dimensions
+    // Configurar primeira página do PDF
+    let page = pdfDoc.addPage([595.276, 841.890]); // Dimensões A4
     const { width, height } = page.getSize();
     
-    // Page margins
+    // Definir margens
     const marginX = 50;
     const marginRight = width - marginX;
     
-    // 1. Header Section - redesigned
+    // 1. Seção de cabeçalho - redesenhada
     const { currentY, quoteNumber } = await renderHeaderSection(
-      pdfDoc, page, width, height, helvetica, helveticaBold, marginX
+      pdfDoc, page, width, height, helvetica, helveticaBold, marginX, quoteVariables
     );
     
-    // 2. Summary Section - with modern styling
+    // 2. Seção de resumo - com estilo moderno
     let newY = renderSummarySection(
       page, currentY, width, marginX, helveticaBold, helvetica
     );
     
-    // 3. Components Section
+    // 3. Seção de componentes
     let pageContext = renderComponentsSection(
       pdfDoc, { page, y: newY }, sanitizedComponents, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
-    // 4. Storage Section
+    // 4. Seção de armazenamento
     pageContext = renderStorageSection(
       pdfDoc, pageContext, sanitizedStorageItems, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
-    // 5. Services Section
+    // 5. Seção de serviços
     pageContext = renderServicesSection(
       pdfDoc, pageContext, sanitizedCustomServices, width, marginX, 
       marginRight, helvetica, helveticaBold, helveticaOblique
     );
     
-    // 6. Financial Summary
+    // 6. Resumo financeiro
     pageContext = renderFinancialSection(
       pdfDoc, pageContext, sanitizedComponents, sanitizedStorageItems, sanitizedCustomServices, 
       margin, width, marginX, marginRight, helvetica, helveticaBold,
       sanitizedConnectivityItems
     );
     
-    // 7. Benefits Section
+    // 7. Seção de benefícios
     pageContext = renderBenefitsSection(
       pdfDoc, pageContext, marginX, helvetica, helveticaBold
     );
     
-    // 8. Terms and Conditions
+    // 8. Termos e condições
     renderTermsSection(
-      pdfDoc, pageContext, marginX, helvetica, helveticaBold
+      pdfDoc, pageContext, marginX, helvetica, helveticaBold, quoteVariables?.observacoes
     );
     
-    // Finalize PDF and return bytes
+    // Finalizar e retornar bytes do PDF
     return await pdfDoc.save();
     
   } catch (error) {

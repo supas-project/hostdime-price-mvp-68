@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader } from "lucide-react";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderDetails } from "./order-details";
 import { generateQuotePDF } from "@/utils/quote-export";
@@ -29,6 +29,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -45,6 +48,14 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [pdfPreviewOption, setPdfPreviewOption] = useState("preview");
   const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
   const [pdfError, setPdfError] = useState("");
+  
+  // Estado para variáveis dinâmicas do PDF
+  const [quoteVariables, setQuoteVariables] = useState<QuoteVariables>({
+    responsavelComercial: "Equipe HostDime",
+    clientName: "Cliente",
+    dataValidade: "30 dias",
+    observacoes: ""
+  });
   
   const handleSaveQuote = async () => {
     setIsSaving(true);
@@ -80,7 +91,8 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
         customServices,
         profitMargin,
         connectivityItems,
-        pdfPreviewOption === "preview" // Passar true para abrir em nova aba, false para download direto
+        pdfPreviewOption === "preview", // Passar true para abrir em nova aba, false para download direto
+        quoteVariables // Passar variáveis dinâmicas
       );
       
     } catch (error) {
@@ -117,6 +129,14 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     }
   };
   
+  // Manipuladores para atualizar variáveis dinâmicas
+  const handleVariableChange = (key: keyof QuoteVariables, value: string) => {
+    setQuoteVariables(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+  
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -130,36 +150,100 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
               <Settings className="h-4 w-4" /> Configurações
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Configurações de Margem</DialogTitle>
+              <DialogTitle>Configurações da Cotação</DialogTitle>
               <DialogDescription>
-                Ajuste a margem de lucro para esta cotação.
+                Ajuste a margem de lucro e as informações que aparecerão no PDF.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <span>Margem de lucro:</span>
-                <div className="flex items-center gap-2">
-                  <Input 
-                    type="number"
-                    value={profitMargin}
-                    onChange={(e) => setProfitMargin(Number(e.target.value))}
-                    className="w-20 text-right"
-                    min={0}
-                    max={100}
+            <div className="space-y-6 py-4">
+              <div className="space-y-4">
+                <div className="font-medium text-sm">Margem de lucro</div>
+                <div className="flex items-center justify-between">
+                  <span>Margem:</span>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="number"
+                      value={profitMargin}
+                      onChange={(e) => setProfitMargin(Number(e.target.value))}
+                      className="w-20 text-right"
+                      min={0}
+                      max={100}
+                    />
+                    <span>%</span>
+                  </div>
+                </div>
+                <Slider 
+                  value={[profitMargin]} 
+                  onValueChange={(values) => setProfitMargin(values[0])}
+                  max={100}
+                  step={1}
+                  className="my-2"
+                />
+              </div>
+              
+              <div className="space-y-4 pt-2 border-t">
+                <div className="font-medium text-sm">Informações para o PDF</div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="responsavel">
+                    <div className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5" />
+                      <span>Responsável Comercial</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="responsavel"
+                    value={quoteVariables.responsavelComercial}
+                    onChange={(e) => handleVariableChange('responsavelComercial', e.target.value)}
+                    placeholder="Nome do responsável"
                   />
-                  <span>%</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cliente">
+                    <div className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5" />
+                      <span>Nome do Cliente</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="cliente"
+                    value={quoteVariables.clientName}
+                    onChange={(e) => handleVariableChange('clientName', e.target.value)}
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="validade">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>Validade da Proposta</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="validade"
+                    value={quoteVariables.dataValidade}
+                    onChange={(e) => handleVariableChange('dataValidade', e.target.value)}
+                    placeholder="Ex: 30 dias"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={quoteVariables.observacoes}
+                    onChange={(e) => handleVariableChange('observacoes', e.target.value)}
+                    placeholder="Observações adicionais para a proposta"
+                    rows={3}
+                  />
                 </div>
               </div>
-              <Slider 
-                value={[profitMargin]} 
-                onValueChange={(values) => setProfitMargin(values[0])}
-                max={100}
-                step={1}
-              />
               
-              <div className="mt-6 border-t pt-4">
+              <div className="border-t pt-4">
                 <h4 className="text-sm font-medium mb-2">Opções de exportação PDF:</h4>
                 <Tabs defaultValue="preview" value={pdfPreviewOption} onValueChange={setPdfPreviewOption}>
                   <TabsList className="grid w-full grid-cols-2">
@@ -168,10 +252,6 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
                   </TabsList>
                 </Tabs>
               </div>
-              
-              <p className="text-xs text-muted-foreground mt-4">
-                Nota: A margem é usada para cálculos internos e não será mostrada no PDF.
-              </p>
             </div>
           </DialogContent>
         </Dialog>
