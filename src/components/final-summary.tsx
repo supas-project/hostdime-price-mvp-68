@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
@@ -65,12 +64,10 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       // Simulate a save operation
       await new Promise(resolve => setTimeout(resolve, 800));
       toast({
-        title: "Cotação salva",
         description: "Sua cotação foi salva com sucesso."
       });
     } catch (error) {
       toast({
-        title: "Erro ao salvar cotação",
         description: "Não foi possível salvar sua cotação. Tente novamente.",
         variant: "destructive"
       });
@@ -86,7 +83,6 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     try {
       // Show toast for PDF generation start
       toast({
-        title: "Preparando PDF",
         description: "Aguarde enquanto geramos seu documento..."
       });
       
@@ -110,7 +106,6 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       setShowPdfErrorDialog(true);
       
       toast({
-        title: "Erro na exportação",
         description: "Não foi possível gerar o PDF. Clique para mais detalhes.",
         variant: "destructive"
       });
@@ -126,13 +121,11 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
-        title: "Pedido finalizado",
         description: "Obrigado por escolher a HostDime! Em breve entraremos em contato.",
         variant: "success"
       });
     } catch (error) {
       toast({
-        title: "Erro ao finalizar pedido",
         description: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
         variant: "destructive"
       });

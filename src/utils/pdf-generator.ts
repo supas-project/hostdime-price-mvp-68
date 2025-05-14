@@ -13,7 +13,6 @@ export async function generateQuoteFromTemplate(
   try {
     // Show processing toast
     toast({
-      title: "Gerando PDF...",
       description: "Preparando os dados para visualização",
       duration: 3000,
     });
@@ -47,7 +46,6 @@ export async function generateQuoteFromTemplate(
     }
     
     toast({
-      title: "Falha na geração do PDF",
       description,
       variant: "destructive",
       duration: 5000,

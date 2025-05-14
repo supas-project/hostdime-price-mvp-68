@@ -19,9 +19,9 @@ export const embedAndDrawImage = async (
       // Try as PNG first
       image = await pdfDoc.embedPng(imageBytes);
     } catch (error) {
-      // Fall back to JPEG if PNG fails
+      // Fall back to JPG if PNG fails
       try {
-        image = await pdfDoc.embedJpeg(imageBytes);
+        image = await pdfDoc.embedJpg(imageBytes);
       } catch (jpgError) {
         throw new Error('Failed to embed image: Unsupported format');
       }

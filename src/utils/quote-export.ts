@@ -16,7 +16,6 @@ export const generateQuotePDF = async (
   try {
     // Notify user that process has started
     toast({
-      title: "Gerando PDF...",
       description: "Aguarde enquanto preparamos seu documento",
       duration: 3000,
     });
@@ -52,21 +51,18 @@ export const generateQuotePDF = async (
     
     if (errorMessage.includes("encode") || errorMessage.includes("0x")) {
       toast({
-        title: "Erro de codificação no PDF",
         description: "Foram encontrados caracteres especiais incompatíveis. Verifique os dados inseridos.",
         variant: "destructive",
         duration: 5000,
       });
     } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
       toast({
-        title: "Erro ao carregar imagens",
         description: "Não foi possível incluir as imagens no documento.",
         variant: "destructive",
         duration: 5000,
       });
     } else {
       toast({
-        title: "Falha ao gerar PDF",
         description: "Tente novamente mais tarde ou contate o suporte técnico.",
         variant: "destructive",
         duration: 5000,
