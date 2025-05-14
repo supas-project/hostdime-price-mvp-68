@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useDataActions } from "./useDataActions";
 
 /**
@@ -9,6 +9,7 @@ import { useDataActions } from "./useDataActions";
 export function usePayBackActions(setPriceData: (data: any) => void) {
   const [selectedContract, setSelectedContract] = useState("0"); // Default: sem contrato
   const { handleExportData } = useDataActions(setPriceData);
+  const { toast } = useToast();
   
   // Função para aplicar o desconto de PayBack com base no contrato selecionado
   const applyPayBackDiscount = (price: number, isHardware: boolean = false) => {

@@ -13,6 +13,7 @@ export function usePriceTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "card">("table");
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [contractDuration, setContractDuration] = useState("0"); // Add contractDuration state
   
   const { toast } = useToast();
 
@@ -119,6 +120,8 @@ export function usePriceTable() {
     collapsedCategories,
     toggleCategoryCollapse,
     filterItems,
-    loadPriceData
+    loadPriceData,
+    contractDuration,
+    setContractDuration
   };
 }

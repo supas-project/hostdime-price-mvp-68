@@ -8,6 +8,9 @@ type ToastOptions = {
     label: string;
     onClick: () => void;
   };
+  icon?: React.ReactNode;
+  important?: boolean;
+  dismissible?: boolean;
 };
 
 /**

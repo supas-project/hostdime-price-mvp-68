@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Home, FileText, Server, Menu, X, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { NotificationCenter } from "@/components/notification-center";
 
