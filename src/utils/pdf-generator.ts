@@ -1,6 +1,6 @@
 
 import { ComponentOption } from "@/types/component";
-import { generateQuotePDF } from "./quote-export";
+import { generateQuotePDF, generateQuoteWebView } from "./quote-export";
 import { toast } from "sonner"; 
 import { QuoteVariables } from "./pdf/dynamic-variables";
 import { sanitizeText } from "./pdf/drawing-utils";
@@ -9,8 +9,9 @@ export async function generateQuoteFromTemplate(
   selectedComponents: { [key: string]: ComponentOption },
   margin: number,
   openInNewTab: boolean = true,
-  quoteVariables?: Partial<QuoteVariables>
-): Promise<Uint8Array> {
+  quoteVariables?: Partial<QuoteVariables>,
+  format: 'pdf' | 'web' = 'pdf'
+): Promise<Uint8Array | void> {
   try {
     // Show processing toast
     toast("Preparando os dados para visualização");
@@ -46,20 +47,34 @@ export async function generateQuoteFromTemplate(
       emailContato: sanitizeText(quoteVariables.emailContato || '')
     } : undefined;
     
-    // Generate PDF with all required parameters
-    const pdfBytes = await generateQuotePDF(
-      sanitizedComponents, 
-      { internal: [], external: [] }, 
-      [], 
-      margin,
-      {}, // Empty connectivity items
-      openInNewTab,
-      sanitizedVariables
-    );
-    
-    return pdfBytes;
+    // Choose between PDF and Web view based on format parameter
+    if (format === 'web') {
+      // Generate web view
+      generateQuoteWebView(
+        sanitizedComponents, 
+        { internal: [], external: [] }, 
+        [], 
+        margin,
+        {}, // Empty connectivity items
+        sanitizedVariables
+      );
+      return;
+    } else {
+      // Generate PDF (default behavior)
+      const pdfBytes = await generateQuotePDF(
+        sanitizedComponents, 
+        { internal: [], external: [] }, 
+        [], 
+        margin,
+        {}, // Empty connectivity items
+        openInNewTab,
+        sanitizedVariables
+      );
+      
+      return pdfBytes;
+    }
   } catch (error) {
-    console.error("Erro ao gerar PDF:", error);
+    console.error("Erro ao gerar documento:", error);
     
     // Enhanced error messaging with more specific information
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -73,12 +88,14 @@ export async function generateQuoteFromTemplate(
       message = "Problema ao renderizar o texto no documento";
     } else if (errorMessage.includes("image") || errorMessage.includes("logo")) {
       message = "Não foi possível carregar imagens no documento";
+    } else if (errorMessage.includes("popup") || errorMessage.includes("blocked")) {
+      message = "O navegador bloqueou a abertura da nova aba";
     }
     
-    toast.error("Falha na geração do PDF", {
+    toast.error("Falha na geração do documento", {
       description: message
     });
     
-    throw new Error("Falha na geração do PDF: " + errorMessage);
+    throw new Error("Falha na geração do documento: " + errorMessage);
   }
 }

@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone } from "lucide-react";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { OrderDetails } from "./order-details";
-import { generateQuotePDF } from "@/utils/quote-export";
+import { generateQuotePDF, generateQuoteWebView } from "@/utils/quote-export";
 import { useWizard } from "@/contexts/WizardContext";
 import { 
   Dialog,
@@ -46,6 +47,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
   const [pdfPreviewOption, setPdfPreviewOption] = useState("preview");
   const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
   const [pdfError, setPdfError] = useState("");
+  const [documentFormat, setDocumentFormat] = useState<"pdf" | "web">("web");
   
   // Enhanced state for dynamic PDF variables with HostDime branding defaults
   const [quoteVariables, setQuoteVariables] = useState<QuoteVariables>({
@@ -76,19 +78,31 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
     setPdfError("");
     
     try {
-      // Show toast for PDF generation start
+      // Show toast for document generation start
       toast("Aguarde enquanto geramos seu documento...");
       
-      // Generate PDF with all required parameters and HostDime branding
-      await generateQuotePDF(
-        selectedComponents,
-        storageItems,
-        customServices,
-        profitMargin,
-        connectivityItems,
-        pdfPreviewOption === "preview", // Use preview option to determine opening mode
-        quoteVariables // Pass dynamic variables
-      );
+      if (documentFormat === "web") {
+        // Generate HTML web view in new tab
+        generateQuoteWebView(
+          selectedComponents,
+          storageItems,
+          customServices,
+          profitMargin,
+          connectivityItems,
+          quoteVariables
+        );
+      } else {
+        // Generate PDF (old behavior)
+        await generateQuotePDF(
+          selectedComponents,
+          storageItems,
+          customServices,
+          profitMargin,
+          connectivityItems,
+          pdfPreviewOption === "preview", // Use preview option to determine opening mode
+          quoteVariables
+        );
+      }
       
     } catch (error) {
       console.error("Erro detalhado:", error);
@@ -98,7 +112,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       setPdfError(errorMessage);
       setShowPdfErrorDialog(true);
       
-      toast.error("Não foi possível gerar o PDF. Clique para mais detalhes.");
+      toast.error("Não foi possível gerar o documento. Clique para mais detalhes.");
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -125,6 +139,30 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       [key]: value
     }));
   };
+
+  // Label for the export button based on format
+  const getExportButtonLabel = () => {
+    if (isGeneratingPDF) {
+      return "Gerando documento...";
+    }
+    
+    if (documentFormat === "web") {
+      return "Visualizar Cotação";
+    } else {
+      return pdfPreviewOption === "preview" ? "Visualizar PDF" : "Exportar PDF";
+    }
+  };
+  
+  // Icon for the export button
+  const getExportButtonIcon = () => {
+    if (isGeneratingPDF) {
+      return <Loader className="h-4 w-4 animate-spin" />;
+    }
+    
+    return documentFormat === "web" ? 
+      <Globe className="h-4 w-4" /> : 
+      <FileDown className="h-4 w-4" />;
+  };
   
   return (
     <div className="space-y-8 animate-fade-in">
@@ -143,7 +181,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
             <DialogHeader>
               <DialogTitle>Configurações da Cotação</DialogTitle>
               <DialogDescription>
-                Ajuste a margem de lucro e as informações que aparecerão no PDF.
+                Ajuste a margem de lucro e as informações que aparecerão no documento.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 py-4">
@@ -173,7 +211,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
               </div>
               
               <div className="space-y-4 pt-2 border-t">
-                <div className="font-medium text-sm">Informações para o PDF</div>
+                <div className="font-medium text-sm">Informações para o documento</div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="responsavel">
@@ -263,13 +301,25 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
               </div>
               
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-2">Opções de exportação PDF:</h4>
-                <Tabs defaultValue="preview" value={pdfPreviewOption} onValueChange={setPdfPreviewOption}>
+                <h4 className="text-sm font-medium mb-2">Formato do documento:</h4>
+                <Tabs defaultValue="web" value={documentFormat} onValueChange={(value) => setDocumentFormat(value as "pdf" | "web")}>
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="preview">Visualizar em Nova Aba</TabsTrigger>
-                    <TabsTrigger value="download">Download Direto</TabsTrigger>
+                    <TabsTrigger value="web">Visualização Web</TabsTrigger>
+                    <TabsTrigger value="pdf">PDF</TabsTrigger>
                   </TabsList>
                 </Tabs>
+                
+                {documentFormat === "pdf" && (
+                  <div className="mt-3">
+                    <h4 className="text-sm font-medium mb-2">Opções de PDF:</h4>
+                    <Tabs defaultValue="preview" value={pdfPreviewOption} onValueChange={setPdfPreviewOption}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="preview">Visualizar em Nova Aba</TabsTrigger>
+                        <TabsTrigger value="download">Download Direto</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                )}
               </div>
             </div>
           </DialogContent>
@@ -286,15 +336,16 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       <AlertDialog open={showPdfErrorDialog} onOpenChange={setShowPdfErrorDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Erro na geração do PDF</AlertDialogTitle>
+            <AlertDialogTitle>Erro na geração do documento</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="text-sm text-destructive mt-2 mb-3">
-                Ocorreu um erro ao gerar o PDF. Isso pode ser causado por:
+                Ocorreu um erro ao gerar o documento. Isso pode ser causado por:
               </div>
               <ul className="list-disc pl-5 mb-3 space-y-1 text-sm">
                 <li>Caracteres especiais incompatíveis</li>
                 <li>Problemas de formatação nos dados</li>
                 <li>Falha ao renderizar elementos gráficos</li>
+                <li>Bloqueio de popups pelo navegador</li>
               </ul>
               
               <div className="bg-muted p-2 rounded text-xs font-mono my-2 max-h-24 overflow-auto">
@@ -345,18 +396,18 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
           )}
         </Button>
         <Button 
-          variant="outline" 
+          variant={documentFormat === "web" ? "default" : "outline"}
           className="flex-1 flex items-center justify-center gap-2" 
           onClick={handleExportPDF}
           disabled={isGeneratingPDF || isSaving || isFinishing}
         >
           {isGeneratingPDF ? (
             <>
-              <Loader className="h-4 w-4 animate-spin" /> Gerando PDF...
+              <Loader className="h-4 w-4 animate-spin" /> Gerando documento...
             </>
           ) : (
             <>
-              <FileDown className="h-4 w-4" /> {pdfPreviewOption === "preview" ? "Visualizar PDF" : "Exportar PDF"}
+              {getExportButtonIcon()} {getExportButtonLabel()}
             </>
           )}
         </Button>
@@ -364,7 +415,7 @@ export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProp
       
       <div className="text-center">
         <Button variant="link" onClick={onRestart}>
-          Recomeçar configuraç��o
+          Recomeçar configuração
         </Button>
       </div>
     </div>
