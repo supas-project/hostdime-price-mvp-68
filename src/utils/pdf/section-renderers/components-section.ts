@@ -19,28 +19,31 @@ export function renderComponentsSection(
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
-  // Hardware Configuration Section
+  // Seção de configuração de hardware com estilo atualizado
   currentY = drawSectionHeader(
     page, 
     "1. Configuracao de Hardware", 
     marginX, 
     currentY, 
     300,
-    helveticaBold
+    helveticaBold,
+    16,
+    COLOR.PRIMARY,
+    true // Usar o novo estilo destacado
   );
   
-  // Regular Components Section
+  // Seção de componentes regulares
   let rowAlt = false;
   Object.values(selectedComponents).forEach(component => {
-    // Skip storage components as they will be handled separately
+    // Ignorar componentes de armazenamento, serão tratados separadamente
     if (component.type === "Armazenamento") return;
     
-    // Check if we need a new page
+    // Verificar se precisamos de uma nova página
     const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
     page = result.page;
     currentY = result.y;
     
-    // Draw alternating row background
+    // Desenhar fundo de linha alternado
     drawTableRow(page, marginX - 5, currentY + 5, width - (marginX * 2) + 10, 20 + 
       (component.description ? 18 : 0) + 
       (component.specs ? component.specs.length * 14 + 5 : 0) + 
@@ -49,7 +52,7 @@ export function renderComponentsSection(
     );
     rowAlt = !rowAlt;
     
-    // Component name and price
+    // Nome do componente e preço
     page.drawText(component.name, {
       x: marginX,
       y: currentY,
@@ -79,7 +82,7 @@ export function renderComponentsSection(
     
     currentY -= 18;
     
-    // Description
+    // Descrição do componente
     if (component.description) {
       page.drawText(component.description, {
         x: marginX + 15,
@@ -91,7 +94,7 @@ export function renderComponentsSection(
       currentY -= 15;
     }
     
-    // Specifications
+    // Especificações
     if (component.specs) {
       component.specs.forEach(spec => {
         page.drawText(`* ${spec}`, {
@@ -105,7 +108,7 @@ export function renderComponentsSection(
       });
     }
     
-    // If component has features, highlight them
+    // Se o componente tem recursos, destaque-os com o novo estilo
     if (component.metadata?.features && component.metadata.features.length > 0) {
       currentY -= 5;
       component.metadata.features.forEach(feature => {

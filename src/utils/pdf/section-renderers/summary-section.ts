@@ -11,7 +11,7 @@ export function renderSummarySection(
   helveticaBold: PDFFont,
   helvetica: PDFFont
 ): number {
-  // Executive Summary
+  // Resumo Executivo no novo estilo
   currentY -= 20;
   drawSeparator(page, marginX, currentY, width - (marginX * 2));
   currentY -= 25;
@@ -21,15 +21,15 @@ export function renderSummarySection(
     y: currentY,
     size: 14,
     font: helveticaBold,
-    color: COLOR.SECONDARY
+    color: COLOR.PRIMARY
   });
   
   currentY -= 25;
   
-  // Fixed text without special characters
+  // Texto simplificado sem caracteres especiais
   const summaryText = "Agradecemos seu interesse nos servicos da HostDime Brasil. Apresentamos a seguir uma proposta de servidor dedicado personalizada de acordo com suas necessidades especificas. Nossa equipe esta a disposicao para quaisquer esclarecimentos adicionais.";
   
-  // Break summary into lines
+  // Quebrar o resumo em linhas
   const maxWidth = width - (marginX * 2);
   const words = summaryText.split(' ');
   let line = '';
@@ -40,7 +40,7 @@ export function renderSummarySection(
     const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
     
     if (testWidth > maxWidth) {
-      // Draw the current line and start a new one
+      // Desenhar a linha atual e iniciar uma nova
       page.drawText(line, {
         x: marginX,
         y: currentY - (lineCount * 15),
@@ -56,7 +56,7 @@ export function renderSummarySection(
     }
   }
   
-  // Draw remaining text
+  // Desenhar o texto restante
   if (line) {
     page.drawText(line, {
       x: marginX,

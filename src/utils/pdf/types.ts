@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { PDFPage, PDFFont, RGB } from "pdf-lib";
 
@@ -7,6 +6,7 @@ export interface GroupedDisk {
   quantity: number;
 }
 
+// Atualizar interface PdfColorScheme para adicionar nova cor
 export interface PdfColorScheme {
   PRIMARY: RGB;
   SECONDARY: RGB;
