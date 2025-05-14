@@ -1,10 +1,46 @@
-
-import { PDFDocument, PDFFont, PDFPage } from "pdf-lib";
+import { PDFDocument, PDFFont } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../colors";
 import { checkAndCreateNewPage, drawSectionHeader, drawTableRow } from "../drawing-utils";
 import { formatCurrency } from "@/lib/utils";
 import { PageContext } from "../types";
+
+function renderComponentDetails(
+  page: PDFPage,
+  component: ComponentOption,
+  x: number,
+  y: number,
+  helvetica: PDFFont,
+  helveticaOblique: PDFFont
+): number {
+  let currentY = y;
+  
+  if (component.description) {
+    page.drawText(component.description, {
+      x: x + 15,
+      y: currentY,
+      size: 10,
+      font: helveticaOblique,
+      color: COLOR.TEXT_LIGHT
+    });
+    currentY -= 15;
+  }
+  
+  if (component.specs) {
+    component.specs.forEach(spec => {
+      page.drawText(`* ${spec}`, {
+        x: x + 15,
+        y: currentY,
+        size: 10,
+        font: helvetica,
+        color: COLOR.TEXT_LIGHT
+      });
+      currentY -= 14;
+    });
+  }
+  
+  return currentY;
+}
 
 export function renderComponentsSection(
   pdfDoc: PDFDocument,
@@ -15,44 +51,43 @@ export function renderComponentsSection(
   marginRight: number,
   helvetica: PDFFont,
   helveticaBold: PDFFont,
-  helveticaOblique: PDFFont,
+  helveticaOblique: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
-  // Seção de configuração de hardware com estilo atualizado
+  // Filter out null or undefined components
+  const validComponents = Object.values(selectedComponents).filter(component => component != null) as ComponentOption[];
+  
+  // Return early if no components are selected
+  if (validComponents.length === 0) {
+    return { page, y: currentY };
+  }
+  
+  // Check if we need to add a new page
+  const componentsCheck = checkAndCreateNewPage(pdfDoc, page, currentY, 300, marginX, 50, helvetica);
+  page = componentsCheck.page;
+  currentY = componentsCheck.y;
+  
+  // Add section header
   currentY = drawSectionHeader(
     page, 
-    "1. Configuracao de Hardware", 
+    "1. Componentes do Servidor", 
     marginX, 
     currentY, 
     300,
-    helveticaBold,
-    16,
-    COLOR.PRIMARY,
-    true // Usar o novo estilo destacado
+    helveticaBold
   );
   
-  // Seção de componentes regulares
   let rowAlt = false;
-  Object.values(selectedComponents).forEach(component => {
-    // Ignorar componentes de armazenamento, serão tratados separadamente
-    if (component.type === "Armazenamento") return;
+  validComponents.forEach(component => {
+    // Draw alternating row background
+    const rowHeight = 20 + 
+      (component.description ? 15 : 0) + 
+      (component.specs ? component.specs.length * 14 : 0);
     
-    // Verificar se precisamos de uma nova página
-    const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
-    page = result.page;
-    currentY = result.y;
-    
-    // Desenhar fundo de linha alternado
-    drawTableRow(page, marginX - 5, currentY + 5, width - (marginX * 2) + 10, 20 + 
-      (component.description ? 18 : 0) + 
-      (component.specs ? component.specs.length * 14 + 5 : 0) + 
-      (component.metadata?.features ? component.metadata.features.length * 14 + 5 : 0),
-      rowAlt
-    );
+    drawTableRow(page, marginX - 5, currentY + 5, width - (marginX * 2) + 10, rowHeight, rowAlt);
     rowAlt = !rowAlt;
     
-    // Nome do componente e preço
     page.drawText(component.name, {
       x: marginX,
       y: currentY,
@@ -61,67 +96,18 @@ export function renderComponentsSection(
       color: COLOR.TEXT
     });
     
-    if (component.type !== "DataCenter" && component.type !== "Contrato") {
-      const price = formatCurrency(component.price);
-      page.drawText(price, {
-        x: marginRight - helvetica.widthOfTextAtSize(price, 12),
-        y: currentY,
-        size: 12,
-        font: helvetica,
-        color: COLOR.TEXT
-      });
-    } else {
-      page.drawText("Incluido", {
-        x: marginRight - helvetica.widthOfTextAtSize("Incluido", 12),
-        y: currentY,
-        size: 12,
-        font: helvetica,
-        color: COLOR.TEXT_LIGHT
-      });
-    }
+    const price = formatCurrency(component.price);
+    page.drawText(price, {
+      x: marginRight - helvetica.widthOfTextAtSize(price, 12),
+      y: currentY,
+      size: 12,
+      font: helvetica,
+      color: COLOR.TEXT
+    });
     
-    currentY -= 18;
+    currentY -= 20;
     
-    // Descrição do componente
-    if (component.description) {
-      page.drawText(component.description, {
-        x: marginX + 15,
-        y: currentY,
-        size: 10,
-        font: helveticaOblique,
-        color: COLOR.TEXT_LIGHT
-      });
-      currentY -= 15;
-    }
-    
-    // Especificações
-    if (component.specs) {
-      component.specs.forEach(spec => {
-        page.drawText(`* ${spec}`, {
-          x: marginX + 20,
-          y: currentY,
-          size: 10,
-          font: helvetica,
-          color: COLOR.TEXT_LIGHT
-        });
-        currentY -= 14;
-      });
-    }
-    
-    // Se o componente tem recursos, destaque-os com o novo estilo
-    if (component.metadata?.features && component.metadata.features.length > 0) {
-      currentY -= 5;
-      component.metadata.features.forEach(feature => {
-        page.drawText(`> ${feature}`, {
-          x: marginX + 20,
-          y: currentY,
-          size: 10,
-          font: helveticaBold,
-          color: COLOR.PRIMARY
-        });
-        currentY -= 14;
-      });
-    }
+    currentY = renderComponentDetails(page, component, marginX, currentY, helvetica, helveticaOblique);
     
     currentY -= 10;
   });

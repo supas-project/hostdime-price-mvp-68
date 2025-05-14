@@ -1,10 +1,8 @@
-
-import { PDFDocument, PDFFont, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../../colors";
-import { checkAndCreateNewPage, drawHighlightBox, drawTableRow } from "../../drawing-utils";
+import { checkAndCreateNewPage, drawTableRow } from "../../drawing-utils";
 import { formatCurrency } from "@/lib/utils";
-import { groupDisksByTypeAndCapacity } from "../../disk-utils";
 import { PageContext } from "../../types";
 
 export function renderInternalStorage(
@@ -25,8 +23,13 @@ export function renderInternalStorage(
     return { page, y: currentY };
   }
   
+  // Check if we need a new page
+  const result = checkAndCreateNewPage(pdfDoc, page, currentY, 200, marginX, 50, helvetica);
+  page = result.page;
+  currentY = result.y;
+  
   // Adicionar cabecalho da secao
-  page.drawText("2.1 Discos Internos:", {
+  page.drawText("2.1 Storage Interno:", {
     x: marginX,
     y: currentY,
     size: 12,
@@ -36,26 +39,17 @@ export function renderInternalStorage(
   
   currentY -= 20;
   
-  const groupedDisks = groupDisksByTypeAndCapacity(internalStorage);
   let rowAlt = false;
-  
-  groupedDisks.forEach(group => {
-    // Check if we need a new page
-    const result = checkAndCreateNewPage(pdfDoc, page, currentY, 150, marginX, 50, helvetica);
-    page = result.page;
-    currentY = result.y;
-    
+  internalStorage.forEach(storage => {
     // Draw alternating row background
     const rowHeight = 20 + 
-      (group.disk.description ? 15 : 0) + 
-      (group.disk.specs ? group.disk.specs.length * 14 : 0) +
-      (group.disk.metadata?.raid && group.disk.metadata.raid.type !== 'none' ? 80 : 0);
+      (storage.description ? 15 : 0) + 
+      (storage.specs ? storage.specs.length * 14 : 0);
     
     drawTableRow(page, marginX + 10, currentY + 5, width - (marginX * 2) - 20, rowHeight, rowAlt);
     rowAlt = !rowAlt;
     
-    // Nome e quantidade
-    page.drawText(`${group.quantity}x ${group.disk.name}`, {
+    page.drawText(storage.name, {
       x: marginX + 15,
       y: currentY,
       size: 12,
@@ -63,7 +57,7 @@ export function renderInternalStorage(
       color: COLOR.TEXT
     });
     
-    const price = formatCurrency(group.disk.price * group.quantity);
+    const price = formatCurrency(storage.price);
     page.drawText(price, {
       x: marginRight - helvetica.widthOfTextAtSize(price, 12),
       y: currentY,
@@ -74,9 +68,8 @@ export function renderInternalStorage(
     
     currentY -= 20;
     
-    // Descricao e especificacoes
-    if (group.disk.description) {
-      page.drawText(group.disk.description, {
+    if (storage.description) {
+      page.drawText(storage.description, {
         x: marginX + 30,
         y: currentY,
         size: 10,
@@ -86,8 +79,8 @@ export function renderInternalStorage(
       currentY -= 15;
     }
     
-    if (group.disk.specs) {
-      group.disk.specs.forEach(spec => {
+    if (storage.specs) {
+      storage.specs.forEach(spec => {
         page.drawText(`* ${spec}`, {
           x: marginX + 30,
           y: currentY,
@@ -97,50 +90,6 @@ export function renderInternalStorage(
         });
         currentY -= 14;
       });
-    }
-    
-    // Configuracao RAID
-    if (group.disk.metadata?.raid && group.disk.metadata.raid.type !== 'none') {
-      // Adicionar um fundo destacado para a configuracao RAID
-      drawHighlightBox(
-        page,
-        marginX + 25,
-        currentY - 5,
-        300,
-        80,
-        rgb(0.95, 0.95, 1.0), // Fundo azul claro
-        rgb(0.7, 0.7, 0.9)     // Borda azul
-      );
-      
-      currentY -= 15;
-      page.drawText("Configuracao RAID:", {
-        x: marginX + 30,
-        y: currentY,
-        size: 11,
-        font: helveticaBold,
-        color: COLOR.SECONDARY
-      });
-      currentY -= 18;
-      
-      const raidInfo = [
-        `Tipo: RAID ${group.disk.metadata.raid.type}`,
-        group.disk.metadata.raid.description,
-        `Protecao: ${group.disk.metadata.raid.protection}`,
-        `Capacidade util: ${group.disk.metadata.raid.usableCapacity}GB`
-      ];
-      
-      raidInfo.forEach(info => {
-        page.drawText(`* ${info}`, {
-          x: marginX + 35,
-          y: currentY,
-          size: 10,
-          font: helvetica,
-          color: COLOR.TEXT
-        });
-        currentY -= 14;
-      });
-      
-      currentY -= 5;
     }
     
     currentY -= 10;
