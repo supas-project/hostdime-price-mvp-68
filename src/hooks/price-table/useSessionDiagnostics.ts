@@ -42,7 +42,7 @@ export function useSessionDiagnostics() {
       
       // Em caso de erro, criar um objeto que satisfaça a interface SessionDiagnostics
       // com valores padrão para as propriedades obrigatórias
-      setDiagnostics({
+      const errorDiagnostics: SessionDiagnostics = {
         sessionId: 'erro',
         sessionDuration: 0,
         lastUpdateTimestamp: 0,
@@ -50,7 +50,9 @@ export function useSessionDiagnostics() {
         activeListeners: 0,
         recentEvents: [],
         hasDataConflicts: false
-      });
+      };
+      
+      setDiagnostics(errorDiagnostics);
       
       // Notificar o usuário sobre o erro
       toast.error("Erro de diagnóstico", {
