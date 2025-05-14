@@ -1,8 +1,6 @@
-
 import { Label } from "@/components/ui/label";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EthernetPort, Network } from "lucide-react";
 import { QuantitySelector } from "@/components/quantity-selector";
@@ -102,33 +100,43 @@ export function ConnectivityContent({
           <span className="break-words">Velocidade da Porta</span>
         </div>
         <div className="grid gap-4">
-          <RadioGroup
-            value={selectedPort?.option.id}
+          <Select 
+            value={selectedPort?.option.id || ""} 
             onValueChange={handlePortSelect}
-            className="flex flex-col gap-3 sm:gap-4"
           >
-            {portOptions.map((port) => (
-              <div key={port.id} className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 rounded-lg flex-wrap sm:flex-nowrap gap-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={port.id} id={port.id} />
-                  <Label htmlFor={port.id} className="text-xs sm:text-sm flex flex-wrap items-center gap-2 sm:gap-4">
-                    <span className="break-words">{port.name}</span>
+            <SelectTrigger className="w-full min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
+              <SelectValue placeholder="Selecione a velocidade da porta" />
+            </SelectTrigger>
+            <SelectContent className="z-[51]">
+              {portOptions.map((port) => (
+                <SelectItem key={port.id} value={port.id} className="py-2 sm:py-2.5">
+                  <div className="flex justify-between items-center w-full gap-2 sm:gap-4 text-xs sm:text-sm">
+                    <span>{port.name}</span>
                     <span className="text-primary font-medium whitespace-nowrap">
                       {formatCurrency(port.price)}
                     </span>
-                  </Label>
-                </div>
-                {selectedPort?.option.id === port.id && (
-                  <QuantitySelector
-                    value={selectedPort.quantity}
-                    onChange={(value) => handlePortQuantityChange(port.id, value)}
-                    min={1}
-                    max={10}
-                  />
-                )}
-              </div>
-            ))}
-          </RadioGroup>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {selectedPort && (
+            <div className="flex items-center justify-between p-2.5 sm:p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs sm:text-sm">
+                {selectedPort.option.name}
+                <span className="text-primary font-medium ml-2">
+                  {formatCurrency(selectedPort.option.price)}
+                </span>
+              </p>
+              <QuantitySelector
+                value={selectedPort.quantity}
+                onChange={(value) => handlePortQuantityChange(selectedPort.option.id, value)}
+                min={1}
+                max={10}
+              />
+            </div>
+          )}
         </div>
       </div>
 

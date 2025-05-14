@@ -47,7 +47,7 @@ export function PriceTableContent({
   
   if (Object.keys(priceData).length === 0) {
     return (
-      <div className="p-8 text-center animate-fade-in">
+      <div className="p-6 text-center animate-fade-in">
         <h3 className="text-lg font-medium mb-2">Nenhuma categoria cadastrada</h3>
         <p className="text-muted-foreground mb-4">
           {isAdmin 
@@ -67,13 +67,13 @@ export function PriceTableContent({
         onDeleteCategory={onDeleteCategory}
       />
 
-      <div className="mt-6 space-y-5 animate-fade-in">
+      <div className="mt-4 space-y-3 animate-fade-in">
         {Object.values(priceData).map((category) => {
           const filteredItems = filterItems(category.items);
           const isCollapsed = collapsedCategories[category.id] || false;
           
           return (
-            <TabsContent key={category.id} value={category.id} className="space-y-5">
+            <TabsContent key={category.id} value={category.id} className="space-y-3">
               <Collapsible 
                 open={!isCollapsed} 
                 className="border border-border rounded-xl overflow-hidden bg-card/50 shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -86,7 +86,7 @@ export function PriceTableContent({
                 
                 <CollapsibleContent className="animate-accordion-down">
                   {displayMode === "card" ? (
-                    <div className="p-5">
+                    <div className="p-3">
                       <TableContent 
                         category={{...category, items: filteredItems}} 
                         onDelete={isAdmin ? onDeleteItem : undefined}

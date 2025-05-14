@@ -11,8 +11,8 @@ interface PriceTableHeaderProps {
 export function PriceTableHeader({ showActions = false, className }: PriceTableHeaderProps) {
   return (
     <TableHeader className={cn("bg-muted/20", className)}>
-      <TableRow>
-        <TableHead className="w-[250px]">
+      <TableRow className="h-10">
+        <TableHead className="w-[250px] py-2 px-4 align-middle">
           <div className="flex items-center gap-1">
             Nome
             <HelpTooltip 
@@ -21,7 +21,7 @@ export function PriceTableHeader({ showActions = false, className }: PriceTableH
             />
           </div>
         </TableHead>
-        <TableHead className="w-[400px]">
+        <TableHead className="w-[400px] py-2 px-4 align-middle">
           <div className="flex items-center gap-1">
             Descrição
             <HelpTooltip 
@@ -30,7 +30,7 @@ export function PriceTableHeader({ showActions = false, className }: PriceTableH
             />
           </div>
         </TableHead>
-        <TableHead>
+        <TableHead className="py-2 px-4 align-middle">
           <div className="flex items-center gap-1">
             Preço
             <HelpTooltip 
@@ -40,7 +40,7 @@ export function PriceTableHeader({ showActions = false, className }: PriceTableH
           </div>
         </TableHead>
         {showActions && (
-          <TableHead className="w-[100px] text-right">
+          <TableHead className="w-[100px] py-2 px-4 text-right align-middle">
             Ações
           </TableHead>
         )}

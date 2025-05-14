@@ -1,4 +1,3 @@
-
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { LoginDialog } from "@/components/login-dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { NotificationCenter } from "@/components/notification-center";
 
-export default function MainLayout() {
+export default function MainLayout({ children }: React.PropsWithChildren) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();

@@ -13,7 +13,7 @@ export function usePriceTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [displayMode, setDisplayMode] = useState<"table" | "card">("table");
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  const [contractDuration, setContractDuration] = useState("0"); // Add contractDuration state
+  const [contractDuration, setContractDuration] = useState<string>("0"); // Add contractDuration state
   
   const { toast } = useToast();
 
@@ -100,7 +100,7 @@ export function usePriceTable() {
       item.description.toLowerCase().includes(lowerSearch) ||
       (item.subtype && item.subtype.toLowerCase().includes(lowerSearch)) ||
       (item.specs && item.specs.some(spec => spec.toLowerCase().includes(lowerSearch))) ||
-      (item.tags && item.tags.some(tag => tag.toLowerCase().includes(lowerSearch))) // Add tag search
+      (item.tags && item.tags.some(tag => tag.toLowerCase().includes(lowerSearch)))
     );
   };
 

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -55,36 +56,36 @@ export function TableContent({
 
   if (displayMode === "card") {
     return (
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.map((item) => (
           <Card key={item.id} className="border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardHeader className="pb-1 space-y-0 px-3 py-2">
               <h4 className="text-sm font-medium">{item.name}</h4>
               {item.tags && item.tags.length > 0 && (
-                <div className="flex items-center space-x-1">
+                <div className="flex flex-wrap items-center gap-1 mt-1">
                   {item.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary">{tag}</Badge>
+                    <Badge key={index} variant="secondary" className="text-xs">{tag}</Badge>
                   ))}
                 </div>
               )}
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{item.description}</p>
-              <div className="flex items-center mt-2">
+            <CardContent className="px-3 py-2">
+              <p className="text-xs text-muted-foreground">{item.description}</p>
+              <div className="flex items-center mt-1">
                 <span className="text-lg font-bold">{formatCurrency(calculatePrice(item))}</span>
-                <span className="text-sm text-muted-foreground ml-1">/mês</span>
+                <span className="text-xs text-muted-foreground ml-1">/mês</span>
               </div>
             </CardContent>
             {onDelete || onEdit ? (
-              <CardFooter className="flex justify-end gap-2">
+              <CardFooter className="flex justify-end gap-1 px-3 py-2 border-t border-border">
                 {onEdit && (
                   <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 {onDelete && (
                   <Button variant="ghost" size="icon" onClick={() => onDelete(item.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 )}
               </CardFooter>
@@ -98,20 +99,20 @@ export function TableContent({
   return (
     <>
       {items.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell className="font-medium">{item.name}</TableCell>
-          <TableCell>{item.description}</TableCell>
-          <TableCell>{item.subtype}</TableCell>
-          <TableCell>{formatCurrency(calculatePrice(item))}</TableCell>
-          <TableCell className="flex justify-end gap-2">
+        <TableRow key={item.id} className="h-12">
+          <TableCell className="py-2 px-4 font-medium align-middle">{item.name}</TableCell>
+          <TableCell className="py-2 px-4 align-middle">{item.description}</TableCell>
+          <TableCell className="py-2 px-4 align-middle">{item.subtype}</TableCell>
+          <TableCell className="py-2 px-4 align-middle">{formatCurrency(calculatePrice(item))}</TableCell>
+          <TableCell className="py-2 px-4 flex justify-end gap-1 align-middle">
             {onEdit && (
-              <Button variant="ghost" size="icon" onClick={() => onEdit(item)}>
-                <Pencil className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(item)}>
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             )}
             {onDelete && (
-              <Button variant="ghost" size="icon" onClick={() => onDelete(item.id)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onDelete(item.id)}>
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
               </Button>
             )}
           </TableCell>
