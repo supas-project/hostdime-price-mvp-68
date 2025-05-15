@@ -102,19 +102,20 @@ export function TableContent({
         <TableRow key={item.id} className="h-12">
           <TableCell className="py-2 px-4 font-medium align-middle">{item.name}</TableCell>
           <TableCell className="py-2 px-4 align-middle">{item.description}</TableCell>
-          <TableCell className="py-2 px-4 align-middle">{item.subtype}</TableCell>
           <TableCell className="py-2 px-4 text-right align-middle whitespace-nowrap">{formatCurrency(calculatePrice(item))}</TableCell>
-          <TableCell className="py-2 px-4 flex justify-end gap-1 align-middle">
-            {onEdit && (
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(item)}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onDelete(item.id)}>
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-              </Button>
-            )}
+          <TableCell className="py-2 px-4 text-right align-middle">
+            <div className="flex justify-end gap-1">
+              {onEdit && (
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(item)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onDelete(item.id)}>
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              )}
+            </div>
           </TableCell>
         </TableRow>
       ))}

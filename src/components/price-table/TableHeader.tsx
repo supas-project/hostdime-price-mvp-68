@@ -30,8 +30,8 @@ export function PriceTableHeader({ showActions = false, className }: PriceTableH
             />
           </div>
         </TableHead>
-        <TableHead className="py-2 px-4 align-middle">
-          <div className="flex items-center gap-1">
+        <TableHead className="py-2 px-4 text-right align-middle">
+          <div className="flex items-center gap-1 justify-end">
             Preço
             <HelpTooltip 
               title="Preço base"
