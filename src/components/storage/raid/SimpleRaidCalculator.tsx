@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
@@ -12,6 +13,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useWizard } from "@/contexts/WizardContext";
 import { toast } from "sonner";
 import { formatStorageCapacity, convertToGB } from "@/utils/storage-utils";
+import { formatCurrency } from "@/lib/utils";
+
+// Hardware RAID fixed cost
+const HARDWARE_RAID_COST = 210.00;
 
 interface SimpleRaidCalculatorProps {
   selectedDisk: PricedDiskOption;
@@ -29,6 +34,9 @@ export function SimpleRaidCalculator({
   const [showDetails, setShowDetails] = useState(false);
   const { handleSelectStorageItem } = useWizard();
 
+  // Check if the disk type is NVMe
+  const isNVMe = selectedDisk?.type?.toLowerCase() === 'nvme';
+
   const calculation = useMemo(() => {
     if (!selectedDisk || quantity < 2) return null;
     return calculateRaidCapacity([selectedDisk], quantity, raidType, isHardwareRaid);
@@ -38,6 +46,15 @@ export function SimpleRaidCalculator({
     if (!selectedDisk || quantity < 2) return false;
     return quantity >= RAID_INFO[type].minDisks;
   };
+
+  // Effect to handle hardware RAID selection changes
+  useEffect(() => {
+    if (isNVMe && isHardwareRaid) {
+      // Automatically switch to software RAID if we have NVMe disks
+      setIsHardwareRaid(false);
+      toast.warning("Hardware RAID não é suportado para discos NVMe. Alterado para Software RAID.");
+    }
+  }, [isNVMe, isHardwareRaid]);
 
   useEffect(() => {
     if (calculation && isValidRaidConfiguration(raidType)) {
@@ -49,16 +66,23 @@ export function SimpleRaidCalculator({
       const formattedTotalCapacity = formatStorageCapacity(totalCapacityGB);
       const formattedUsableCapacity = formatStorageCapacity(usableCapacityGB);
 
+      // Calculate the total price including hardware RAID cost if applicable
+      const basePrice = selectedDisk.price * quantity;
+      const hardwareRaidPrice = isHardwareRaid ? HARDWARE_RAID_COST : 0;
+      const totalPrice = basePrice + hardwareRaidPrice;
+
       const storageOption = {
         id: `internal-disk-${selectedDisk.type}-${selectedDisk.capacity}`,
         type: "Armazenamento",
         subtype: "Disco Interno",
         name: `${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
         description: `${quantity}x ${selectedDisk.type.toUpperCase()} ${selectedDisk.capacity}`,
-        price: selectedDisk.price * quantity,
+        price: totalPrice,
         metadata: {
           quantity,
           features: [`Tipo: ${selectedDisk.type}`],
+          unitPrice: selectedDisk.price,
+          hardwareRaidCost: hardwareRaidPrice,
           raid: {
             type: raidType,
             description: RAID_INFO[raidType].description,
@@ -95,8 +119,21 @@ export function SimpleRaidCalculator({
   
   const handleRaidImplementationChange = (value: string) => {
     const isHardware = value === "hardware";
+    
+    // Check if hardware RAID is allowed for this disk type
+    if (isHardware && isNVMe) {
+      toast.warning("Hardware RAID não é suportado para discos NVMe");
+      return;
+    }
+
     setIsHardwareRaid(isHardware);
-    toast.success(`RAID ${isHardware ? 'Hardware' : 'Software'} selecionado`);
+    
+    // Show appropriate notification
+    if (isHardware) {
+      toast.success(`RAID Hardware selecionado (+${formatCurrency(HARDWARE_RAID_COST)})`);
+    } else {
+      toast.success(`RAID Software selecionado`);
+    }
   };
 
   if (quantity < 2) return null;
@@ -140,11 +177,19 @@ export function SimpleRaidCalculator({
             <ToggleGroupItem 
               value="hardware" 
               size="sm" 
-              className="flex items-center gap-1.5 px-3 py-1.5 data-[state=on]:bg-[#f58220]/10 data-[state=on]:text-[#f58220]"
+              disabled={isNVMe}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 data-[state=on]:bg-[#f58220]/10 data-[state=on]:text-[#f58220]",
+                isNVMe && "opacity-50 cursor-not-allowed"
+              )}
               aria-label="Hardware RAID"
+              title={isNVMe ? "Hardware RAID não é suportado para discos NVMe" : ""}
             >
               <Server className="h-3.5 w-3.5" />
               <span className="text-xs">Hardware</span>
+              {!isNVMe && (
+                <span className="ml-1 text-xs text-[#f58220]">+{formatCurrency(HARDWARE_RAID_COST)}</span>
+              )}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -231,6 +276,16 @@ export function SimpleRaidCalculator({
                   </p>
                 </div>
               </div>
+
+              {/* Hardware RAID cost info (if applicable) */}
+              {isHardwareRaid && (
+                <div className="text-xs bg-[#f58220]/10 rounded p-2 border border-[#f58220]/20">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Custo adicional (Hardware RAID):</span>
+                    <span className="font-bold text-[#f58220]">{formatCurrency(HARDWARE_RAID_COST)}</span>
+                  </div>
+                </div>
+              )}
 
               {/* Pros and Cons Collapsible */}
               <Collapsible open={showDetails} onOpenChange={setShowDetails}>

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { StorageHeader } from "./storage-header";
 import { componentSpacing } from "../ui/shared-styles";
 import { cn } from "@/lib/utils";
-import { HardDrive } from "lucide-react";
+import { HardDrive, Info } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { InternalStoragePanel } from "./InternalStoragePanel";
 import { ExternalStoragePanel } from "./ExternalStoragePanel";
@@ -22,6 +22,7 @@ interface StorageSelectorProps {
 
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const [activeTab, setActiveTab] = useState<string>("internal");
+  const [selectedDiskType, setSelectedDiskType] = useState<string | null>(null);
   const { handleSelectStorageItem } = useWizard();
   const storageTypes = useStorageTypes();
   const [showHelp, setShowHelp] = useState(true);
@@ -35,8 +36,11 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     handleSelectStorageItem
   });
 
-  // Modified to mark all storage components as hardware
+  // Modified to mark all storage components as hardware and track disk type
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    // Track the selected disk type for RAID compatibility display
+    setSelectedDiskType(disk.type.toLowerCase());
+    
     // Mark the disk as hardware before passing it
     const diskWithHardwareFlag = { ...disk, isHardware: true };
     handleSelectInternalDiskInternal(diskWithHardwareFlag, quantity);
@@ -44,13 +48,15 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
     // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
-    handleSelectExternalStorageInternal(type, capacity, price, true);
+    handleSelectExternalStorageInternal(type, capacity, price, storageTypes);
   };
 
   const storageDescriptions = {
     internal: "Os discos internos são instalados dentro do seu servidor físico. Escolha entre discos NVMe (mais rápidos), SSDs (equilíbrio entre velocidade e custo) ou HDDs (mais capacidade por custo).",
     external: "Armazenamento externo é acessado pela rede, oferecendo flexibilidade para aumentar espaço sem modificar o servidor físico."
   };
+
+  const isNVMe = selectedDiskType === 'nvme';
 
   return (
     <Card className={cn(
@@ -74,6 +80,16 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
             >
               Entendi
             </button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isNVMe && (
+        <Alert className="mb-3 bg-[#f58220]/5 border-[#f58220]/20 text-foreground">
+          <Info className="h-4 w-4 text-[#f58220]" />
+          <AlertDescription className="text-xs sm:text-sm ml-2">
+            <strong>Nota:</strong> Discos NVMe são compatíveis apenas com configuração RAID por software.
+            Hardware RAID não está disponível para este tipo de disco.
           </AlertDescription>
         </Alert>
       )}
