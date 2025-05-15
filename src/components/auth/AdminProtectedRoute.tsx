@@ -2,6 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
+import { toast } from "sonner";
 
 interface AdminProtectedRouteProps {
   children: ReactNode;
@@ -28,8 +29,13 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
   }
 
   if (!isAdmin) {
+    // Mostrar toast de erro e redirecionar
+    toast.error("Acesso negado", {
+      description: "Você não tem permissão para acessar esta página."
+    });
+    
     // Redirect to home if authenticated but not admin
-    return <Navigate to="/configure" state={{ message: "Acesso negado: permissão de administrador necessária" }} replace />;
+    return <Navigate to="/configure" replace />;
   }
 
   return <>{children}</>;

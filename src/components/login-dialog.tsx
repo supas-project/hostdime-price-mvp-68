@@ -3,10 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export function LoginDialog() {
   const { isAuthenticated, isAdmin, user, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (loading) {
     return (
@@ -35,14 +37,31 @@ export function LoginDialog() {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => {
-            logout().catch(error => {
+          onClick={async () => {
+            try {
+              setIsLoggingOut(true);
+              await logout();
+              // Após o logout, redireciona para a página de login
+              navigate("/login");
+            } catch (error) {
               console.error("Erro ao fazer logout via botão:", error);
-            });
+            } finally {
+              setIsLoggingOut(false);
+            }
           }}
+          disabled={isLoggingOut}
         >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sair
+          {isLoggingOut ? (
+            <>
+              <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+              Saindo...
+            </>
+          ) : (
+            <>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </>
+          )}
         </Button>
       </div>
     );

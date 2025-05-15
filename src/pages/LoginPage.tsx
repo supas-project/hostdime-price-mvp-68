@@ -55,7 +55,7 @@ export default function LoginPage() {
         const from = location.state?.from?.pathname || "/configure";
         navigate(from, { replace: true });
         form.reset();
-        toast("Login realizado com sucesso");
+        toast.success("Login realizado com sucesso");
       } else {
         setLoginError("Credenciais inválidas. Tente novamente.");
       }

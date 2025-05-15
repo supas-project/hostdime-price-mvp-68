@@ -176,29 +176,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
-      // Fazer o logout no Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Erro ao fazer logout no Supabase:", error);
-        toast.error("Erro ao fazer logout", {
-          description: "Houve um problema, mas sua sessão local foi finalizada."
-        });
-        return;
-      }
-      
-      // Limpar os estados após o logout bem-sucedido
+      // Primeiramente, limpar os estados locais para garantir uma resposta rápida na UI
       setIsAuthenticated(false);
       setIsAdmin(false);
       setUser(null);
       
-      toast.success("Logout realizado com sucesso");
+      // Agora vamos fazer o logout no Supabase
+      const { error } = await supabase.auth.signOut();
       
-      // Não vamos forçar redirecionamento aqui para evitar loops
+      if (error) {
+        console.error("Erro ao fazer logout no Supabase:", error);
+        // Não mostramos o toast de erro pois já limpamos a sessão local
+        return;
+      }
+      
+      toast.success("Logout realizado com sucesso");
       
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      toast.error("Ocorreu um erro ao finalizar a sessão");
+      // Mesmo com erro, não exibimos mensagem para o usuário pois já limpamos a sessão local
     }
   };
 
