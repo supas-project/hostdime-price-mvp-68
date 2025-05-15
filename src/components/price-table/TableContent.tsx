@@ -14,7 +14,7 @@ interface TableContentProps {
   onEdit?: (item: PriceItem) => void;
   displayMode?: "table" | "card";
   sortOrder?: "asc" | "desc" | null;
-  contractDuration?: string; // Added contractDuration as optional prop
+  contractDuration?: string; // Contract duration parameter
 }
 
 export function TableContent({
@@ -103,7 +103,7 @@ export function TableContent({
           <TableCell className="py-2 px-4 font-medium align-middle">{item.name}</TableCell>
           <TableCell className="py-2 px-4 align-middle">{item.description}</TableCell>
           <TableCell className="py-2 px-4 align-middle">{item.subtype}</TableCell>
-          <TableCell className="py-2 px-4 align-middle">{formatCurrency(calculatePrice(item))}</TableCell>
+          <TableCell className="py-2 px-4 text-right align-middle whitespace-nowrap">{formatCurrency(calculatePrice(item))}</TableCell>
           <TableCell className="py-2 px-4 flex justify-end gap-1 align-middle">
             {onEdit && (
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => onEdit(item)}>

@@ -27,10 +27,12 @@ export function HelpTooltip({ title, description, icon = true, iconOnly = false 
           )}
         </TooltipTrigger>
         <TooltipContent 
-          className="max-w-[280px] p-3 z-[100] bg-popover shadow-lg" 
+          className="max-w-[250px] p-3 z-[100]" 
+          side="top"
           sideOffset={5}
+          align="center"
         >
-          <p className="text-sm leading-relaxed">{description}</p>
+          <p className="text-sm leading-relaxed break-words">{description}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
