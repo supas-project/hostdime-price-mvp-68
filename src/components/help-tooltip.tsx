@@ -20,7 +20,7 @@ export function HelpTooltip({ title, description, icon = true, iconOnly = false 
       <Tooltip delayDuration={300}>
         <TooltipTrigger className="cursor-help inline-flex items-center">
           {icon && (
-            <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-primary" />
+            <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-primary transition-colors" />
           )}
           {!iconOnly && (
             <span className="sr-only">{title}</span>
