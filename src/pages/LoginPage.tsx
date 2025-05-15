@@ -73,7 +73,7 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
           <p className="text-foreground">Carregando...</p>
@@ -86,17 +86,17 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4 animate-fade-in">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold tracking-tight">
             <span className="text-primary">Host</span>
             <span className="text-white">Dime</span>
           </h1>
         </div>
 
         <Card className="border-border bg-card/90 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent className="p-6 sm:p-8">
             <div className="text-center mb-6">
-              <h1 className="text-xl font-semibold">Bem-vindo</h1>
-              <p className="text-xs text-muted-foreground mt-1">
+              <h1 className="text-xl font-semibold tracking-tight">Bem-vindo</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure seus servidores dedicados
               </p>
             </div>
@@ -104,8 +104,8 @@ export default function LoginPage() {
             {loginError && (
               <Alert variant="destructive" className="mb-5 animate-fade-in">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Erro</AlertTitle>
-                <AlertDescription>{loginError}</AlertDescription>
+                <AlertTitle className="text-sm font-medium">Erro</AlertTitle>
+                <AlertDescription className="text-xs mt-1">{loginError}</AlertDescription>
               </Alert>
             )}
             
@@ -116,18 +116,19 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Email</FormLabel>
+                      <FormLabel className="text-sm font-medium">Email</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input 
                             placeholder="seu@email.com" 
-                            className="pl-10 bg-background/50"
-                            {...field} 
+                            className="pl-10 bg-background/50 transition-colors focus-visible:ring-primary/50"
+                            {...field}
+                            aria-label="Email"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -137,34 +138,35 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Senha</FormLabel>
+                      <FormLabel className="text-sm font-medium">Senha</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input 
                             type={showPassword ? "text" : "password"}
                             placeholder="********" 
-                            className="pl-10 pr-10 bg-background/50"
-                            {...field} 
+                            className="pl-10 pr-10 bg-background/50 transition-colors focus-visible:ring-primary/50"
+                            {...field}
+                            aria-label="Senha"
                           />
                           <button 
                             type="button" 
                             onClick={toggleShowPassword}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
                 
                 <Button 
                   type="submit" 
-                  className="w-full mt-2 bg-primary hover:bg-primary-hover text-white transition-all duration-200 touch-target"
+                  className="w-full mt-6 bg-primary hover:bg-primary-hover text-white transition-all duration-200 touch-target font-medium"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -177,7 +179,7 @@ export default function LoginPage() {
               </form>
             </Form>
             
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center">
               <p className="text-xs text-muted-foreground">
                 HostDime Brasil &copy; {new Date().getFullYear()}
               </p>

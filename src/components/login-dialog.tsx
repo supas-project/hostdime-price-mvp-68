@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function LoginDialog() {
   const { isAuthenticated, isAdmin, user, logout, loading } = useAuth();
@@ -22,13 +23,13 @@ export function LoginDialog() {
 
   if (isAuthenticated && user) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-1">
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium truncate max-w-[150px] sm:max-w-[200px]">
               {user.email}
             </span>
-            {isAdmin && <Shield className="w-3.5 h-3.5 text-primary" />}
+            {isAdmin && <Shield className="w-3.5 h-3.5 text-primary" aria-label="Administrador" />}
           </div>
           <span className="text-xs text-muted-foreground">
             {isAdmin ? "Administrador" : "Usuário"}
@@ -50,16 +51,21 @@ export function LoginDialog() {
             }
           }}
           disabled={isLoggingOut}
+          className={cn(
+            "transition-all font-medium",
+            "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
+            "focus-visible:ring-destructive/30"
+          )}
         >
           {isLoggingOut ? (
             <>
               <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
-              Saindo...
+              <span className="truncate">Saindo...</span>
             </>
           ) : (
             <>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
+              <LogOut className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Sair</span>
             </>
           )}
         </Button>
@@ -72,9 +78,14 @@ export function LoginDialog() {
       variant="outline" 
       size="sm" 
       onClick={() => navigate("/login")}
+      className={cn(
+        "transition-all font-medium",
+        "hover:bg-primary/10 hover:text-primary hover:border-primary/30",
+        "focus-visible:ring-primary/30"
+      )}
     >
-      <LogIn className="w-4 h-4 mr-2" />
-      Login
+      <LogIn className="w-4 h-4 mr-2 shrink-0" />
+      <span className="truncate">Login</span>
     </Button>
   );
 }
