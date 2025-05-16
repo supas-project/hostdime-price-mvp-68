@@ -10,6 +10,8 @@ import { TableActions } from "@/components/price-table/TableActions";
 import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ImportButton } from "@/components/price-table/ImportButton";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
+import { useDataActions } from "@/hooks/price-table/useDataActions";
+import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 
 export default function PriceTable() {
   // Custom hooks
@@ -57,12 +59,19 @@ export default function PriceTable() {
     fileInputRef,
     handleFileUpload
   } = useFileHandling(setPriceData);
+  
+  // Data actions hook para lidar com sincronização e conflitos
+  const {
+    isRefreshing,
+    hasConflicts,
+    handleRefreshData
+  } = useDataActions(setPriceData);
 
   // Authentication
   const { isAuthenticated, isAdmin } = useAuth();
 
   // Combined loading indicator
-  const isLoading = dataLoading || fileLoading;
+  const isLoading = dataLoading || fileLoading || isRefreshing;
 
   // Filtrar categorias para remover a categoria de contratos
   const filteredPriceData = {...priceData};
@@ -97,19 +106,28 @@ export default function PriceTable() {
               />
             )}
 
-            <div className="flex gap-2 ml-auto">
-              <ContractSelect 
-                value={contractDuration}
-                onChange={setContractDuration}
+            <div className="flex flex-col sm:flex-row gap-2 ml-auto">
+              <SyncIndicator 
+                lastSyncTime={lastSyncTime} 
+                hasConflicts={hasConflicts}
+                onRefresh={handleRefreshData}
+                isRefreshing={isRefreshing}
               />
               
-              {isAdmin && (
-                <ImportButton 
-                  isLoading={isLoading}
-                  fileInputRef={fileInputRef}
-                  onFileUpload={handleFileUpload}
+              <div className="flex gap-2">
+                <ContractSelect 
+                  value={contractDuration}
+                  onChange={setContractDuration}
                 />
-              )}
+                
+                {isAdmin && (
+                  <ImportButton 
+                    isLoading={isLoading}
+                    fileInputRef={fileInputRef}
+                    onFileUpload={handleFileUpload}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>

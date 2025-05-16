@@ -2,12 +2,21 @@
 import { CheckCircle, RefreshCcw, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/utils/toast-utils";
+import { Button } from "@/components/ui/button";
 
 interface SyncIndicatorProps {
   lastSyncTime: Date | null;
+  hasConflicts?: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export function SyncIndicator({ lastSyncTime }: SyncIndicatorProps) {
+export function SyncIndicator({ 
+  lastSyncTime, 
+  hasConflicts = false, 
+  onRefresh, 
+  isRefreshing = false 
+}: SyncIndicatorProps) {
   const [timeAgo, setTimeAgo] = useState<string>("");
   const [isStale, setIsStale] = useState<boolean>(false);
 
@@ -52,7 +61,7 @@ export function SyncIndicator({ lastSyncTime }: SyncIndicatorProps) {
     );
   }
 
-  const handleClick = () => {
+  const handleInfoClick = () => {
     const formattedTime = lastSyncTime.toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit',
@@ -71,20 +80,52 @@ export function SyncIndicator({ lastSyncTime }: SyncIndicatorProps) {
   };
 
   return (
-    <div 
-      className={`flex items-center gap-1.5 text-xs border rounded-full px-2.5 py-1 shadow-sm 
-                cursor-pointer transition-all hover:shadow-md
-                ${isStale 
-                  ? "bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/15" 
-                  : "bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/15"}`}
-      onClick={handleClick}
-    >
-      {isStale ? (
-        <AlertCircle className="w-3 h-3 text-amber-500" />
-      ) : (
-        <CheckCircle className="w-3 h-3 text-green-500" />
+    <div className="flex items-center gap-2">
+      <div 
+        className={`flex items-center gap-1.5 text-xs border rounded-full px-2.5 py-1 shadow-sm 
+                  cursor-pointer transition-all hover:shadow-md
+                  ${hasConflicts
+                    ? "bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/15"
+                    : isStale 
+                      ? "bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/15" 
+                      : "bg-green-500/10 text-green-700 border-green-200 hover:bg-green-500/15"}`}
+        onClick={handleInfoClick}
+      >
+        {hasConflicts ? (
+          <AlertCircle className="w-3 h-3 text-amber-500" />
+        ) : isStale ? (
+          <AlertCircle className="w-3 h-3 text-amber-500" />
+        ) : (
+          <CheckCircle className="w-3 h-3 text-green-500" />
+        )}
+        <span>
+          {hasConflicts 
+            ? "Alterações detectadas" 
+            : `Atualizado ${timeAgo}`}
+        </span>
+      </div>
+      
+      {hasConflicts && onRefresh && (
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="text-xs h-7 gap-1"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <>
+              <RefreshCcw className="w-3 h-3 animate-spin" />
+              Sincronizando...
+            </>
+          ) : (
+            <>
+              <RefreshCcw className="w-3 h-3" />
+              Atualizar dados
+            </>
+          )}
+        </Button>
       )}
-      <span>Atualizado {timeAgo}</span>
     </div>
   );
 }

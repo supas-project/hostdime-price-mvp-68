@@ -56,7 +56,7 @@ export function LoginDialog() {
               try {
                 setIsLoggingOut(true);
                 await logout();
-                // Após o logout, redireciona para a página de login
+                // Esta navegação só acontece se o logout for bem-sucedido
                 navigate("/login");
               } catch (error) {
                 console.error("Erro ao fazer logout via botão:", error);

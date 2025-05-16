@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    // Redirect to login page and save the location they were trying to access
+    // Salva a localização atual para redirecionamento após login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

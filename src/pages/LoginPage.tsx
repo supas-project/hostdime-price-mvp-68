@@ -20,7 +20,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const { isAuthenticated, login, loading } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoginError(null);
-    setIsLoading(true);
+    setIsLogging(true);
     
     try {
       const success = await login(values.email, values.password);
@@ -63,7 +63,7 @@ export default function LoginPage() {
       console.error("Erro no processo de login:", error);
       setLoginError("Ocorreu um erro durante o login. Tente novamente.");
     } finally {
-      setIsLoading(false);
+      setIsLogging(false);
     }
   };
 
@@ -167,9 +167,9 @@ export default function LoginPage() {
                 <Button 
                   type="submit" 
                   className="w-full mt-6 bg-primary hover:bg-primary-hover text-white transition-all duration-200 touch-target font-medium"
-                  disabled={isLoading}
+                  disabled={isLogging}
                 >
-                  {isLoading ? (
+                  {isLogging ? (
                     <>
                       <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
                       Entrando...

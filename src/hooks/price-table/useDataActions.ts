@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -7,7 +7,31 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasConflicts, setHasConflicts] = useState(false);
   const { toast } = useToast();
+
+  // Verificar periodicamente se há conflitos de dados
+  useEffect(() => {
+    const checkForConflicts = () => {
+      const hasDataConflicts = PriceService.checkForDataConflicts();
+      setHasConflicts(hasDataConflicts);
+      
+      if (hasDataConflicts) {
+        toast.warning("Alterações detectadas", {
+          description: "Outro usuário modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
+          duration: 6000
+        });
+      }
+    };
+    
+    // Verificar inicialmente
+    checkForConflicts();
+    
+    // Verificar periodicamente cada 30 segundos
+    const intervalId = setInterval(checkForConflicts, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [toast]);
 
   // Handle exporting data as JSON
   const handleExportData = () => {
@@ -61,7 +85,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
 
-  // Nova função para forçar atualização dos dados quando houver conflitos multiusuário
+  // Função para forçar atualização dos dados quando houver conflitos multiusuário
   const handleRefreshData = () => {
     try {
       setIsRefreshing(true);
@@ -71,6 +95,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
       
       // Atualiza o estado com os dados atualizados
       setPriceData(refreshedData);
+      setHasConflicts(false);
       
       toast.success("Dados atualizados", {
         description: "Os dados foram sincronizados com a fonte mais recente."
@@ -93,6 +118,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     isExporting,
     isResetting,
     isRefreshing,
+    hasConflicts,
     handleExportData,
     handleResetData,
     handleRefreshData,
