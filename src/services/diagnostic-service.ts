@@ -97,10 +97,10 @@ export class DiagnosticService {
   private async testDatabaseConnection(): Promise<void> {
     const startTime = performance.now();
     try {
-      // Instead of using typed query which is causing the TypeScript error,
-      // we'll use the client's rpc method which allows arbitrary SQL execution
-      // This avoids TypeScript's type checking for table names that don't exist in the schema
-      const { error } = await supabase.rpc('dummy_function_call', {})
+      // Use type assertion to bypass TypeScript's type checking
+      // We're using a function that doesn't exist to test connectivity, so we expect an error
+      const { error } = await (supabase as any)
+        .rpc('dummy_function_call', {})
         .limit(1)
         .single();
       
