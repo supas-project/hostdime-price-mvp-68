@@ -1,192 +1,120 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Lock, Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const formSchema = z.object({
-  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  password: z.string().min(1, "Senha é obrigatória"),
-});
-
 export default function LoginPage() {
-  const { isAuthenticated, login, loading } = useAuth();
-  const [isLogging, setIsLogging] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  // Redirect only once if authenticated
-  useEffect(() => {
-    if (isAuthenticated && !redirectAttempted && !loading) {
-      setRedirectAttempted(true); // Prevent multiple redirects
-      const from = location.state?.from?.pathname || "/configure";
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, location, redirectAttempted, loading]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoginError(null);
-    setIsLogging(true);
-    
-    try {
-      const success = await login(values.email, values.password);
-      if (success) {
-        setRedirectAttempted(true);
-        const from = location.state?.from?.pathname || "/configure";
-        navigate(from, { replace: true });
-        form.reset();
-        toast.success("Login realizado com sucesso");
-      } else {
-        setLoginError("Credenciais inválidas. Tente novamente.");
-      }
-    } catch (error) {
-      console.error("Erro no processo de login:", error);
-      setLoginError("Ocorreu um erro durante o login. Tente novamente.");
-    } finally {
-      setIsLogging(false);
-    }
-  };
-
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+  // Redireciona usuários já autenticados
+  if (isAuthenticated) {
+    // Se for admin, redireciona para a tabela de preços
+    const isAdminEmail = user?.email === "admin@hostdime.com.br";
+    const redirectTo = isAdminEmail ? "/price-table" : "/configure";
+    navigate(redirectTo, { replace: true });
+    return null;
   }
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const success = await login(email, password);
+      
+      if (success) {
+        // Verificar se é o email de admin para redirecionar para a tabela de preços
+        const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
+        const redirectPath = isAdmin ? "/price-table" : "/configure";
+        
+        const from = (location.state as any)?.from?.pathname || redirectPath;
+        navigate(from, { replace: true });
+        
+        toast.success("Login realizado com sucesso", {
+          description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
+        });
+      }
+    } catch (error) {
+      console.error("Erro no login:", error);
+      toast.error("Falha no login", {
+        description: "Verifique suas credenciais e tente novamente."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 animate-fade-in">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="text-primary">Host</span>
-            <span className="text-white">Dime</span>
-          </h1>
-        </div>
-
-        <Card className="border-border bg-card/90 backdrop-blur-sm shadow-xl rounded-xl overflow-hidden">
-          <CardContent className="p-6 sm:p-8">
-            <div className="text-center mb-6">
-              <h1 className="text-xl font-semibold tracking-tight">Bem-vindo</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Configure seus servidores dedicados
-              </p>
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Acesso ao Sistema</CardTitle>
+          <CardDescription>
+            Entre com suas credenciais para acessar o painel
+          </CardDescription>
+        </CardHeader>
+        
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="exemplo@hostdime.com.br"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full"
+              />
             </div>
-
-            {loginError && (
-              <Alert variant="destructive" className="mb-5 animate-fade-in">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle className="text-sm font-medium">Erro</AlertTitle>
-                <AlertDescription className="text-xs mt-1">{loginError}</AlertDescription>
-              </Alert>
-            )}
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            placeholder="seu@email.com" 
-                            className="pl-10 bg-background/50 transition-colors focus-visible:ring-primary/50"
-                            {...field}
-                            aria-label="Email"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Senha</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="********" 
-                            className="pl-10 pr-10 bg-background/50 transition-colors focus-visible:ring-primary/50"
-                            {...field}
-                            aria-label="Senha"
-                          />
-                          <button 
-                            type="button" 
-                            onClick={toggleShowPassword}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full mt-6 bg-primary hover:bg-primary-hover text-white transition-all duration-200 touch-target font-medium"
-                  disabled={isLogging}
-                >
-                  {isLogging ? (
-                    <>
-                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                      Entrando...
-                    </>
-                  ) : "Entrar"}
-                </Button>
-              </form>
-            </Form>
-            
-            <div className="mt-8 text-center">
-              <p className="text-xs text-muted-foreground">
-                HostDime Brasil &copy; {new Date().getFullYear()}
-              </p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Senha
+                </label>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full"
+              />
             </div>
           </CardContent>
-        </Card>
-      </div>
+          
+          <CardFooter>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Autenticando...
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }

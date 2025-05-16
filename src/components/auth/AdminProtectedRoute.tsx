@@ -35,7 +35,7 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // CORREÇÃO: Verificação explícita se o email do usuário é admin@hostdime.com.br
+  // Verificação explícita se o email do usuário é admin@hostdime.com.br
   const isAdminEmail = user?.email === "admin@hostdime.com.br";
   
   if (!isAdmin && !isAdminEmail) {
