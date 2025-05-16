@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
@@ -6,8 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EthernetPort, Network } from "lucide-react";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { PriceService } from "@/services/price-service";
 
 interface ConnectivityContentProps {
   options: ComponentOption[];
@@ -22,24 +19,6 @@ export function ConnectivityContent({
 }: ConnectivityContentProps) {
   const portOptions = options.filter((opt) => opt.subtype === "porta");
   const ipOptions = options.filter((opt) => opt.subtype === "ip");
-  
-  // Efeito para garantir que os dados de conectividade estejam sincronizados
-  useEffect(() => {
-    // Verificamos se precisamos sincronizar os dados
-    const networkCategory = PriceService.getCategory('network');
-    const ipCategory = PriceService.getCategory('ip');
-    
-    if ((!networkCategory || networkCategory.items.length === 0) || 
-        (!ipCategory || ipCategory.items.length === 0)) {
-      // Se alguma categoria estiver vazia, tentamos sincronizar
-      try {
-        const ComponentSyncService = require('@/services/component-sync-service').default;
-        ComponentSyncService.syncConnectivityData();
-      } catch (error) {
-        console.error("Erro ao sincronizar dados de conectividade:", error);
-      }
-    }
-  }, []);
 
   const handlePortSelect = (portId: string | null) => {
     if (!portId) {

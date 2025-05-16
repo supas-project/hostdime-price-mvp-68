@@ -23,27 +23,6 @@ export function usePriceTable() {
       setIsLoading(true);
       const data = PriceService.getAllData();
       
-      // Garantir que os dados de conectividade estejam sincronizados
-      const needsSyncingConnectivity = 
-        (!data.network || data.network.items.length === 0) || 
-        (!data.ip || data.ip.items.length === 0);
-      
-      if (needsSyncingConnectivity) {
-        try {
-          // Carregando o serviço de sincronização dinamicamente
-          const ComponentSyncService = require('@/services/component-sync-service').default;
-          ComponentSyncService.syncConnectivityData();
-          
-          // Recarregar dados após sincronização
-          const updatedData = PriceService.getAllData();
-          setPriceData(updatedData);
-        } catch (error) {
-          console.error("Erro ao sincronizar dados de conectividade:", error);
-        }
-      } else {
-        setPriceData(data);
-      }
-      
       // Process items to ensure they have the appropriate tags
       Object.values(data).forEach(category => {
         category.items = category.items.map(item => {
@@ -64,13 +43,13 @@ export function usePriceTable() {
         });
       });
       
+      setPriceData(data);
       setLastSyncTime(new Date());
       
       if (!activeTab && Object.keys(data).length > 0) {
         setActiveTab(Object.keys(data)[0]);
       }
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados", {
         description: "Não foi possível carregar a tabela de preços."
       });
