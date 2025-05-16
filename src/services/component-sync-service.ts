@@ -1,8 +1,8 @@
-
 import { PriceService } from "./price-service";
 import { diskData } from "@/data/disk-data";
 import { cpuComponents } from "@/data/cpu-components";
 import { memoryComponents } from "@/data/memory-components";
+import { connectivityComponents } from "@/data/connectivity-components";
 import { toast } from "sonner";
 
 /**
@@ -30,6 +30,9 @@ const ComponentSyncService = {
 
       // Adicionar dados de sistema operacional
       ComponentSyncService.syncOSData();
+      
+      // Adicionar dados de conectividade
+      ComponentSyncService.syncConnectivityData();
       
       console.log("Dados da tabela de preços inicializados com sucesso!");
       toast.success("Dados da tabela de preços inicializados com sucesso");
@@ -281,7 +284,7 @@ const ComponentSyncService = {
       console.error("Erro ao sincronizar dados de storage:", error);
     }
   },
-
+  
   /**
    * Sincroniza dados de sistemas operacionais com a tabela de preços
    */
@@ -368,6 +371,128 @@ const ComponentSyncService = {
       console.log("Dados de sistemas operacionais sincronizados com sucesso!");
     } catch (error) {
       console.error("Erro ao sincronizar dados de sistemas operacionais:", error);
+    }
+  },
+  
+  /**
+   * Sincroniza dados de conectividade com a tabela de preços
+   */
+  syncConnectivityData: () => {
+    try {
+      // 1. Sincronizar itens para categoria de Interface de Rede (network)
+      let networkCategory = PriceService.getCategory('network');
+      
+      if (!networkCategory) {
+        // Criar categoria se não existir
+        networkCategory = PriceService.addCategory({
+          name: 'Interface de Rede',
+          items: []
+        });
+      }
+      
+      // 2. Sincronizar itens para categoria de Bloco de IPs (ip)
+      let ipCategory = PriceService.getCategory('ip');
+      
+      if (!ipCategory) {
+        // Criar categoria se não existir
+        ipCategory = PriceService.addCategory({
+          name: 'Bloco de IPs',
+          items: []
+        });
+      }
+      
+      // Filtramos os componentes de conectividade por subtype
+      const portOptions = connectivityComponents.options.filter(opt => opt.subtype === "porta");
+      const ipOptions = connectivityComponents.options.filter(opt => opt.subtype === "ip");
+      
+      // Adicionar itens de porta à categoria network
+      portOptions.forEach(port => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = networkCategory?.items.filter(item => 
+            item.name.toLowerCase() === port.name.toLowerCase()
+          ) || [];
+          
+          if (existingItems.length === 0 && networkCategory) {
+            // Adicionar novo item
+            PriceService.addItem('network', {
+              name: port.name,
+              description: port.description || `Porta de rede ${port.name}`,
+              price: port.price,
+              specs: [],
+              type: "Conectividade",
+              subtype: "porta",
+              tags: ["Hardware"]
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar porta de rede ${port.name}:`, err);
+        }
+      });
+      
+      // Adicionar itens de IP à categoria ip
+      ipOptions.forEach(ip => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = ipCategory?.items.filter(item => 
+            item.name.toLowerCase() === ip.name.toLowerCase()
+          ) || [];
+          
+          if (existingItems.length === 0 && ipCategory) {
+            // Adicionar novo item
+            PriceService.addItem('ip', {
+              name: ip.name,
+              description: ip.description || `Bloco de IPs ${ip.name}`,
+              price: ip.price,
+              specs: [],
+              type: "Conectividade",
+              subtype: "ip"
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar bloco de IP ${ip.name}:`, err);
+        }
+      });
+      
+      // Opcionalmente, também sincronizamos com a categoria geral de conectividade
+      let connectivityCategory = PriceService.getCategory('connectivity');
+      
+      if (!connectivityCategory) {
+        // Criar categoria se não existir
+        connectivityCategory = PriceService.addCategory({
+          name: 'Conectividade',
+          items: []
+        });
+      }
+      
+      // Adicionar todos os itens de conectividade (combinando portas e IPs)
+      connectivityComponents.options.forEach(conn => {
+        try {
+          // Verificar se o item já existe
+          const existingItems = connectivityCategory?.items.filter(item => 
+            item.name.toLowerCase() === conn.name.toLowerCase()
+          ) || [];
+          
+          if (existingItems.length === 0 && connectivityCategory) {
+            // Adicionar novo item
+            PriceService.addItem('connectivity', {
+              name: conn.name,
+              description: conn.description,
+              price: conn.price,
+              specs: [],
+              type: "Conectividade",
+              subtype: conn.subtype,
+              tags: conn.subtype === "porta" ? ["Hardware"] : []
+            });
+          }
+        } catch (err) {
+          console.warn(`Erro ao adicionar item de conectividade ${conn.name}:`, err);
+        }
+      });
+      
+      console.log("Dados de conectividade sincronizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados de conectividade:", error);
     }
   }
 };
