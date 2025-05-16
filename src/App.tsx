@@ -11,6 +11,7 @@ import PriceTable from "./pages/PriceTable";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
+import Diagnostics from "./pages/Diagnostics";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminProtectedRoute from "./components/auth/AdminProtectedRoute";
@@ -47,10 +48,16 @@ const App = () => (
             }>
               <Route index element={<Navigate to="/configure" replace />} />
               
-              {/* Admin protected route */}
+              {/* Admin protected routes */}
               <Route path="price-table" element={
                 <AdminProtectedRoute>
                   <PriceTable />
+                </AdminProtectedRoute>
+              } />
+              
+              <Route path="diagnostics" element={
+                <AdminProtectedRoute>
+                  <Diagnostics />
                 </AdminProtectedRoute>
               } />
               

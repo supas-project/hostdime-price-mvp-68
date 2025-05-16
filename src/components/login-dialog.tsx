@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, Shield } from "lucide-react";
+import { LogIn, LogOut, Shield, ActivitySquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -35,40 +35,55 @@ export function LoginDialog() {
             {isAdmin ? "Administrador" : "Usuário"}
           </span>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={async () => {
-            try {
-              setIsLoggingOut(true);
-              await logout();
-              // Após o logout, redireciona para a página de login
-              navigate("/login");
-            } catch (error) {
-              console.error("Erro ao fazer logout via botão:", error);
-            } finally {
-              setIsLoggingOut(false);
-            }
-          }}
-          disabled={isLoggingOut}
-          className={cn(
-            "transition-all font-medium",
-            "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
-            "focus-visible:ring-destructive/30"
+        
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/diagnostics")}
+              className="text-primary hover:bg-primary/10"
+            >
+              <ActivitySquare className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Diagnóstico</span>
+            </Button>
           )}
-        >
-          {isLoggingOut ? (
-            <>
-              <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span className="truncate">Saindo...</span>
-            </>
-          ) : (
-            <>
-              <LogOut className="w-4 h-4 mr-2 shrink-0" />
-              <span className="truncate">Sair</span>
-            </>
-          )}
-        </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={async () => {
+              try {
+                setIsLoggingOut(true);
+                await logout();
+                // Após o logout, redireciona para a página de login
+                navigate("/login");
+              } catch (error) {
+                console.error("Erro ao fazer logout via botão:", error);
+              } finally {
+                setIsLoggingOut(false);
+              }
+            }}
+            disabled={isLoggingOut}
+            className={cn(
+              "transition-all font-medium",
+              "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
+              "focus-visible:ring-destructive/30"
+            )}
+          >
+            {isLoggingOut ? (
+              <>
+                <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span className="truncate">Saindo...</span>
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 mr-2 shrink-0" />
+                <span className="truncate">Sair</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     );
   }
