@@ -11,7 +11,6 @@ import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ImportButton } from "@/components/price-table/ImportButton";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
-import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -74,8 +73,11 @@ export default function PriceTable() {
   // Hook de sincronização
   const { lastSyncTime: syncTime, hasUpdates } = useDataSync();
 
-  // Authentication
-  const { isAuthenticated, isAdmin } = useAuth();
+  // Authentication - CORREÇÃO: Garantir que estamos obtendo corretamente o status de admin
+  const { isAuthenticated, isAdmin, user } = useAuth();
+
+  // Log para debug - CORREÇÃO: Adicionar logs para debug
+  console.log("PriceTable - Auth state:", { isAuthenticated, isAdmin, userEmail: user?.email });
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing;
@@ -93,11 +95,14 @@ export default function PriceTable() {
     delete filteredPriceData.contract;
   }
 
+  // CORREÇÃO: Adicionar verificação explícita para garantir acesso admin
+  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
+
   return (
     <div className="container py-6 md:py-8 animate-fade-in">
       <PriceTableHeader lastSyncTime={lastSyncTime} />
 
-      {!isAdmin && (
+      {!isAdminAccess && (
         <Alert className="mb-4 border-primary/20 bg-primary/5">
           <AlertCircle className="h-4 w-4 text-primary" />
           <AlertTitle>Modo de visualização</AlertTitle>
@@ -110,7 +115,7 @@ export default function PriceTable() {
       <Card className="border border-border rounded-xl shadow-lg overflow-hidden mt-6">
         <CardHeader className="pb-0">
           <div className="flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-4">
-            {isAdmin && (
+            {isAdminAccess && (
               <TableActions
                 activeTab={activeTab}
                 priceData={filteredPriceData}
@@ -144,7 +149,7 @@ export default function PriceTable() {
                   onChange={setContractDuration}
                 />
                 
-                {isAdmin && (
+                {isAdminAccess && (
                   <ImportButton 
                     isLoading={isLoading}
                     fileInputRef={fileInputRef}
@@ -169,7 +174,7 @@ export default function PriceTable() {
             priceData={filteredPriceData}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            isAdmin={isAdmin}
+            isAdmin={isAdminAccess}
             searchTerm={searchTerm}
             sortOrder={sortOrder}
             displayMode={displayMode}

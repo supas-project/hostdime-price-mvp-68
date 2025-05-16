@@ -11,8 +11,11 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasConflicts, setHasConflicts] = useState(false);
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { registerAdminChange, syncWithLatestData } = useDataSync();
+
+  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   // Verificar periodicamente se há conflitos de dados
   useEffect(() => {
@@ -20,7 +23,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
       const hasDataConflicts = PriceService.checkForDataConflicts();
       setHasConflicts(hasDataConflicts);
       
-      if (hasDataConflicts && !isAdmin) {
+      if (hasDataConflicts && !isAdminAccess) {
         toast.warning("Alterações detectadas", {
           description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
           duration: 6000
@@ -35,7 +38,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     const intervalId = setInterval(checkForConflicts, 30000);
     
     return () => clearInterval(intervalId);
-  }, [toast, isAdmin]);
+  }, [toast, isAdminAccess]);
 
   // Handle exporting data as JSON
   const handleExportData = () => {
@@ -66,7 +69,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
 
   // Handle resetting data to initial state
   const handleResetData = () => {
-    if (!isAdmin) {
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem resetar os dados."
       });

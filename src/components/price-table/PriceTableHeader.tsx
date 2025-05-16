@@ -1,9 +1,9 @@
 
 import { HardDrive } from "lucide-react";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
-import { useDataActions } from "@/hooks/price-table/useDataActions";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PriceTableHeaderProps {
   lastSyncTime: Date | null;
@@ -12,6 +12,7 @@ interface PriceTableHeaderProps {
 export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
   const { hasUpdates, syncWithLatestData } = useDataSync();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { isAdmin } = useAuth();
   
   // Handle refresh function
   const handleRefresh = () => {
@@ -33,7 +34,11 @@ export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
             Tabela de Preços
           </h1>
-          <p className="text-muted-foreground">Gerencie os preços dos componentes para servidores</p>
+          <p className="text-muted-foreground">
+            {isAdmin 
+              ? "Gerencie os preços dos componentes para servidores" 
+              : "Visualize os preços dos componentes para servidores"}
+          </p>
         </div>
       </div>
       

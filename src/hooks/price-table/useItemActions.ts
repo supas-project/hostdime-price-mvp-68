@@ -16,10 +16,13 @@ export function useItemActions(
   const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
   const { toast } = useToast();
   const { registerAdminChange } = useDataSync();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+
+  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   const handleInitiateEdit = (item: PriceItem) => {
-    if (!isAdmin) {
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
       });
@@ -31,8 +34,8 @@ export function useItemActions(
   };
 
   const handleAddItem = async (values: any) => {
-    // Verifica permissão de administrador
-    if (!isAdmin) {
+    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar itens."
       });
@@ -94,8 +97,8 @@ export function useItemActions(
   };
 
   const handleEditItem = (values: any, itemId?: string) => {
-    // Verifica permissão de administrador
-    if (!isAdmin) {
+    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
       });
@@ -166,8 +169,8 @@ export function useItemActions(
   };
 
   const handleDeleteItem = (itemId: string) => {
-    // Verifica permissão de administrador
-    if (!isAdmin) {
+    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir itens."
       });

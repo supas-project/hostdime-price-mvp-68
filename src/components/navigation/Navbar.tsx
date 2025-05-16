@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { LoginDialog } from "@/components/login-dialog";
 
 interface NavbarProps {
   notifications?: React.ReactNode;
@@ -23,35 +24,8 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
         </div>
 
         <div className={cn("flex flex-1 items-center justify-end space-x-4")}>
-          {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              {notifications && <div className="mr-2">{notifications}</div>}
-              
-              <div className="text-sm text-muted-foreground">
-                {user?.email}
-                {isAdmin && <span className="ml-1 text-primary">(Admin)</span>}
-              </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  logout();
-                  navigate("/login");
-                }}
-              >
-                Logout
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </Button>
-          )}
+          {notifications && <div className="mr-2">{notifications}</div>}
+          <LoginDialog />
         </div>
       </div>
     </header>

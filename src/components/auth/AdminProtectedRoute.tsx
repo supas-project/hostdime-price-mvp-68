@@ -9,8 +9,15 @@ interface AdminProtectedRouteProps {
 }
 
 export default function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isAdmin, user, loading } = useAuth();
   const location = useLocation();
+
+  console.log("AdminProtectedRoute - Auth state:", { 
+    isAuthenticated, 
+    isAdmin, 
+    userEmail: user?.email,
+    loading 
+  });
 
   if (loading) {
     return (
@@ -28,7 +35,10 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!isAdmin) {
+  // CORREÇÃO: Verificação explícita se o email do usuário é admin@hostdime.com.br
+  const isAdminEmail = user?.email === "admin@hostdime.com.br";
+  
+  if (!isAdmin && !isAdminEmail) {
     // Mostrar toast de erro e redirecionar
     toast.error("Acesso negado", {
       description: "Você não tem permissão para acessar esta página."

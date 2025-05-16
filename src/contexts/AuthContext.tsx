@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +15,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Constantes para o usuário admin padrão - agora com verificação precisa
+// Constantes para o usuário admin padrão - com verificação precisa
 const ADMIN_EMAIL = "admin@hostdime.com.br";
 const DEFAULT_ADMIN_PASSWORD = "H0stD1m3@2025";
 
@@ -191,7 +190,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (localData.session && localData.user) {
           setIsAuthenticated(true);
           setUser(localData.user);
-          setIsAdmin(localData.user.email === ADMIN_EMAIL); // Restringe admin somente para admin@hostdime.com.br
+          
+          // CORREÇÃO: Verifica se o usuário é admin por comparação exata do email
+          const isUserAdmin = localData.user.email === ADMIN_EMAIL;
+          setIsAdmin(isUserAdmin);
+          
+          console.log("Sessão carregada do localStorage:", localData.user.email, "isAdmin:", isUserAdmin);
           setLoading(false);
           return;
         }
@@ -209,9 +213,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(true);
           setUser(session.user);
           
-          // Verifica se o usuário é admin - AGORA ESTRITAMENTE APENAS admin@hostdime.com.br
+          // CORREÇÃO: Verifica se o usuário é admin por comparação exata do email
           const isUserAdmin = session.user.email === ADMIN_EMAIL;
           setIsAdmin(isUserAdmin);
+          
+          console.log("Sessão carregada do Supabase:", session.user.email, "isAdmin:", isUserAdmin);
           
           // Salvar a sessão localmente para esta janela/aba
           saveLocalSession(session, session.user, isUserAdmin);
@@ -238,9 +244,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(true);
           setUser(session.user);
           
-          // Verifica se é admin - AGORA ESTRITAMENTE APENAS admin@hostdime.com.br
+          // CORREÇÃO: Verifica se o usuário é admin por comparação exata do email
           const isUserAdmin = session.user.email === ADMIN_EMAIL;
           setIsAdmin(isUserAdmin);
+          
+          console.log("Sign In:", session.user.email, "isAdmin:", isUserAdmin);
           
           // Salvar a sessão localmente para esta janela/aba
           saveLocalSession(session, session.user, isUserAdmin);
@@ -278,6 +286,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: error.message
         });
         return false;
+      }
+      
+      // CORREÇÃO: Adicionar log para verificar corretamente o status de admin após login
+      if (data && data.user) {
+        const isUserAdmin = data.user.email === ADMIN_EMAIL;
+        console.log("Login bem-sucedido:", data.user.email, "isAdmin:", isUserAdmin);
       }
       
       return true;

@@ -10,10 +10,13 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const { toast } = useToast();
   const { registerAdminChange } = useDataSync();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  
+  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   const handleAddCategory = (values: any) => {
-    if (!isAdmin) {
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar categorias."
       });
@@ -50,7 +53,7 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    if (!isAdmin) {
+    if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir categorias."
       });
