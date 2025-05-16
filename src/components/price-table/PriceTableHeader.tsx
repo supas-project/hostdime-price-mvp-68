@@ -1,12 +1,28 @@
 
 import { HardDrive } from "lucide-react";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
+import { useDataActions } from "@/hooks/price-table/useDataActions";
+import { useDataSync } from "@/hooks/useDataSync";
+import { useState } from "react";
 
 interface PriceTableHeaderProps {
   lastSyncTime: Date | null;
 }
 
 export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
+  const { hasUpdates, syncWithLatestData } = useDataSync();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Handle refresh function
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    // Simple timeout to simulate refresh process
+    setTimeout(() => {
+      syncWithLatestData();
+      setIsRefreshing(false);
+    }, 1000);
+  };
+  
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
       <div className="flex items-center gap-3">
@@ -22,7 +38,12 @@ export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
       </div>
       
       <div className="flex items-center gap-4">
-        <SyncIndicator lastSyncTime={lastSyncTime} />
+        <SyncIndicator 
+          lastSyncTime={lastSyncTime}
+          hasConflicts={hasUpdates}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
       </div>
     </div>
   );
