@@ -1,6 +1,6 @@
 
 import { PDFDocument, PDFImage, PDFPage, PDFFont } from 'pdf-lib';
-import { hostDimeLogoBase64 } from '../../pdf-assets';
+import { hostDimeLogoBase64, hostDimeSvgLogoUrl } from '../../pdf-assets';
 
 export async function embeddedImage(doc: PDFDocument, base64Image: string) {
   try {
@@ -67,6 +67,11 @@ export function calculateImageDimensions(
   }
   
   return { width, height };
+}
+
+// Função atualizada para verificar se a imagem é uma URL SVG
+export async function isSvgUrl(url: string): Promise<boolean> {
+  return url.toLowerCase().endsWith('.svg') || url.toLowerCase().includes('/svg');
 }
 
 // Enhanced function to embed and draw images with robust error handling

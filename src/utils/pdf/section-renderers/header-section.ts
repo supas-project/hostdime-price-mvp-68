@@ -4,6 +4,7 @@ import { COLOR } from '../colors';
 import { drawHeader } from '../drawing-utils';
 import { QuoteVariables, getQuoteVariables } from '../dynamic-variables';
 import { drawTextCell } from '../drawing-utils/text';
+import { hostDimeSvgLogoUrl } from '../../pdf-assets';
 
 export async function renderHeaderSection(
   pdfDoc: PDFDocument,
@@ -27,6 +28,9 @@ export async function renderHeaderSection(
   const monthYear = `${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getFullYear()}`;
   const randomPart = Math.floor(Math.random() * 90000) + 10000;
   const quoteNumber = `HD-${randomPart}-${monthYear}`;
+  
+  // Adicionar nota sobre a imagem SVG usada na versão web
+  console.log(`Utilizando logo SVG na cotação web: ${hostDimeSvgLogoUrl}`);
   
   // CORREÇÃO: Ajustar a posição e tamanho do box de informações para melhor alinhamento
   page.drawRectangle({

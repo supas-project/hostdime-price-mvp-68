@@ -2,7 +2,7 @@
 import { PDFDocument, PDFPage, PDFFont } from 'pdf-lib';
 import { COLOR } from '../colors';
 import { PageContext } from '../types';
-import { hostDimeLogoBase64 } from '../../pdf-assets';
+import { hostDimeLogoBase64, hostDimeSvgLogoUrl } from '../../pdf-assets';
 import { embedAndDrawImage } from './images';
 
 // Enhanced helper function to check if we need a new page with improved spacing
