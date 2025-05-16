@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
+import { useDataSync } from "@/hooks/useDataSync";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
@@ -9,6 +11,8 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasConflicts, setHasConflicts] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
+  const { registerAdminChange, syncWithLatestData } = useDataSync();
 
   // Verificar periodicamente se há conflitos de dados
   useEffect(() => {
@@ -16,9 +20,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
       const hasDataConflicts = PriceService.checkForDataConflicts();
       setHasConflicts(hasDataConflicts);
       
-      if (hasDataConflicts) {
+      if (hasDataConflicts && !isAdmin) {
         toast.warning("Alterações detectadas", {
-          description: "Outro usuário modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
+          description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
           duration: 6000
         });
       }
@@ -31,7 +35,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     const intervalId = setInterval(checkForConflicts, 30000);
     
     return () => clearInterval(intervalId);
-  }, [toast]);
+  }, [toast, isAdmin]);
 
   // Handle exporting data as JSON
   const handleExportData = () => {
@@ -62,6 +66,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
 
   // Handle resetting data to initial state
   const handleResetData = () => {
+    if (!isAdmin) {
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem resetar os dados."
+      });
+      return;
+    }
+
     if (confirm("Tem certeza que deseja resetar todos os dados para o padrão inicial? Esta ação não pode ser desfeita.")) {
       try {
         setIsResetting(true);
@@ -71,6 +82,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
         
         // Update state with reset data
         setPriceData(resetData);
+        
+        // Registre a alteração para notificar outros usuários
+        registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
         
         toast.success("Dados resetados", {
           description: "Todos os dados foram redefinidos para o padrão inicial."
@@ -96,6 +110,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
       // Atualiza o estado com os dados atualizados
       setPriceData(refreshedData);
       setHasConflicts(false);
+      
+      // Atualiza o estado de sincronização
+      syncWithLatestData();
       
       toast.success("Dados atualizados", {
         description: "Os dados foram sincronizados com a fonte mais recente."

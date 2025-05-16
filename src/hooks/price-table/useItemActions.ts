@@ -3,6 +3,8 @@ import { useState } from "react";
 import { PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
+import { useDataSync } from "@/hooks/useDataSync";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useItemActions(
   activeTab: string,
@@ -13,13 +15,30 @@ export function useItemActions(
   const [openEditItem, setOpenEditItem] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
   const { toast } = useToast();
+  const { registerAdminChange } = useDataSync();
+  const { isAdmin } = useAuth();
 
   const handleInitiateEdit = (item: PriceItem) => {
+    if (!isAdmin) {
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem editar itens."
+      });
+      return;
+    }
+    
     setItemToEdit(item);
     setOpenEditItem(true);
   };
 
   const handleAddItem = async (values: any) => {
+    // Verifica permissão de administrador
+    if (!isAdmin) {
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem adicionar itens."
+      });
+      return;
+    }
+    
     // Avoid multiple submissions
     if (isSubmittingItem) return;
     
@@ -56,6 +75,9 @@ export function useItemActions(
       // Close modal
       setOpenAddItem(false);
       
+      // Registra a mudança para notificação
+      registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${PriceService.getCategory(activeTab)?.name || activeTab}`);
+      
       toast.success("Item adicionado", {
         description: `O item ${values.name} foi adicionado com sucesso.`
       });
@@ -72,6 +94,14 @@ export function useItemActions(
   };
 
   const handleEditItem = (values: any, itemId?: string) => {
+    // Verifica permissão de administrador
+    if (!isAdmin) {
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem editar itens."
+      });
+      return;
+    }
+    
     if (!activeTab || !itemId) {
       toast.error("Erro ao editar item", {
         description: "Nenhuma categoria ou item selecionado."
@@ -94,8 +124,6 @@ export function useItemActions(
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
       };
       
-      console.log("Atualizando item com dados:", updatedItemData);
-      
       // Update item using existing method
       const updatedItem = PriceService.updateItem(activeTab, itemId, updatedItemData);
       
@@ -117,6 +145,9 @@ export function useItemActions(
         return newState;
       });
       
+      // Registra a mudança para notificação
+      registerAdminChange("edit_item", `Item "${values.name}" atualizado na categoria ${PriceService.getCategory(activeTab)?.name || activeTab}`);
+      
       // Close edit dialog and reset state
       setOpenEditItem(false);
       setItemToEdit(undefined);
@@ -135,9 +166,20 @@ export function useItemActions(
   };
 
   const handleDeleteItem = (itemId: string) => {
-    if (!activeTab) return;
+    // Verifica permissão de administrador
+    if (!isAdmin) {
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem excluir itens."
+      });
+      return false;
+    }
+    
+    if (!activeTab) return false;
     
     try {
+      // Obtém o nome do item antes de excluí-lo para a mensagem
+      const itemToDelete = PriceService.getCategory(activeTab)?.items.find(item => item.id === itemId);
+      
       PriceService.deleteItem(activeTab, itemId);
       
       // Atualiza o estado local para feedback imediato
@@ -148,6 +190,9 @@ export function useItemActions(
           items: prev[activeTab].items.filter(item => item.id !== itemId)
         }
       }));
+      
+      // Registra a mudança para notificação
+      registerAdminChange("delete_item", `Item "${itemToDelete?.name || itemId}" excluído da categoria ${PriceService.getCategory(activeTab)?.name || activeTab}`);
       
       toast.success("Item excluído", {
         description: "O item foi excluído com sucesso."

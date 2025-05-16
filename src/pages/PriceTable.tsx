@@ -12,6 +12,10 @@ import { ImportButton } from "@/components/price-table/ImportButton";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
+import { useDataSync } from "@/hooks/useDataSync";
+import { useEffect } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default function PriceTable() {
   // Custom hooks
@@ -66,12 +70,22 @@ export default function PriceTable() {
     hasConflicts,
     handleRefreshData
   } = useDataActions(setPriceData);
+  
+  // Hook de sincronização
+  const { lastSyncTime: syncTime, hasUpdates } = useDataSync();
 
   // Authentication
   const { isAuthenticated, isAdmin } = useAuth();
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing;
+
+  // Effect para forçar atualização quando hasUpdates for true
+  useEffect(() => {
+    if (hasUpdates) {
+      handleRefreshData();
+    }
+  }, [hasUpdates]);
 
   // Filtrar categorias para remover a categoria de contratos
   const filteredPriceData = {...priceData};
@@ -82,6 +96,16 @@ export default function PriceTable() {
   return (
     <div className="container py-6 md:py-8 animate-fade-in">
       <PriceTableHeader lastSyncTime={lastSyncTime} />
+
+      {!isAdmin && (
+        <Alert className="mb-4 border-primary/20 bg-primary/5">
+          <AlertCircle className="h-4 w-4 text-primary" />
+          <AlertTitle>Modo de visualização</AlertTitle>
+          <AlertDescription>
+            Você está no modo de visualização. Apenas administradores podem editar esta tabela.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="border border-border rounded-xl shadow-lg overflow-hidden mt-6">
         <CardHeader className="pb-0">

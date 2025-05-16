@@ -217,18 +217,16 @@ function NotificationList({
                 className="h-7 w-7" 
                 onClick={() => markAsRead(notification.id)}
               >
-                <CheckCircle className="h-4 w-4" />
-                <span className="sr-only">Marcar como lida</span>
+                <CheckCircle className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             )}
             <Button 
               size="icon" 
               variant="ghost" 
-              className="h-7 w-7 text-muted-foreground" 
+              className="h-7 w-7" 
               onClick={() => clearNotification(notification.id)}
             >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Remover</span>
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </div>
         </div>

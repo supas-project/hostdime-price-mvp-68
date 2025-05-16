@@ -1,137 +1,191 @@
-import { useState, useEffect } from "react";
-import { toast as sonnerToast } from "@/utils/toast-utils";
-import { v4 as uuidv4 } from "uuid";
 
-// Define the types for notifications
-interface Notification {
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+
+export interface Notification {
   id: string;
   message: string;
   description?: string;
-  timestamp: number;
+  timestamp: Date;
   read: boolean;
-  variant?: "default" | "destructive" | "success" | "warning" | "info";
-  important?: boolean;
+  variant?: "default" | "destructive" | "success" | "info" | "warning";
   icon?: React.ReactNode;
+  important?: boolean;
 }
 
-// Define the return type for the hook
-interface UseToastReturn {
-  toast: typeof sonnerToast;
-  notifications: Notification[];
-  unreadCount: number;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearNotification: (id: string) => void;
-  clearAllNotifications: () => void;
-}
+// Armazenamento global de notificações para persistência entre renders
+let notifications: Notification[] = [];
 
-/**
- * Hook para utilizar o sistema de toast e notificações em componentes funcionais.
- * 
- * @returns O objeto de funcionalidades de toast e gerenciamento de notificações
- */
-export function useToast(): UseToastReturn {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+// Listeners para mudanças nas notificações
+const listeners = new Set<() => void>();
 
-  // Keep track of toast calls to add to notification center
+const addNotificationToState = (notification: Notification) => {
+  notifications = [notification, ...notifications].slice(0, 50); // Limita a 50 notificações
+  notifyListeners();
+};
+
+const markNotificationAsReadInState = (id: string) => {
+  notifications = notifications.map((n) =>
+    n.id === id ? { ...n, read: true } : n
+  );
+  notifyListeners();
+};
+
+const markAllNotificationsAsReadInState = () => {
+  notifications = notifications.map((n) => ({ ...n, read: true }));
+  notifyListeners();
+};
+
+const clearNotificationInState = (id: string) => {
+  notifications = notifications.filter((n) => n.id !== id);
+  notifyListeners();
+};
+
+const clearAllNotificationsInState = () => {
+  notifications = [];
+  notifyListeners();
+};
+
+const notifyListeners = () => {
+  listeners.forEach((listener) => listener());
+};
+
+// Hook para consumir notificações
+export function useToast() {
+  const [state, setState] = useState<{
+    notifications: Notification[];
+    unreadCount: number;
+  }>({
+    notifications,
+    unreadCount: notifications.filter((n) => !n.read).length,
+  });
+
   useEffect(() => {
-    const handleToast = (message: string, options?: any, variant?: string) => {
-      const notification: Notification = {
-        id: uuidv4(),
-        message,
-        description: options?.description,
-        timestamp: Date.now(),
-        read: false,
-        variant: variant as any,
-        important: options?.important || false,
-        icon: options?.icon
-      };
-      
-      setNotifications(prev => [notification, ...prev].slice(0, 100)); // Limit to 100 notifications
-      return message; // Pass through for chaining
+    const updateState = () => {
+      setState({
+        notifications,
+        unreadCount: notifications.filter((n) => !n.read).length,
+      });
     };
-    
-    // Override toast methods to capture notifications
-    const originalSuccess = sonnerToast.success;
-    const originalError = sonnerToast.error;
-    const originalInfo = sonnerToast.info;
-    const originalWarning = sonnerToast.warning;
-    const originalCustom = sonnerToast.custom;
-    
-    sonnerToast.success = (message, options) => {
-      handleToast(message, options, "success");
-      return originalSuccess(message, options);
-    };
-    
-    sonnerToast.error = (message, options) => {
-      handleToast(message, options, "destructive");
-      return originalError(message, options);
-    };
-    
-    sonnerToast.info = (message, options) => {
-      handleToast(message, options, "info");
-      return originalInfo(message, options);
-    };
-    
-    sonnerToast.warning = (message, options) => {
-      handleToast(message, options, "warning");
-      return originalWarning(message, options);
-    };
-    
-    sonnerToast.custom = (message, options) => {
-      handleToast(message, options, "default");
-      return originalCustom(message, options);
-    };
-    
+
+    listeners.add(updateState);
+    updateState(); // Inicial setup
+
     return () => {
-      // Restore original methods on cleanup
-      sonnerToast.success = originalSuccess;
-      sonnerToast.error = originalError;
-      sonnerToast.info = originalInfo;
-      sonnerToast.warning = originalWarning;
-      sonnerToast.custom = originalCustom;
+      listeners.delete(updateState);
     };
   }, []);
-  
-  // Calculate unread count
-  const unreadCount = notifications.filter(n => !n.read).length;
-  
-  // Mark notification as read
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+
+  const addToast = (
+    message: string,
+    options?: {
+      description?: string;
+      variant?: "default" | "destructive" | "success" | "info" | "warning";
+      icon?: React.ReactNode;
+      important?: boolean;
+      duration?: number;
+    }
+  ) => {
+    const notification: Notification = {
+      id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      message,
+      description: options?.description,
+      timestamp: new Date(),
+      read: false,
+      variant: options?.variant || "default",
+      icon: options?.icon,
+      important: options?.important || false,
+    };
+
+    addNotificationToState(notification);
+
+    // Exibe o toast usando sonner
+    const toastFn = options?.variant 
+      ? (options.variant === 'destructive' ? toast.error 
+        : options.variant === 'success' ? toast.success 
+        : options.variant === 'warning' ? toast.warning
+        : options.variant === 'info' ? toast.info
+        : toast)
+      : toast;
+
+    toastFn(message, {
+      description: options?.description,
+      duration: options?.duration || 5000,
+      position: "top-right",
+    });
+
+    return notification.id;
   };
-  
-  // Mark all notifications as read
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-  };
-  
-  // Remove a notification
-  const clearNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
-  
-  // Clear all notifications
-  const clearAllNotifications = () => {
-    setNotifications([]);
-  };
-  
+
   return {
-    toast: sonnerToast,
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    clearNotification,
-    clearAllNotifications
+    notifications: state.notifications,
+    unreadCount: state.unreadCount,
+    toast: {
+      ...toast,
+      // Métodos de conveniência com registro
+      info: (message: string, options?: any) => addToast(message, { ...options, variant: "info" }),
+      success: (message: string, options?: any) => addToast(message, { ...options, variant: "success" }),
+      warning: (message: string, options?: any) => addToast(message, { ...options, variant: "warning" }),
+      error: (message: string, options?: any) => addToast(message, { ...options, variant: "destructive" }),
+    },
+    // Métodos para gerenciar as notificações
+    addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
+      const fullNotification: Notification = {
+        id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        timestamp: new Date(),
+        read: false,
+        ...notification,
+      };
+      addNotificationToState(fullNotification);
+      return fullNotification.id;
+    },
+    markAsRead: (id: string) => markNotificationAsReadInState(id),
+    markAllAsRead: () => markAllNotificationsAsReadInState(),
+    clearNotification: (id: string) => clearNotificationInState(id),
+    clearAllNotifications: () => clearAllNotificationsInState(),
   };
 }
 
-// Export toast directly for use without the hook
-export const toast = sonnerToast;
+// Helper para acessar o toast de qualquer lugar
+export const toast = {
+  info: (message: string, options?: any) => {
+    toast.default(message, { ...options, variant: "info" });
+  },
+  success: (message: string, options?: any) => {
+    toast.default(message, { ...options, variant: "success" });
+  },
+  warning: (message: string, options?: any) => {
+    toast.default(message, { ...options, variant: "warning" });
+  },
+  error: (message: string, options?: any) => {
+    toast.default(message, { ...options, variant: "destructive" });
+  },
+  default: (message: string, options?: any) => {
+    const notification: Notification = {
+      id: `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      message,
+      description: options?.description,
+      timestamp: new Date(),
+      read: false,
+      variant: options?.variant || "default",
+      icon: options?.icon,
+      important: options?.important || false,
+    };
+
+    addNotificationToState(notification);
+
+    // Exibir toast usando o sonner
+    const toastFn = options?.variant 
+      ? (options.variant === 'destructive' ? toast.error 
+        : options.variant === 'success' ? toast.success 
+        : options.variant === 'warning' ? toast.warning
+        : options.variant === 'info' ? toast.info
+        : toast)
+      : toast;
+
+    toast(message, {
+      description: options?.description,
+      duration: options?.duration || 5000,
+    });
+  },
+};

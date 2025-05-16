@@ -16,8 +16,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Constantes para o usuário admin padrão
-const DEFAULT_ADMIN_EMAIL = "admin@hostdime.com.br";
+// Constantes para o usuário admin padrão - agora com verificação precisa
+const ADMIN_EMAIL = "admin@hostdime.com.br";
 const DEFAULT_ADMIN_PASSWORD = "H0stD1m3@2025";
 
 // Chave para armazenar sessões no localStorage com identificador único
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Tentar fazer login com o usuário admin para verificar se ele existe
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: DEFAULT_ADMIN_EMAIL,
+        email: ADMIN_EMAIL,
         password: DEFAULT_ADMIN_PASSWORD,
       });
 
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Se não conseguimos fazer login, tentamos criar o usuário
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: DEFAULT_ADMIN_EMAIL,
+        email: ADMIN_EMAIL,
         password: DEFAULT_ADMIN_PASSWORD,
         options: {
           // Definir para não requerer confirmação de email, já que é um usuário padrão
@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (localData.session && localData.user) {
           setIsAuthenticated(true);
           setUser(localData.user);
-          setIsAdmin(localData.isAdmin);
+          setIsAdmin(localData.user.email === ADMIN_EMAIL); // Restringe admin somente para admin@hostdime.com.br
           setLoading(false);
           return;
         }
@@ -209,10 +209,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(true);
           setUser(session.user);
           
-          // Check if user is admin (email verification)
-          const isUserAdmin = session.user.email === DEFAULT_ADMIN_EMAIL || 
-                              session.user.email?.endsWith('@hostdime.com.br') || 
-                              false;
+          // Verifica se o usuário é admin - AGORA ESTRITAMENTE APENAS admin@hostdime.com.br
+          const isUserAdmin = session.user.email === ADMIN_EMAIL;
           setIsAdmin(isUserAdmin);
           
           // Salvar a sessão localmente para esta janela/aba
@@ -240,10 +238,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAuthenticated(true);
           setUser(session.user);
           
-          // Check if admin
-          const isUserAdmin = session.user.email === DEFAULT_ADMIN_EMAIL || 
-                              session.user.email?.endsWith('@hostdime.com.br') || 
-                              false;
+          // Verifica se é admin - AGORA ESTRITAMENTE APENAS admin@hostdime.com.br
+          const isUserAdmin = session.user.email === ADMIN_EMAIL;
           setIsAdmin(isUserAdmin);
           
           // Salvar a sessão localmente para esta janela/aba
