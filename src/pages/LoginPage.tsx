@@ -59,7 +59,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-2">
             <img src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg" alt="HostDime Logo" className="h-12 w-auto object-scale-down" />
           </div>
-          <CardTitle className="text-2xl font-bold">Acesso ao Sistema</CardTitle>
+          
           <CardDescription>
             Entre com suas credenciais para acessar o painel
           </CardDescription>
