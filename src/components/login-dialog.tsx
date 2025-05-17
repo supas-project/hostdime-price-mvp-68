@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, Shield, ActivitySquare, Database } from "lucide-react";
+import { LogIn, LogOut, Shield, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -41,27 +41,15 @@ export function LoginDialog() {
         
         <div className="flex items-center gap-2">
           {isAdminAccess && (
-            <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate("/price-table")}
-                className="text-primary hover:bg-primary/10"
-              >
-                <Database className="w-4 h-4 mr-2 shrink-0" />
-                <span className="truncate">Tabela de Preços</span>
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate("/diagnostics")}
-                className="text-primary hover:bg-primary/10"
-              >
-                <ActivitySquare className="w-4 h-4 mr-2 shrink-0" />
-                <span className="truncate">Diagnóstico</span>
-              </Button>
-            </>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/price-table")}
+              className="text-primary hover:bg-primary/10"
+            >
+              <Database className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Tabela de Preços</span>
+            </Button>
           )}
           
           <Button 
@@ -105,11 +93,6 @@ export function LoginDialog() {
 
   return (
     <div className="flex items-center gap-2">
-      <img 
-        src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
-        alt="HostDime Logo"
-        className="h-6 w-auto hidden sm:block"
-      />
       <Button 
         variant="outline" 
         size="sm" 

@@ -26,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
             <img 
               src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
               alt="HostDime Logo"
-              className="h-8 w-auto"
+              className="h-6 w-auto" // Ajustado para um tamanho mais harmonioso
             />
           </a>
           
