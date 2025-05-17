@@ -17,27 +17,12 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
 
   // Verificação explícita para acesso de administrador
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
-  
-  // Função para navegação para página inicial com base no estado de autenticação
-  const handleLogoClick = () => {
-    if (isAuthenticated) {
-      // Se estiver autenticado, navegue para a página apropriada
-      const targetPath = isAdminAccess ? "/price-table" : "/configure";
-      navigate(targetPath);
-    } else {
-      // Se não estiver autenticado, navegue para a página inicial
-      navigate("/");
-    }
-  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-14 items-center">
         <div className="flex items-center space-x-4">
-          <div 
-            onClick={handleLogoClick}
-            className="flex items-center space-x-2 cursor-pointer"
-          >
+          <div className="flex items-center space-x-2">
             <img 
               src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
               alt="HostDime Logo"
