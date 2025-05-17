@@ -1,18 +1,18 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Shield, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function LoginDialog() {
-  const { isAuthenticated, user, logout, loading } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Verificação explícita para acesso de administrador
-  const isAdminAccess = user?.email === "admin@hostdime.com.br";
+  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   if (loading) {
     return (
@@ -32,6 +32,7 @@ export function LoginDialog() {
             <span className="text-sm font-medium truncate max-w-[150px] sm:max-w-[200px]">
               {user.email}
             </span>
+            {isAdminAccess && <Shield className="w-3.5 h-3.5 text-primary" aria-label="Administrador" />}
           </div>
           <span className="text-xs text-muted-foreground">
             {isAdminAccess ? "Administrador" : "Usuário"}
@@ -39,7 +40,17 @@ export function LoginDialog() {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Removido botão de Tabela de Preços conforme solicitado */}
+          {isAdminAccess && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate("/price-table")}
+              className="text-primary hover:bg-primary/10"
+            >
+              <Database className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Tabela de Preços</span>
+            </Button>
+          )}
           
           <Button 
             variant="outline" 

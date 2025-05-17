@@ -41,7 +41,18 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
                 Configurações
               </Button>
               
-              {/* Opção removida conforme solicitado - simplificando navegação */}
+              {isAdminAccess && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-primary hover:text-primary/80 flex items-center"
+                  onClick={() => navigate("/price-table")}
+                >
+                  <Database className="w-4 h-4 mr-1" />
+                  Tabela de Preços
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
             </nav>
           )}
         </div>

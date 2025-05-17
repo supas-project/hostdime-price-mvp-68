@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { CategoryForm } from "./forms/CategoryForm";
 import { ItemForm } from "./forms/ItemForm";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, RefreshCw } from "lucide-react";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { HelpTooltip } from "@/components/help-tooltip";
 
@@ -108,6 +108,26 @@ export function TableActions({
         Exportar JSON
       </Button>
 
-      {/* Opção "Restaurar Padrões" removida conforme solicitado */}
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="sm" title="Restaurar dados para os valores padrão">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Restaurar Padrões
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restaurar dados padrão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá redefinir a tabela de preços para os valores iniciais. 
+              Todos os dados personalizados serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onResetData}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 }
