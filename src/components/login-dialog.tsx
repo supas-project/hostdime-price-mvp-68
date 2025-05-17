@@ -104,18 +104,25 @@ export function LoginDialog() {
   }
 
   return (
-    <Button 
-      variant="outline" 
-      size="sm" 
-      onClick={() => navigate("/login")}
-      className={cn(
-        "transition-all font-medium",
-        "hover:bg-primary/10 hover:text-primary hover:border-primary/30",
-        "focus-visible:ring-primary/30"
-      )}
-    >
-      <LogIn className="w-4 h-4 mr-2 shrink-0" />
-      <span className="truncate">Login</span>
-    </Button>
+    <div className="flex items-center gap-2">
+      <img 
+        src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
+        alt="HostDime Logo"
+        className="h-6 w-auto hidden sm:block"
+      />
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => navigate("/login")}
+        className={cn(
+          "transition-all font-medium",
+          "hover:bg-primary/10 hover:text-primary hover:border-primary/30",
+          "focus-visible:ring-primary/30"
+        )}
+      >
+        <LogIn className="w-4 h-4 mr-2 shrink-0" />
+        <span className="truncate">Login</span>
+      </Button>
+    </div>
   );
 }

@@ -57,6 +57,13 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-2">
+            <img 
+              src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
+              alt="HostDime Logo"
+              className="h-12 w-auto"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold">Acesso ao Sistema</CardTitle>
           <CardDescription>
             Entre com suas credenciais para acessar o painel

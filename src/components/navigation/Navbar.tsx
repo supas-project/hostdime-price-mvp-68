@@ -23,7 +23,11 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
       <div className="container flex h-14 items-center">
         <div className="flex items-center space-x-4">
           <a href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-lg sm:block md:text-xl">HostDime</span>
+            <img 
+              src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
+              alt="HostDime Logo"
+              className="h-8 w-auto"
+            />
           </a>
           
           {isAuthenticated && (
