@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { PriceService } from '@/services/price-service';
 import { toast } from 'sonner';
-import { initializeServerCategories } from '@/services/component-sync';
+import { initializeServerCategories } from '@/services/component-sync/initialization';
 
 export function useDataLoader(
   isLoading: boolean,

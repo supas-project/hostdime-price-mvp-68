@@ -1,3 +1,4 @@
+
 import { PriceService } from '@/services/price-service';
 import { serverData } from '@/data/server-components';
 import { diskData } from '@/data/disk-data';
@@ -16,12 +17,12 @@ import {
  * Initialize server categories from price data
  * This ensures all necessary categories exist and are properly configured
  */
-export async function initializeServerCategories(priceData?: PriceData): Promise<boolean> {
+export async function initializeServerCategories(): Promise<boolean> {
   try {
     console.log('[ComponentSync] Initializing server categories');
 
-    // Load price data if not provided
-    const data = priceData || await PriceService.getAllData();
+    // Load price data
+    const data = await PriceService.getAllData();
     if (!data) {
       console.error("[ComponentSync] No price data available for initialization");
       return false;
@@ -101,7 +102,7 @@ export async function syncDiskDataWithPriceService(): Promise<boolean> {
     }
     
     // Initialize categories
-    await initializeServerCategories(priceData);
+    await initializeServerCategories();
     
     return true;
   } catch (error) {
@@ -113,7 +114,7 @@ export async function syncDiskDataWithPriceService(): Promise<boolean> {
 /**
  * Initialize external storage data
  */
-export async function initExternalStorageData(): Promise<boolean> {
+export async function initExternalStorageData(): Promise<PriceCategory | null> {
   try {
     console.log('[ComponentSync] Initializing external storage data');
     
@@ -121,7 +122,7 @@ export async function initExternalStorageData(): Promise<boolean> {
     const priceData = await PriceService.getAllData();
     if (!priceData) {
       console.error('[ComponentSync] No price data available');
-      return false;
+      return null;
     }
     
     // Check if external storage category exists
@@ -146,24 +147,15 @@ export async function initExternalStorageData(): Promise<boolean> {
         }
       }));
       
-      // Update price data with new category
-      const updatedData = {
-        ...priceData,
-        external_storage: externalStorageCategory
-      };
-      
-      // Save updated data
-      await PriceService.saveData(updatedData);
-      
       console.log('[ComponentSync] External storage category initialized successfully');
+      return externalStorageCategory;
     } else {
       console.log('[ComponentSync] External storage category already exists');
+      return null;
     }
-    
-    return true;
   } catch (error) {
     console.error('[ComponentSync] Error initializing external storage data:', error);
-    return false;
+    return null;
   }
 }
 
