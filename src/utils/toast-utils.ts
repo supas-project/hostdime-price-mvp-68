@@ -1,5 +1,6 @@
 
 import { toast as sonnerToast } from "sonner";
+import { ReactNode } from "react";
 
 type ToastOptions = {
   description?: string;
@@ -8,7 +9,7 @@ type ToastOptions = {
     label: string;
     onClick: () => void;
   };
-  icon?: React.ComponentType | React.ReactNode;
+  icon?: ReactNode;
   important?: boolean;
   dismissible?: boolean;
 };
