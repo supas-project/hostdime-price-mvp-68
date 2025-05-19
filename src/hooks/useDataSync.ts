@@ -17,14 +17,14 @@ export function useDataSync() {
   const [hasUpdates, setHasUpdates] = useState(false);
   const { toast: uiToast } = useToast();
 
-  // Verificação explícita se o email do usuário é admin@hostdime.com.br
-  const isAdminAccess = isAdmin || (user?.email === "admin@hostdime.com.br");
+  // Explicit check if user email is admin@hostdime.com.br
+  const isAdminAccess = user?.email === "admin@hostdime.com.br";
 
   // Check for available updates
   const checkForUpdates = async () => {
     try {
       if (!isAuthenticated) {
-        console.log("Usuário não autenticado para verificar atualizações");
+        console.log("User not authenticated to check for updates");
         return false;
       }
 
@@ -60,7 +60,7 @@ export function useDataSync() {
   const notifyDataChange = async (type: string, details: string, initiator = 'system') => {
     try {
       if (!isAuthenticated) {
-        console.error("Usuário não autenticado para notificar alterações");
+        console.error("User not authenticated to notify changes");
         return;
       }
 
@@ -88,8 +88,8 @@ export function useDataSync() {
         return;
       }
       
-      // If not admin, notify about the change - Fixed the toast props
-      toast(`O administrador realizou alterações: ${details}`);
+      // If not admin, notify about the change
+      toast(`The administrator made changes: ${details}`);
       
       // Mark that there are available updates
       setHasUpdates(true);
@@ -101,7 +101,7 @@ export function useDataSync() {
   // Register an update made by admin
   const registerAdminChange = async (type: string, details: string) => {
     if (!isAdminAccess) {
-      console.error("Apenas administradores podem registrar mudanças");
+      console.error("Only administrators can register changes");
       return;
     }
     
@@ -115,7 +115,7 @@ export function useDataSync() {
   const syncWithLatestData = async () => {
     try {
       if (!isAuthenticated) {
-        console.error("Usuário não autenticado para sincronizar dados");
+        console.error("User not authenticated to sync data");
         return false;
       }
 
@@ -146,7 +146,7 @@ export function useDataSync() {
   // Periodically check for changes (non-admin users only)
   useEffect(() => {
     if (!isAuthenticated) {
-      return; // Não verificar se não estiver autenticado
+      return; // Don't check if not authenticated
     }
     
     if (isAdminAccess) {
@@ -154,14 +154,14 @@ export function useDataSync() {
       return;
     }
     
+    console.log("Setting up periodic check for updates");
+    
     const intervalId = setInterval(async () => {
       const hasNewUpdates = await checkForUpdates();
       
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
-        
-        // Fixed toast usage
-        toast("O administrador realizou alterações. Clique para atualizar.");
+        toast("Administrator has made changes. Click to update.");
       }
     }, CHECK_INTERVAL);
     
@@ -172,7 +172,7 @@ export function useDataSync() {
   useEffect(() => {
     const initSyncTime = async () => {
       if (!isAuthenticated) {
-        return; // Não inicializar se não estiver autenticado
+        return; // Don't initialize if not authenticated
       }
 
       try {

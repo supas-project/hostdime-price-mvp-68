@@ -12,11 +12,11 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasConflicts, setHasConflicts] = useState(false);
   const { toast: uiToast } = useToast();
-  const { isAdmin, user } = useAuth();
+  const { user } = useAuth();
   const { registerAdminChange, syncWithLatestData } = useDataSync();
 
   // Explicit check to ensure admin access
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
+  const isAdminAccess = user?.email === "admin@hostdime.com.br";
 
   // Periodically check for data conflicts
   const checkForConflicts = async () => {
@@ -25,13 +25,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
       setHasConflicts(hasDataConflicts);
       
       if (hasDataConflicts && !isAdminAccess) {
-        toast.info("Alterações detectadas", {
-          description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
+        toast.info("Changes detected", {
+          description: "The administrator modified the data. Click 'Update data' to synchronize.",
           duration: 6000
         });
       }
     } catch (error) {
-      console.error("Erro ao verificar conflitos:", error);
+      console.error("Error checking for conflicts:", error);
     }
   };
 
@@ -40,6 +40,14 @@ export function useDataActions(setPriceData: (data: any) => void) {
     try {
       setIsExporting(true);
       const data = await PriceService.getAllData();
+      
+      if (!data) {
+        toast.error("Export failed", {
+          description: "No data available to export."
+        });
+        return;
+      }
+      
       const dataStr = JSON.stringify(data, null, 2);
       const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
       
@@ -50,12 +58,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-      toast.success("Exportação concluída", {
-        description: "Dados exportados com sucesso."
+      toast.success("Export complete", {
+        description: "Data exported successfully."
       });
     } catch (error) {
-      toast.error("Erro ao exportar dados", {
-        description: "Não foi possível exportar os dados."
+      toast.error("Export failed", {
+        description: "Could not export the data."
       });
     } finally {
       setIsExporting(false);
@@ -65,31 +73,38 @@ export function useDataActions(setPriceData: (data: any) => void) {
   // Handle resetting data to initial state
   const handleResetData = async () => {
     if (!isAdminAccess) {
-      toast.error("Permissão negada", {
-        description: "Apenas administradores podem resetar os dados."
+      toast.error("Permission denied", {
+        description: "Only administrators can reset data."
       });
       return;
     }
 
-    if (confirm("Tem certeza que deseja resetar todos os dados para o padrão inicial? Esta ação não pode ser desfeita.")) {
+    if (confirm("Are you sure you want to reset all data to default? This action cannot be undone.")) {
       try {
         setIsResetting(true);
         
         // Reset data in PriceService
         const resetData = await PriceService.resetData();
         
-        // Update state with reset data
-        setPriceData(resetData);
-        
-        // Register change to notify other users
-        await registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
-        
-        toast.success("Dados resetados", {
-          description: "Todos os dados foram redefinidos para o padrão inicial."
-        });
+        if (resetData) {
+          // Update state with reset data
+          setPriceData(resetData);
+          
+          // Register change to notify other users
+          await registerAdminChange("reset", "All data has been reset to default values");
+          
+          toast.success("Data reset", {
+            description: "All data has been reset to default values."
+          });
+        } else {
+          toast.error("Reset failed", {
+            description: "Could not reset the data."
+          });
+        }
       } catch (error) {
-        toast.error("Erro ao resetar dados", {
-          description: "Não foi possível resetar os dados."
+        console.error("Error resetting data:", error);
+        toast.error("Reset failed", {
+          description: "An error occurred while resetting data."
         });
       } finally {
         setIsResetting(false);
@@ -103,21 +118,29 @@ export function useDataActions(setPriceData: (data: any) => void) {
       setIsRefreshing(true);
       
       // Force reload data from Supabase (possibly updated by another user)
+      console.log("Refreshing data from source");
       const refreshedData = await PriceService.forceRefreshFromLatestSource();
       
-      // Update state with updated data
-      setPriceData(refreshedData);
-      setHasConflicts(false);
-      
-      // Update sync state
-      await syncWithLatestData();
-      
-      toast.success("Dados atualizados", {
-        description: "Os dados foram sincronizados com a fonte mais recente."
-      });
+      if (refreshedData) {
+        // Update state with updated data
+        setPriceData(refreshedData);
+        setHasConflicts(false);
+        
+        // Update sync state
+        await syncWithLatestData();
+        
+        toast.success("Data updated", {
+          description: "Data has been synchronized with the latest source."
+        });
+      } else {
+        toast.error("Update failed", {
+          description: "Could not synchronize data."
+        });
+      }
     } catch (error) {
-      toast.error("Erro ao atualizar dados", {
-        description: "Não foi possível sincronizar os dados."
+      console.error("Error refreshing data:", error);
+      toast.error("Update failed", {
+        description: "An error occurred while updating data."
       });
     } finally {
       setIsRefreshing(false);

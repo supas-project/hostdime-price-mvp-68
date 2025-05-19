@@ -7,10 +7,15 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
   
   // Function to sync with latest data when updates are available
   const handleSyncData = async () => {
-    if (hasUpdates) {
-      await syncWithLatestData();
-      await loadPriceData();
-      toast.success("Dados atualizados com sucesso!");
+    try {
+      if (hasUpdates) {
+        await syncWithLatestData();
+        await loadPriceData();
+        toast.success("Data updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error syncing data:", error);
+      toast.error("Failed to sync data. Please try again.");
     }
   };
 

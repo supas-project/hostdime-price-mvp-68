@@ -1,30 +1,46 @@
-import { PriceData } from '@/types/pricing';
-import { getAllData } from './operations';
 
-// Array to store data change listeners
-let listeners: ((data: PriceData) => void)[] = [];
+import { PriceData } from '@/types/pricing';
+
+// Array to store listener callbacks
+type DataChangeListener = (data: PriceData | null) => void;
+let listeners: DataChangeListener[] = [];
 
 /**
- * Adds a new data change listener
+ * Adds a listener for data changes
  */
-export function addDataChangeListener(listener: (data: PriceData) => void) {
-  listeners.push(listener);
+export function addDataChangeListener(callback: DataChangeListener): void {
+  if (typeof callback === 'function') {
+    listeners.push(callback);
+    console.log("[PriceService] Data change listener added, total listeners:", listeners.length);
+  } else {
+    console.error("[PriceService] Invalid listener callback provided");
+  }
 }
 
 /**
- * Removes a data change listener
+ * Removes a listener from the array
  */
-export function removeDataChangeListener(listener: (data: PriceData) => void) {
-  listeners = listeners.filter(l => l !== listener);
+export function removeDataChangeListener(callback?: DataChangeListener): void {
+  if (callback) {
+    listeners = listeners.filter(listener => listener !== callback);
+    console.log("[PriceService] Specific listener removed, remaining:", listeners.length);
+  } else {
+    // If no callback provided, remove all listeners
+    listeners = [];
+    console.log("[PriceService] All listeners removed");
+  }
 }
 
 /**
  * Notifies all listeners about data changes
  */
-export function notifyListeners() {
-  getAllData().then(data => {
-    listeners.forEach(listener => listener(data));
-  }).catch(error => {
-    console.error("Error notifying listeners:", error);
+export function notifyListeners(data?: PriceData): void {
+  console.log("[PriceService] Notifying", listeners.length, "listeners about data changes");
+  listeners.forEach(listener => {
+    try {
+      listener(data || null);
+    } catch (error) {
+      console.error("[PriceService] Error in listener callback:", error);
+    }
   });
 }

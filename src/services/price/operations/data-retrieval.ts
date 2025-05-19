@@ -9,6 +9,7 @@ import { PRICE_DATA_TABLE } from '../constants';
 export async function getAllData(): Promise<PriceData> {
   try {
     console.log("[PriceService] Getting all price data");
+    
     // Fetch the data from price_data table
     const { data: priceData, error } = await supabase
       .from(PRICE_DATA_TABLE)
@@ -39,8 +40,8 @@ export async function getAllData(): Promise<PriceData> {
       `Found ${Object.keys(jsonData).length} categories` : 
       "Empty data object");
     
-    // Type assertion with proper cast - first to unknown then to PriceData
-    return jsonData as unknown as PriceData;
+    // Type assertion with proper cast
+    return jsonData as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
     throw new Error(err.message || "Failed to retrieve price data.");

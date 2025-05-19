@@ -11,8 +11,34 @@ import { notifyListeners } from '../listeners';
 export async function checkForDataConflicts(): Promise<boolean> {
   try {
     console.log("[PriceService] Checking for data conflicts");
-    // For now, just return false
-    return false;
+    
+    // Get the last update time from the database
+    const { data: updates, error } = await supabase
+      .from('price_data_updates')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1);
+      
+    if (error) {
+      console.error("[PriceService] Error checking for data conflicts:", error);
+      return false;
+    }
+    
+    if (!updates || updates.length === 0) {
+      return false;
+    }
+    
+    // Get the last time we fetched data
+    const lastFetchTime = localStorage.getItem('price_data_last_fetch');
+    if (!lastFetchTime) {
+      return true; // We haven't fetched data yet, so there might be conflicts
+    }
+    
+    const lastUpdateTime = new Date(updates[0].updated_at);
+    const lastFetch = new Date(lastFetchTime);
+    
+    // If there's an update newer than our last fetch, there's a conflict
+    return lastUpdateTime > lastFetch;
   } catch (error) {
     console.error("[PriceService] Error checking for data conflicts:", error);
     return false;
@@ -35,7 +61,7 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
       
     if (error) {
       console.error("[PriceService] Error refreshing data from source:", error);
-      toast.error("Erro ao atualizar dados", { description: error.message });
+      toast.error("Error updating data", { description: error.message });
       return null;
     }
     
@@ -45,16 +71,19 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
     }
     
     // Process the fetched data
-    const jsonData = priceData[0].data as unknown as PriceData;
+    const jsonData = priceData[0].data as PriceData;
     
     // Log categories found
     if (jsonData) {
       const categories = Object.keys(jsonData);
       console.log(`[PriceService] Refreshed data with ${categories.length} categories:`, categories.join(", "));
+      
+      // Save the current time as last fetch time
+      localStorage.setItem('price_data_last_fetch', new Date().toISOString());
     }
     
-    // Notify listeners
-    notifyListeners();
+    // Notify listeners with the new data
+    notifyListeners(jsonData);
     
     console.log("[PriceService] Price data refreshed successfully");
     return jsonData;

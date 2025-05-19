@@ -22,17 +22,23 @@ export class InitService {
         // Sync disk data
         await syncDiskDataWithPriceService();
         
-        toast.success("Dados inicializados com sucesso", {
-          description: "Configuração padrão carregada com sucesso."
+        toast.success("Data initialized successfully", {
+          description: "Default configuration loaded successfully."
         });
+
+        // Save current fetch time
+        localStorage.setItem('price_data_last_fetch', new Date().toISOString());
       } else {
-        console.log("Existing data found, initialization skipped.");
+        console.log("Existing data found:", Object.keys(existingData).length, "categories");
+        
+        // Save current fetch time even for existing data
+        localStorage.setItem('price_data_last_fetch', new Date().toISOString());
       }
       
       return true;
     } catch (error) {
       console.error("Error initializing data:", error);
-      toast.error("Erro ao inicializar dados");
+      toast.error("Error initializing data");
       return false;
     }
   }

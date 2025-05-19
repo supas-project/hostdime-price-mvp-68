@@ -15,17 +15,26 @@ export function useDataLoader(
     setIsLoading(true);
     try {
       if (!isAuthenticated) {
-        console.log("Usuário não autenticado, não carregando dados de preço");
+        console.log("User not authenticated, not loading price data");
         setIsLoading(false);
         return;
       }
 
+      console.log("Loading price data for authenticated user");
       const data = await PriceService.getAllData();
+      
+      if (!data) {
+        console.warn("No price data returned from service");
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Price data loaded successfully with categories:", Object.keys(data).join(", "));
       setPriceData(data);
     } catch (error) {
       console.error('Error loading price data:', error);
-      toast.error("Erro ao carregar dados de preço", {
-        description: "Tente novamente mais tarde ou verifique se você está autenticado."
+      toast.error("Error loading price data", {
+        description: "Please try again or check if you are authenticated."
       });
     } finally {
       setIsLoading(false);
@@ -35,23 +44,25 @@ export function useDataLoader(
   // Initial data loading
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("User authenticated, loading initial price data");
       loadPriceData();
   
       // Add listener for data changes
       PriceService.addDataChangeListener((newData) => {
-        console.log('Price data updated:', newData);
-        setPriceData(newData);
+        console.log('Price data updated:', newData ? Object.keys(newData).length : 0, 'categories');
+        if (newData) {
+          setPriceData(newData);
+        }
       });
     } else {
       setPriceData(null);
+      console.log("User not authenticated, clearing price data");
     }
     
     // Cleanup
     return () => {
       // Remove listener when unmounted
-      PriceService.removeDataChangeListener((newData) => {
-        setPriceData(newData);
-      });
+      PriceService.removeDataChangeListener();
     };
   }, [isAuthenticated, setPriceData]);
 

@@ -6,6 +6,7 @@ import { useDataActions } from "@/hooks/price-table/useDataActions";
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
+import { InitService } from "@/services/init-service";
 
 export default function PriceTableContainer() {
   const { isAuthenticated } = useAuth();
@@ -38,7 +39,8 @@ export default function PriceTableContainer() {
   const {
     isRefreshing,
     hasConflicts,
-    handleRefreshData
+    handleRefreshData,
+    checkForConflicts
   } = useDataActions(setPriceData);
 
   // Combined loading indicator
@@ -54,9 +56,20 @@ export default function PriceTableContainer() {
   // Ensure data is loaded when component mounts
   useEffect(() => {
     if (isAuthenticated) {
-      loadPriceData();
+      // Initialize data if needed
+      InitService.initializeData().then(() => {
+        // Then load price data
+        loadPriceData();
+      });
+      
+      // Set up periodic conflict checks
+      const intervalId = setInterval(() => {
+        checkForConflicts();
+      }, 30000); // Check every 30 seconds
+      
+      return () => clearInterval(intervalId);
     }
-  }, [isAuthenticated, loadPriceData]);
+  }, [isAuthenticated]);
 
   // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};

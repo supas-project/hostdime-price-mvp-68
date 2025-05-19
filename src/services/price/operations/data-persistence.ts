@@ -11,25 +11,39 @@ import { notifyListeners } from '../listeners';
 export async function saveData(data: PriceData): Promise<void> {
   try {
     console.log("[PriceService] Saving price data with categories:", Object.keys(data).join(", "));
-    // Verificar se o usuário está autenticado antes de salvar dados
+    
+    // Verify user is authenticated before saving data
     const { data: session, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       console.error("[PriceService] Authentication error:", sessionError);
-      toast.error("Erro de autenticação", { 
-        description: "Não foi possível verificar sua autenticação. Tente fazer login novamente." 
+      toast.error("Authentication error", { 
+        description: "Unable to verify your authentication. Try logging in again." 
       });
       throw new Error("Authentication error: " + sessionError.message);
     }
     
     if (!session.session) {
-      console.warn("[PriceService] No active session found, trying to proceed anyway");
-    } else {
-      console.log("[PriceService] Saving data with authenticated user:", session.session.user.email);
+      console.error("[PriceService] No active session found");
+      toast.error("Authentication required", {
+        description: "You must be logged in to save data."
+      });
+      throw new Error("Authentication required");
     }
 
+    // Check if user is admin
+    const userEmail = session.session.user.email;
+    if (userEmail !== "admin@hostdime.com.br") {
+      console.error("[PriceService] User not authorized to save data:", userEmail);
+      toast.error("Permission denied", {
+        description: "Only administrators can modify price data."
+      });
+      throw new Error("Permission denied: Only administrators can modify price data");
+    }
+    
+    console.log("[PriceService] Saving data with authenticated admin:", userEmail);
+
     // Insert a new record with the updated data
-    // We need to cast data to Json type for Supabase
     const { error } = await supabase
       .from(PRICE_DATA_TABLE)
       .insert({
@@ -39,16 +53,19 @@ export async function saveData(data: PriceData): Promise<void> {
 
     if (error) {
       console.error("[PriceService] Error saving price data:", error);
+      toast.error("Error saving data", {
+        description: error.message
+      });
       throw new Error(error.message);
     }
 
     console.log("[PriceService] Price data saved successfully");
-    toast.success("Dados salvos com sucesso", { 
-      description: "Os componentes foram salvos e sincronizados." 
+    toast.success("Data saved successfully", { 
+      description: "Components have been saved and synchronized." 
     });
 
-    // Notificar listeners após salvar os dados com sucesso
-    notifyListeners();
+    // Notify listeners after successful save
+    notifyListeners(data);
   } catch (err: any) {
     console.error("[PriceService] Error in saveData:", err);
     throw new Error(err.message || "Failed to save price data.");
