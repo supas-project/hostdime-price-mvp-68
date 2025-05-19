@@ -9,7 +9,7 @@ interface UseDataLoaderOptions {
   showToasts?: boolean;
 }
 
-interface UseDataLoaderReturn {
+export interface UseDataLoaderReturn {
   data: PriceData | null;
   categories: string[];
   isLoading: boolean;
@@ -59,7 +59,7 @@ export function useDataLoader(options: UseDataLoaderOptions = {}): UseDataLoader
     setError(null);
     
     try {
-      // Pass no arguments to forceRefreshFromLatestSource which now expects 0 arguments
+      // Call forceRefreshFromLatestSource with no arguments as expected in the service
       await PriceService.forceRefreshFromLatestSource();
       
       const priceData = await PriceService.getAllData();

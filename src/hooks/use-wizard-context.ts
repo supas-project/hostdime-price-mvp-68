@@ -1,7 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ComponentOption } from '@/types/component';
 import { initializeServerCategories, registerComponentSyncListeners } from '@/services/component-sync';
+import { PriceService } from '@/services/price-service';
+import { toast } from '@/utils/toast-utils';
 
 export function useWizardContext() {
   // State for tracking categories loading state
@@ -31,12 +33,36 @@ export function useWizardContext() {
   // State for showing final summary
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   
+  // Function to manually refresh categories
+  const refreshCategories = useCallback(async () => {
+    try {
+      setCategoriesLoaded(false);
+      // Force refresh of price data from source
+      await PriceService.forceRefreshFromLatestSource();
+      // Then initialize server categories
+      await initializeServerCategories();
+      setCategoriesLoaded(true);
+      toast.success("Categorias e componentes atualizados com sucesso!");
+    } catch (error) {
+      console.error("Error refreshing categories:", error);
+      toast.error("Falha ao atualizar categorias. Tente novamente.");
+      setCategoriesLoaded(true);
+    }
+  }, []);
+  
   // Initialize categories from price table data
   useEffect(() => {
     const initializeCategories = async () => {
       try {
         console.log("Initializing categories from price data");
         setCategoriesLoaded(false);
+        
+        // First force refresh from latest source
+        try {
+          await PriceService.forceRefreshFromLatestSource();
+        } catch (error) {
+          console.warn("Could not force refresh price data, using existing data:", error);
+        }
         
         // Sync components with price data
         const success = await initializeServerCategories();
@@ -58,6 +84,16 @@ export function useWizardContext() {
     };
     
     initializeCategories();
+    
+    // Set up periodic automatic refresh
+    const intervalId = setInterval(() => {
+      console.log("Running scheduled category refresh");
+      initializeServerCategories().catch(err => 
+        console.error("Scheduled category refresh failed:", err)
+      );
+    }, 120000); // Refresh every 2 minutes
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   // Handle component selection
@@ -181,6 +217,7 @@ export function useWizardContext() {
     addCustomService,
     removeCustomService,
     beginnerMode,
-    setBeginnerMode
+    setBeginnerMode,
+    refreshCategories
   };
 }
