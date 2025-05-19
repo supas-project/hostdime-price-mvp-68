@@ -31,4 +31,5 @@ export interface WizardContextType {
   removeCustomService: (id: string) => void;
   beginnerMode: boolean;
   setBeginnerMode: (value: boolean) => void; // Add the setter function
+  categoriesLoaded: boolean; // Added this property to fix the TypeScript error
 }

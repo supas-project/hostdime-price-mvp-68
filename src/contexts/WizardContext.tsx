@@ -1,4 +1,3 @@
-
 import { createContext, useContext, ReactNode, useEffect, useState } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
@@ -164,7 +163,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         addCustomService,
         removeCustomService,
         beginnerMode,
-        setBeginnerMode // Direct function reference, no wrapper needed
+        setBeginnerMode,
+        categoriesLoaded
       }}
     >
       {children}
