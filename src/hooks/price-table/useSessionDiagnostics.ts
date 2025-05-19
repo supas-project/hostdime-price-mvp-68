@@ -30,7 +30,7 @@ export function useSessionDiagnostics() {
           
           if (!sessionError && session) {
             setSessionDetails({
-              sessionCreatedAt: new Date().toISOString(), // Use current date as fallback
+              sessionCreatedAt: session.created_at || new Date().toISOString(), // Use session created_at if available
               lastActivity: new Date().toISOString(),
               expiresAt: session?.expires_at,
               provider: session?.user.app_metadata.provider,

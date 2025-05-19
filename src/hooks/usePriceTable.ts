@@ -17,6 +17,7 @@ export function usePriceTable() {
   const [contractDuration, setContractDuration] = useState<string>('12');
   
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
+  const tableActions = usePriceTableActions(activeTab, setPriceData);
 
   // Filter function for items based on search term
   const filterItems = (items: PriceItem[]): PriceItem[] => {
@@ -45,7 +46,9 @@ export function usePriceTable() {
       setPriceData(data);
     } catch (error) {
       console.error('Error loading price data:', error);
-      toast.error("Erro ao carregar dados de preço. Tente novamente mais tarde.");
+      toast.error("Erro ao carregar dados de preço", {
+        description: "Tente novamente mais tarde."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +88,7 @@ export function usePriceTable() {
     setPriceData,
     activeTab,
     setActiveTab,
+    tableActions,
     hasUpdates,
     handleSyncData,
     loadPriceData,

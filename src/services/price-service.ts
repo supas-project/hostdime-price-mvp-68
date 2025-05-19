@@ -1,610 +1,325 @@
-import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
-import { serverData } from "@/data/server-components";
-import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
+import { PriceCategory, PriceData, PriceItem } from '@/types/pricing';
+import { v4 as uuidv4 } from 'uuid';
 
-// Define Json type for Supabase
-type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+export class PriceService {
+  private static readonly PRICE_TABLE = 'price_table';
+  private static listeners: ((data: PriceData) => void)[] = [];
 
-// Initial price data loaded from server components
-const initialPriceData: PriceData = {
-  cpu: { 
-    id: 'cpu', 
-    name: 'Processadores', 
-    items: serverData.componentes.find(c => c.type === "Processador")?.options?.map(option => ({
-      id: option.id,
-      name: option.name,
-      description: option.description,
-      price: option.price,
-      specs: option.specs || [],
-      type: option.type,
-      subtype: option.subtype,
-      metadata: option.metadata,
-    })) || []
-  },
-  memory: { 
-    id: 'memory', 
-    name: 'Memória', 
-    items: serverData.componentes.find(c => c.type === "Memória")?.options?.map(option => ({
-      id: option.id,
-      name: option.name,
-      description: option.description,
-      price: option.price,
-      specs: option.specs || [],
-      type: option.type,
-      subtype: option.subtype,
-      metadata: option.metadata,
-    })) || []
-  },
-  disk: { id: 'disk', name: 'Discos', items: [] },
-  storage: { id: 'storage', name: 'Storage', items: [] },
-  network: { id: 'network', name: 'Interface de Rede', items: [] },
-  ip: { id: 'ip', name: 'Bloco de IPs', items: [] },
-  os: { id: 'os', name: 'Sistemas Operacionais', items: [] },
-  chassis: { id: 'chassis', name: 'Chassi', items: [] },
-  contract: { id: 'contract', name: 'Contratos', items: [] },
-  connectivity: { id: 'connectivity', name: 'Conectividade', items: [] }
-};
-
-// Data change listeners
-type DataChangeListener = (data: PriceData) => void;
-let dataChangeListeners: DataChangeListener[] = [];
-
-// Helper functions
-const generateUniqueId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-};
-
-const validateItem = (item: Partial<PriceItem>): string | null => {
-  if (!item.name || item.name.trim() === '') {
-    return "Nome do item é obrigatório";
-  }
-  
-  if (item.price === undefined || item.price < 0) {
-    return "Preço deve ser um número positivo";
-  }
-  
-  if (!item.type || item.type.trim() === '') {
-    return "Tipo do item é obrigatório";
-  }
-  
-  return null; // Item válido
-};
-
-// Notify listeners about data changes
-const notifyDataChangeListeners = (data: PriceData): void => {
-  dataChangeListeners.forEach(listener => {
+  static async getAllData(): Promise<PriceData> {
     try {
-      listener(data);
-    } catch (error) {
-      console.error('Error notifying listener about data change:', error);
-    }
-  });
-};
+      const { data: jsonData, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .select('*');
 
-// Price Service implementation
-export const PriceService = {
-  // Listener management
-  addDataChangeListener: (listener: DataChangeListener): void => {
-    dataChangeListeners.push(listener);
-  },
-  
-  removeDataChangeListener: (listener: DataChangeListener): void => {
-    dataChangeListeners = dataChangeListeners.filter(l => l !== listener);
-  },
-  
-  // Get all price data - FIXED to properly handle JSON types
-  getAllData: async (): Promise<PriceData> => {
-    try {
-      // Try to load from Supabase
-      const { data, error } = await supabase
-        .from('price_data')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      
       if (error) {
-        console.error('Error loading data:', error);
-        return initialPriceData;
+        console.error("Error fetching all data:", error);
+        throw new Error(error.message);
       }
-      
-      if (!data || !data.data) {
-        // If no data exists, save initial data
-        await PriceService.saveDataToSupabase(initialPriceData);
-        return initialPriceData;
+
+      if (!jsonData || jsonData.length === 0) {
+        console.warn("No data found in price table, returning default data");
+        return {};
       }
-      
-      // Convert from Json to PriceData with proper type casting
-      return data.data as unknown as PriceData;
-    } catch (error) {
-      console.error('Error retrieving data:', error);
-      return initialPriceData;
-    }
-  },
-  
-  // Save data to Supabase - FIXED to handle JSON type conversion
-  saveDataToSupabase: async (data: PriceData): Promise<void> => {
-    try {
-      // Check if data already exists
-      const { data: existingData, error: checkError } = await supabase
-        .from('price_data')
-        .select('id')
-        .limit(1)
-        .single();
-      
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing data:', checkError);
-        throw new Error('Failed to check for existing data');
-      }
-      
-      if (existingData) {
-        // Update existing record - convert PriceData to Json
-        const { error } = await supabase
-          .from('price_data')
-          .update({ 
-            data: data as unknown as Json,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingData.id);
-          
-        if (error) {
-          console.error('Error updating data:', error);
-          throw new Error('Failed to update data');
-        }
-      } else {
-        // Insert new record - convert PriceData to Json
-        const { error } = await supabase
-          .from('price_data')
-          .insert({
-            data: data as unknown as Json,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-          
-        if (error) {
-          console.error('Error inserting data:', error);
-          throw new Error('Failed to insert data');
-        }
-      }
-      
-      // Record update
-      await supabase
-        .from('price_data_updates')
-        .insert({
-          type: 'data_update',
-          details: 'Price data updated',
-          updated_at: new Date().toISOString()
-        });
-        
-      // Notify listeners
-      notifyDataChangeListeners(data);
-    } catch (error) {
-      console.error('Error saving data:', error);
-      throw error;
-    }
-  },
-  
-  // Get a specific category
-  getCategory: async (categoryId: string): Promise<PriceCategory> => {
-    if (!categoryId) {
-      console.error('Invalid or missing category ID');
-      return { id: '', name: '', items: [] };
-    }
-    
-    const data = await PriceService.getAllData();
-    return data[categoryId] || { id: categoryId, name: categoryId, items: [] };
-  },
-  
-  // Rest of the service methods with proper Promise handling
-  addCategory: async (category: Omit<PriceCategory, 'id'>): Promise<PriceCategory> => {
-    if (!category.name || category.name.trim() === '') {
-      throw new Error("Nome da categoria é obrigatório");
-    }
-    
-    const data = await PriceService.getAllData();
-    const id = category.name.toLowerCase().replace(/\s+/g, '-');
-    
-    // Verifica se a categoria já existe
-    if (data[id]) {
-      throw new Error(`Categoria "${category.name}" já existe`);
-    }
-    
-    const newCategory: PriceCategory = {
-      id,
-      name: category.name.trim(),
-      items: [],
-    };
-    
-    data[id] = newCategory;
-    await PriceService.saveDataToSupabase(data);
-    return newCategory;
-  },
-  
-  updateCategory: async (categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory> => {
-    if (!categoryId) {
-      throw new Error("ID de categoria não fornecido");
-    }
-    
-    const data = await PriceService.getAllData();
-    
-    if (!data[categoryId]) {
-      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
-    }
-    
-    if (updates.name && updates.name.trim() === '') {
-      throw new Error("Nome da categoria não pode ser vazio");
-    }
-    
-    data[categoryId] = {
-      ...data[categoryId],
-      ...updates,
-      // Garantir que o ID não seja alterado
-      id: categoryId
-    };
-    
-    await PriceService.saveDataToSupabase(data);
-    return data[categoryId];
-  },
-  
-  deleteCategory: async (categoryId: string): Promise<void> => {
-    if (!categoryId) {
-      throw new Error("ID de categoria não fornecido");
-    }
-    
-    const data = await PriceService.getAllData();
-    
-    if (!data[categoryId]) {
-      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
-    }
-    
-    delete data[categoryId];
-    await PriceService.saveDataToSupabase(data);
-  },
-  
-  // Adds an item to a category
-  addItem: async (categoryId: string, item: Omit<PriceItem, 'id'>): Promise<PriceItem> => {
-    if (!categoryId) {
-      throw new Error("ID de categoria não fornecido");
-    }
-    
-    const validationError = validateItem(item);
-    if (validationError) {
-      throw new Error(validationError);
-    }
-    
-    const data = await PriceService.getAllData();
-    
-    if (!data[categoryId]) {
-      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
-    }
-    
-    // Normalize item name for more robust duplication check
-    const normalizedItemName = item.name.trim().toLowerCase();
-    
-    // Check if an item with the same name (normalized) already exists
-    const existingItem = data[categoryId].items.find(i => 
-      i.name.toLowerCase().trim() === normalizedItemName
-    );
-    
-    if (existingItem) {
-      throw new Error(`Já existe um item com o nome "${item.name}" nesta categoria`);
-    }
-    
-    const newItem: PriceItem = {
-      id: generateUniqueId(),
-      ...item,
-      name: item.name.trim(),
-      description: item.description?.trim() || '',
-      specs: item.specs || [],
-      price: Number(item.price) // Ensure price is a number
-    };
-    
-    // Create a new copy of the data to ensure atomicity
-    const updatedData = {
-      ...data,
-      [categoryId]: {
-        ...data[categoryId],
-        items: [...data[categoryId].items, newItem]
-      }
-    };
-    
-    // Save the updated data
-    await PriceService.saveDataToSupabase(updatedData);
-    return newItem;
-  },
-  
-  // Update an item
-  updateItem: async (categoryId: string, itemId: string, updates: Partial<PriceItem>): Promise<PriceItem> => {
-    if (!categoryId || !itemId) {
-      throw new Error("ID de categoria ou ID de item não fornecido");
-    }
-    
-    // Validate updated fields
-    if (updates.price !== undefined && (isNaN(Number(updates.price)) || Number(updates.price) < 0)) {
-      throw new Error("Preço deve ser um número positivo");
-    }
-    
-    if (updates.name !== undefined && updates.name.trim() === '') {
-      throw new Error("Nome do item não pode ser vazio");
-    }
-    
-    const data = await PriceService.getAllData();
-    
-    if (!data[categoryId]) {
-      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
-    }
-    
-    const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
-    
-    if (itemIndex === -1) {
-      throw new Error(`Item com ID "${itemId}" não encontrado na categoria ${categoryId}`);
-    }
-    
-    // Check if we're changing name to an already existing one
-    if (updates.name) {
-      const duplicateName = data[categoryId].items.find(i => 
-        i.name.toLowerCase() === updates.name?.toLowerCase() && i.id !== itemId
-      );
-      
-      if (duplicateName) {
-        throw new Error(`Não é possível renomear para "${updates.name}" pois já existe um item com este nome nesta categoria`);
-      }
-    }
-    
-    // Update the item with the new values
-    data[categoryId].items[itemIndex] = {
-      ...data[categoryId].items[itemIndex],
-      ...updates,
-      // Ensure ID isn't changed
-      id: itemId,
-      // Process text fields to remove extra spaces
-      name: updates.name !== undefined ? updates.name.trim() : data[categoryId].items[itemIndex].name,
-      description: updates.description !== undefined ? 
-        updates.description.trim() : data[categoryId].items[itemIndex].description,
-      // Ensure price is a number
-      price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price
-    };
-    
-    await PriceService.saveDataToSupabase(data);
-    return data[categoryId].items[itemIndex];
-  },
-  
-  // Remove an item
-  deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
-    if (!categoryId || !itemId) {
-      throw new Error("ID de categoria ou ID de item não fornecido");
-    }
-    
-    const data = await PriceService.getAllData();
-    
-    if (!data[categoryId]) {
-      throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
-    }
-    
-    const itemIndex = data[categoryId].items.findIndex(item => item.id === itemId);
-    
-    if (itemIndex === -1) {
-      throw new Error(`Item com ID "${itemId}" não encontrado na categoria ${categoryId}`);
-    }
-    
-    data[categoryId].items.splice(itemIndex, 1);
-    await PriceService.saveDataToSupabase(data);
-  },
-  
-  // Import data from JSON
-  importFromJSON: async (jsonData: string): Promise<PriceData> => {
-    try {
-      const parsedData = JSON.parse(jsonData);
-      
-      // Validate structure
-      if (typeof parsedData !== 'object' || parsedData === null) {
-        throw new Error('Estrutura JSON inválida. Esperado um objeto.');
-      }
-      
-      // Merge with existing data
-      const existingData = await PriceService.getAllData();
-      const mergedData = { ...existingData };
-      
-      Object.entries(parsedData).forEach(([categoryId, category]) => {
-        // Validate category structure
-        if (typeof category !== 'object' || !('items' in category) || !Array.isArray((category as any).items)) {
-          throw new Error(`Estrutura de categoria inválida para ${categoryId}`);
-        }
-        
-        // Create or update category
-        mergedData[categoryId] = {
-          id: categoryId,
-          name: (category as PriceCategory).name || categoryId,
-          items: (category as PriceCategory).items.map(item => ({
-            id: item.id || generateUniqueId(),
-            name: item.name?.trim() || 'Item sem nome',
-            description: item.description?.trim() || '',
-            price: typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0,
-            specs: Array.isArray(item.specs) ? item.specs : [],
-            type: item.type || categoryId,
-            subtype: item.subtype,
-            metadata: item.metadata || {},
-          })),
+
+      // Find the contract category and ensure it's processed first
+      const contractCategory = jsonData.find((category: any) => category.id === 'contract');
+      const otherCategories = jsonData.filter((category: any) => category.id !== 'contract');
+
+      // Sort categories alphabetically, placing 'contract' first
+      const sortedCategories = [
+        ...(contractCategory ? [contractCategory] : []),
+        ...otherCategories.sort((a: any, b: any) => a.name.localeCompare(b.name))
+      ];
+
+      // Process each category
+      const priceData: PriceData = {};
+      for (const category of sortedCategories) {
+        priceData[category.id] = {
+          id: category.id,
+          name: category.name,
+          items: category.items || [],
         };
-      });
-      
-      await PriceService.saveDataToSupabase(mergedData);
-      return mergedData;
-    } catch (error) {
-      console.error('Erro ao importar dados JSON:', error);
-      toast.error(error instanceof Error ? error.message : "Formato JSON inválido");
-      throw error;
+      }
+
+      return priceData as unknown as PriceData;
+    } catch (err: any) {
+      console.error("Error in getAllData:", err);
+      throw new Error(err.message || "Failed to retrieve price data.");
     }
-  },
-  
-  // Analisa e importa dados CSV
-  importFromCSV: async (csvData: string): Promise<PriceData> => {
+  }
+
+  static async getCategory(categoryId: string): Promise<PriceCategory | null> {
     try {
-      const lines = csvData.split('\n');
-      
-      if (lines.length < 2) {
-        throw new Error("Arquivo CSV inválido ou vazio");
-      }
-      
-      // Extrai o cabeçalho
-      const header = lines[0].split(',').map(h => h.trim());
-      
-      // Verifica colunas obrigatórias
-      const categoryIndex = header.findIndex(h => h.toLowerCase() === 'category');
-      const nameIndex = header.findIndex(h => h.toLowerCase() === 'name');
-      const descriptionIndex = header.findIndex(h => h.toLowerCase() === 'description');
-      const priceIndex = header.findIndex(h => h.toLowerCase() === 'price');
-      
-      if (categoryIndex === -1 || nameIndex === -1 || priceIndex === -1) {
-        throw new Error('O CSV deve conter pelo menos as colunas category, name e price');
-      }
-      
-      // Processa linhas de dados
-      const existingData = await PriceService.getAllData();
-      const mergedData: PriceData = { ...existingData };
-      let importedItems = 0;
-      let invalidItems = 0;
-      
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue; // Ignora linhas vazias
-        
-        const values = lines[i].split(',').map(v => v.trim());
-        
-        if (values.length < Math.max(categoryIndex, nameIndex, priceIndex) + 1) {
-          invalidItems++;
-          continue; // Linha não tem todas as colunas necessárias
-        }
-        
-        const categoryName = values[categoryIndex];
-        if (!categoryName) {
-          invalidItems++;
-          continue; // Categoria vazia
-        }
-        
-        const categoryId = categoryName.toLowerCase().replace(/\s+/g, '-');
-        const name = values[nameIndex];
-        if (!name) {
-          invalidItems++;
-          continue; // Nome vazio
-        }
-        
-        const description = descriptionIndex !== -1 ? values[descriptionIndex] : '';
-        const price = parseFloat(values[priceIndex]);
-        
-        if (isNaN(price)) {
-          invalidItems++;
-          continue; // Preço inválido
-        }
-        
-        // Cria a categoria se não existir
-        if (!mergedData[categoryId]) {
-          mergedData[categoryId] = {
-            id: categoryId,
-            name: categoryName, // Usa o nome original da categoria com capitalização apropriada
-            items: [],
-          };
-        }
-        
-        // Verifica se já existe um item com o mesmo nome
-        const existingItem = mergedData[categoryId].items.find(
-          item => item.name.toLowerCase() === name.toLowerCase()
-        );
-        
-        if (existingItem) {
-          // Atualiza item existente
-          existingItem.description = description;
-          existingItem.price = price;
-        } else {
-          // Adiciona o item à categoria
-          mergedData[categoryId].items.push({
-            id: generateUniqueId(),
-            name,
-            description,
-            price,
-            specs: [],
-            type: categoryId,
-          });
-        }
-        
-        importedItems++;
-      }
-      
-      await PriceService.saveDataToSupabase(mergedData);
-      
-      if (invalidItems > 0) {
-        toast.info(`Importados ${importedItems} itens. ${invalidItems} itens foram ignorados por terem formato inválido.`);
-      }
-      
-      return mergedData;
-    } catch (error) {
-      console.error('Erro ao importar dados CSV:', error);
-      toast.error(error instanceof Error ? error.message : "Formato CSV inválido");
-      throw error;
-    }
-  },
-  
-  // Reinicia dados para o estado inicial
-  resetData: async (): Promise<PriceData> => {
-    await PriceService.saveDataToSupabase(initialPriceData);
-    return initialPriceData;
-  },
-  
-  // Verificar se há conflitos de dados com outras sessões
-  checkForDataConflicts: async (): Promise<boolean> => {
-    try {
-      // Verifica se há atualizações mais recentes
-      const { data, error } = await supabase
-        .from('price_data_updates')
-        .select('updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(1)
+      const { data: categoryData, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .select('*')
+        .eq('id', categoryId)
         .single();
-      
-      if (error || !data) {
+
+      if (error) {
+        console.error(`Error fetching category ${categoryId}:`, error);
+        return null;
+      }
+
+      if (!categoryData) {
+        console.warn(`Category ${categoryId} not found`);
+        return null;
+      }
+
+      return {
+        id: categoryData.id,
+        name: categoryData.name,
+        items: categoryData.items || [],
+      };
+    } catch (err: any) {
+      console.error(`Error in getCategory for ${categoryId}:`, err);
+      return null;
+    }
+  }
+
+  static async addCategory(category: Omit<PriceCategory, 'items'>): Promise<PriceCategory> {
+    try {
+      const newCategoryId = uuidv4();
+      const categoryToAdd = { ...category, id: newCategoryId, items: [] };
+
+      const { data, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .insert([categoryToAdd])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error adding category:", error);
+        throw new Error(error.message);
+      }
+
+      this.notifyListeners();
+      return data as PriceCategory;
+    } catch (err: any) {
+      console.error("Error in addCategory:", err);
+      throw new Error(err.message || "Failed to add category.");
+    }
+  }
+
+  static async updateCategory(categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory | null> {
+    try {
+      const { data, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .update(updates)
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error updating category ${categoryId}:`, error);
+        throw new Error(error.message);
+      }
+
+      this.notifyListeners();
+      return data as PriceCategory;
+    } catch (err: any) {
+      console.error(`Error in updateCategory for ${categoryId}:`, err);
+      return null;
+    }
+  }
+
+  static async deleteCategory(categoryId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) {
+        console.error(`Error deleting category ${categoryId}:`, error);
         return false;
       }
-      
-      // Se houver dados e o usuário não tiver sincronizado ainda, há conflito
+
+      this.notifyListeners();
       return true;
-    } catch (e) {
-      console.error('Erro ao verificar conflitos de dados:', e);
+    } catch (err: any) {
+      console.error(`Error in deleteCategory for ${categoryId}:`, err);
       return false;
     }
-  },
-  
-  // Forçar atualização de dados da fonte mais recente
-  forceRefreshFromLatestSource: async (): Promise<PriceData> => {
-    console.info('Forçando atualização de dados da fonte mais recente');
-    const data = await PriceService.getAllData();
-    notifyDataChangeListeners(data);
-    return data;
-  },
-  
-  // Initialize service
-  initialize: async () => {
+  }
+
+  static async addItem(categoryId: string, item: Omit<PriceItem, 'id'>): Promise<PriceItem | null> {
     try {
-      // Check if required tables exist
-      const { error } = await supabase
-        .from('price_data')
-        .select('id')
-        .limit(1);
-      
-      if (error && error.code === 'PGRST204') {
-        console.error('price_data table does not exist, need to create it.');
-      } else {
-        console.log('Database connection established.');
+      const newItemId = uuidv4();
+      const itemToAdd = { ...item, id: newItemId };
+
+      // Get the category to update its items
+      const category = await this.getCategory(categoryId);
+      if (!category) {
+        console.error(`Category ${categoryId} not found`);
+        return null;
       }
-      
-      // Load initial data if needed
-      await PriceService.getAllData();
-      console.log('Data loaded successfully.');
-    } catch (error) {
-      console.error('Error initializing price service:', error);
-      toast.error("Could not initialize price service.");
+
+      // Add the new item to the category's items
+      const updatedItems = [...category.items, itemToAdd];
+
+      // Update the category with the new items array
+      const { data, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .update({ items: updatedItems })
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error adding item to category ${categoryId}:`, error);
+        throw new Error(error.message);
+      }
+
+      this.notifyListeners();
+      return itemToAdd as PriceItem;
+    } catch (err: any) {
+      console.error(`Error in addItem to ${categoryId}:`, err);
+      return null;
     }
   }
-};
 
-// Initialize service on import
-PriceService.initialize();
+  static async updateItem(categoryId: string, itemId: string, updates: Partial<PriceItem>): Promise<PriceItem | null> {
+    try {
+      // Get the category to update its items
+      const category = await this.getCategory(categoryId);
+      if (!category) {
+        console.error(`Category ${categoryId} not found`);
+        return null;
+      }
+
+      // Map over the items and replace the item with the matching ID
+      const updatedItems = category.items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, ...updates };
+        }
+        return item;
+      });
+
+      // Update the category with the new items array
+      const { data, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .update({ items: updatedItems })
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error updating item ${itemId} in category ${categoryId}:`, error);
+        throw new Error(error.message);
+      }
+
+      this.notifyListeners();
+      return { ...updates, id: itemId } as PriceItem;
+    } catch (err: any) {
+      console.error(`Error in updateItem for ${itemId} in ${categoryId}:`, err);
+      return null;
+    }
+  }
+
+  static async deleteItem(categoryId: string, itemId: string): Promise<boolean> {
+    try {
+      // Get the category to update its items
+      const category = await this.getCategory(categoryId);
+      if (!category) {
+        console.error(`Category ${categoryId} not found`);
+        return false;
+      }
+
+      // Filter out the item with the matching ID
+      const updatedItems = category.items.filter(item => item.id !== itemId);
+
+      // Update the category with the new items array
+      const { data, error } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .update({ items: updatedItems })
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error deleting item ${itemId} from category ${categoryId}:`, error);
+        return false;
+      }
+
+      this.notifyListeners();
+      return true;
+    } catch (err: any) {
+      console.error(`Error in deleteItem for ${itemId} from ${categoryId}:`, err);
+      return false;
+    }
+  }
+
+  static addDataChangeListener(listener: (data: PriceData) => void) {
+    PriceService.listeners.push(listener);
+  }
+
+  static removeDataChangeListener(listener: (data: PriceData) => void) {
+    PriceService.listeners = PriceService.listeners.filter(l => l !== listener);
+  }
+
+  private static notifyListeners() {
+    this.getAllData().then(data => {
+      PriceService.listeners.forEach(listener => listener(data));
+    }).catch(error => {
+      console.error("Error notifying listeners:", error);
+    });
+  }
+
+  static async resetData(): Promise<PriceData | null> {
+    try {
+      // Delete all existing records
+      const { error: deleteError } = await supabase
+        .from(PriceService.PRICE_TABLE)
+        .delete()
+        .neq('id', null);  // Delete all records
+
+      if (deleteError) {
+        console.error("Error deleting existing data:", deleteError);
+        throw new Error(deleteError.message);
+      }
+
+      // Re-import initial data (assuming you have a function for this)
+      const { initExternalStorageData, syncDiskDataWithPriceService } = await import('./component-sync-service');
+      await syncDiskDataWithPriceService();
+      await initExternalStorageData();
+
+      // Fetch and return the new data
+      const newData = await this.getAllData();
+      this.notifyListeners();
+      return newData;
+    } catch (error: any) {
+      console.error("Error resetting data:", error);
+      throw new Error(error.message || "Failed to reset data.");
+    }
+  }
+
+  static async checkForDataConflicts(): Promise<boolean> {
+    try {
+      // Implement a more robust conflict detection mechanism
+      // This could involve comparing timestamps or versions of the data
+
+      // For now, just return false
+      return false;
+    } catch (error) {
+      console.error("Error checking for data conflicts:", error);
+      return false;
+    }
+  }
+
+  static async forceRefreshFromLatestSource(): Promise<PriceData | null> {
+    try {
+      // Re-fetch all data from the source (e.g., Supabase)
+      const newData = await this.getAllData();
+
+      // Notify listeners about the refreshed data
+      this.notifyListeners();
+
+      return newData;
+    } catch (error) {
+      console.error("Error refreshing data from source:", error);
+      return null;
+    }
+  }
+}

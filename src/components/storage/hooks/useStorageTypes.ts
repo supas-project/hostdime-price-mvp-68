@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
 import { PriceService } from "@/services/price-service";
 import { PriceItem } from '@/types/pricing';
+import { storageData } from '@/data/storage-pricing';
 
 export interface StorageType {
   id: string;
@@ -26,37 +27,59 @@ export function useStorageTypes() {
   useEffect(() => {
     const loadStorageTypes = async () => {
       try {
-        const category = await PriceService.getCategory('storage');
-        if (category && Array.isArray(category.items) && category.items.length > 0) {
-          // Convert price items to storage types
-          const types: StorageType[] = category.items.map(item => {
-            // Access metadata carefully with optional chaining and defaults
-            const metadata = item.metadata || {};
-            
-            // Set default values for storage type if metadata is missing specific properties
-            return {
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              price: item.price || 0,
-              pricePerGB: item.price / 100, // Assuming price is per 100GB
-              type: item.type || 'storage',
-              subtype: item.subtype || 'block',
-              specs: item.specs || [],
-              // Use defaulted values for storage properties
-              minCapacity: 100,  // Default values
-              maxCapacity: 1000,
-              capacityUnit: 'GB',
-              capacityStep: 100,
-              benefits: Array.isArray(metadata.features) ? metadata.features : []
-            };
-          });
+        // Try to get storage category from price service
+        try {
+          const category = await PriceService.getCategory('storage');
+          if (category && Array.isArray(category.items) && category.items.length > 0) {
+            // Convert price items to storage types
+            const types: StorageType[] = category.items.map(item => {
+              // Access metadata carefully with optional chaining and defaults
+              const metadata = item.metadata || {};
+              
+              return {
+                id: item.id,
+                name: item.name,
+                description: item.description || '',
+                price: item.price || 0,
+                pricePerGB: item.price / 100, // Assuming price is per 100GB
+                type: item.type || 'storage',
+                subtype: item.subtype || 'block',
+                specs: item.specs || [],
+                // Use defaulted values for storage properties with fallbacks
+                minCapacity: metadata.minCapacity || 100,
+                maxCapacity: metadata.maxCapacity || 1000,
+                capacityUnit: metadata.capacityUnit || 'GB',
+                capacityStep: metadata.capacityStep || 100,
+                benefits: Array.isArray(metadata.benefits) ? metadata.benefits : []
+              };
+            });
 
-          setStorageTypes(types);
-        } else {
-          console.warn('No storage types found');
-          setStorageTypes([]);
+            setStorageTypes(types);
+            return;
+          }
+        } catch (error) {
+          console.error('Error loading storage types from price service:', error);
         }
+        
+        // Fallback to static data
+        console.log('Falling back to static storage data');
+        const staticTypes: StorageType[] = storageData.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          pricePerGB: item.price,
+          type: item.type,
+          subtype: item.subtype,
+          specs: item.specs || [],
+          minCapacity: item.metadata.minCapacity,
+          maxCapacity: item.metadata.maxCapacity,
+          capacityUnit: item.metadata.capacityUnit,
+          capacityStep: item.metadata.capacityStep,
+          benefits: item.metadata.benefits
+        }));
+        
+        setStorageTypes(staticTypes);
       } catch (error) {
         console.error('Error loading storage types:', error);
         setStorageTypes([]);

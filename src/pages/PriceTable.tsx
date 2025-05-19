@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
-import { usePriceTableActions } from "@/hooks/price-table";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { PriceTableHeader } from "@/components/price-table/PriceTableHeader";
 import { TableControls } from "@/components/price-table/TableControls";
@@ -11,7 +10,6 @@ import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ImportButton } from "@/components/price-table/ImportButton";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
-import { useDataSync } from "@/hooks/useDataSync";
 import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -24,6 +22,7 @@ export default function PriceTable() {
     setPriceData,
     activeTab,
     setActiveTab,
+    tableActions,
     isLoading: dataLoading,
     hasUpdates,
     handleSyncData,
@@ -41,25 +40,6 @@ export default function PriceTable() {
     contractDuration,
     setContractDuration
   } = usePriceTable();
-
-  const {
-    openAddCategory,
-    setOpenAddCategory,
-    openAddItem,
-    setOpenAddItem,
-    openEditItem,
-    setOpenEditItem,
-    itemToEdit,
-    setItemToEdit,
-    handleAddCategory,
-    handleAddItem,
-    handleEditItem,
-    handleInitiateEdit,
-    handleDeleteCategory,
-    handleDeleteItem,
-    handleExportData,
-    handleResetData
-  } = usePriceTableActions(activeTab, setPriceData);
 
   const {
     isLoading: fileLoading,
@@ -80,12 +60,32 @@ export default function PriceTable() {
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing;
 
+  // Destructure tableActions for easier access
+  const {
+    openAddCategory,
+    setOpenAddCategory,
+    openAddItem,
+    setOpenAddItem,
+    openEditItem,
+    setOpenEditItem,
+    itemToEdit,
+    setItemToEdit,
+    handleAddCategory,
+    handleAddItem,
+    handleEditItem,
+    handleInitiateEdit,
+    handleDeleteCategory,
+    handleDeleteItem,
+    handleExportData,
+    handleResetData
+  } = tableActions;
+
   // Effect to force update when hasUpdates is true
   useEffect(() => {
     if (hasUpdates) {
       handleRefreshData();
     }
-  }, [hasUpdates]);
+  }, [hasUpdates, handleRefreshData]);
 
   // Filter categories to remove contract category
   const filteredPriceData = {...priceData};
@@ -95,9 +95,6 @@ export default function PriceTable() {
 
   // Ensure admin access
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
-
-  // Convert contractDuration for use
-  const contractDurationNumber = parseInt(contractDuration, 10);
 
   return (
     <div className="container py-6 md:py-8 animate-fade-in">
@@ -185,7 +182,7 @@ export default function PriceTable() {
             onDeleteCategory={handleDeleteCategory}
             onDeleteItem={handleDeleteItem}
             onEditItem={handleInitiateEdit}
-            contractDuration={contractDurationNumber.toString()}
+            contractDuration={contractDuration}
           />
         </CardContent>
       </Card>
