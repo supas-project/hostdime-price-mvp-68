@@ -14,6 +14,7 @@ export interface PriceItem {
     features?: string[];
     quantity?: number;
     unitPrice?: number;
+    unitInfo?: string; // Added for storing additional storage metadata as JSON string
   };
 }
 

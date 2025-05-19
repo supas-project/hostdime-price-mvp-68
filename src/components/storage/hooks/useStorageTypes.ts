@@ -36,11 +36,11 @@ export function useStorageTypes() {
               // Access metadata carefully with optional chaining and defaults
               const metadata = item.metadata || {};
               
-              // Extract metadata from features or unitInfo if available
+              // Extract metadata from unitInfo if available
               let additionalInfo: any = {};
               try {
                 if (metadata.unitInfo) {
-                  additionalInfo = JSON.parse(metadata.unitInfo as string);
+                  additionalInfo = JSON.parse(metadata.unitInfo);
                 }
               } catch (e) {
                 console.error('Error parsing unitInfo', e);

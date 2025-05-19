@@ -1,4 +1,3 @@
-
 import { StorageDataItem } from "@/data/storage-pricing";
 import { diskData } from "@/data/disk-data";
 import { PriceService } from "./price-service";
@@ -171,8 +170,7 @@ export async function initExternalStorageData() {
             discount: 0,
             quantity: 1,
             unitPrice: item.price,
-            // Store the additional metadata as features
-            // Instead of using customMetadata which isn't in the type
+            // Store the additional metadata as JSON string
             unitInfo: JSON.stringify({
               minCapacity: item.metadata.minCapacity,
               maxCapacity: item.metadata.maxCapacity,

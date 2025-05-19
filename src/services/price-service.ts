@@ -34,8 +34,8 @@ export class PriceService {
         return {};
       }
 
-      // Type assertion to ensure we get a PriceData object
-      return jsonData as PriceData;
+      // Type assertion with proper cast - first to unknown then to PriceData
+      return jsonData as unknown as PriceData;
     } catch (err: any) {
       console.error("Error in getAllData:", err);
       throw new Error(err.message || "Failed to retrieve price data.");
@@ -262,10 +262,11 @@ export class PriceService {
   private static async saveData(data: PriceData): Promise<void> {
     try {
       // Insert a new record with the updated data
+      // We need to cast data to Json type for Supabase
       const { error } = await supabase
         .from(PriceService.PRICE_DATA_TABLE)
         .insert({
-          data: data,
+          data: data as any, // Cast to any to bypass type checking
           updated_at: new Date().toISOString() // Convert Date to ISO string
         });
 
