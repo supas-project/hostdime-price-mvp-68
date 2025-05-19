@@ -17,18 +17,21 @@ export const toast = {
   success: (title: string, options?: ToastOptions) => {
     sonnerToast.success(title, {
       ...options,
+      // Use createElement instead of JSX for icons
       icon: options?.icon || <CheckCircle2 className="h-5 w-5" />
     });
   },
   error: (title: string, options?: ToastOptions) => {
     sonnerToast.error(title, {
       ...options,
+      // Use createElement instead of JSX for icons
       icon: options?.icon || <AlertCircle className="h-5 w-5" />
     });
   },
   info: (title: string, options?: ToastOptions) => {
     sonnerToast.info(title, {
       ...options,
+      // Use createElement instead of JSX for icons
       icon: options?.icon || <Info className="h-5 w-5" />
     });
   }

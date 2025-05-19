@@ -72,8 +72,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
         });
       } else {
         toast.error("Erro na atualização", {
-          description: "Não foi possível obter os dados do servidor.",
-          icon: <AlertCircle className="h-5 w-5" />
+          description: "Não foi possível obter os dados do servidor."
         });
       }
     } catch (error) {
