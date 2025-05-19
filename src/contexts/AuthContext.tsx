@@ -1,13 +1,15 @@
 
-import React, { createContext, useContext, ReactNode } from "react";
-import { User } from "@supabase/supabase-js";
+import React, { createContext, useContext, ReactNode, useState } from "react";
+import { User, Session } from "@supabase/supabase-js";
 import { useAuthState } from "@/hooks/useAuthState";
 import { authService } from "@/utils/authUtils";
+import { toast } from "sonner";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   user: User | null;
+  session: Session | null;  // Include session in the context
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -17,17 +19,48 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isAdmin, user, loading } = useAuthState();
+  const { isAuthenticated, isAdmin, user, session, loading, isSupabaseReady } = useAuthState();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Enhanced login function with better error handling
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const success = await authService.login(email, password);
+      return success;
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Erro ao fazer login", {
+        description: "Ocorreu um erro inesperado. Tente novamente."
+      });
+      return false;
+    }
+  };
+
+  // Enhanced logout function with state tracking
+  const handleLogout = async (): Promise<void> => {
+    try {
+      setIsLoggingOut(true);
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erro ao fazer logout", {
+        description: "Ocorreu um erro inesperado. Tente novamente."
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       isAdmin, 
       user, 
-      login: authService.login,
-      logout: authService.logout,
+      session,  // Expose the session
+      login: handleLogin,
+      logout: handleLogout,
       loading,
-      isSupabaseReady: true 
+      isSupabaseReady
     }}>
       {children}
     </AuthContext.Provider>

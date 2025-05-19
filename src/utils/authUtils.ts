@@ -1,6 +1,6 @@
 
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 
 // Constants for the user admin
@@ -68,7 +68,7 @@ export const isUserAdmin = (user: User | null): boolean => {
   return user?.email === ADMIN_EMAIL;
 };
 
-// Authentication service functions
+// Authentication service functions with improved error handling
 export const authService = {
   login: async (email: string, password: string): Promise<boolean> => {
     try {
@@ -99,9 +99,7 @@ export const authService = {
 
   logout: async (): Promise<void> => {
     try {
-      const { error } = await supabase.auth.signOut({
-        scope: 'local' // Only log out the current session
-      });
+      const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Erro ao fazer logout no Supabase:", error);

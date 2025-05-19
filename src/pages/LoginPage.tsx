@@ -15,14 +15,15 @@ export default function LoginPage() {
     login,
     isAuthenticated,
     user,
-    loading
+    loading,
+    isSupabaseReady
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Efeito para redirecionar usuários que já estão autenticados
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isSupabaseReady && isAuthenticated && !loading) {
       // Se for admin, redireciona para a tabela de preços
       const isAdminEmail = user?.email === "admin@hostdime.com.br";
       const redirectTo = isAdminEmail ? "/price-table" : "/configure";
@@ -34,7 +35,7 @@ export default function LoginPage() {
         replace: true
       });
     }
-  }, [isAuthenticated, loading, user, navigate, location.state]);
+  }, [isAuthenticated, loading, user, navigate, location.state, isSupabaseReady]);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,10 +45,6 @@ export default function LoginPage() {
       if (success) {
         // Verificar se é o email de admin para redirecionar para a tabela de preços
         const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
-        const redirectPath = isAdmin ? "/price-table" : "/configure";
-        const from = (location.state as any)?.from?.pathname || redirectPath;
-        
-        // Em vez de navegar aqui, vamos deixar o useEffect lidar com o redirecionamento
         toast.success("Login realizado com sucesso", {
           description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
         });
@@ -63,7 +60,7 @@ export default function LoginPage() {
   };
   
   // Exibe o indicador de carregamento enquanto o estado de autenticação está sendo verificado
-  if (loading) {
+  if (loading || !isSupabaseReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <div className="text-center space-y-4">
