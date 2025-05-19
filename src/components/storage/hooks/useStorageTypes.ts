@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { StorageType } from '../types/storage-types';
 import { loadStorageTypes } from '../services/storage-service';
 
-export { StorageType } from '../types/storage-types';
+// Use "export type" for re-exporting types when isolatedModules is enabled
+export type { StorageType } from '../types/storage-types';
 
 export function useStorageTypes() {
   const [storageTypes, setStorageTypes] = useState<StorageType[]>([]);

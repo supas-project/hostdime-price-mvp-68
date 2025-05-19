@@ -14,5 +14,5 @@ export interface StorageHandlerConfig {
   onSelectExternalStorage?: (type: string, capacity: number, price: number) => void;
 }
 
-// Re-export the storage type from storage-types.ts
-export { StorageType as StorageTypeDetailed } from './storage-types';
+// Use "export type" for re-exporting types when isolatedModules is enabled
+export type { StorageType as StorageTypeDetailed } from './storage-types';
