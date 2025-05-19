@@ -3,7 +3,6 @@ import { useCategoryActions } from "./useCategoryActions";
 import { useItemActions } from "./useItemActions";
 import { useDataActions } from "./useDataActions";
 import { usePayBackActions } from "./usePayBackActions";
-import { notifyListeners } from "../../services/price/listeners";
 
 export function usePriceTableActions(
   activeTab: string, 
@@ -15,44 +14,14 @@ export function usePriceTableActions(
   const dataActions = useDataActions(setPriceData);
   const payBackActions = usePayBackActions(setPriceData);
 
-  // Wrap functions to notify listeners when there are changes
-  const handleAddCategory = async (...args: Parameters<typeof categoryActions.handleAddCategory>) => {
-    const result = await categoryActions.handleAddCategory(...args);
-    notifyListeners();
-    return result;
-  };
-
-  const handleAddItem = async (...args: Parameters<typeof itemActions.handleAddItem>) => {
-    const result = await itemActions.handleAddItem(...args);
-    notifyListeners();
-    return result;
-  };
-
-  const handleEditItem = async (...args: Parameters<typeof itemActions.handleEditItem>) => {
-    const result = await itemActions.handleEditItem(...args);
-    notifyListeners();
-    return result;
-  };
-
-  const handleDeleteCategory = async (...args: Parameters<typeof categoryActions.handleDeleteCategory>) => {
-    const result = await categoryActions.handleDeleteCategory(...args);
-    notifyListeners();
-    return result;
-  };
-
-  const handleDeleteItem = async (...args: Parameters<typeof itemActions.handleDeleteItem>) => {
-    const result = await itemActions.handleDeleteItem(...args);
-    notifyListeners();
-    return result;
-  };
-  
-  // Return combined actions from all hooks
+  // Return combined actions from all hooks without wrapping them again
+  // This avoids duplicate notifications in the same function
   return {
     // Category actions
     openAddCategory: categoryActions.openAddCategory,
     setOpenAddCategory: categoryActions.setOpenAddCategory,
-    handleAddCategory,
-    handleDeleteCategory,
+    handleAddCategory: categoryActions.handleAddCategory,
+    handleDeleteCategory: categoryActions.handleDeleteCategory,
     
     // Item actions
     openAddItem: itemActions.openAddItem,
@@ -63,9 +32,9 @@ export function usePriceTableActions(
     setItemToEdit: itemActions.setItemToEdit,
     isSubmittingItem: itemActions.isSubmittingItem,
     handleInitiateEdit: itemActions.handleInitiateEdit,
-    handleAddItem,
-    handleEditItem,
-    handleDeleteItem,
+    handleAddItem: itemActions.handleAddItem,
+    handleEditItem: itemActions.handleEditItem,
+    handleDeleteItem: itemActions.handleDeleteItem,
     
     // Data actions
     handleExportData: dataActions.handleExportData,

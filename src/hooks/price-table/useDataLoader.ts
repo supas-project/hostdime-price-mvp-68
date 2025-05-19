@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { PriceService } from '@/services/price-service';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { initializeServerCategories } from '@/services/component-sync';
 
 export function useDataLoader(
   isLoading: boolean,
@@ -31,6 +31,16 @@ export function useDataLoader(
       
       console.log("Price data loaded successfully with categories:", Object.keys(data).join(", "));
       setPriceData(data);
+      
+      // After loading price data, ensure server categories are initialized
+      // This ensures that the wizard components are properly synchronized
+      try {
+        console.log("Initializing server categories from price data");
+        await initializeServerCategories(data);
+        console.log("Server categories initialized successfully");
+      } catch (initError) {
+        console.error("Error initializing server categories:", initError);
+      }
     } catch (error) {
       console.error('Error loading price data:', error);
       toast.error("Error loading price data", {
