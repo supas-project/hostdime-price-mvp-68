@@ -14,7 +14,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Create consistent ID without quantity to prevent duplicates
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
     
-    // Normalizar capacidade para garantir que tenha unidade
+    // Normalize capacity to ensure it has a unit
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
     
     const storageOption: ComponentOption = {
@@ -41,7 +41,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
-    // Garantir que a capacidade tenha unidade (GB)
+    // Ensure capacity has a unit (GB)
     const formattedCapacity = `${capacity}GB`;
     
     const storageOption: ComponentOption = {

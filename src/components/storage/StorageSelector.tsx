@@ -3,35 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { useStorageTypes, StorageType } from './hooks/useStorageTypes';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
+import { PricedDiskOption } from '@/types/storage';
+import { InternalStoragePanel } from './InternalStoragePanel';
+import { ExternalStoragePanel } from './ExternalStoragePanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StorageHeader } from './storage-header';
 
-interface StorageSelectorProps {
-  onSelect: (storage: StorageType) => void;
-  selectedStorageId?: string | null;
+export interface StorageSelectorProps {
+  onSelectInternalDisk: (disk: PricedDiskOption, quantity: number) => void;
+  onSelectExternalStorage: (type: string, capacity: number, price: number) => void;
 }
 
-export function StorageSelector({ onSelect, selectedStorageId }: StorageSelectorProps) {
+export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
-  const [selectedId, setSelectedId] = useState<string | null>(selectedStorageId || null);
-  
-  // Select first storage type if none is selected
-  useEffect(() => {
-    if (storageTypes.length > 0 && !selectedId) {
-      setSelectedId(storageTypes[0].id);
-      onSelect(storageTypes[0]);
-    }
-  }, [storageTypes, selectedId, onSelect]);
-  
-  // Update if selectedStorageId changes externally
-  useEffect(() => {
-    if (selectedStorageId !== selectedId) {
-      setSelectedId(selectedStorageId || null);
-    }
-  }, [selectedStorageId]);
-  
-  const handleSelect = (storage: StorageType) => {
-    setSelectedId(storage.id);
-    onSelect(storage);
-  };
+  const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
   
   // Create a mapping for the storage performance indicators
   const storagePerformanceMap: Record<string, {
@@ -62,59 +47,26 @@ export function StorageSelector({ onSelect, selectedStorageId }: StorageSelector
   });
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Select Storage Type</h3>
+    <div className="space-y-8">
+      <StorageHeader />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {storageTypes.map(storage => (
-          <Card 
-            key={storage.id}
-            className={`p-4 cursor-pointer transition-all ${
-              selectedId === storage.id 
-              ? 'ring-2 ring-primary border-primary bg-primary/5' 
-              : 'hover:bg-muted/50'
-            }`}
-            onClick={() => handleSelect(storage)}
-          >
-            <div className="flex flex-col h-full">
-              <h4 className="font-medium text-lg">{storage.name}</h4>
-              
-              <div className="text-sm text-muted-foreground mb-2">
-                {storage.description}
-              </div>
-              
-              <div className="mt-auto space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>IOPS:</span>
-                  <span className="font-medium">
-                    {storagePerformanceMap[storage.id]?.iops || 'N/A'}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span>Throughput:</span>
-                  <span className="font-medium">
-                    {storagePerformanceMap[storage.id]?.throughput || 'N/A'}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span>Price:</span>
-                  <span className="font-medium">
-                    ${storage.pricePerGB.toFixed(2)}/GB/mo
-                  </span>
-                </div>
-              </div>
-              
-              {selectedId === storage.id && (
-                <Button size="sm" className="w-full mt-3 bg-primary text-primary-foreground">
-                  Selected
-                </Button>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
+        <TabsList className="grid grid-cols-2 w-full">
+          <TabsTrigger value="internal">Discos Internos</TabsTrigger>
+          <TabsTrigger value="external">Storage Externo</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="internal" className="mt-4">
+          <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
+        </TabsContent>
+        
+        <TabsContent value="external" className="mt-4">
+          <ExternalStoragePanel 
+            onSelectStorage={onSelectExternalStorage}
+            storageTypes={storagePerformanceMap}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

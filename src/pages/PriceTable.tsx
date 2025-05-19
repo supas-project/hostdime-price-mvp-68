@@ -67,40 +67,37 @@ export default function PriceTable() {
     handleFileUpload
   } = useFileHandling(setPriceData);
   
-  // Data actions hook para lidar com sincronização e conflitos
+  // Data actions hook
   const {
     isRefreshing,
     hasConflicts,
     handleRefreshData
   } = useDataActions(setPriceData);
-  
-  // Hook de sincronização
-  const { lastSyncTime: syncTime } = useDataSync();
 
-  // Authentication - CORREÇÃO: Garantir que estamos obtendo corretamente o status de admin
+  // Authentication
   const { isAuthenticated, isAdmin, user } = useAuth();
-
-  // Log para debug - CORREÇÃO: Adicionar logs para debug
-  console.log("PriceTable - Auth state:", { isAuthenticated, isAdmin, userEmail: user?.email });
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing;
 
-  // Effect para forçar atualização quando hasUpdates for true
+  // Effect to force update when hasUpdates is true
   useEffect(() => {
     if (hasUpdates) {
       handleRefreshData();
     }
   }, [hasUpdates]);
 
-  // Filtrar categorias para remover a categoria de contratos
+  // Filter categories to remove contract category
   const filteredPriceData = {...priceData};
   if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;
   }
 
-  // CORREÇÃO: Adicionar verificação explícita para garantir acesso admin
+  // Ensure admin access
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
+
+  // Convert contractDuration for use
+  const contractDurationNumber = parseInt(contractDuration, 10);
 
   return (
     <div className="container py-6 md:py-8 animate-fade-in">
@@ -150,7 +147,7 @@ export default function PriceTable() {
               <div className="flex gap-2">
                 <ContractSelect 
                   value={contractDuration}
-                  onChange={setContractDuration}
+                  onChange={(value) => setContractDuration(value)}
                 />
                 
                 {isAdminAccess && (
@@ -188,7 +185,7 @@ export default function PriceTable() {
             onDeleteCategory={handleDeleteCategory}
             onDeleteItem={handleDeleteItem}
             onEditItem={handleInitiateEdit}
-            contractDuration={contractDuration}
+            contractDuration={contractDurationNumber.toString()}
           />
         </CardContent>
       </Card>

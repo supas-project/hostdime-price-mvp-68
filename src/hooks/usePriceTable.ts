@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { PriceService } from '@/services/price-service';
-import { PriceData } from '@/types/pricing';
+import { PriceData, PriceItem } from '@/types/pricing';
 import { usePriceTableActions } from './price-table/usePriceTableActions';
 import { useDataSync } from './useDataSync';
 import { toast } from 'sonner';
@@ -12,16 +12,16 @@ export function usePriceTable() {
   const [activeTab, setActiveTab] = useState('cpu');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
-  const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
-  const [contractDuration, setContractDuration] = useState(12);
+  const [displayMode, setDisplayMode] = useState<'table' | 'card'>('card');
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [contractDuration, setContractDuration] = useState<string>('12');
   
-  const { hasUpdates, syncWithLatestData } = useDataSync();
+  const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
 
   // Filter function for items based on search term
-  const filterItems = (items: any[], term: string) => {
-    if (!term || term.trim() === '') return items;
-    const lowerTerm = term.toLowerCase();
+  const filterItems = (items: PriceItem[]): PriceItem[] => {
+    if (!searchTerm || searchTerm.trim() === '') return items;
+    const lowerTerm = searchTerm.toLowerCase();
     return items.filter(item => 
       item.name.toLowerCase().includes(lowerTerm) ||
       item.description?.toLowerCase().includes(lowerTerm) ||
@@ -31,11 +31,10 @@ export function usePriceTable() {
 
   // Toggle category collapse state
   const toggleCategoryCollapse = (categoryId: string) => {
-    setCollapsedCategories(current => 
-      current.includes(categoryId)
-        ? current.filter(id => id !== categoryId)
-        : [...current, categoryId]
-    );
+    setCollapsedCategories(current => ({
+      ...current,
+      [categoryId]: !current[categoryId]
+    }));
   };
 
   // Load price data
@@ -46,7 +45,7 @@ export function usePriceTable() {
       setPriceData(data);
     } catch (error) {
       console.error('Error loading price data:', error);
-      toast("Erro ao carregar dados de preço. Tente novamente mais tarde.");
+      toast.error("Erro ao carregar dados de preço. Tente novamente mais tarde.");
     } finally {
       setIsLoading(false);
     }
@@ -71,27 +70,25 @@ export function usePriceTable() {
     };
   }, []);
 
-  // Get table actions
-  const tableActions = usePriceTableActions(activeTab, setPriceData);
-
   // Function to sync with latest data when updates are available
   const handleSyncData = async () => {
     if (hasUpdates) {
       await syncWithLatestData();
       await loadPriceData();
-      toast("Dados atualizados com sucesso!");
+      toast.success("Dados atualizados com sucesso!");
     }
   };
 
   return {
     isLoading,
     priceData,
+    setPriceData,
     activeTab,
     setActiveTab,
-    tableActions,
     hasUpdates,
     handleSyncData,
     loadPriceData,
+    lastSyncTime,
     searchTerm,
     setSearchTerm,
     sortOrder,
