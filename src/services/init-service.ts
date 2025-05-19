@@ -1,6 +1,6 @@
 
 import { PriceService } from "./price-service";
-import { syncDiskDataWithPriceService, initExternalStorageData } from "./component-sync-service";
+import { syncDiskDataWithPriceService, initExternalStorageData } from "./component-sync";
 import { toast } from "sonner";
 
 // This service handles initialization of the application data

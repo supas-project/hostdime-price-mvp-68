@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { PriceData, ImportOptions } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from './constants';
@@ -106,7 +105,7 @@ export async function resetData(): Promise<PriceData | null> {
   try {
     console.log("[PriceService] Resetting price data to initial state");
     // Re-import initial data
-    const { syncDiskDataWithPriceService, initExternalStorageData } = await import('../component-sync-service');
+    const { syncDiskDataWithPriceService, initExternalStorageData } = await import('../component-sync');
     
     // Create empty default data
     const defaultData: PriceData = {};
