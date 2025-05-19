@@ -10,13 +10,17 @@ import { toast } from "sonner";
 export function useCategoryActions(setPriceData: (data: any) => void) {
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const { toast: uiToast } = useToast();
-  const { registerAdminChange } = useDataSync();
-  const { isAdmin, user } = useAuth();
+  const { registerAdminChange, isAdminAccess } = useDataSync();
+  const { isAuthenticated } = useAuth();
   
-  // Explicit check to ensure admin access
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
-
   const handleAddCategory = async (values: any) => {
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para adicionar categorias."
+      });
+      return null;
+    }
+    
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar categorias."
@@ -56,6 +60,13 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para excluir categorias."
+      });
+      return false;
+    }
+    
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir categorias."

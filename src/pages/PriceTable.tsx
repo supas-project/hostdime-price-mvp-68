@@ -14,8 +14,17 @@ import { useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
+import { useDataSync } from "@/hooks/useDataSync";
+import { Navigate } from "react-router-dom";
 
 export default function PriceTable() {
+  const { isAuthenticated } = useAuth();
+  
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   // Custom hooks
   const {
     priceData,
@@ -55,7 +64,8 @@ export default function PriceTable() {
   } = useDataActions(setPriceData);
 
   // Authentication
-  const { isAuthenticated, isAdmin, user } = useAuth();
+  const { isAdmin, user } = useAuth();
+  const { isAdminAccess } = useDataSync();
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing;
@@ -87,14 +97,18 @@ export default function PriceTable() {
     }
   }, [hasUpdates, handleRefreshData]);
 
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadPriceData();
+    }
+  }, [isAuthenticated]);
+
   // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};
   if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;
   }
-
-  // Ensure admin access
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   return (
     <div className="container py-6 md:py-8 animate-fade-in">

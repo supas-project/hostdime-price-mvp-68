@@ -16,13 +16,17 @@ export function useItemActions(
   const [openEditItem, setOpenEditItem] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
   const { toast: uiToast } = useToast();
-  const { registerAdminChange } = useDataSync();
-  const { isAdmin, user } = useAuth();
-
-  // Explicit check to ensure admin access
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
+  const { registerAdminChange, isAdminAccess } = useDataSync();
+  const { isAuthenticated } = useAuth();
 
   const handleInitiateEdit = (item: PriceItem) => {
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para editar itens."
+      });
+      return;
+    }
+    
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
@@ -35,7 +39,15 @@ export function useItemActions(
   };
 
   const handleAddItem = async (values: any) => {
-    // Check admin permission - Explicit check
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para adicionar itens."
+      });
+      return;
+    }
+    
+    // Check admin permission
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar itens."
@@ -100,7 +112,15 @@ export function useItemActions(
   };
 
   const handleEditItem = async (values: any, itemId?: string) => {
-    // Check admin permission - Explicit check
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para editar itens."
+      });
+      return;
+    }
+    
+    // Check admin permission
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
@@ -160,7 +180,15 @@ export function useItemActions(
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    // Check admin permission - Explicit check
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para excluir itens."
+      });
+      return false;
+    }
+    
+    // Check admin permission
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir itens."

@@ -5,6 +5,7 @@ import { PriceData, PriceItem } from '@/types/pricing';
 import { usePriceTableActions } from './price-table/usePriceTableActions';
 import { useDataSync } from './useDataSync';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function usePriceTable() {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +19,7 @@ export function usePriceTable() {
   
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
   const tableActions = usePriceTableActions(activeTab, setPriceData);
+  const { isAuthenticated } = useAuth();
 
   // Filter function for items based on search term
   const filterItems = (items: PriceItem[]): PriceItem[] => {
@@ -42,12 +44,18 @@ export function usePriceTable() {
   const loadPriceData = async () => {
     setIsLoading(true);
     try {
+      if (!isAuthenticated) {
+        console.log("Usuário não autenticado, não carregando dados de preço");
+        setIsLoading(false);
+        return;
+      }
+
       const data = await PriceService.getAllData();
       setPriceData(data);
     } catch (error) {
       console.error('Error loading price data:', error);
       toast.error("Erro ao carregar dados de preço", {
-        description: "Tente novamente mais tarde."
+        description: "Tente novamente mais tarde ou verifique se você está autenticado."
       });
     } finally {
       setIsLoading(false);
@@ -56,14 +64,18 @@ export function usePriceTable() {
 
   // Initial data loading
   useEffect(() => {
-    loadPriceData();
-
-    // Add listener for data changes
-    PriceService.addDataChangeListener((newData) => {
-      console.log('Price data updated:', newData);
-      setPriceData(newData);
-    });
-
+    if (isAuthenticated) {
+      loadPriceData();
+  
+      // Add listener for data changes
+      PriceService.addDataChangeListener((newData) => {
+        console.log('Price data updated:', newData);
+        setPriceData(newData);
+      });
+    } else {
+      setPriceData(null);
+    }
+    
     // Cleanup
     return () => {
       // Remove listener when unmounted
@@ -71,7 +83,7 @@ export function usePriceTable() {
         setPriceData(newData);
       });
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Function to sync with latest data when updates are available
   const handleSyncData = async () => {

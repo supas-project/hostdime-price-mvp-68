@@ -12,14 +12,22 @@ const LAST_UPDATE_KEY = 'price_data_last_update';
 const CHECK_INTERVAL = 10000; // 10 seconds
 
 export function useDataSync() {
-  const { isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [hasUpdates, setHasUpdates] = useState(false);
   const { toast: uiToast } = useToast();
 
+  // Verificação explícita se o email do usuário é admin@hostdime.com.br
+  const isAdminAccess = isAdmin || (user?.email === "admin@hostdime.com.br");
+
   // Check for available updates
   const checkForUpdates = async () => {
     try {
+      if (!isAuthenticated) {
+        console.log("Usuário não autenticado para verificar atualizações");
+        return false;
+      }
+
       // Fetch the latest update from the database
       const { data, error } = await supabase
         .from('price_data_updates')
@@ -51,6 +59,11 @@ export function useDataSync() {
   // Notify about a data change
   const notifyDataChange = async (type: string, details: string, initiator = 'system') => {
     try {
+      if (!isAuthenticated) {
+        console.error("Usuário não autenticado para notificar alterações");
+        return;
+      }
+
       // Record update in database
       const timestamp = new Date().toISOString();
       
@@ -70,7 +83,7 @@ export function useDataSync() {
       }
       
       // If admin, just log the change but don't notify
-      if (isAdmin) {
+      if (isAdminAccess) {
         console.log("Data change recorded:", { type, details, timestamp });
         return;
       }
@@ -87,7 +100,10 @@ export function useDataSync() {
   
   // Register an update made by admin
   const registerAdminChange = async (type: string, details: string) => {
-    if (!isAdmin) return; // Only admin can register changes
+    if (!isAdminAccess) {
+      console.error("Apenas administradores podem registrar mudanças");
+      return;
+    }
     
     await notifyDataChange(type, details, 'admin');
     
@@ -98,6 +114,11 @@ export function useDataSync() {
   // Sync with latest updates
   const syncWithLatestData = async () => {
     try {
+      if (!isAuthenticated) {
+        console.error("Usuário não autenticado para sincronizar dados");
+        return false;
+      }
+
       const { data, error } = await supabase
         .from('price_data_updates')
         .select('updated_at')
@@ -124,7 +145,11 @@ export function useDataSync() {
 
   // Periodically check for changes (non-admin users only)
   useEffect(() => {
-    if (isAdmin) {
+    if (!isAuthenticated) {
+      return; // Não verificar se não estiver autenticado
+    }
+    
+    if (isAdminAccess) {
       // Admins don't need to check - they are the ones making changes
       return;
     }
@@ -141,11 +166,15 @@ export function useDataSync() {
     }, CHECK_INTERVAL);
     
     return () => clearInterval(intervalId);
-  }, [isAdmin, hasUpdates, lastSyncTime]);
+  }, [isAuthenticated, isAdminAccess, hasUpdates, lastSyncTime]);
 
   // Initialize sync time
   useEffect(() => {
     const initSyncTime = async () => {
+      if (!isAuthenticated) {
+        return; // Não inicializar se não estiver autenticado
+      }
+
       try {
         const { data, error } = await supabase
           .from('price_data_updates')
@@ -167,14 +196,17 @@ export function useDataSync() {
       }
     };
     
-    initSyncTime();
-  }, []);
+    if (isAuthenticated) {
+      initSyncTime();
+    }
+  }, [isAuthenticated]);
 
   return {
     lastSyncTime,
     hasUpdates,
     registerAdminChange,
     syncWithLatestData,
-    notifyDataChange
+    notifyDataChange,
+    isAdminAccess
   };
 }

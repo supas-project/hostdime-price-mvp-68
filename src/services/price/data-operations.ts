@@ -47,6 +47,16 @@ export async function getAllData(): Promise<PriceData> {
  */
 export async function saveData(data: PriceData): Promise<void> {
   try {
+    // Verificar se o usuário está autenticado antes de salvar dados
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session.session) {
+      console.error("User not authenticated:", sessionError);
+      throw new Error("Authentication required to save data");
+    }
+    
+    console.log("Saving data with authenticated user:", session.session.user.email);
+
     // Insert a new record with the updated data
     // We need to cast data to Json type for Supabase
     const { error } = await supabase
