@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   user: User | null;
-  session: Session | null;  // Include session in the context
+  session: Session | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, isAdmin, user, session, loading, isSupabaseReady } = useAuthState();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
-  // Enhanced login function with better error handling
+  // Enhanced login function with comprehensive error handling
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     try {
       const success = await authService.login(email, password);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Enhanced logout function with state tracking
+  // Enhanced logout function with improved state tracking
   const handleLogout = async (): Promise<void> => {
     try {
       setIsLoggingOut(true);
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated, 
       isAdmin, 
       user, 
-      session,  // Expose the session
+      session,
       login: handleLogin,
       logout: handleLogout,
       loading,

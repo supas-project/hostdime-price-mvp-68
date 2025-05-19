@@ -72,12 +72,14 @@ export const isUserAdmin = (user: User | null): boolean => {
 export const authService = {
   login: async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log("Tentando fazer login com:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error("Erro de autenticação:", error.message);
         toast.error("Erro ao fazer login", {
           description: error.message
         });
@@ -87,9 +89,10 @@ export const authService = {
       if (data && data.user) {
         const isUserAdmin = data.user.email === ADMIN_EMAIL;
         console.log("Login bem-sucedido:", data.user.email, "isAdmin:", isUserAdmin);
+        return true;
       }
       
-      return true;
+      return false;
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       toast.error("Ocorreu um erro durante o login");
@@ -99,17 +102,20 @@ export const authService = {
 
   logout: async (): Promise<void> => {
     try {
+      console.log("Iniciando processo de logout");
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Erro ao fazer logout no Supabase:", error);
-        return;
+        throw error;
       }
       
+      console.log("Logout realizado com sucesso");
       toast.success("Logout realizado com sucesso");
       
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
+      throw error;
     }
   }
 };

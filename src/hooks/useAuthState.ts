@@ -15,26 +15,24 @@ export function useAuthState() {
   const [loading, setLoading] = useState(true);
   const [isSupabaseReady, setIsSupabaseReady] = useState(false);
 
-  // Initialize session and set up auth listeners with deadlock prevention
+  // Initialize session and set up auth listeners with improved ordering
   useEffect(() => {
     console.log("Inicializando hook de autenticação");
-    setLoading(true);
     
-    // 1. Set up the auth listener first before checking current session
+    // 1. Set up the auth listener FIRST to catch immediate auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, sessionData) => {
-        console.log("Estado de autenticação alterado:", event, sessionData?.user?.email);
+      (event, currentSession) => {
+        console.log("Estado de autenticação alterado:", event, currentSession?.user?.email);
         
-        if (sessionData) {
-          // Ponto crítico: Atualizações de estado síncronas para evitar deadlocks
-          setSession(sessionData);
-          setUser(sessionData.user);
+        if (currentSession) {
+          // Update state SYNCHRONOUSLY to prevent race conditions
+          setSession(currentSession);
+          setUser(currentSession.user);
           setIsAuthenticated(true);
           
-          // Verificação de admin é simples e pode ser realizada sem chamar Supabase novamente
-          const userIsAdmin = isUserAdmin(sessionData.user);
+          const userIsAdmin = isUserAdmin(currentSession.user);
           setIsAdmin(userIsAdmin);
-          console.log("Sessão processada:", sessionData.user.email, "isAdmin:", userIsAdmin);
+          console.log("Sessão processada:", currentSession.user.email, "isAdmin:", userIsAdmin);
         } else if (event === 'SIGNED_OUT') {
           console.log("Usuário deslogado");
           setIsAuthenticated(false);
@@ -45,32 +43,30 @@ export function useAuthState() {
       }
     );
 
-    // 2. Check for existing session
+    // 2. THEN check for existing session
     const checkSession = async () => {
       try {
-        // Verificar se há uma sessão ativa
         console.log("Verificando sessão existente...");
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Erro ao verificar sessão:", error);
           setLoading(false);
+          setIsSupabaseReady(true);
           return;
         }
         
-        if (currentSession) {
-          console.log("Sessão recuperada:", currentSession.user.email);
+        if (existingSession) {
+          console.log("Sessão recuperada:", existingSession.user.email);
           
-          // Armazenar explicitamente a sessão inteira, não apenas o usuário
-          setSession(currentSession);
-          setUser(currentSession.user);
+          setSession(existingSession);
+          setUser(existingSession.user);
           setIsAuthenticated(true);
           
-          // Verificação de admin
-          const userIsAdmin = isUserAdmin(currentSession.user);
+          const userIsAdmin = isUserAdmin(existingSession.user);
           setIsAdmin(userIsAdmin);
           
-          console.log("Sessão restaurada. Usuário:", currentSession.user.email, "isAdmin:", userIsAdmin);
+          console.log("Sessão restaurada. Usuário:", existingSession.user.email, "isAdmin:", userIsAdmin);
         } else {
           console.log("Nenhuma sessão ativa encontrada");
           setIsAuthenticated(false);
@@ -99,7 +95,7 @@ export function useAuthState() {
     isAuthenticated,
     isAdmin,
     user,
-    session,  // Expose the entire session object
+    session,
     loading,
     isSupabaseReady
   };

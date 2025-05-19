@@ -21,14 +21,15 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Efeito para redirecionar usuários que já estão autenticados
+  // Enhanced effect for handling authenticated users and redirecting properly
   useEffect(() => {
     if (isSupabaseReady && isAuthenticated && !loading) {
-      // Se for admin, redireciona para a tabela de preços
+      console.log("Usuário autenticado, redirecionando...");
+      // If admin, redirect to price table
       const isAdminEmail = user?.email === "admin@hostdime.com.br";
       const redirectTo = isAdminEmail ? "/price-table" : "/configure";
       
-      // Usa o from se existir, senão usa o redirectTo padrão
+      // Use the from if it exists, otherwise use the default redirectTo
       const from = (location.state as any)?.from?.pathname || redirectTo;
       
       navigate(from, {
@@ -43,7 +44,7 @@ export default function LoginPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        // Verificar se é o email de admin para redirecionar para a tabela de preços
+        // Check if admin email to redirect to price table
         const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
         toast.success("Login realizado com sucesso", {
           description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
@@ -59,7 +60,7 @@ export default function LoginPage() {
     }
   };
   
-  // Exibe o indicador de carregamento enquanto o estado de autenticação está sendo verificado
+  // Display loading indicator while checking authentication state
   if (loading || !isSupabaseReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
@@ -71,7 +72,7 @@ export default function LoginPage() {
     );
   }
   
-  // Se o usuário já estiver autenticado, não renderiza o formulário
+  // If user is already authenticated, don't render the form
   if (isAuthenticated) {
     return null;
   }
