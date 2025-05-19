@@ -10,3 +10,7 @@ export { usePayBackActions } from './usePayBackActions';
 export { useItemAdd } from './item-actions/useItemAdd';
 export { useItemEdit } from './item-actions/useItemEdit';
 export { useItemDelete } from './item-actions/useItemDelete';
+
+// Export modular category action hooks
+export { useCategoryAdd } from './category-actions/useCategoryAdd';
+export { useCategoryDelete } from './category-actions/useCategoryDelete';
