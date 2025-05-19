@@ -3,13 +3,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
 import { InitService } from "@/services/init-service";
+import { toast } from "sonner";
 
 export default function PriceTableContainer() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -44,7 +46,7 @@ export default function PriceTableContainer() {
   } = useDataActions(setPriceData);
 
   // Combined loading indicator
-  const isLoading = dataLoading || fileLoading || isRefreshing;
+  const isLoading = dataLoading || fileLoading || isRefreshing || !isInitialized;
 
   // Effect to force update when hasUpdates is true
   useEffect(() => {
@@ -55,20 +57,38 @@ export default function PriceTableContainer() {
 
   // Ensure data is loaded when component mounts
   useEffect(() => {
-    if (isAuthenticated) {
-      // Initialize data if needed
-      InitService.initializeData().then(() => {
-        // Then load price data
-        loadPriceData();
-      });
-      
-      // Set up periodic conflict checks
-      const intervalId = setInterval(() => {
-        checkForConflicts();
-      }, 30000); // Check every 30 seconds
-      
-      return () => clearInterval(intervalId);
+    async function initialize() {
+      if (isAuthenticated) {
+        try {
+          // Initialize data if needed
+          await InitService.initializeData();
+          
+          // Then load price data
+          await loadPriceData();
+          
+          setIsInitialized(true);
+        } catch (error) {
+          console.error("Error initializing price table:", error);
+          if (error instanceof Error && !error.message.includes("Authentication")) {
+            toast.error("Error initializing price table", {
+              description: "Please try again or contact support."
+            });
+          }
+          setIsInitialized(true); // Still mark as initialized to avoid loading forever
+        }
+        
+        // Set up periodic conflict checks
+        const intervalId = setInterval(() => {
+          checkForConflicts();
+        }, 30000); // Check every 30 seconds
+        
+        return () => clearInterval(intervalId);
+      } else {
+        setIsInitialized(true);
+      }
     }
+    
+    initialize();
   }, [isAuthenticated]);
 
   // Filter categories to remove contract category

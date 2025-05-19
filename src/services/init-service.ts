@@ -9,6 +9,13 @@ export class InitService {
     try {
       console.log("Initializing application data...");
       
+      // Check if user is authenticated
+      const { data: session } = await PriceService.supabase.auth.getSession();
+      if (!session.session) {
+        console.log("User not authenticated, skipping data initialization");
+        return false;
+      }
+      
       // Check if data already exists
       const existingData = await PriceService.getAllData();
       
@@ -38,7 +45,10 @@ export class InitService {
       return true;
     } catch (error) {
       console.error("Error initializing data:", error);
-      toast.error("Error initializing data");
+      // Only show toast if it's not an authentication error
+      if (error instanceof Error && !error.message.includes("Authentication")) {
+        toast.error("Error initializing data");
+      }
       return false;
     }
   }

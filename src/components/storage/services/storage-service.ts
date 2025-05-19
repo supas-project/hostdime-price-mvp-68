@@ -11,34 +11,48 @@ import { toast } from "sonner";
  */
 export async function loadStorageTypes(): Promise<StorageType[]> {
   try {
-    // Primeiro, atualizar os dados do serviço de preços
-    await PriceService.forceRefreshFromLatestSource().catch(error => {
-      console.error('[loadStorageTypes] Erro ao atualizar dados:', error);
-    });
+    // First check if user is authenticated
+    const { data: session } = await PriceService.supabase.auth.getSession();
+    const isAuthenticated = !!session.session;
+    
+    // If not authenticated, fall back to static data immediately
+    if (!isAuthenticated) {
+      console.log('[loadStorageTypes] User not authenticated, using static data');
+      return storageData.map(mapStaticDataToStorageType);
+    }
+    
+    // Try to force refresh data if authenticated
+    try {
+      await PriceService.forceRefreshFromLatestSource().catch(error => {
+        if (!error.message.includes("Authentication")) {
+          console.error('[loadStorageTypes] Error refreshing data:', error);
+        }
+      });
+    } catch (error) {
+      // Continue even if refresh fails - we'll try to get existing data
+      console.log('[loadStorageTypes] Refresh failed, continuing with existing data');
+    }
     
     // Try to get storage category from price service
     try {
-      console.log('[loadStorageTypes] Tentando carregar categoria de armazenamento');
+      console.log('[loadStorageTypes] Attempting to load storage category');
       const category = await PriceService.getCategory('storage');
       if (category && Array.isArray(category.items) && category.items.length > 0) {
         // Convert price items to storage types
-        console.log(`[loadStorageTypes] Encontrados ${category.items.length} itens de armazenamento na tabela de preços`);
+        console.log(`[loadStorageTypes] Found ${category.items.length} storage items in price table`);
         return category.items.map(mapPriceItemToStorageType);
       } else {
-        console.warn('[loadStorageTypes] Categoria storage encontrada, mas sem itens');
+        console.warn('[loadStorageTypes] Storage category found, but no items');
       }
     } catch (error) {
-      console.error('[loadStorageTypes] Erro ao carregar tipos de armazenamento do serviço de preços:', error);
+      console.error('[loadStorageTypes] Error loading storage types from price service:', error);
     }
     
     // Fallback to static data
-    console.log('[loadStorageTypes] Usando dados estáticos de armazenamento como fallback');
-    toast.warning("Usando dados estáticos de armazenamento", {
-      description: "Os dados da tabela de preços não estão disponíveis."
-    });
+    console.log('[loadStorageTypes] Using static storage data as fallback');
     return storageData.map(mapStaticDataToStorageType);
   } catch (error) {
-    console.error('[loadStorageTypes] Erro ao carregar tipos de armazenamento:', error);
-    return [];
+    console.error('[loadStorageTypes] Error loading storage types:', error);
+    return storageData.map(mapStaticDataToStorageType);
   }
 }

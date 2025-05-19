@@ -17,17 +17,11 @@ export async function saveData(data: PriceData): Promise<void> {
     
     if (sessionError) {
       console.error("[PriceService] Authentication error:", sessionError);
-      toast.error("Authentication error", { 
-        description: "Unable to verify your authentication. Try logging in again." 
-      });
       throw new Error("Authentication error: " + sessionError.message);
     }
     
     if (!session.session) {
       console.error("[PriceService] No active session found");
-      toast.error("Authentication required", {
-        description: "You must be logged in to save data."
-      });
       throw new Error("Authentication required");
     }
 
@@ -35,9 +29,6 @@ export async function saveData(data: PriceData): Promise<void> {
     const userEmail = session.session.user.email;
     if (userEmail !== "admin@hostdime.com.br") {
       console.error("[PriceService] User not authorized to save data:", userEmail);
-      toast.error("Permission denied", {
-        description: "Only administrators can modify price data."
-      });
       throw new Error("Permission denied: Only administrators can modify price data");
     }
     
@@ -53,9 +44,6 @@ export async function saveData(data: PriceData): Promise<void> {
 
     if (error) {
       console.error("[PriceService] Error saving price data:", error);
-      toast.error("Error saving data", {
-        description: error.message
-      });
       throw new Error(error.message);
     }
 
@@ -64,10 +52,25 @@ export async function saveData(data: PriceData): Promise<void> {
       description: "Components have been saved and synchronized." 
     });
 
+    // Also save in the updates table to notify other users
+    await supabase
+      .from('price_data_updates')
+      .insert({
+        type: 'update',
+        details: 'Full data update by admin',
+        initiator: 'admin',
+        updated_at: new Date().toISOString()
+      });
+
     // Notify listeners after successful save
     notifyListeners(data);
   } catch (err: any) {
     console.error("[PriceService] Error in saveData:", err);
+    if (!err.message.includes("Authentication")) {
+      toast.error("Error saving data", {
+        description: err.message
+      });
+    }
     throw new Error(err.message || "Failed to save price data.");
   }
 }

@@ -1,5 +1,6 @@
 
 import { PriceCategory, PriceData, PriceItem, ImportOptions } from '@/types/pricing';
+import { supabase } from '@/lib/supabase';
 
 // Import all the functionality from the modular files
 import { 
@@ -36,6 +37,7 @@ import {
  */
 export class PriceService {
   static readonly PRICE_DATA_TABLE = 'price_data';
+  static readonly supabase = supabase; // Expose supabase client for auth checks
 
   // Data retrieval
   static getAllData = getAllData;

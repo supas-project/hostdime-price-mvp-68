@@ -11,15 +11,39 @@ import { diskData } from "@/data/disk-data";
  */
 export async function syncDiskDataWithPriceService(): Promise<void> {
   try {
+    console.log("Syncing disk data with price service...");
+    
+    // Check if user is authenticated before proceeding
+    const { data: session } = await PriceService.supabase.auth.getSession();
+    if (!session.session) {
+      console.log("User not authenticated, skipping disk data sync");
+      return;
+    }
+    
+    // Check if user is admin
+    const userEmail = session.session.user.email;
+    const isAdmin = userEmail === "admin@hostdime.com.br";
+    
     // Get storage category
     const storageCategory = await PriceService.getCategory("storage");
     
-    if (!storageCategory) {
-      // Create storage category if it doesn't exist
+    if (!storageCategory && isAdmin) {
+      // Create storage category if it doesn't exist (admin only)
       await PriceService.addCategory({
         id: "storage",
         name: CATEGORY_MAPPING.storage
       });
+      
+      console.log("Created storage category");
+    } else if (!storageCategory) {
+      console.log("Storage category doesn't exist and user is not admin, skipping");
+      return;
+    }
+    
+    // If not admin, just return the existing data without updating
+    if (!isAdmin) {
+      console.log("User is not admin, skipping disk data sync");
+      return;
     }
     
     // Convert all storage items to price items
@@ -35,9 +59,12 @@ export async function syncDiskDataWithPriceService(): Promise<void> {
     
   } catch (error) {
     console.error("Error syncing disk data:", error);
-    toast.error("Erro ao sincronizar dados de armazenamento", {
-      description: "Verifique o console para mais detalhes."
-    });
+    // Don't show toast for authentication errors - these are expected for non-logged-in users
+    if (error instanceof Error && !error.message.includes("Authentication")) {
+      toast.error("Erro ao sincronizar dados de armazenamento", {
+        description: "Verifique o console para mais detalhes."
+      });
+    }
   }
 }
 
@@ -48,8 +75,25 @@ export async function initExternalStorageData(): Promise<void> {
   try {
     console.log("Initializing external storage data...");
     
+    // Check if user is authenticated before proceeding
+    const { data: session } = await PriceService.supabase.auth.getSession();
+    if (!session.session) {
+      console.log("User not authenticated, skipping external storage initialization");
+      return;
+    }
+    
+    // Check if user is admin
+    const userEmail = session.session.user.email;
+    const isAdmin = userEmail === "admin@hostdime.com.br";
+    
     // Check if external_storage category exists
     const externalStorageCategory = await PriceService.getCategory("external_storage");
+    
+    // If not admin, just return and don't try to modify data
+    if (!isAdmin) {
+      console.log("User is not admin, skipping external storage initialization");
+      return;
+    }
     
     if (!externalStorageCategory) {
       // Create external_storage category
@@ -113,8 +157,11 @@ export async function initExternalStorageData(): Promise<void> {
     
   } catch (error) {
     console.error("Error initializing external storage data:", error);
-    toast.error("Erro ao inicializar dados de storage externo", {
-      description: "Verifique o console para mais detalhes."
-    });
+    // Don't show toast for authentication errors - these are expected for non-logged-in users
+    if (error instanceof Error && !error.message.includes("Authentication")) {
+      toast.error("Erro ao inicializar dados de storage externo", {
+        description: "Verifique o console para mais detalhes."
+      });
+    }
   }
 }
