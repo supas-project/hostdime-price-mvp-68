@@ -75,7 +75,8 @@ export function useDataSync() {
       }
       
       // Se não for admin, notifica sobre a mudança
-      toast.info("Dados atualizados", {
+      toast({
+        title: "Dados atualizados",
         description: `O administrador realizou alterações: ${details}`,
         duration: 5000
       });
@@ -137,9 +138,9 @@ export function useDataSync() {
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
         
-        toast.info("Atualizações disponíveis", {
+        toast({
+          title: "Atualizações disponíveis",
           description: "O administrador realizou alterações. Clique para atualizar.",
-          duration: 0 // Não expira automaticamente
         });
       }
     }, CHECK_INTERVAL);

@@ -187,14 +187,14 @@ export const PriceService = {
   },
   
   // Obtém uma categoria específica
-  getCategory: async (categoryId: string): Promise<PriceCategory | null> => {
+  getCategory: async (categoryId: string): Promise<PriceCategory> => {
     if (!categoryId) {
       console.error('ID de categoria inválido ou não fornecido');
-      return null;
+      return { id: '', name: '', items: [] };
     }
     
     const data = await PriceService.getAllData();
-    return data[categoryId] || null;
+    return data[categoryId] || { id: categoryId, name: categoryId, items: [] };
   },
   
   // Adiciona uma nova categoria

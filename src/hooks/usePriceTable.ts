@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { PriceData, PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export function usePriceTable() {
   const [priceData, setPriceData] = useState<PriceData>({});
@@ -50,8 +51,10 @@ export function usePriceTable() {
         setActiveTab(Object.keys(data)[0]);
       }
     } catch (error) {
-      toast.error("Erro ao carregar dados", {
-        description: "Não foi possível carregar a tabela de preços."
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar a tabela de preços.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -80,7 +83,7 @@ export function usePriceTable() {
     const setupRealtimeSubscription = async () => {
       try {
         // Subscribe to changes in price_data table
-        const { data: { subscription } } = await supabase
+        const channel = supabase
           .channel('price_data_changes')
           .on('postgres_changes', { 
             event: '*', 
@@ -93,7 +96,7 @@ export function usePriceTable() {
           .subscribe();
           
         // Also subscribe to updates table for notifications
-        const { data: { subscription: updatesSub } } = await supabase
+        const updatesSub = supabase
           .channel('price_data_updates_changes')
           .on('postgres_changes', { 
             event: 'INSERT', 
@@ -106,8 +109,8 @@ export function usePriceTable() {
           
         // Cleanup function
         return () => {
-          subscription.unsubscribe();
-          updatesSub.unsubscribe();
+          supabase.removeChannel(channel);
+          supabase.removeChannel(updatesSub);
         };
       } catch (error) {
         console.error("Erro ao configurar subscrição em tempo real:", error);

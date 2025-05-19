@@ -1,92 +1,61 @@
 
-import { useEffect, useState } from 'react';
-import { PriceService } from '@/services/price-service';
-import { toast } from '@/utils/toast-utils';
-
-interface SessionEvent {
-  sessionId: string;
-  timestamp: number;
-  level: 'info' | 'warn' | 'error';
-  event: string;
-  details?: any;
-}
-
-interface SessionDiagnostics {
-  sessionId: string;
-  sessionDuration: number;
-  lastUpdateTimestamp: number;
-  isWriteLocked: boolean;
-  activeListeners: number;
-  recentEvents: Array<SessionEvent>;
-  hasDataConflicts: boolean;
-}
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export function useSessionDiagnostics() {
-  const [diagnostics, setDiagnostics] = useState<SessionDiagnostics | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Função para atualizar os dados de diagnóstico
-  const updateDiagnostics = () => {
-    try {
-      const info = PriceService.getDiagnosticInfo();
-      const hasConflicts = PriceService.checkForDataConflicts();
-      
-      // Garantir que o objeto info satisfaz a interface SessionDiagnostics
-      setDiagnostics({
-        ...info,
-        hasDataConflicts: hasConflicts
-      } as SessionDiagnostics);
-      
-      setIsLoading(false);
-    } catch (e) {
-      console.error('Erro ao obter dados de diagnóstico:', e);
-      
-      // Em caso de erro, criar um objeto que satisfaça a interface SessionDiagnostics
-      // com valores padrão para as propriedades obrigatórias
-      const errorDiagnostics: SessionDiagnostics = {
-        sessionId: 'erro',
-        sessionDuration: 0,
-        lastUpdateTimestamp: 0,
-        isWriteLocked: false,
-        activeListeners: 0,
-        recentEvents: [],
-        hasDataConflicts: false
-      };
-      
-      setDiagnostics(errorDiagnostics);
-      
-      // Notificar o usuário sobre o erro
-      toast.error("Erro de diagnóstico", {
-        description: "Não foi possível obter informações de diagnóstico da sessão."
-      });
-      
-      setIsLoading(false);
-    }
-  };
-
-  // Atualizar diagnóstico periodicamente
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  
+  // Fetch diagnostic information
   useEffect(() => {
-    // Carregar diagnóstico inicial
-    updateDiagnostics();
-    
-    // Configurar atualização periódica
-    const intervalId = setInterval(updateDiagnostics, 10000); // 10 segundos
-    
-    return () => {
-      clearInterval(intervalId);
+    const fetchDiagnosticInfo = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Get session information
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw new Error(`Session error: ${sessionError.message}`);
+        }
+        
+        // Get system information
+        const systemInfo = {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          platform: navigator.platform,
+          connectionType: (navigator as any).connection ? 
+            (navigator as any).connection.effectiveType : 'unknown'
+        };
+        
+        // Combine all diagnostic information
+        setSessionInfo({
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            lastLogin: user.lastSignInAt
+          } : 'No user authenticated',
+          session: sessionData?.session ? {
+            id: sessionData.session.access_token?.substring(0, 8) + '...',
+            expiresAt: new Date(sessionData.session.expires_at || 0).toLocaleString()
+          } : 'No active session',
+          system: systemInfo
+        });
+        
+      } catch (err: any) {
+        setError(`Failed to load diagnostic info: ${err.message}`);
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, []);
-
-  // Função para forçar atualização de dados quando conflitos são detectados
-  const refreshFromLatestSource = () => {
-    PriceService.forceRefreshFromLatestSource();
-    updateDiagnostics();
-  };
-
-  return {
-    diagnostics,
-    isLoading,
-    refreshFromLatestSource,
-    updateDiagnostics
-  };
+    
+    fetchDiagnosticInfo();
+  }, [user]);
+  
+  return { sessionInfo, isLoading, error };
 }

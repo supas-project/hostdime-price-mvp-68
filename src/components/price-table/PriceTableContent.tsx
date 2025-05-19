@@ -1,15 +1,13 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCaption } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { CategoryTabs } from "@/components/price-table/CategoryTabs";
 import { TableContent } from "@/components/price-table/TableContent";
 import { PriceTableHeader } from "@/components/price-table/TableHeader";
 import { CategoryHeader } from "@/components/price-table/CategoryHeader";
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PriceTableContentProps {
   priceData: PriceData;

@@ -35,7 +35,9 @@ export function ContractSelect({
         </SelectContent>
       </Select>
       
-      <HelpTooltip content="Os descontos se aplicam apenas aos componentes de hardware" />
+      <HelpTooltip>
+        Os descontos se aplicam apenas aos componentes de hardware
+      </HelpTooltip>
     </div>
   );
 }

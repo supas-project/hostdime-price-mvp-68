@@ -15,74 +15,82 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
   // CORREÇÃO: Verificação explícita para garantir acesso de administrador
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
-  const handleAddCategory = (values: any) => {
+  const handleAddCategory = async (values: any) => {
     if (!isAdminAccess) {
-      toast.error("Permissão negada", {
-        description: "Apenas administradores podem adicionar categorias."
+      toast({
+        title: "Permissão negada",
+        description: "Apenas administradores podem adicionar categorias.",
+        variant: "destructive"
       });
       return null;
     }
     
     try {
-      const newCategory = PriceService.addCategory({
+      const newCategory = await PriceService.addCategory({
         name: values.name,
         items: []
       });
       
-      setPriceData(prev => ({
-        ...prev,
-        [newCategory.id]: newCategory
-      }));
+      // Get the updated data after adding a category
+      const updatedData = await PriceService.getAllData();
+      setPriceData(updatedData);
       
       setOpenAddCategory(false);
       
       // Registra a mudança para notificação
-      registerAdminChange("add_category", `Categoria "${newCategory.name}" adicionada`);
+      await registerAdminChange("add_category", `Categoria "${newCategory.name}" adicionada`);
       
-      toast.success("Categoria adicionada", {
+      toast({
+        title: "Categoria adicionada",
         description: `A categoria ${newCategory.name} foi adicionada com sucesso.`
       });
       
       return newCategory.id;
     } catch (error) {
-      toast.error("Erro ao adicionar categoria", {
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
+      toast({
+        title: "Erro ao adicionar categoria",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+        variant: "destructive"
       });
       return null;
     }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     if (!isAdminAccess) {
-      toast.error("Permissão negada", {
-        description: "Apenas administradores podem excluir categorias."
+      toast({
+        title: "Permissão negada",
+        description: "Apenas administradores podem excluir categorias.",
+        variant: "destructive"
       });
       return false;
     }
     
     try {
       // Obtém o nome da categoria antes de excluí-la para a mensagem
-      const categoryName = PriceService.getCategory(categoryId)?.name || categoryId;
+      const category = await PriceService.getCategory(categoryId);
+      const categoryName = category?.name || categoryId;
       
-      PriceService.deleteCategory(categoryId);
+      await PriceService.deleteCategory(categoryId);
       
-      setPriceData(prev => {
-        const updatedData = { ...prev };
-        delete updatedData[categoryId];
-        return updatedData;
-      });
+      // Get updated data after deletion
+      const updatedData = await PriceService.getAllData();
+      setPriceData(updatedData);
       
       // Registra a mudança para notificação
-      registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
+      await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
-      toast.success("Categoria excluída", {
+      toast({
+        title: "Categoria excluída",
         description: "A categoria foi excluída com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast.error("Erro ao excluir categoria", {
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
+      toast({
+        title: "Erro ao excluir categoria",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+        variant: "destructive"
       });
       return false;
     }
