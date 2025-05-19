@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initializeServerCategories } from "@/services/component-sync-service";
+import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -34,8 +34,13 @@ export function WizardContent() {
   const refreshData = async () => {
     try {
       setIsLoadingData(true);
+      // First clean up duplicates
+      await cleanupDuplicateCategories();
+      // Then refresh data
       await PriceService.forceRefreshFromLatestSource();
+      // Initialize server categories including connectivity ones
       await initializeServerCategories();
+      
       toast.success("Dados sincronizados com sucesso!", {
         description: "Todas as categorias e itens atualizados."
       });

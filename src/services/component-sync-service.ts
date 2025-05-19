@@ -5,5 +5,6 @@ export * from './component-sync';
 export {
   syncDiskDataWithPriceService,
   initExternalStorageData,
-  initializeServerCategories
+  initializeServerCategories,
+  cleanupDuplicateCategories
 } from './component-sync/initialization';
