@@ -114,13 +114,22 @@ export function priceItemToComponent(item: PriceItem): ComponentOption {
  * Convert storage data item to price item
  */
 export function convertStorageDataItem(item: PricedDiskOption): PriceItem {
-  // Ensure metadata exists
-  const metadata = item.metadata || {};
+  // Define empty metadata object to prevent undefined access
+  const metadata = {
+    pricing: {
+      basePrice: 0,
+      pricePerGB: 0,
+      baseCapacity: 0
+    }
+  };
+  
+  // Create a description if it doesn't exist
+  const description = item.type.toUpperCase() + " disk with " + item.capacity;
   
   return {
     id: item.id,
     name: item.type.toUpperCase() + " " + item.capacity,
-    description: item.description || "",
+    description: description,
     price: item.price || 0,
     type: "storage",
     subtype: item.type || "hdd",
@@ -132,13 +141,12 @@ export function convertStorageDataItem(item: PricedDiskOption): PriceItem {
     ],
     isHardware: true,
     metadata: {
-      ...metadata,
       capacity: item.capacity || "0 GB",
-      // Use metadata properties for pricing info
+      // Use pricing info structure compatible with PriceItem metadata
       pricing: {
-        basePrice: metadata.pricing?.basePrice || 0,
-        pricePerGB: metadata.pricing?.pricePerGB || 0,
-        baseCapacity: metadata.pricing?.baseCapacity || 0
+        basePrice: 0,
+        pricePerGB: 0,
+        baseCapacity: 0
       }
     }
   };
@@ -209,10 +217,13 @@ export async function initExternalStorageData(): Promise<void> {
           specs: ["Desempenho padrão", "Ideal para backup"],
           isHardware: true,
           metadata: {
-            pricePerGB: 0.15,
-            baseCapacity: 100,
-            minCapacity: 100,
-            maxCapacity: 10000
+            features: ["Desempenho padrão", "Ideal para backup"],
+            unitInfo: JSON.stringify({
+              pricePerGB: 0.15,
+              baseCapacity: 100,
+              minCapacity: 100,
+              maxCapacity: 10000
+            })
           }
         },
         {
@@ -225,10 +236,13 @@ export async function initExternalStorageData(): Promise<void> {
           specs: ["Alto desempenho", "SLA de 99.9%", "Ideal para aplicações críticas"],
           isHardware: true,
           metadata: {
-            pricePerGB: 0.25,
-            baseCapacity: 100,
-            minCapacity: 100,
-            maxCapacity: 10000
+            features: ["Alto desempenho", "SLA de 99.9%", "Ideal para aplicações críticas"],
+            unitInfo: JSON.stringify({
+              pricePerGB: 0.25,
+              baseCapacity: 100,
+              minCapacity: 100,
+              maxCapacity: 10000
+            })
           }
         }
       ];
