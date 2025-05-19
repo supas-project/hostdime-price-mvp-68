@@ -1,3 +1,4 @@
+
 import { PriceService } from "@/services/price-service";
 import { ServerComponent, ComponentOption } from "@/types/component";
 import { toast } from "@/utils/toast-utils";
@@ -161,9 +162,26 @@ export async function initExternalStorageData(): Promise<boolean> {
       return false;
     }
     
-    // Filter external storage items (those with subtype 'external')
+    // Filter external storage items (fix the type checking issue)
+    // Instead of directly accessing item.metadata.isExternal, check if subtype is 'external'
+    // Or carefully check if the metadata object has an isExternal property
     const externalItems = storageCategory.items
-      .filter(item => item.subtype === 'external' || (item.metadata && item.metadata.isExternal === true))
+      .filter(item => {
+        // Check if it has a subtype of 'external' 
+        if (item.subtype === 'external') {
+          return true;
+        }
+        
+        // Check if metadata exists and has an isExternal property with string conversion
+        // This avoids TypeScript error while still enabling the functionality
+        if (item.metadata && typeof item.metadata === 'object') {
+          // Type assertion to access potential custom property
+          const metadata = item.metadata as Record<string, any>;
+          return metadata.isExternal === true;
+        }
+        
+        return false;
+      })
       .map(mapPriceItemToComponentOption);
     
     if (externalItems.length === 0) {
