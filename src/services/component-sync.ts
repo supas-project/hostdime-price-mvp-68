@@ -1,4 +1,3 @@
-
 import { PriceService } from "@/services/price-service";
 import { ServerComponent, ComponentOption } from "@/types/component";
 import { toast } from "@/utils/toast-utils";
@@ -88,7 +87,12 @@ function mapPriceItemToComponentOption(item: any): ComponentOption {
     type: item.type || "unknown", // Required field
     specs: item.specs || [],
     // Extract additional properties if available
-    ...(item.metadata && { metadata: item.metadata }),
+    ...(item.metadata && { 
+      metadata: {
+        ...item.metadata,
+        // Handle any additional nested properties explicitly
+      } 
+    }),
     ...(item.subtype && { subtype: item.subtype })
   };
 }
@@ -159,7 +163,7 @@ export async function initExternalStorageData(): Promise<boolean> {
     
     // Filter external storage items (those with subtype 'external')
     const externalItems = storageCategory.items
-      .filter(item => item.subtype === 'external' || item.metadata?.isExternal)
+      .filter(item => item.subtype === 'external' || (item.metadata && item.metadata.isExternal === true))
       .map(mapPriceItemToComponentOption);
     
     if (externalItems.length === 0) {
