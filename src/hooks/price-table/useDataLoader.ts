@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { PriceService } from '@/services/price-service';
 import { PriceData, PriceCategory } from '@/types/pricing';
@@ -58,8 +59,8 @@ export function useDataLoader(options: UseDataLoaderOptions = {}): UseDataLoader
     setError(null);
     
     try {
-      // Pass an empty object or appropriate parameter to fix the error
-      await PriceService.forceRefreshFromLatestSource({});
+      // Pass no arguments to forceRefreshFromLatestSource which now expects 0 arguments
+      await PriceService.forceRefreshFromLatestSource();
       
       const priceData = await PriceService.getAllData();
       
