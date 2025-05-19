@@ -45,11 +45,11 @@ export function useStorageTypes() {
                 type: item.type || 'storage',
                 subtype: item.subtype || 'block',
                 specs: item.specs || [],
-                // Use defaulted values for storage properties with fallbacks
-                minCapacity: metadata.minCapacity || 100,
-                maxCapacity: metadata.maxCapacity || 1000,
-                capacityUnit: metadata.capacityUnit || 'GB',
-                capacityStep: metadata.capacityStep || 100,
+                // Use metadata properties with type safety
+                minCapacity: typeof metadata === 'object' && 'minCapacity' in metadata ? Number(metadata.minCapacity) : 100,
+                maxCapacity: typeof metadata === 'object' && 'maxCapacity' in metadata ? Number(metadata.maxCapacity) : 1000,
+                capacityUnit: typeof metadata === 'object' && 'capacityUnit' in metadata ? String(metadata.capacityUnit) : 'GB',
+                capacityStep: typeof metadata === 'object' && 'capacityStep' in metadata ? Number(metadata.capacityStep) : 100,
                 benefits: Array.isArray(metadata.benefits) ? metadata.benefits : []
               };
             });

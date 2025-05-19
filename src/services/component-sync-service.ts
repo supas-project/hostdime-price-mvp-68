@@ -3,6 +3,7 @@ import { StorageDataItem } from "@/data/storage-pricing";
 import { diskData } from "@/data/disk-data";
 import { PriceService } from "./price-service";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
+import { PriceCategory } from "@/types/pricing";
 
 // Function to sync disk data with price service
 export async function syncDiskDataWithPriceService() {
@@ -12,8 +13,7 @@ export async function syncDiskDataWithPriceService() {
     if (!diskCategory) {
       diskCategory = await PriceService.addCategory({
         name: 'Discos',
-        id: 'disk',
-        items: []
+        id: 'disk'
       });
     }
     
@@ -39,7 +39,11 @@ export async function syncDiskDataWithPriceService() {
             ...disk.specs.recommended.map(rec => `Recomendado para: ${rec}`)
           ],
           tags: ['Hardware'],
-          isHardware: true
+          isHardware: true,
+          metadata: {
+            features: disk.specs.recommended,
+            unitPrice: disk.price
+          }
         });
       }
     }
@@ -59,8 +63,7 @@ export async function initExternalStorageData() {
     if (!storageCategory) {
       storageCategory = await PriceService.addCategory({
         name: 'Storage Externo',
-        id: 'storage',
-        items: []
+        id: 'storage'
       });
     }
     
@@ -163,7 +166,19 @@ export async function initExternalStorageData() {
           specs: item.specs,
           tags: item.tags,
           isHardware: false,
-          metadata: item.metadata
+          metadata: {
+            // Map the storage metadata to compatible format
+            features: item.metadata.benefits,
+            discount: 0,
+            quantity: 1,
+            unitPrice: item.price,
+            // Custom properties will be available through dynamic access
+            minCapacity: item.metadata.minCapacity,
+            maxCapacity: item.metadata.maxCapacity,
+            capacityUnit: item.metadata.capacityUnit,
+            capacityStep: item.metadata.capacityStep,
+            benefits: item.metadata.benefits
+          }
         });
       }
     }

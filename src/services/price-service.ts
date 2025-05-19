@@ -1,48 +1,40 @@
+
 import { supabase } from '@/lib/supabase';
 import { PriceCategory, PriceData, PriceItem } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
 
 export class PriceService {
-  private static readonly PRICE_TABLE = 'price_table';
+  private static readonly PRICE_DATA_TABLE = 'price_data';
   private static listeners: ((data: PriceData) => void)[] = [];
 
   static async getAllData(): Promise<PriceData> {
     try {
-      const { data: jsonData, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .select('*');
+      // Fetch the data from price_data table
+      const { data: priceData, error } = await supabase
+        .from(PriceService.PRICE_DATA_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error) {
-        console.error("Error fetching all data:", error);
+        console.error("Error fetching price data:", error);
         throw new Error(error.message);
       }
 
-      if (!jsonData || jsonData.length === 0) {
-        console.warn("No data found in price table, returning default data");
+      if (!priceData || priceData.length === 0) {
+        console.warn("No data found in price data table, returning default data");
         return {};
       }
 
-      // Find the contract category and ensure it's processed first
-      const contractCategory = jsonData.find((category: any) => category.id === 'contract');
-      const otherCategories = jsonData.filter((category: any) => category.id !== 'contract');
+      // Return the data from the JSON column
+      const jsonData = priceData[0].data;
 
-      // Sort categories alphabetically, placing 'contract' first
-      const sortedCategories = [
-        ...(contractCategory ? [contractCategory] : []),
-        ...otherCategories.sort((a: any, b: any) => a.name.localeCompare(b.name))
-      ];
-
-      // Process each category
-      const priceData: PriceData = {};
-      for (const category of sortedCategories) {
-        priceData[category.id] = {
-          id: category.id,
-          name: category.name,
-          items: category.items || [],
-        };
+      if (!jsonData) {
+        console.warn("No JSON data found in price data record");
+        return {};
       }
 
-      return priceData as unknown as PriceData;
+      return jsonData as PriceData;
     } catch (err: any) {
       console.error("Error in getAllData:", err);
       throw new Error(err.message || "Failed to retrieve price data.");
@@ -51,51 +43,38 @@ export class PriceService {
 
   static async getCategory(categoryId: string): Promise<PriceCategory | null> {
     try {
-      const { data: categoryData, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .select('*')
-        .eq('id', categoryId)
-        .single();
-
-      if (error) {
-        console.error(`Error fetching category ${categoryId}:`, error);
-        return null;
-      }
-
-      if (!categoryData) {
-        console.warn(`Category ${categoryId} not found`);
-        return null;
-      }
-
-      return {
-        id: categoryData.id,
-        name: categoryData.name,
-        items: categoryData.items || [],
-      };
+      // Get all data and find the category
+      const allData = await this.getAllData();
+      return allData[categoryId] || null;
     } catch (err: any) {
       console.error(`Error in getCategory for ${categoryId}:`, err);
       return null;
     }
   }
 
-  static async addCategory(category: Omit<PriceCategory, 'items'>): Promise<PriceCategory> {
+  static async addCategory(category: Omit<PriceCategory, "items">): Promise<PriceCategory> {
     try {
-      const newCategoryId = uuidv4();
-      const categoryToAdd = { ...category, id: newCategoryId, items: [] };
+      const newCategoryId = category.id || uuidv4();
+      const newCategory: PriceCategory = { 
+        id: newCategoryId, 
+        name: category.name,
+        items: [] 
+      };
 
-      const { data, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .insert([categoryToAdd])
-        .select()
-        .single();
+      // Get all existing data
+      const allData = await this.getAllData();
+      
+      // Add the new category
+      const updatedData = {
+        ...allData,
+        [newCategoryId]: newCategory
+      };
 
-      if (error) {
-        console.error("Error adding category:", error);
-        throw new Error(error.message);
-      }
-
+      // Save the updated data
+      await this.saveData(updatedData);
+      
       this.notifyListeners();
-      return data as PriceCategory;
+      return newCategory;
     } catch (err: any) {
       console.error("Error in addCategory:", err);
       throw new Error(err.message || "Failed to add category.");
@@ -104,20 +83,31 @@ export class PriceService {
 
   static async updateCategory(categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory | null> {
     try {
-      const { data, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .update(updates)
-        .eq('id', categoryId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Error updating category ${categoryId}:`, error);
-        throw new Error(error.message);
+      // Get all existing data
+      const allData = await this.getAllData();
+      
+      // Find the category to update
+      if (!allData[categoryId]) {
+        console.error(`Category ${categoryId} not found`);
+        return null;
       }
-
+      
+      // Update the category
+      const updatedCategory: PriceCategory = {
+        ...allData[categoryId],
+        ...updates
+      };
+      
+      const updatedData = {
+        ...allData,
+        [categoryId]: updatedCategory
+      };
+      
+      // Save the updated data
+      await this.saveData(updatedData);
+      
       this.notifyListeners();
-      return data as PriceCategory;
+      return updatedCategory;
     } catch (err: any) {
       console.error(`Error in updateCategory for ${categoryId}:`, err);
       return null;
@@ -126,16 +116,20 @@ export class PriceService {
 
   static async deleteCategory(categoryId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .delete()
-        .eq('id', categoryId);
-
-      if (error) {
-        console.error(`Error deleting category ${categoryId}:`, error);
+      // Get all existing data
+      const allData = await this.getAllData();
+      
+      // Remove the category
+      if (!allData[categoryId]) {
+        console.error(`Category ${categoryId} not found`);
         return false;
       }
-
+      
+      const { [categoryId]: removed, ...updatedData } = allData;
+      
+      // Save the updated data
+      await this.saveData(updatedData);
+      
       this.notifyListeners();
       return true;
     } catch (err: any) {
@@ -149,28 +143,29 @@ export class PriceService {
       const newItemId = uuidv4();
       const itemToAdd = { ...item, id: newItemId };
 
-      // Get the category to update its items
-      const category = await this.getCategory(categoryId);
-      if (!category) {
+      // Get all data
+      const allData = await this.getAllData();
+      
+      // Find the category
+      if (!allData[categoryId]) {
         console.error(`Category ${categoryId} not found`);
         return null;
       }
-
+      
       // Add the new item to the category's items
-      const updatedItems = [...category.items, itemToAdd];
-
-      // Update the category with the new items array
-      const { data, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .update({ items: updatedItems })
-        .eq('id', categoryId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Error adding item to category ${categoryId}:`, error);
-        throw new Error(error.message);
-      }
+      const updatedCategory = {
+        ...allData[categoryId],
+        items: [...allData[categoryId].items, itemToAdd]
+      };
+      
+      // Update the data
+      const updatedData = {
+        ...allData,
+        [categoryId]: updatedCategory
+      };
+      
+      // Save the updated data
+      await this.saveData(updatedData);
 
       this.notifyListeners();
       return itemToAdd as PriceItem;
@@ -182,36 +177,44 @@ export class PriceService {
 
   static async updateItem(categoryId: string, itemId: string, updates: Partial<PriceItem>): Promise<PriceItem | null> {
     try {
-      // Get the category to update its items
-      const category = await this.getCategory(categoryId);
-      if (!category) {
+      // Get all data
+      const allData = await this.getAllData();
+      
+      // Find the category
+      if (!allData[categoryId]) {
         console.error(`Category ${categoryId} not found`);
         return null;
       }
-
-      // Map over the items and replace the item with the matching ID
-      const updatedItems = category.items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, ...updates };
-        }
-        return item;
-      });
-
-      // Update the category with the new items array
-      const { data, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .update({ items: updatedItems })
-        .eq('id', categoryId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Error updating item ${itemId} in category ${categoryId}:`, error);
-        throw new Error(error.message);
+      
+      // Find the item index
+      const itemIndex = allData[categoryId].items.findIndex(item => item.id === itemId);
+      
+      if (itemIndex === -1) {
+        console.error(`Item ${itemId} not found in category ${categoryId}`);
+        return null;
       }
+      
+      // Update the item
+      const updatedItems = [...allData[categoryId].items];
+      updatedItems[itemIndex] = { ...updatedItems[itemIndex], ...updates };
+      
+      // Update the category
+      const updatedCategory = {
+        ...allData[categoryId],
+        items: updatedItems
+      };
+      
+      // Update the data
+      const updatedData = {
+        ...allData,
+        [categoryId]: updatedCategory
+      };
+      
+      // Save the updated data
+      await this.saveData(updatedData);
 
       this.notifyListeners();
-      return { ...updates, id: itemId } as PriceItem;
+      return updatedItems[itemIndex];
     } catch (err: any) {
       console.error(`Error in updateItem for ${itemId} in ${categoryId}:`, err);
       return null;
@@ -220,34 +223,58 @@ export class PriceService {
 
   static async deleteItem(categoryId: string, itemId: string): Promise<boolean> {
     try {
-      // Get the category to update its items
-      const category = await this.getCategory(categoryId);
-      if (!category) {
+      // Get all data
+      const allData = await this.getAllData();
+      
+      // Find the category
+      if (!allData[categoryId]) {
         console.error(`Category ${categoryId} not found`);
         return false;
       }
-
-      // Filter out the item with the matching ID
-      const updatedItems = category.items.filter(item => item.id !== itemId);
-
-      // Update the category with the new items array
-      const { data, error } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .update({ items: updatedItems })
-        .eq('id', categoryId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Error deleting item ${itemId} from category ${categoryId}:`, error);
-        return false;
-      }
+      
+      // Filter out the item
+      const updatedItems = allData[categoryId].items.filter(item => item.id !== itemId);
+      
+      // Update the category
+      const updatedCategory = {
+        ...allData[categoryId],
+        items: updatedItems
+      };
+      
+      // Update the data
+      const updatedData = {
+        ...allData,
+        [categoryId]: updatedCategory
+      };
+      
+      // Save the updated data
+      await this.saveData(updatedData);
 
       this.notifyListeners();
       return true;
     } catch (err: any) {
       console.error(`Error in deleteItem for ${itemId} from ${categoryId}:`, err);
       return false;
+    }
+  }
+
+  private static async saveData(data: PriceData): Promise<void> {
+    try {
+      // Insert a new record with the updated data
+      const { error } = await supabase
+        .from(PriceService.PRICE_DATA_TABLE)
+        .insert({
+          data: data,
+          updated_at: new Date()
+        });
+
+      if (error) {
+        console.error("Error saving price data:", error);
+        throw new Error(error.message);
+      }
+    } catch (err: any) {
+      console.error("Error in saveData:", err);
+      throw new Error(err.message || "Failed to save price data.");
     }
   }
 
@@ -269,22 +296,19 @@ export class PriceService {
 
   static async resetData(): Promise<PriceData | null> {
     try {
-      // Delete all existing records
-      const { error: deleteError } = await supabase
-        .from(PriceService.PRICE_TABLE)
-        .delete()
-        .neq('id', null);  // Delete all records
-
-      if (deleteError) {
-        console.error("Error deleting existing data:", deleteError);
-        throw new Error(deleteError.message);
-      }
-
-      // Re-import initial data (assuming you have a function for this)
-      const { initExternalStorageData, syncDiskDataWithPriceService } = await import('./component-sync-service');
-      await syncDiskDataWithPriceService();
+      // Re-import initial data
+      const { syncDiskDataWithPriceService, initExternalStorageData } = await import('./component-sync-service');
+      
+      // Create empty default data
+      const defaultData: PriceData = {};
+      
+      // Save the default data first
+      await this.saveData(defaultData);
+      
+      // Initialize storage data
       await initExternalStorageData();
-
+      await syncDiskDataWithPriceService();
+      
       // Fetch and return the new data
       const newData = await this.getAllData();
       this.notifyListeners();
@@ -297,9 +321,6 @@ export class PriceService {
 
   static async checkForDataConflicts(): Promise<boolean> {
     try {
-      // Implement a more robust conflict detection mechanism
-      // This could involve comparing timestamps or versions of the data
-
       // For now, just return false
       return false;
     } catch (error) {
@@ -310,16 +331,35 @@ export class PriceService {
 
   static async forceRefreshFromLatestSource(): Promise<PriceData | null> {
     try {
-      // Re-fetch all data from the source (e.g., Supabase)
+      // Re-fetch all data from the source
       const newData = await this.getAllData();
-
-      // Notify listeners about the refreshed data
+      
+      // Notify listeners
       this.notifyListeners();
-
+      
       return newData;
     } catch (error) {
       console.error("Error refreshing data from source:", error);
       return null;
     }
+  }
+  
+  // Add missing methods for file imports
+  static importFromJSON(content: string): PriceData {
+    try {
+      const data = JSON.parse(content);
+      // Save the imported data
+      this.saveData(data);
+      return data;
+    } catch (error) {
+      console.error("Error importing JSON:", error);
+      throw new Error("Invalid JSON format");
+    }
+  }
+  
+  static importFromCSV(content: string): PriceData {
+    // For simplicity, we'll just throw an error for now
+    // In a real implementation, this would parse CSV into the correct format
+    throw new Error("CSV import not implemented yet");
   }
 }

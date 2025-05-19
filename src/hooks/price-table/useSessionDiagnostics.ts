@@ -29,8 +29,11 @@ export function useSessionDiagnostics() {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (!sessionError && session) {
+            // Use session.created_at if available, otherwise use current time
+            const sessionCreatedAt = session.created_at || new Date().toISOString();
+            
             setSessionDetails({
-              sessionCreatedAt: session.created_at || new Date().toISOString(), // Use session created_at if available
+              sessionCreatedAt,
               lastActivity: new Date().toISOString(),
               expiresAt: session?.expires_at,
               provider: session?.user.app_metadata.provider,

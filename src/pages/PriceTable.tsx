@@ -88,7 +88,7 @@ export default function PriceTable() {
   }, [hasUpdates, handleRefreshData]);
 
   // Filter categories to remove contract category
-  const filteredPriceData = {...priceData};
+  const filteredPriceData = priceData ? {...priceData} : {};
   if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;
   }

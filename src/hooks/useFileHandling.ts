@@ -2,8 +2,9 @@
 import { useRef, useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
+import { PriceData } from "@/types/pricing";
 
-export function useFileHandling(setPriceData: (data: any) => void) {
+export function useFileHandling(setPriceData: (data: PriceData) => void) {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -16,17 +17,24 @@ export function useFileHandling(setPriceData: (data: any) => void) {
     
     try {
       const content = await file.text();
+      let importedData: PriceData;
       
       if (file.name.toLowerCase().endsWith('.json')) {
-        setPriceData(PriceService.importFromJSON(content));
+        importedData = PriceService.importFromJSON(content);
+        setPriceData(importedData);
         toast.success("Dados importados com sucesso", {
           description: "Os dados JSON foram validados e carregados."
         });
       } else if (file.name.toLowerCase().endsWith('.csv')) {
-        setPriceData(PriceService.importFromCSV(content));
-        toast.success("Dados importados com sucesso", {
-          description: "Os dados CSV foram validados e carregados."
-        });
+        try {
+          importedData = PriceService.importFromCSV(content);
+          setPriceData(importedData);
+          toast.success("Dados importados com sucesso", {
+            description: "Os dados CSV foram validados e carregados."
+          });
+        } catch (csvError) {
+          throw new Error("Formato CSV não suportado ainda. Use JSON.");
+        }
       } else {
         throw new Error("Formato de arquivo não suportado. Use JSON ou CSV.");
       }
