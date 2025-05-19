@@ -1,7 +1,7 @@
 
 import { toast as sonnerToast } from "sonner";
 import { ReactNode } from "react";
-import { AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 import React from "react";
 
 type ToastOptions = {
@@ -12,6 +12,8 @@ type ToastOptions = {
   };
   icon?: ReactNode;
   duration?: number;
+  dismissible?: boolean;
+  important?: boolean;
 };
 
 export const toast = {
@@ -34,6 +36,13 @@ export const toast = {
       ...options,
       // Create icon element properly for TypeScript
       icon: options?.icon || React.createElement(Info, { className: "h-5 w-5" })
+    });
+  },
+  warning: (title: string, options?: ToastOptions) => {
+    sonnerToast.warning(title, {
+      ...options,
+      // Create icon element properly for TypeScript
+      icon: options?.icon || React.createElement(AlertTriangle, { className: "h-5 w-5" })
     });
   }
 };

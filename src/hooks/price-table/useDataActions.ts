@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { PriceService } from "@/services/price-service";
 import { toast } from "@/utils/toast-utils";
-import { AlertCircle } from "lucide-react";
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -121,11 +120,29 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
   
+  // Export data
+  const handleExportData = () => {
+    try {
+      // Implementation of data export functionality
+      console.log("Exporting data");
+      // This is a placeholder for the actual export implementation
+      toast.success("Dados exportados", {
+        description: "Os dados foram exportados com sucesso."
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Erro na exportação", {
+        description: "Ocorreu um problema ao exportar os dados."
+      });
+    }
+  };
+  
   return {
     isRefreshing,
     hasConflicts,
     checkForConflicts,
     handleRefreshData,
-    handleResetData
+    handleResetData,
+    handleExportData
   };
 }

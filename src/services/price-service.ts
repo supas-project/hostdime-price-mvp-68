@@ -68,4 +68,37 @@ export class PriceService {
   
   // Private method - exposed here for backwards compatibility
   static saveData = saveData;
+
+  // Get last modified time of price data
+  static async getLastModifiedTime(): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('price_data_updates')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (error || !data) {
+        console.error('[PriceService] Error getting last modified time:', error);
+        return null;
+      }
+      
+      return data.updated_at;
+    } catch (error) {
+      console.error('[PriceService] Error in getLastModifiedTime:', error);
+      return null;
+    }
+  }
+
+  // Reset data to defaults
+  static async resetToDefaults(): Promise<boolean> {
+    try {
+      const newData = await resetData();
+      return !!newData;
+    } catch (error) {
+      console.error('[PriceService] Error in resetToDefaults:', error);
+      return false;
+    }
+  }
 }

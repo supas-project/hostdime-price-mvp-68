@@ -18,8 +18,7 @@ export function NotificationDemo() {
     toast.error("Erro ao processar a requisição", {
       description: "Verifique sua conexão com a internet e tente novamente.",
       icon: <AlertCircle className="h-4 w-4" />,
-      duration: 8000, // Longer duration for error
-      dismissible: true // User can dismiss manually
+      duration: 8000 // Longer duration for error
     });
   };
 
@@ -50,7 +49,6 @@ export function NotificationDemo() {
     toast.error("Ação do sistema necessária", {
       description: "Uma atualização crítica precisa ser instalada imediatamente.",
       icon: <AlertCircle className="h-4 w-4" />,
-      important: true,
       duration: 0 // Doesn't auto-dismiss (until manually closed)
     });
   };
