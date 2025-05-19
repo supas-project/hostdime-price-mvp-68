@@ -144,7 +144,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Only show notification if it's been more than 2.5 seconds since the last one
         if (now - lastNotificationTime > 2500) {
           toast.success("Sincronização concluída com sucesso", {
-            icon: <CheckCircle2 className="h-5 w-5" />,
+            icon: <CheckCircle2 className="h-5 w-5" />
           });
           setLastNotificationTime(now);
         }
