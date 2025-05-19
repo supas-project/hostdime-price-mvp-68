@@ -1,7 +1,7 @@
 
 import { PriceItem, PriceData } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { getAllData, saveData } from './data-operations';
+import { getAllData, saveData } from './operations';
 import { getCategory } from './category-operations';
 import { notifyListeners } from './listeners';
 

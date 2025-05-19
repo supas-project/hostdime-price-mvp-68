@@ -2,7 +2,8 @@
 import { supabase } from '@/lib/supabase';
 import { PriceCategory, PriceData } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { saveData, getAllData } from './data-operations';
+import { saveData } from './operations';
+import { getAllData } from './operations';
 import { notifyListeners } from './listeners';
 
 /**

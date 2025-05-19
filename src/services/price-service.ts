@@ -23,7 +23,7 @@ import {
   forceRefreshFromLatestSource,
   importFromJSON,
   importFromCSV
-} from './price/data-operations';
+} from './price/operations';
 
 import {
   addDataChangeListener,

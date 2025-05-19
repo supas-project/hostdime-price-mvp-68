@@ -1,6 +1,5 @@
-
 import { PriceData } from '@/types/pricing';
-import { getAllData } from './data-operations';
+import { getAllData } from './operations';
 
 // Array to store data change listeners
 let listeners: ((data: PriceData) => void)[] = [];
