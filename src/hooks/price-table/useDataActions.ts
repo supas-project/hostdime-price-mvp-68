@@ -1,178 +1,132 @@
 
-import { useState } from "react";
+import { useState } from 'react';
 import { PriceService } from "@/services/price-service";
-import { useToast } from "@/hooks/use-toast";
-import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/utils/toast-utils";
-import { CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export function useDataActions(setPriceData: (data: any) => void) {
-  const [isExporting, setIsExporting] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasConflicts, setHasConflicts] = useState(false);
-  const { toast: uiToast } = useToast();
-  const { user } = useAuth();
-  const { registerAdminChange, syncWithLatestData } = useDataSync();
-
-  // Track last notification to prevent duplicates
-  const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
-
-  // Explicit check to ensure admin access
-  const isAdminAccess = user?.email === "admin@hostdime.com.br";
-
-  // Periodically check for data conflicts
+  
+  // Check if there are conflicts between local and server data
   const checkForConflicts = async () => {
     try {
-      const hasDataConflicts = await PriceService.checkForDataConflicts();
-      setHasConflicts(hasDataConflicts);
+      const lastFetchTime = localStorage.getItem('price_data_last_fetch');
       
-      if (hasDataConflicts && !isAdminAccess) {
-        const now = Date.now();
-        // Only show notification if it's been more than 10 seconds since the last one
-        if (now - lastNotificationTime > 10000) {
-          toast.info("Atualizações disponíveis", {
-            description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
-            duration: 5000
-          });
-          setLastNotificationTime(now);
-        }
+      if (!lastFetchTime) {
+        // No fetch time recorded, cannot check for conflicts
+        return false;
+      }
+      
+      // Get timestamp of last modification from server
+      const lastModified = await PriceService.getLastModifiedTime();
+      
+      if (!lastModified) {
+        return false;
+      }
+      
+      const localTime = new Date(lastFetchTime).getTime();
+      const serverTime = new Date(lastModified).getTime();
+      
+      // If server data is newer, indicate a conflict
+      if (serverTime > localTime) {
+        setHasConflicts(true);
+        console.log("Data conflicts detected", {
+          localTime: new Date(localTime).toISOString(),
+          serverTime: new Date(serverTime).toISOString()
+        });
+        return true;
+      } else {
+        setHasConflicts(false);
+        return false;
       }
     } catch (error) {
       console.error("Error checking for conflicts:", error);
+      toast.error("Erro ao verificar conflitos", {
+        description: "Não foi possível comparar os dados locais com os do servidor."
+      });
+      return false;
     }
   };
-
-  // Handle exporting data as JSON
-  const handleExportData = async () => {
-    try {
-      setIsExporting(true);
-      const data = await PriceService.getAllData();
-      
-      if (!data) {
-        toast.error("Falha na exportação", {
-          description: "Nenhum dado disponível para exportar."
-        });
-        return;
-      }
-      
-      const dataStr = JSON.stringify(data, null, 2);
-      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-      
-      // Create an invisible link and trigger a download
-      const exportFileDefaultName = `price-data-${new Date().toISOString().slice(0, 10)}.json`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-      
-      toast.success("Exportação concluída", {
-        description: "Dados exportados com sucesso."
-      });
-    } catch (error) {
-      toast.error("Falha na exportação", {
-        description: "Não foi possível exportar os dados."
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Handle resetting data to initial state
-  const handleResetData = async () => {
-    if (!isAdminAccess) {
-      toast.error("Permissão negada", {
-        description: "Somente administradores podem redefinir os dados."
-      });
-      return;
-    }
-
-    if (confirm("Tem certeza que deseja redefinir todos os dados para o padrão? Esta ação não pode ser desfeita.")) {
-      try {
-        setIsResetting(true);
-        
-        // Reset data in PriceService
-        const resetData = await PriceService.resetData();
-        
-        if (resetData) {
-          // Update state with reset data
-          setPriceData(resetData);
-          
-          // Register change to notify other users
-          await registerAdminChange("reset", "Todos os dados foram redefinidos para os valores padrão");
-          
-          toast.success("Dados redefinidos", {
-            description: "Todos os dados foram redefinidos para os valores padrão."
-          });
-        } else {
-          toast.error("Falha na redefinição", {
-            description: "Não foi possível redefinir os dados."
-          });
-        }
-      } catch (error) {
-        console.error("Error resetting data:", error);
-        toast.error("Falha na redefinição", {
-          description: "Ocorreu um erro ao redefinir os dados."
-        });
-      } finally {
-        setIsResetting(false);
-      }
-    }
-  };
-
-  // Function to force data update when there are multi-user conflicts
+  
+  // Refresh data from server
   const handleRefreshData = async () => {
-    const now = Date.now();
     try {
       setIsRefreshing(true);
+      console.log("Refreshing data from server");
       
-      // Force reload data from Supabase (possibly updated by another user)
-      console.log("Refreshing data from source");
-      const refreshedData = await PriceService.forceRefreshFromLatestSource();
+      const data = await PriceService.getAllData();
       
-      if (refreshedData) {
-        // Update state with updated data
-        setPriceData(refreshedData);
+      if (data) {
+        // Update state with fresh data
+        setPriceData(data);
+        
+        // Update last fetch time
+        localStorage.setItem('price_data_last_fetch', new Date().toISOString());
+        
+        // Clear conflict flag
         setHasConflicts(false);
         
-        // Update sync state
-        await syncWithLatestData();
-        
-        // Only show notification if it's been more than 2.5 seconds since the last one
-        if (now - lastNotificationTime > 2500) {
-          toast.success("Sincronização concluída com sucesso");
-          setLastNotificationTime(now);
-        }
+        toast.info("Dados atualizados", {
+          description: "Os dados foram sincronizados com o servidor."
+        });
       } else {
-        toast.error("Falha na atualização", {
-          description: "Não foi possível sincronizar os dados."
+        toast.error("Erro na atualização", {
+          description: "Não foi possível obter os dados do servidor.",
+          icon: <AlertCircle className="h-5 w-5" />
         });
       }
     } catch (error) {
       console.error("Error refreshing data:", error);
-      toast.error("Falha na atualização", {
-        description: "Ocorreu um erro ao atualizar os dados."
+      toast.error("Erro na atualização", {
+        description: "Ocorreu um problema ao atualizar os dados."
       });
     } finally {
       setIsRefreshing(false);
     }
   };
-
-  // Check for data conflicts and notify if necessary
-  const checkForDataConflicts = async (): Promise<boolean> => {
-    return await PriceService.checkForDataConflicts();
+  
+  // Reset data to defaults
+  const handleResetData = async () => {
+    try {
+      console.log("Resetting data to defaults");
+      
+      // Reset the data on the server
+      const success = await PriceService.resetToDefaults();
+      
+      if (success) {
+        // Get the fresh default data
+        const data = await PriceService.getAllData();
+        
+        if (data) {
+          // Update state with default data
+          setPriceData(data);
+          
+          // Update last fetch time
+          localStorage.setItem('price_data_last_fetch', new Date().toISOString());
+          
+          toast.success("Dados redefinidos", {
+            description: "Os dados foram restaurados para os valores padrão."
+          });
+        }
+      } else {
+        toast.error("Erro na redefinição", {
+          description: "Não foi possível restaurar os dados padrão."
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      toast.error("Erro na redefinição", {
+        description: "Ocorreu um problema ao restaurar os dados."
+      });
+    }
   };
-
+  
   return {
-    isExporting,
-    isResetting,
     isRefreshing,
     hasConflicts,
-    handleExportData,
-    handleResetData,
+    checkForConflicts,
     handleRefreshData,
-    checkForDataConflicts,
-    checkForConflicts
+    handleResetData
   };
 }

@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/utils/toast-utils';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Key for storing last update
 const LAST_UPDATE_KEY = 'price_data_last_update';
