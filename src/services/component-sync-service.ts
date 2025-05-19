@@ -141,13 +141,17 @@ export function convertStorageDataItem(item: PricedDiskOption): PriceItem {
     ],
     isHardware: true,
     metadata: {
-      capacity: item.capacity || "0 GB",
+      // Store capacity info in a features array instead of as a direct property
+      features: [`Capacity: ${item.capacity || "0 GB"}`],
       // Use pricing info structure compatible with PriceItem metadata
-      pricing: {
-        basePrice: 0,
-        pricePerGB: 0,
-        baseCapacity: 0
-      }
+      unitInfo: JSON.stringify({
+        capacity: item.capacity || "0 GB",
+        pricing: {
+          basePrice: 0,
+          pricePerGB: 0,
+          baseCapacity: 0
+        }
+      })
     }
   };
 }
