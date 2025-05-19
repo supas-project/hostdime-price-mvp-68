@@ -3,16 +3,21 @@ import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { findMatchingComponent } from "@/utils/component-matching";
 import { cn } from "@/lib/utils";
+import { PriceService } from "@/services/price-service";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  
   const { 
     currentStep, 
     selectedComponents, 
@@ -20,8 +25,40 @@ export function WizardContent() {
     handleSelectOption,
     isStepComplete,
     setConnectivityItems,
-    handleSelectStorageItem 
+    handleSelectStorageItem,
+    categoriesLoaded
   } = useWizard();
+
+  // Adicionar sincronização com a tabela de preços
+  const refreshData = async () => {
+    try {
+      setIsLoadingData(true);
+      await PriceService.forceRefreshFromLatestSource();
+      toast.success("Dados sincronizados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao sincronizar dados:", error);
+      toast.error("Falha ao sincronizar dados", {
+        description: "Verifique sua conexão e tente novamente."
+      });
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Carregar dados ao iniciar o componente
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        await PriceService.forceRefreshFromLatestSource();
+      } catch (error) {
+        console.error("Erro ao inicializar dados:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    
+    initializeData();
+  }, []);
 
   const getSelectedOption = (component: ServerComponent): ComponentOption | null => {
     if (!component) return null;
@@ -53,30 +90,52 @@ export function WizardContent() {
 
   const currentComponent = serverData.componentes[currentStep];
 
+  if (isLoadingData) {
+    return (
+      <div className="space-y-4 w-full p-4 animate-pulse">
+        <Skeleton className="h-8 w-40 bg-muted-foreground/20" />
+        <Skeleton className="h-64 w-full bg-muted-foreground/10" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setShowAllSteps(!showAllSteps)}
-        className={cn(
-          "flex items-center gap-1 mb-2 sm:mb-4",
-          "text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3",
-          "h-auto transition-colors"
-        )}
-      >
-        {showAllSteps ? (
-          <>
-            <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="whitespace-nowrap">Mostrar apenas ativo</span>
-          </>
-        ) : (
-          <>
-            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="whitespace-nowrap">Mostrar todos</span>
-          </>
-        )}
-      </Button>
+      <div className="flex items-center justify-between mb-2 sm:mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAllSteps(!showAllSteps)}
+          className={cn(
+            "flex items-center gap-1",
+            "text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3",
+            "h-auto transition-colors"
+          )}
+        >
+          {showAllSteps ? (
+            <>
+              <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="whitespace-nowrap">Mostrar apenas ativo</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="whitespace-nowrap">Mostrar todos</span>
+            </>
+          )}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshData}
+          disabled={isLoadingData}
+          className="flex items-center gap-1 text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3 h-auto"
+        >
+          <RefreshCw className={cn("h-3 w-3 sm:h-4 sm:w-4", isLoadingData && "animate-spin")} />
+          <span>Sincronizar</span>
+        </Button>
+      </div>
 
       {showAllSteps ? (
         <ScrollArea className="max-h-[calc(100vh-200px)] pr-0 sm:pr-2 overflow-x-hidden">

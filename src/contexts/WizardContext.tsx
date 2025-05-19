@@ -1,15 +1,32 @@
 
-import { createContext, useContext, ReactNode, useEffect } from "react";
+import { createContext, useContext, ReactNode, useEffect, useState } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
 import { useWizardSteps } from "@/hooks/use-wizard-steps";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
+import { PriceService } from "@/services/price-service";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
+  const [dataInitialized, setDataInitialized] = useState(false);
+  
+  // Inicializar dados da tabela de preços
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        await PriceService.forceRefreshFromLatestSource();
+        setDataInitialized(true);
+      } catch (error) {
+        console.error("Erro ao carregar dados iniciais:", error);
+      }
+    };
+    
+    initData();
+  }, []);
+
   const {
     selectedComponents,
     setSelectedComponents,
@@ -31,7 +48,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setCurrentStep,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete: baseIsStepComplete
+    isStepComplete: baseIsStepComplete,
+    categoriesLoaded
   } = useWizardSteps();
   
   // Use the correct hook format - default to false to disable beginner mode
@@ -114,6 +132,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // Reset auto-advanced steps when restarting
     setAutoAdvancedSteps([]);
   };
+
+  if (!dataInitialized && !categoriesLoaded) {
+    // Renderizar um estado de carregamento até que os dados estejam prontos
+    return <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-8 h-8 border-4 border-t-primary rounded-full animate-spin"></div>
+        <div className="text-sm text-muted-foreground">Carregando configurações...</div>
+      </div>
+    </div>;
+  }
 
   return (
     <WizardContext.Provider

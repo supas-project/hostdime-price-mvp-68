@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { OSSelector } from "./os/OSSelector";
@@ -7,6 +7,7 @@ import { findMatchingComponent } from "@/utils/component-matching";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { PriceService } from "@/services/price-service";
 
 interface OSContentProps {
   // Make options optional by adding the ? modifier
@@ -22,21 +23,29 @@ export function OSContent({
 }: OSContentProps) {
   // Use propOptions if provided, otherwise fetch from the price service
   const { options, isLoading, error } = useComponentOptions('os');
-  const finalOptions = propOptions || options; // Use propOptions if available, fall back to fetched options
+  const finalOptions = propOptions?.length ? propOptions : options; // Use propOptions if available, fall back to fetched options
   
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
   useEffect(() => {
+    // Forçar atualização dos dados da tabela de preços
+    const updateFromPriceTable = async () => {
+      try {
+        await PriceService.forceRefreshFromLatestSource();
+      } catch (error) {
+        console.error("Erro ao carregar dados de SO da tabela de preços:", error);
+      }
+    };
+    
+    updateFromPriceTable();
+    
     // Log information about options for debugging
     console.log("OSContent options from useComponentOptions:", finalOptions);
     
     if (finalOptions.length === 0 && !isLoading) {
-      console.warn("No OS options available. Check category mapping in price service.");
-      toast.warning("Aviso", {
-        description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração."
-      });
+      console.warn("Nenhuma opção de SO disponível. Verifique o mapeamento de categorias no serviço de preços.");
     }
-  }, [finalOptions, isLoading]);
+  }, [finalOptions.length]);
   
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {
@@ -59,6 +68,19 @@ export function OSContent({
           </div>
           <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
           <Skeleton className="h-4 w-2/3 bg-[#2a2a2a]" />
+        </div>
+      </Card>
+    );
+  }
+  
+  if (finalOptions.length === 0) {
+    return (
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="text-base font-medium text-white">Sistema Operacional</div>
+          <p className="text-sm text-muted-foreground">
+            Nenhum sistema operacional disponível. Por favor, certifique-se de que existem opções cadastradas na tabela de preços.
+          </p>
         </div>
       </Card>
     );

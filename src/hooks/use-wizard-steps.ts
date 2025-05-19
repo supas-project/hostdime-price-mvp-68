@@ -1,12 +1,29 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { serverData } from "@/data/server-components";
 import { normalizeComponentType } from "./use-component-selection";
 import { ComponentOption } from "@/types/component";
+import { PriceService } from "@/services/price-service"; // Importando o serviço
 
 export function useWizardSteps() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+
+  // Adicionar carregar as categorias da tabela de preços ao inicializar
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        // Carregar dados do serviço de preços para garantir que temos os dados mais recentes
+        await PriceService.forceRefreshFromLatestSource();
+        setCategoriesLoaded(true);
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+      }
+    };
+    
+    loadCategories();
+  }, []);
 
   const isStepComplete = (
     stepIndex: number, 
@@ -60,6 +77,7 @@ export function useWizardSteps() {
     setCurrentStep,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete
+    isStepComplete,
+    categoriesLoaded
   };
 }
