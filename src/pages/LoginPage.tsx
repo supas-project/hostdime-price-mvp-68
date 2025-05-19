@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +27,6 @@ export default function LoginPage() {
     });
     return null;
   }
-  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -56,7 +53,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  
   return <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
@@ -64,7 +60,7 @@ export default function LoginPage() {
             <img src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg" alt="HostDime Logo" className="h-8 w-auto object-contain" />
           </div>
           
-          <CardDescription>
+          <CardDescription className="text-zinc-50">
             Entre com suas credenciais para acessar o painel
           </CardDescription>
         </CardHeader>
