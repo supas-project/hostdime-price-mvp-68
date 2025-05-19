@@ -7,13 +7,13 @@ import {
   addCategory, 
   updateCategory, 
   deleteCategory 
-} from './price/category-operations';
+} from './price/operations/category-operations';
 
 import {
   addItem,
   updateItem,
   deleteItem
-} from './price/item-operations';
+} from './price/operations/item-operations';
 
 import {
   getAllData,
