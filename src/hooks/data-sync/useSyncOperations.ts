@@ -1,5 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/utils/toast-utils';
 
 /**
  * Hook for data synchronization operations
@@ -22,7 +23,7 @@ export function useSyncOperations(
         .select('updated_at')
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error("Error fetching latest update:", error);

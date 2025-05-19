@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -19,28 +20,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ADMIN_EMAIL = "admin@hostdime.com.br";
 const DEFAULT_ADMIN_PASSWORD = "H0stD1m3@2025";
 
-// Chave para armazenar sessões no localStorage com identificador único
-const SESSION_STORAGE_KEY_PREFIX = 'hostdime_auth_session_';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Gerar um ID de sessão único para este navegador/janela
-  const [sessionId] = useState(() => {
-    const existingId = localStorage.getItem('current_browser_session_id');
-    if (existingId) return existingId;
-    
-    const newId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    localStorage.setItem('current_browser_session_id', newId);
-    return newId;
-  });
 
-  // Chave de sessão específica para esta janela/aba do navegador
-  const currentSessionKey = `${SESSION_STORAGE_KEY_PREFIX}${sessionId}`;
-  
   // Função para criar o usuário admin padrão
   const createAdminUser = async () => {
     try {
@@ -103,142 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Salvar sessão específica para esta janela/aba
-  const saveLocalSession = (session: Session | null, userInfo: User | null, isUserAdmin: boolean) => {
-    if (session && userInfo) {
-      const localSessionData = {
-        session,
-        user: userInfo,
-        isAdmin: isUserAdmin,
-        timestamp: Date.now()
-      };
-      
-      localStorage.setItem(currentSessionKey, JSON.stringify(localSessionData));
-      console.log(`Sessão salva para ${currentSessionKey}`);
-      
-      // Atualizar também o registro global de sessões ativas
-      updateGlobalSessionRegistry(userInfo.id, true);
-    } else {
-      localStorage.removeItem(currentSessionKey);
-      // Remover da lista global de sessões
-      if (user) {
-        updateGlobalSessionRegistry(user.id, false);
-      }
-    }
-  };
-
-  // Atualizar o registro global de sessões ativas
-  const updateGlobalSessionRegistry = (userId: string, isActive: boolean) => {
-    const registryKey = 'hostdime_active_sessions';
-    const existingRegistry = localStorage.getItem(registryKey);
-    let registry: Record<string, string[]> = existingRegistry ? JSON.parse(existingRegistry) : {};
-    
-    if (isActive) {
-      // Adicionar esta sessão à lista de sessões ativas para este usuário
-      if (!registry[userId]) {
-        registry[userId] = [];
-      }
-      
-      if (!registry[userId].includes(sessionId)) {
-        registry[userId].push(sessionId);
-      }
-    } else {
-      // Remover esta sessão da lista
-      if (registry[userId]) {
-        registry[userId] = registry[userId].filter(id => id !== sessionId);
-        
-        if (registry[userId].length === 0) {
-          delete registry[userId];
-        }
-      }
-    }
-    
-    localStorage.setItem(registryKey, JSON.stringify(registry));
-  };
-
-  // Recuperar sessão específica desta janela/aba com validação melhorada
-  const loadLocalSession = (): {
-    session: Session | null,
-    user: User | null,
-    isAdmin: boolean
-  } => {
-    try {
-      const localSessionData = localStorage.getItem(currentSessionKey);
-      if (!localSessionData) {
-        return { session: null, user: null, isAdmin: false };
-      }
-      
-      const { session, user, isAdmin } = JSON.parse(localSessionData);
-      
-      // Verificar se a sessão expirou
-      if (session && session.expires_at) {
-        const expiresAt = new Date((session.expires_at) * 1000);
-        if (expiresAt > new Date()) {
-          return { session, user, isAdmin };
-        } else {
-          console.log("Sessão local expirada");
-          localStorage.removeItem(currentSessionKey);
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao carregar sessão local:", err);
-      localStorage.removeItem(currentSessionKey);
-    }
-    
-    return { session: null, user: null, isAdmin: false };
-  };
-
   // Check for existing session on initial load with improved retry logic
   useEffect(() => {
     const checkSession = async () => {
       try {
         setLoading(true);
         
-        // Primeiro, verificamos se há uma sessão local salva para esta janela/aba
-        const localData = loadLocalSession();
-        
-        if (localData.session && localData.user) {
-          console.log("Sessão encontrada em localStorage:", localData.user.email);
-          setIsAuthenticated(true);
-          setUser(localData.user);
-          
-          // Verifica se o usuário é admin por comparação exata do email
-          const isUserAdmin = localData.user.email === ADMIN_EMAIL;
-          setIsAdmin(isUserAdmin);
-          
-          // Verificar com o Supabase se a sessão ainda é válida
-          const { data: { session: supabaseSession }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Erro ao verificar sessão no Supabase:", error);
-          } else if (supabaseSession) {
-            // Atualizar session com a mais recente do Supabase
-            saveLocalSession(supabaseSession, supabaseSession.user, isUserAdmin);
-          } else {
-            // Restaurar a sessão do Supabase usando a sessão local
-            console.log("Tentando recuperar sessão no Supabase usando dados locais");
-            const { data: refreshData, error: refreshError } = await supabase.auth.setSession({
-              access_token: localData.session.access_token,
-              refresh_token: localData.session.refresh_token,
-            });
-            
-            if (refreshError) {
-              console.error("Não foi possível restaurar a sessão:", refreshError);
-              setIsAuthenticated(false);
-              setUser(null);
-              setIsAdmin(false);
-              localStorage.removeItem(currentSessionKey);
-            } else if (refreshData && refreshData.session) {
-              console.log("Sessão restaurada com sucesso no Supabase");
-              saveLocalSession(refreshData.session, refreshData.user, refreshData.user.email === ADMIN_EMAIL);
-            }
-          }
-          
-          setLoading(false);
-          return;
-        }
-        
-        // Se não houver sessão local, verificamos a sessão do Supabase
+        // Verificar com o Supabase se a sessão ainda é válida
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -256,8 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const isUserAdmin = session.user.email === ADMIN_EMAIL;
           setIsAdmin(isUserAdmin);
           
-          // Salvar a sessão localmente para esta janela/aba
-          saveLocalSession(session, session.user, isUserAdmin);
+          console.log("Sessão restaurada. Usuário:", session.user.email, "isAdmin:", isUserAdmin);
         } else {
           console.log("Nenhuma sessão encontrada");
         }
@@ -276,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth listener with improved error handling
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email, "Session ID:", sessionId);
+        console.log("Auth state changed:", event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session) {
           setIsAuthenticated(true);
@@ -287,25 +142,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAdmin(isUserAdmin);
           
           console.log("Sign In:", session.user.email, "isAdmin:", isUserAdmin);
-          
-          // Salvar a sessão localmente para esta janela/aba
-          saveLocalSession(session, session.user, isUserAdmin);
         } else if (event === 'SIGNED_OUT') {
-          // Para evitar deslogamento cruzado entre abas, só limpa os estados se
-          // o evento SIGNED_OUT for para a sessão atual
-          const localData = loadLocalSession();
-          
-          if (!localData.session || localData.user?.id === session?.user?.id || !session) {
-            setIsAuthenticated(false);
-            setIsAdmin(false);
-            setUser(null);
-            localStorage.removeItem(currentSessionKey);
-          }
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setUser(null);
         } else if (event === 'TOKEN_REFRESHED' && session) {
           // Atualizar a sessão local quando o token for atualizado
           console.log("Token refreshed for:", session.user.email);
           const isUserAdmin = session.user.email === ADMIN_EMAIL;
-          saveLocalSession(session, session.user, isUserAdmin);
+          setIsAdmin(isUserAdmin);
+          setUser(session.user);
         }
       }
     );
@@ -351,14 +197,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       setIsAdmin(false);
       setUser(null);
-      
-      // Remover apenas a sessão atual sem afetar outras sessões
-      localStorage.removeItem(currentSessionKey);
-      
-      // Atualizar o registro global de sessões
-      if (user) {
-        updateGlobalSessionRegistry(user.id, false);
-      }
       
       // Agora vamos fazer o logout no Supabase
       const { error } = await supabase.auth.signOut({

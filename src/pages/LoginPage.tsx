@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,21 +14,27 @@ export default function LoginPage() {
   const {
     login,
     isAuthenticated,
-    user
+    user,
+    loading
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redireciona usuários já autenticados
-  if (isAuthenticated) {
-    // Se for admin, redireciona para a tabela de preços
-    const isAdminEmail = user?.email === "admin@hostdime.com.br";
-    const redirectTo = isAdminEmail ? "/price-table" : "/configure";
-    navigate(redirectTo, {
-      replace: true
-    });
-    return null;
-  }
+  // Efeito para redirecionar usuários que já estão autenticados
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      // Se for admin, redireciona para a tabela de preços
+      const isAdminEmail = user?.email === "admin@hostdime.com.br";
+      const redirectTo = isAdminEmail ? "/price-table" : "/configure";
+      
+      // Usa o from se existir, senão usa o redirectTo padrão
+      const from = (location.state as any)?.from?.pathname || redirectTo;
+      
+      navigate(from, {
+        replace: true
+      });
+    }
+  }, [isAuthenticated, loading, user, navigate, location.state]);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,9 +46,8 @@ export default function LoginPage() {
         const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
         const redirectPath = isAdmin ? "/price-table" : "/configure";
         const from = (location.state as any)?.from?.pathname || redirectPath;
-        navigate(from, {
-          replace: true
-        });
+        
+        // Em vez de navegar aqui, vamos deixar o useEffect lidar com o redirecionamento
         toast.success("Login realizado com sucesso", {
           description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
         });
@@ -56,6 +61,23 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  // Exibe o indicador de carregamento enquanto o estado de autenticação está sendo verificado
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Se o usuário já estiver autenticado, não renderiza o formulário
+  if (isAuthenticated) {
+    return null;
+  }
   
   return <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-lg">

@@ -23,7 +23,7 @@ export function useInitSync() {
           .select('updated_at')
           .order('updated_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
         
         if (data) {
           setLastSyncTime(new Date(data.updated_at));
