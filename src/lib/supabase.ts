@@ -1,8 +1,8 @@
 
-import { supabase as supabaseClient } from '@/integrations/supabase/client';
+import { supabase as supabaseClient } from '@/lib/supabaseClient';
 
 // Re-export the configured client to maintain compatibility
 export const supabase = supabaseClient;
 
-// Helper function to verificar se o Supabase está configurado
-export const isSupabaseConfigured = () => true; // Sempre retorna true pois estamos usando o cliente oficial
+// Helper function to verify if Supabase is configured
+export const isSupabaseConfigured = () => true;

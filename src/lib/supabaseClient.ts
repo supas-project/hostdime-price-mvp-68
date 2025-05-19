@@ -1,6 +1,5 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { supabase as supabaseInstance } from '@/integrations/supabase/client';
 
 /**
  * Enhanced Supabase client with explicit session persistence configuration.
@@ -14,7 +13,7 @@ export const supabase = createClient(
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: false,  // Desabilitamos para evitar conflitos com navegação
       flowType: 'implicit',
     },
   }
