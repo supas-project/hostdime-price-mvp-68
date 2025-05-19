@@ -17,10 +17,8 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
 
   const handleAddCategory = async (values: any) => {
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem adicionar categorias.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem adicionar categorias."
       });
       return null;
     }
@@ -40,17 +38,14 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
       // Registra a mudança para notificação
       await registerAdminChange("add_category", `Categoria "${newCategory.name}" adicionada`);
       
-      toast({
-        title: "Categoria adicionada",
+      toast.success("Categoria adicionada", {
         description: `A categoria ${newCategory.name} foi adicionada com sucesso.`
       });
       
       return newCategory.id;
     } catch (error) {
-      toast({
-        title: "Erro ao adicionar categoria",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao adicionar categoria", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
       return null;
     }
@@ -58,10 +53,8 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
 
   const handleDeleteCategory = async (categoryId: string) => {
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem excluir categorias.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem excluir categorias."
       });
       return false;
     }
@@ -80,17 +73,14 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
       // Registra a mudança para notificação
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
-      toast({
-        title: "Categoria excluída",
+      toast.success("Categoria excluída", {
         description: "A categoria foi excluída com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast({
-        title: "Erro ao excluir categoria",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao excluir categoria", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
       return false;
     }

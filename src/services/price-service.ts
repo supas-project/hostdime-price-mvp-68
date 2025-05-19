@@ -1,4 +1,3 @@
-
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 import { toast } from "@/utils/toast-utils";
@@ -186,7 +185,7 @@ export const PriceService = {
     }
   },
   
-  // Obtém uma categoria específica
+  // Obtém uma categoria específica - Modificado para retornar diretamente o objeto
   getCategory: async (categoryId: string): Promise<PriceCategory> => {
     if (!categoryId) {
       console.error('ID de categoria inválido ou não fornecido');

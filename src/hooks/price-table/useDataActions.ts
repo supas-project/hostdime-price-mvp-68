@@ -24,11 +24,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
       setHasConflicts(hasDataConflicts);
       
       if (hasDataConflicts && !isAdminAccess) {
-        toast({
-          title: "Alterações detectadas",
+        toast.info("Alterações detectadas", {
           description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
-          duration: 6000,
-          variant: "default"
+          duration: 6000
         });
       }
     } catch (error) {
@@ -51,15 +49,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-      toast({
-        title: "Exportação concluída",
+      toast.success("Exportação concluída", {
         description: "Dados exportados com sucesso."
       });
     } catch (error) {
-      toast({
-        title: "Erro ao exportar dados",
-        description: "Não foi possível exportar os dados.",
-        variant: "destructive"
+      toast.error("Erro ao exportar dados", {
+        description: "Não foi possível exportar os dados."
       });
     } finally {
       setIsExporting(false);
@@ -69,10 +64,8 @@ export function useDataActions(setPriceData: (data: any) => void) {
   // Handle resetting data to initial state
   const handleResetData = async () => {
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem resetar os dados.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem resetar os dados."
       });
       return;
     }
@@ -90,15 +83,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Registre a alteração para notificar outros usuários
         await registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
         
-        toast({
-          title: "Dados resetados",
+        toast.success("Dados resetados", {
           description: "Todos os dados foram redefinidos para o padrão inicial."
         });
       } catch (error) {
-        toast({
-          title: "Erro ao resetar dados",
-          description: "Não foi possível resetar os dados.",
-          variant: "destructive"
+        toast.error("Erro ao resetar dados", {
+          description: "Não foi possível resetar os dados."
         });
       } finally {
         setIsResetting(false);
@@ -121,15 +111,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
       // Atualiza o estado de sincronização
       await syncWithLatestData();
       
-      toast({
-        title: "Dados atualizados",
+      toast.success("Dados atualizados", {
         description: "Os dados foram sincronizados com a fonte mais recente."
       });
     } catch (error) {
-      toast({
-        title: "Erro ao atualizar dados",
-        description: "Não foi possível sincronizar os dados.",
-        variant: "destructive"
+      toast.error("Erro ao atualizar dados", {
+        description: "Não foi possível sincronizar os dados."
       });
     } finally {
       setIsRefreshing(false);

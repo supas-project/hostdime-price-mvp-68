@@ -23,10 +23,8 @@ export function useItemActions(
 
   const handleInitiateEdit = (item: PriceItem) => {
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem editar itens.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem editar itens."
       });
       return;
     }
@@ -38,10 +36,8 @@ export function useItemActions(
   const handleAddItem = async (values: any) => {
     // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem adicionar itens.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem adicionar itens."
       });
       return;
     }
@@ -50,10 +46,8 @@ export function useItemActions(
     if (isSubmittingItem) return;
     
     if (!activeTab) {
-      toast({
-        title: "Erro ao adicionar item",
-        description: "Nenhuma categoria selecionada.",
-        variant: "destructive"
+      toast.error("Erro ao adicionar item", {
+        description: "Nenhuma categoria selecionada."
       });
       return;
     }
@@ -89,15 +83,12 @@ export function useItemActions(
       // Registra a mudança para notificação
       await registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${category?.name || activeTab}`);
       
-      toast({
-        title: "Item adicionado",
+      toast.success("Item adicionado", {
         description: `O item ${values.name} foi adicionado com sucesso.`
       });
     } catch (error) {
-      toast({
-        title: "Erro ao adicionar item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao adicionar item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
     } finally {
       // Reset state after a period
@@ -110,19 +101,15 @@ export function useItemActions(
   const handleEditItem = async (values: any, itemId?: string) => {
     // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem editar itens.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem editar itens."
       });
       return;
     }
     
     if (!activeTab || !itemId) {
-      toast({
-        title: "Erro ao editar item",
-        description: "Nenhuma categoria ou item selecionado.",
-        variant: "destructive"
+      toast.error("Erro ao editar item", {
+        description: "Nenhuma categoria ou item selecionado."
       });
       return;
     }
@@ -158,16 +145,13 @@ export function useItemActions(
       setOpenEditItem(false);
       setItemToEdit(undefined);
       
-      toast({
-        title: "Item atualizado",
+      toast.success("Item atualizado", {
         description: `O item ${values.name} foi atualizado com sucesso.`
       });
     } catch (error) {
       console.error("Erro ao atualizar item:", error);
-      toast({
-        title: "Erro ao editar item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao editar item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
     } finally {
       setIsSubmittingItem(false);
@@ -177,10 +161,8 @@ export function useItemActions(
   const handleDeleteItem = async (itemId: string) => {
     // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
     if (!isAdminAccess) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem excluir itens.",
-        variant: "destructive"
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem excluir itens."
       });
       return false;
     }
@@ -201,17 +183,14 @@ export function useItemActions(
       // Registra a mudança para notificação
       await registerAdminChange("delete_item", `Item "${itemToDelete?.name || itemId}" excluído da categoria ${category?.name || activeTab}`);
       
-      toast({
-        title: "Item excluído",
+      toast.success("Item excluído", {
         description: "O item foi excluído com sucesso."
       });
       
       return true;
     } catch (error) {
-      toast({
-        title: "Erro ao excluir item",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        variant: "destructive"
+      toast.error("Erro ao excluir item", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
       return false;
     }

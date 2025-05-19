@@ -1,123 +1,61 @@
 
-import { useState, useEffect, useRef } from "react";
-import { PriceService } from "@/services/price-service";
+import { useState, useEffect } from 'react';
+import { PriceService } from '@/services/price-service';
+import { storageComponents } from '@/data/storage-components';
 
-interface StorageType {
+export interface StorageType {
+  id: string;
   name: string;
-  pricePerGB: number;
-  iops: string;
-  throughput: string;
+  type: string;
   description: string;
-  throughputAdd?: number;
-  maxThroughput?: string;
+  price: number;
+  minCapacity: number;
+  maxCapacity: number;
+  capacityUnit: string;
+  capacityStep: number;
+  specs: string[];
+  benefits: string[];
 }
 
 export function useStorageTypes() {
-  const [storageTypes, setStorageTypes] = useState<{
-    [key: string]: StorageType;
-  }>({});
-  
-  // Usar useRef para armazenar a função de callback para evitar recriação
-  const loadStorageTypesRef = useRef<() => void>();
+  const [types, setTypes] = useState<StorageType[]>([]);
 
   useEffect(() => {
-    // Definir a função de carregamento de tipos de armazenamento
-    const loadStorageTypes = () => {
+    const loadStorageTypes = async () => {
       try {
-        const storageCategory = PriceService.getCategory('storage');
-        if (!storageCategory) return;
+        // Try to load from price data
+        const category = await PriceService.getCategory('storage');
         
-        const types: typeof storageTypes = {};
-        
-        storageCategory.items.forEach(item => {
-          if (item.name.toLowerCase().includes('snapshot')) return;
+        if (category && category.items && category.items.length > 0) {
+          // Convert price items to storage types
+          const storageTypes: StorageType[] = category.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            type: item.subtype || 'storage',
+            description: item.description || '',
+            price: item.price,
+            minCapacity: item.metadata?.minCapacity || 100,
+            maxCapacity: item.metadata?.maxCapacity || 10000,
+            capacityUnit: item.metadata?.capacityUnit || 'GB',
+            capacityStep: item.metadata?.capacityStep || 100,
+            specs: item.specs || [],
+            benefits: item.metadata?.benefits || []
+          }));
           
-          const key = item.name.replace('Storage ', '').toLowerCase();
-          
-          let iops = 'Até 1000';
-          let throughput = 'Até 125 MB/s';
-          let throughputAdd: number | undefined = undefined;
-          let maxThroughput: string | undefined = undefined;
-          
-          if (item.specs) {
-            const iopsSpec = item.specs.find(spec => spec.includes('IOPS'));
-            if (iopsSpec) {
-              iops = iopsSpec.replace('IOPS: ', '');
-            }
-            
-            const throughputSpec = item.specs.find(spec => spec.includes('Throughput:') && !spec.includes('adicional') && !spec.includes('máximo'));
-            if (throughputSpec) {
-              throughput = throughputSpec.replace('Throughput: ', '');
-            }
-            
-            const throughputAddSpec = item.specs.find(spec => spec.includes('Throughput adicional'));
-            if (throughputAddSpec) {
-              const match = throughputAddSpec.match(/R\$\s*(\d+\.\d+)/);
-              if (match) {
-                throughputAdd = parseFloat(match[1]);
-              }
-            }
-            
-            const maxThroughputSpec = item.specs.find(spec => spec.includes('Throughput máximo'));
-            if (maxThroughputSpec) {
-              maxThroughput = maxThroughputSpec.replace('Throughput máximo: ', '');
-            }
-          }
-          
-          types[key] = {
-            name: key.charAt(0).toUpperCase() + key.slice(1),
-            pricePerGB: item.price,
-            iops,
-            throughput,
-            description: item.description || `Storage ${key} para dados`,
-            ...(throughputAdd && { throughputAdd }),
-            ...(maxThroughput && { maxThroughput })
-          };
-        });
-        
-        if (Object.keys(types).length > 0) {
-          setStorageTypes(types);
+          setTypes(storageTypes);
         } else {
-          setStorageTypes({
-            standard: { 
-              name: "Standard", 
-              pricePerGB: 0.15, 
-              iops: "Até 1000", 
-              throughput: "Até 125 MB/s",
-              description: "Ideal para backups e arquivos raramente acessados"
-            },
-            premium: { 
-              name: "Premium", 
-              pricePerGB: 0.35, 
-              iops: "Até 6000", 
-              throughput: "Até 500 MB/s",
-              description: "Ótimo para aplicações de alto desempenho"
-            }
-          });
+          // Fallback to static data
+          setTypes(storageComponents);
         }
       } catch (error) {
-        console.error('Erro ao carregar tipos de storage:', error);
+        console.error('Error loading storage types:', error);
+        // Fallback to static data
+        setTypes(storageComponents);
       }
     };
-    
-    // Armazenar referência da função para usar depois
-    loadStorageTypesRef.current = loadStorageTypes;
-    
-    // Executar busca inicial
+
     loadStorageTypes();
-    
-    // Registrar listener usando a referência armazenada
-    if (loadStorageTypesRef.current) {
-      PriceService.addDataChangeListener(loadStorageTypesRef.current);
-    }
-    
-    // Cleanup: remover listener quando componente for desmontado
-    return () => {
-      if (loadStorageTypesRef.current) {
-        PriceService.removeDataChangeListener(loadStorageTypesRef.current);
-      }
-    };
   }, []);
 
-  return storageTypes;
+  return types;
 }

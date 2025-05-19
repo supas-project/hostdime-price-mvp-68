@@ -23,9 +23,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Carregar dados de disco da tabela de preços
   useEffect(() => {
-    const loadDisksFromPriceTable = () => {
+    const loadDisksFromPriceTable = async () => {
       try {
-        const diskCategory = PriceService.getCategory('disk');
+        const diskCategory = await PriceService.getCategory('disk');
         if (!diskCategory) return;
         
         // Converter itens da tabela de preços para formato de disco
@@ -89,9 +89,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   // Registrar listener para atualização de dados
   useEffect(() => {
     // Definir a função de atualização dos discos
-    const updateDisks = () => {
+    const updateDisks = async () => {
       if (selectedDiskType) {
-        const diskCategory = PriceService.getCategory('disk');
+        const diskCategory = await PriceService.getCategory('disk');
         if (!diskCategory) return;
         
         // Atualiza discos disponíveis quando os dados mudam
