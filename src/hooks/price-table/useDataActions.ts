@@ -120,17 +120,54 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
   
-  // Export data
+  // Export data as JSON file
   const handleExportData = () => {
     try {
-      // Implementation of data export functionality
-      console.log("Exporting data");
-      // This is a placeholder for the actual export implementation
-      toast.success("Dados exportados", {
-        description: "Os dados foram exportados com sucesso."
+      // Get current data from PriceService or use the app state directly
+      PriceService.getAllData().then(data => {
+        if (!data) {
+          toast.error("Erro na exportação", {
+            description: "Não foi possível obter os dados para exportar."
+          });
+          return;
+        }
+
+        // Convert data to JSON string with formatting
+        const jsonData = JSON.stringify(data, null, 2);
+        
+        // Create blob with JSON content
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        
+        // Create object URL for the blob
+        const url = URL.createObjectURL(blob);
+        
+        // Create temporary anchor element
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `hostdime_price_data_${new Date().toISOString().split('T')[0]}.json`;
+        
+        // Append to body, click and remove
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        console.log("JSON file exported successfully");
+        toast.success("Dados exportados", {
+          description: "Os dados foram exportados com sucesso."
+        });
+      }).catch(error => {
+        console.error("Error exporting data:", error);
+        toast.error("Erro na exportação", {
+          description: "Ocorreu um problema ao exportar os dados."
+        });
       });
     } catch (error) {
-      console.error("Error exporting data:", error);
+      console.error("Error in export handler:", error);
       toast.error("Erro na exportação", {
         description: "Ocorreu um problema ao exportar os dados."
       });
