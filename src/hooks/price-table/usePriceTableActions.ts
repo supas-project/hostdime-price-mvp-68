@@ -3,7 +3,7 @@ import { useCategoryActions } from "./useCategoryActions";
 import { useItemActions } from "./useItemActions";
 import { useDataActions } from "./useDataActions";
 import { usePayBackActions } from "./usePayBackActions";
-import { notifyListeners } from "../services/price/listeners";
+import { notifyListeners } from "../../services/price/listeners";
 
 export function usePriceTableActions(
   activeTab: string, 
