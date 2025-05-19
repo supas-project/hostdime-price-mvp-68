@@ -97,8 +97,7 @@ export function useDataSync() {
       const now = Date.now();
       if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
         toast.info("Alterações disponíveis", {
-          description: `O administrador fez alterações: ${details}`,
-          icon: <AlertCircle size={16} />
+          description: `O administrador fez alterações: ${details}`
         });
         setLastNotificationTime(now);
       }
@@ -125,9 +124,7 @@ export function useDataSync() {
     // Show success notification to admin (with duplicate prevention)
     const now = Date.now();
     if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
-      toast.success("Alterações registradas com sucesso", {
-        icon: <CheckCircle2 size={16} />
-      });
+      toast.success("Alterações registradas com sucesso");
       setLastNotificationTime(now);
     }
   };
@@ -187,8 +184,7 @@ export function useDataSync() {
         const now = Date.now();
         if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
           toast.info("Alterações disponíveis", {
-            description: "O administrador fez alterações. Clique para atualizar.",
-            icon: <AlertCircle size={16} />
+            description: "O administrador fez alterações. Clique para atualizar."
           });
           setLastNotificationTime(now);
         }

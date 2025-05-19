@@ -2,7 +2,6 @@
 import { PriceService } from "./price-service";
 import { syncDiskDataWithPriceService, initExternalStorageData } from "./component-sync";
 import { toast } from "@/utils/toast-utils";
-import { CheckCircle2, AlertCircle } from "lucide-react";
 
 // This service handles initialization of the application data
 export class InitService {
@@ -36,8 +35,7 @@ export class InitService {
           await syncDiskDataWithPriceService();
           
           toast.success("Dados inicializados", {
-            description: "Configuração padrão carregada com sucesso.",
-            icon: <CheckCircle2 size={16} />
+            description: "Configuração padrão carregada com sucesso."
           });
 
           // Save current fetch time
@@ -52,8 +50,7 @@ export class InitService {
         console.error("Error during data initialization:", initError);
         if (initError instanceof Error && !initError.message.includes("Authentication")) {
           toast.error("Erro na inicialização", {
-            description: "Não foi possível carregar os dados iniciais.",
-            icon: <AlertCircle size={16} />
+            description: "Não foi possível carregar os dados iniciais."
           });
         }
         return false;
@@ -65,8 +62,7 @@ export class InitService {
       // Only show toast if it's not an authentication error
       if (error instanceof Error && !error.message.includes("Authentication")) {
         toast.error("Erro na inicialização", {
-          description: "Ocorreu um erro ao inicializar os dados.",
-          icon: <AlertCircle size={16} />
+          description: "Ocorreu um erro ao inicializar os dados."
         });
       }
       return false;

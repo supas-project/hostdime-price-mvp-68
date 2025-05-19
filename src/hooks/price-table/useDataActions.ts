@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
@@ -67,8 +68,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.click();
       
       toast.success("Exportação concluída", {
-        description: "Dados exportados com sucesso.",
-        icon: <CheckCircle2 size={16} />
+        description: "Dados exportados com sucesso."
       });
     } catch (error) {
       toast.error("Falha na exportação", {
@@ -103,8 +103,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
           await registerAdminChange("reset", "Todos os dados foram redefinidos para os valores padrão");
           
           toast.success("Dados redefinidos", {
-            description: "Todos os dados foram redefinidos para os valores padrão.",
-            icon: <CheckCircle2 size={16} />
+            description: "Todos os dados foram redefinidos para os valores padrão."
           });
         } else {
           toast.error("Falha na redefinição", {
@@ -142,9 +141,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
         
         // Only show notification if it's been more than 2.5 seconds since the last one
         if (now - lastNotificationTime > 2500) {
-          toast.success("Sincronização concluída com sucesso", {
-            icon: <CheckCircle2 size={16} />
-          });
+          toast.success("Sincronização concluída com sucesso");
           setLastNotificationTime(now);
         }
       } else {
