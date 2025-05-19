@@ -49,13 +49,13 @@ export function SyncIndicator({
               </>
             ) : (
               <>
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                 <span>Sincronizado {formattedTime}</span>
               </>
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
+        <TooltipContent side="bottom" className="bg-background text-foreground border shadow-md">
           {isRefreshing ? (
             "Sincronizando dados..."
           ) : hasConflicts ? (

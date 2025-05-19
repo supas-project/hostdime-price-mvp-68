@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
@@ -14,6 +15,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const { toast: uiToast } = useToast();
   const { user } = useAuth();
   const { registerAdminChange, syncWithLatestData } = useDataSync();
+
+  // Track last notification to prevent duplicates
+  const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
 
   // Explicit check to ensure admin access
   const isAdminAccess = user?.email === "admin@hostdime.com.br";
@@ -25,10 +29,15 @@ export function useDataActions(setPriceData: (data: any) => void) {
       setHasConflicts(hasDataConflicts);
       
       if (hasDataConflicts && !isAdminAccess) {
-        toast.info("Changes detected", {
-          description: "The administrator modified the data. Click 'Update data' to synchronize.",
-          duration: 6000
-        });
+        const now = Date.now();
+        // Only show notification if it's been more than 10 seconds since the last one
+        if (now - lastNotificationTime > 10000) {
+          toast.info("Atualizações disponíveis", {
+            description: "O administrador modificou os dados. Clique em 'Atualizar dados' para sincronizar.",
+            duration: 5000
+          });
+          setLastNotificationTime(now);
+        }
       }
     } catch (error) {
       console.error("Error checking for conflicts:", error);
@@ -42,8 +51,8 @@ export function useDataActions(setPriceData: (data: any) => void) {
       const data = await PriceService.getAllData();
       
       if (!data) {
-        toast.error("Export failed", {
-          description: "No data available to export."
+        toast.error("Falha na exportação", {
+          description: "Nenhum dado disponível para exportar."
         });
         return;
       }
@@ -58,12 +67,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
-      toast.success("Export complete", {
-        description: "Data exported successfully."
+      toast.success("Exportação concluída", {
+        description: "Dados exportados com sucesso.",
+        icon: <CheckCircle2 className="h-5 w-5" />
       });
     } catch (error) {
-      toast.error("Export failed", {
-        description: "Could not export the data."
+      toast.error("Falha na exportação", {
+        description: "Não foi possível exportar os dados."
       });
     } finally {
       setIsExporting(false);
@@ -73,13 +83,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
   // Handle resetting data to initial state
   const handleResetData = async () => {
     if (!isAdminAccess) {
-      toast.error("Permission denied", {
-        description: "Only administrators can reset data."
+      toast.error("Permissão negada", {
+        description: "Somente administradores podem redefinir os dados."
       });
       return;
     }
 
-    if (confirm("Are you sure you want to reset all data to default? This action cannot be undone.")) {
+    if (confirm("Tem certeza que deseja redefinir todos os dados para o padrão? Esta ação não pode ser desfeita.")) {
       try {
         setIsResetting(true);
         
@@ -91,20 +101,21 @@ export function useDataActions(setPriceData: (data: any) => void) {
           setPriceData(resetData);
           
           // Register change to notify other users
-          await registerAdminChange("reset", "All data has been reset to default values");
+          await registerAdminChange("reset", "Todos os dados foram redefinidos para os valores padrão");
           
-          toast.success("Data reset", {
-            description: "All data has been reset to default values."
+          toast.success("Dados redefinidos", {
+            description: "Todos os dados foram redefinidos para os valores padrão.",
+            icon: <CheckCircle2 className="h-5 w-5" />
           });
         } else {
-          toast.error("Reset failed", {
-            description: "Could not reset the data."
+          toast.error("Falha na redefinição", {
+            description: "Não foi possível redefinir os dados."
           });
         }
       } catch (error) {
         console.error("Error resetting data:", error);
-        toast.error("Reset failed", {
-          description: "An error occurred while resetting data."
+        toast.error("Falha na redefinição", {
+          description: "Ocorreu um erro ao redefinir os dados."
         });
       } finally {
         setIsResetting(false);
@@ -114,6 +125,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
 
   // Function to force data update when there are multi-user conflicts
   const handleRefreshData = async () => {
+    const now = Date.now();
     try {
       setIsRefreshing(true);
       
@@ -129,18 +141,22 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Update sync state
         await syncWithLatestData();
         
-        toast.success("Data updated", {
-          description: "Data has been synchronized with the latest source."
-        });
+        // Only show notification if it's been more than 2.5 seconds since the last one
+        if (now - lastNotificationTime > 2500) {
+          toast.success("Sincronização concluída com sucesso", {
+            icon: <CheckCircle2 className="h-5 w-5" />,
+          });
+          setLastNotificationTime(now);
+        }
       } else {
-        toast.error("Update failed", {
-          description: "Could not synchronize data."
+        toast.error("Falha na atualização", {
+          description: "Não foi possível sincronizar os dados."
         });
       }
     } catch (error) {
       console.error("Error refreshing data:", error);
-      toast.error("Update failed", {
-        description: "An error occurred while updating data."
+      toast.error("Falha na atualização", {
+        description: "Ocorreu um erro ao atualizar os dados."
       });
     } finally {
       setIsRefreshing(false);

@@ -8,6 +8,7 @@ import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
 import { InitService } from "@/services/init-service";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
 
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -72,8 +73,9 @@ export default function PriceTableContainer() {
         } catch (error) {
           console.error("Error initializing price table:", error);
           if (error instanceof Error && !error.message.includes("Authentication")) {
-            toast.error("Erro ao inicializar tabela de preços", {
-              description: "Por favor, tente novamente ou contate o suporte."
+            toast.error("Erro ao inicializar tabela", {
+              description: "Por favor, tente novamente ou contate o suporte.",
+              icon: <AlertCircle className="h-5 w-5" />
             });
           }
           setIsInitialized(true); // Still mark as initialized to avoid loading forever

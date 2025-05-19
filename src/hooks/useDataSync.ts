@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Key for storing last update
 const LAST_UPDATE_KEY = 'price_data_last_update';
@@ -11,11 +12,15 @@ const LAST_UPDATE_KEY = 'price_data_last_update';
 // Check interval (in ms)
 const CHECK_INTERVAL = 10000; // 10 seconds
 
+// Time threshold to prevent duplicate notifications (ms)
+const NOTIFICATION_THRESHOLD = 2500; // 2.5 seconds
+
 export function useDataSync() {
   const { isAuthenticated, isAdmin, user } = useAuth();
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [hasUpdates, setHasUpdates] = useState(false);
   const { toast: uiToast } = useToast();
+  const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
 
   // Explicit check if user email is admin@hostdime.com.br
   const isAdminAccess = user?.email === "admin@hostdime.com.br";
@@ -88,8 +93,15 @@ export function useDataSync() {
         return;
       }
       
-      // If not admin, notify about the change
-      toast(`The administrator made changes: ${details}`);
+      // If not admin, notify about the change (with duplicate prevention)
+      const now = Date.now();
+      if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
+        toast.info("Alterações disponíveis", {
+          description: `O administrador fez alterações: ${details}`,
+          icon: <AlertCircle className="h-5 w-5" />
+        });
+        setLastNotificationTime(now);
+      }
       
       // Mark that there are available updates
       setHasUpdates(true);
@@ -109,6 +121,15 @@ export function useDataSync() {
     
     // Update local sync time for admin
     setLastSyncTime(new Date());
+    
+    // Show success notification to admin (with duplicate prevention)
+    const now = Date.now();
+    if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
+      toast.success("Alterações registradas com sucesso", {
+        icon: <CheckCircle2 className="h-5 w-5" />
+      });
+      setLastNotificationTime(now);
+    }
   };
   
   // Sync with latest updates
@@ -161,7 +182,16 @@ export function useDataSync() {
       
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
-        toast("Administrator has made changes. Click to update.");
+        
+        // Only show notification if it's been at least 2.5 seconds since the last one
+        const now = Date.now();
+        if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
+          toast.info("Alterações disponíveis", {
+            description: "O administrador fez alterações. Clique para atualizar.",
+            icon: <AlertCircle className="h-5 w-5" />
+          });
+          setLastNotificationTime(now);
+        }
       }
     }, CHECK_INTERVAL);
     
