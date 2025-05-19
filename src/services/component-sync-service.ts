@@ -167,19 +167,19 @@ export async function initExternalStorageData() {
           tags: item.tags,
           isHardware: false,
           metadata: {
-            // Map the storage metadata to compatible format
             features: item.metadata.benefits,
             discount: 0,
             quantity: 1,
             unitPrice: item.price,
-            // Using a custom field approach for storing additional metadata
-            customMetadata: {
+            // Store the additional metadata as features
+            // Instead of using customMetadata which isn't in the type
+            unitInfo: JSON.stringify({
               minCapacity: item.metadata.minCapacity,
               maxCapacity: item.metadata.maxCapacity,
               capacityUnit: item.metadata.capacityUnit,
               capacityStep: item.metadata.capacityStep,
               benefits: item.metadata.benefits
-            }
+            })
           }
         });
       }

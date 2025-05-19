@@ -36,8 +36,15 @@ export function useStorageTypes() {
               // Access metadata carefully with optional chaining and defaults
               const metadata = item.metadata || {};
               
-              // Type assertion for custom metadata properties that TypeScript doesn't know about
-              const customMetadata = metadata as any;
+              // Extract metadata from features or unitInfo if available
+              let additionalInfo: any = {};
+              try {
+                if (metadata.unitInfo) {
+                  additionalInfo = JSON.parse(metadata.unitInfo as string);
+                }
+              } catch (e) {
+                console.error('Error parsing unitInfo', e);
+              }
               
               return {
                 id: item.id,
@@ -48,12 +55,12 @@ export function useStorageTypes() {
                 type: item.type || 'storage',
                 subtype: item.subtype || 'block',
                 specs: item.specs || [],
-                // Use custom metadata properties with type assertion
-                minCapacity: customMetadata?.minCapacity ? Number(customMetadata.minCapacity) : 100,
-                maxCapacity: customMetadata?.maxCapacity ? Number(customMetadata.maxCapacity) : 1000,
-                capacityUnit: customMetadata?.capacityUnit ? String(customMetadata.capacityUnit) : 'GB',
-                capacityStep: customMetadata?.capacityStep ? Number(customMetadata.capacityStep) : 100,
-                benefits: Array.isArray(customMetadata?.benefits) ? customMetadata.benefits : []
+                // Use parsed unitInfo or fallback to defaults
+                minCapacity: additionalInfo.minCapacity || 100,
+                maxCapacity: additionalInfo.maxCapacity || 1000,
+                capacityUnit: additionalInfo.capacityUnit || 'GB',
+                capacityStep: additionalInfo.capacityStep || 100,
+                benefits: additionalInfo.benefits || metadata.features || []
               };
             });
 

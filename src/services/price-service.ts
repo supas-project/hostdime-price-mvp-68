@@ -35,7 +35,7 @@ export class PriceService {
       }
 
       // Type assertion to ensure we get a PriceData object
-      return jsonData as unknown as PriceData;
+      return jsonData as PriceData;
     } catch (err: any) {
       console.error("Error in getAllData:", err);
       throw new Error(err.message || "Failed to retrieve price data.");
@@ -265,8 +265,8 @@ export class PriceService {
       const { error } = await supabase
         .from(PriceService.PRICE_DATA_TABLE)
         .insert({
-          data: data as any, // Type assertion to satisfy TypeScript
-          updated_at: new Date()
+          data: data,
+          updated_at: new Date().toISOString() // Convert Date to ISO string
         });
 
       if (error) {
@@ -345,7 +345,7 @@ export class PriceService {
     }
   }
   
-  // Add missing methods for file imports
+  // Methods for file imports
   static importFromJSON(content: string): PriceData {
     try {
       const data = JSON.parse(content) as PriceData;
