@@ -23,17 +23,37 @@ export function OSContent({
 }: OSContentProps) {
   // Use propOptions if provided, otherwise fetch from the price service
   const { options, isLoading, error } = useComponentOptions('os');
-  const finalOptions = propOptions?.length ? propOptions : options; // Use propOptions if available, fall back to fetched options
-  
+  const [finalOptions, setFinalOptions] = useState<ComponentOption[]>([]);
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
   useEffect(() => {
-    // Forçar atualização dos dados da tabela de preços
+    // Set final options based on propOptions or fetched options
+    if (propOptions?.length) {
+      setFinalOptions(propOptions);
+    } else if (options?.length) {
+      setFinalOptions(options);
+    }
+  }, [propOptions, options]);
+  
+  useEffect(() => {
+    // Try to load data from the price service, but don't show errors if not authenticated
     const updateFromPriceTable = async () => {
       try {
-        await PriceService.forceRefreshFromLatestSource();
+        const { data: session } = await PriceService.supabase.auth.getSession();
+        if (!session.session) {
+          console.log("User not authenticated, skipping OS data refresh");
+          return;
+        }
+        
+        await PriceService.forceRefreshFromLatestSource().catch(error => {
+          // Only log authentication errors, don't display them to users
+          if (!error.message.includes("Authentication")) {
+            console.error("Erro ao carregar dados de SO da tabela de preços:", error);
+          }
+        });
       } catch (error) {
-        console.error("Erro ao carregar dados de SO da tabela de preços:", error);
+        // Silent fail - just for logging purposes
+        console.log("Error during OS data refresh:", error);
       }
     };
     
@@ -43,7 +63,7 @@ export function OSContent({
     console.log("OSContent options from useComponentOptions:", finalOptions);
     
     if (finalOptions.length === 0 && !isLoading) {
-      console.warn("Nenhuma opção de SO disponível. Verifique o mapeamento de categorias no serviço de preços.");
+      console.warn("Nenhuma opção de SO disponível. Verificando opções alternativas.");
     }
   }, [finalOptions.length]);
   

@@ -8,31 +8,60 @@ import { serverData } from "@/data/server-components";
 import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
 import { PriceService } from "@/services/price-service";
 import { initializeServerCategories } from "@/services/component-sync-service";
+import { toast } from "sonner";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [dataInitialized, setDataInitialized] = useState(false);
+  const [initializationAttempted, setInitializationAttempted] = useState(false);
   
   // Inicializar dados da tabela de preços
   useEffect(() => {
     const initData = async () => {
       try {
-        // Primeiro, forçar atualização dos dados do serviço de preços
-        await PriceService.forceRefreshFromLatestSource();
+        // Check authentication first
+        const { data: session } = await PriceService.supabase.auth.getSession();
         
-        // Então inicializar categorias necessárias se estiverem faltando
-        await initializeServerCategories();
+        if (!session.session) {
+          console.log("User not authenticated, skipping data initialization in WizardContext");
+          setDataInitialized(true);
+          setInitializationAttempted(true);
+          return;
+        }
         
-        // Marcar como inicializado
-        setDataInitialized(true);
+        console.log("User authenticated, initializing data in WizardContext");
+        
+        try {
+          // Primeiro, forçar atualização dos dados do serviço de preços
+          await PriceService.forceRefreshFromLatestSource();
+          
+          // Então inicializar categorias necessárias se estiverem faltando
+          await initializeServerCategories();
+          
+          // Marcar como inicializado
+          setDataInitialized(true);
+        } catch (error) {
+          console.error("Erro ao carregar dados iniciais:", error);
+          if (error instanceof Error && !error.message.includes("Authentication")) {
+            toast.error("Erro ao inicializar categorias", {
+              description: "Verifique o console para mais detalhes."
+            });
+          }
+          setDataInitialized(true); // Mark as initialized anyway to avoid loading forever
+        }
       } catch (error) {
-        console.error("Erro ao carregar dados iniciais:", error);
+        console.error("Erro ao verificar autenticação:", error);
+        setDataInitialized(true); // Mark as initialized anyway to avoid loading forever
+      } finally {
+        setInitializationAttempted(true);
       }
     };
     
-    initData();
-  }, []);
+    if (!initializationAttempted) {
+      initData();
+    }
+  }, [initializationAttempted]);
 
   const {
     selectedComponents,
@@ -140,7 +169,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     setAutoAdvancedSteps([]);
   };
 
-  if (!dataInitialized && !categoriesLoaded) {
+  if (!dataInitialized && !categoriesLoaded && initializationAttempted) {
     // Renderizar um estado de carregamento até que os dados estejam prontos
     return <div className="flex items-center justify-center min-h-[400px]">
       <div className="flex flex-col items-center gap-2">

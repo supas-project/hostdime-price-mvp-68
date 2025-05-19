@@ -60,6 +60,8 @@ export default function PriceTableContainer() {
     async function initialize() {
       if (isAuthenticated) {
         try {
+          console.log("Authenticated user, attempting to initialize data");
+          
           // Initialize data if needed
           await InitService.initializeData();
           
@@ -70,8 +72,8 @@ export default function PriceTableContainer() {
         } catch (error) {
           console.error("Error initializing price table:", error);
           if (error instanceof Error && !error.message.includes("Authentication")) {
-            toast.error("Error initializing price table", {
-              description: "Please try again or contact support."
+            toast.error("Erro ao inicializar tabela de preços", {
+              description: "Por favor, tente novamente ou contate o suporte."
             });
           }
           setIsInitialized(true); // Still mark as initialized to avoid loading forever
@@ -84,6 +86,7 @@ export default function PriceTableContainer() {
         
         return () => clearInterval(intervalId);
       } else {
+        console.log("User not authenticated, skipping initialization");
         setIsInitialized(true);
       }
     }
