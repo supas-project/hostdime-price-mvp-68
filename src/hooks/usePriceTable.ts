@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 export function usePriceTable() {
   const [priceData, setPriceData] = useState<PriceData>({});
   const [activeTab, setActiveTab] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
@@ -18,10 +18,10 @@ export function usePriceTable() {
   const { toast } = useToast();
 
   // Load initial data
-  const loadPriceData = () => {
+  const loadPriceData = async () => {
     try {
       setIsLoading(true);
-      const data = PriceService.getAllData();
+      const data = await PriceService.getAllData();
       
       // Process items to ensure they have the appropriate tags
       Object.values(data).forEach(category => {
@@ -73,6 +73,48 @@ export function usePriceTable() {
     return () => {
       PriceService.removeDataChangeListener(handleDataChange);
     };
+  }, []);
+
+  // Add real-time subscription to database changes
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      try {
+        // Subscribe to changes in price_data table
+        const { data: { subscription } } = await supabase
+          .channel('price_data_changes')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'price_data' 
+          }, () => {
+            // When we detect a change, reload the data
+            loadPriceData();
+          })
+          .subscribe();
+          
+        // Also subscribe to updates table for notifications
+        const { data: { subscription: updatesSub } } = await supabase
+          .channel('price_data_updates_changes')
+          .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'price_data_updates' 
+          }, () => {
+            loadPriceData();
+          })
+          .subscribe();
+          
+        // Cleanup function
+        return () => {
+          subscription.unsubscribe();
+          updatesSub.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Erro ao configurar subscrição em tempo real:", error);
+      }
+    };
+    
+    setupRealtimeSubscription();
   }, []);
 
   // Ensure that a tab is active when data is loaded

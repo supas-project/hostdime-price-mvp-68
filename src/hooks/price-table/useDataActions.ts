@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
@@ -18,9 +19,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   // Verificar periodicamente se há conflitos de dados
-  useEffect(() => {
-    const checkForConflicts = () => {
-      const hasDataConflicts = PriceService.checkForDataConflicts();
+  const checkForConflicts = async () => {
+    try {
+      const hasDataConflicts = await PriceService.checkForDataConflicts();
       setHasConflicts(hasDataConflicts);
       
       if (hasDataConflicts && !isAdminAccess) {
@@ -29,22 +30,16 @@ export function useDataActions(setPriceData: (data: any) => void) {
           duration: 6000
         });
       }
-    };
-    
-    // Verificar inicialmente
-    checkForConflicts();
-    
-    // Verificar periodicamente cada 30 segundos
-    const intervalId = setInterval(checkForConflicts, 30000);
-    
-    return () => clearInterval(intervalId);
-  }, [toast, isAdminAccess]);
+    } catch (error) {
+      console.error("Erro ao verificar conflitos:", error);
+    }
+  };
 
   // Handle exporting data as JSON
-  const handleExportData = () => {
+  const handleExportData = async () => {
     try {
       setIsExporting(true);
-      const data = PriceService.getAllData();
+      const data = await PriceService.getAllData();
       const dataStr = JSON.stringify(data, null, 2);
       const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
       
@@ -68,7 +63,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
   };
 
   // Handle resetting data to initial state
-  const handleResetData = () => {
+  const handleResetData = async () => {
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem resetar os dados."
@@ -81,13 +76,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
         setIsResetting(true);
         
         // Reset data in PriceService
-        const resetData = PriceService.resetData();
+        const resetData = await PriceService.resetData();
         
         // Update state with reset data
         setPriceData(resetData);
         
         // Registre a alteração para notificar outros usuários
-        registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
+        await registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
         
         toast.success("Dados resetados", {
           description: "Todos os dados foram redefinidos para o padrão inicial."
@@ -103,19 +98,19 @@ export function useDataActions(setPriceData: (data: any) => void) {
   };
 
   // Função para forçar atualização dos dados quando houver conflitos multiusuário
-  const handleRefreshData = () => {
+  const handleRefreshData = async () => {
     try {
       setIsRefreshing(true);
       
-      // Força recarregar dados do localStorage (possivelmente atualizados por outro usuário)
-      const refreshedData = PriceService.forceRefreshFromLatestSource();
+      // Força recarregar dados do Supabase (possivelmente atualizados por outro usuário)
+      const refreshedData = await PriceService.forceRefreshFromLatestSource();
       
       // Atualiza o estado com os dados atualizados
       setPriceData(refreshedData);
       setHasConflicts(false);
       
       // Atualiza o estado de sincronização
-      syncWithLatestData();
+      await syncWithLatestData();
       
       toast.success("Dados atualizados", {
         description: "Os dados foram sincronizados com a fonte mais recente."
@@ -130,8 +125,8 @@ export function useDataActions(setPriceData: (data: any) => void) {
   };
 
   // Verifica se há conflitos de dados e notifica se necessário
-  const checkForDataConflicts = (): boolean => {
-    return PriceService.checkForDataConflicts();
+  const checkForDataConflicts = async (): Promise<boolean> => {
+    return await PriceService.checkForDataConflicts();
   };
 
   return {
@@ -142,6 +137,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     handleExportData,
     handleResetData,
     handleRefreshData,
-    checkForDataConflicts
+    checkForDataConflicts,
+    checkForConflicts
   };
 }

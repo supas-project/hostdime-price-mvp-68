@@ -1,15 +1,8 @@
+
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
 import { toast } from "@/utils/toast-utils";
-
-// Chave para armazenamento local
-const PRICE_DATA_KEY = 'priceData';
-
-// Flag para controlar operações concorrentes de gravação
-let isWriteLocked = false;
-
-// Timestamp da última atualização para controle de versão
-let lastUpdateTimestamp = Date.now();
+import { supabase } from "@/lib/supabase";
 
 // Dados iniciais carregados dos componentes do servidor
 const initialPriceData: PriceData = {
@@ -55,200 +48,6 @@ const initialPriceData: PriceData = {
 type DataChangeListener = (data: PriceData) => void;
 let dataChangeListeners: DataChangeListener[] = [];
 
-// Sistema de controle de versão para detecção de conflitos
-interface VersionedData {
-  data: PriceData;
-  version: number;
-}
-
-// Controle de sessão para diagnóstico multiusuário
-const SESSION_ID = `user_${Math.random().toString(36).substring(2, 10)}`;
-const sessionStartTime = Date.now();
-
-// Carrega dados do localStorage ou usa dados iniciais
-const loadDataFromStorage = (): PriceData => {
-  try {
-    const storedData = localStorage.getItem(PRICE_DATA_KEY);
-    if (storedData) {
-      try {
-        // Tenta fazer parse dos dados, que podem incluir controle de versão
-        const parsedData = JSON.parse(storedData);
-        
-        // Verifica se os dados têm o formato versionado
-        if (parsedData && parsedData.version && parsedData.data) {
-          // Atualiza o timestamp de última atualização
-          lastUpdateTimestamp = parsedData.version;
-          return parsedData.data;
-        }
-        
-        // Compatibilidade com dados antigos (sem versão)
-        return parsedData;
-      } catch (parseError) {
-        console.error('Erro ao fazer parse dos dados:', parseError);
-        // Registra erro de sessão para diagnóstico
-        logSessionEvent('error', 'parse_data_error', { error: String(parseError) });
-        
-        toast.error("Erro ao processar dados armazenados");
-        return initialPriceData;
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao carregar dados da tabela de preços:', error);
-    // Notificar o usuário sobre o erro de carregamento
-    toast.error("Não foi possível carregar os dados salvos. Usando dados padrão.");
-    
-    // Registra erro de sessão para diagnóstico
-    logSessionEvent('error', 'load_data_error', { error: String(error) });
-  }
-  
-  // Salva dados iniciais no localStorage se não existirem
-  const versionedData: VersionedData = {
-    data: initialPriceData,
-    version: Date.now()
-  };
-  
-  localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
-  return initialPriceData;
-};
-
-// Salva dados no localStorage e notifica observadores
-const saveDataToStorage = (data: PriceData): void => {
-  try {
-    // Verificar se há uma gravação em andamento
-    if (isWriteLocked) {
-      console.warn('Tentativa de gravação durante operação de gravação em andamento');
-      throw new Error("Operação em andamento. Tente novamente.");
-    }
-    
-    // Adquire o lock
-    isWriteLocked = true;
-    
-    // Verifica se há atualizações concorrentes
-    const currentData = localStorage.getItem(PRICE_DATA_KEY);
-    if (currentData) {
-      try {
-        const parsedData = JSON.parse(currentData);
-        if (parsedData && parsedData.version && parsedData.version > lastUpdateTimestamp) {
-          // Detectou atualização concorrente
-          console.warn("Conflito de dados detectado: outro usuário modificou os dados");
-          logSessionEvent('warn', 'concurrent_update_detected', {
-            localTimestamp: lastUpdateTimestamp,
-            remoteTimestamp: parsedData.version
-          });
-          
-          toast.warning("Alterações feitas por outro usuário detectadas. Atualizando dados.");
-          
-          // Atualiza localmente com os dados mais recentes
-          lastUpdateTimestamp = parsedData.version;
-          isWriteLocked = false;
-          
-          // Notifica sobre dados atualizados, mas não salva os dados atuais (evita sobreposição)
-          notifyDataChangeListeners(parsedData.data);
-          
-          throw new Error("Dados modificados por outro usuário. Por favor, tente novamente após atualização.");
-        }
-      } catch (parseError) {
-        // Erro ao analisar dados existentes, continua com a gravação
-        console.warn('Erro ao verificar versão de dados existentes:', parseError);
-      }
-    }
-    
-    // Atualiza a versão para esta gravação
-    const newTimestamp = Date.now();
-    lastUpdateTimestamp = newTimestamp;
-    
-    // Prepara dados versionados
-    const versionedData: VersionedData = {
-      data,
-      version: newTimestamp
-    };
-    
-    // Salva no localStorage
-    localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
-    
-    // Registra evento de atualização
-    logSessionEvent('info', 'data_updated', { timestamp: newTimestamp });
-    
-    notifyDataChangeListeners(data);
-  } catch (error) {
-    console.error('Erro ao salvar dados da tabela de preços:', error);
-    toast.error("Não foi possível salvar os dados. Verifique o espaço disponível no navegador.");
-    
-    // Registra erro para diagnóstico
-    logSessionEvent('error', 'save_data_error', { error: String(error) });
-    
-    throw new Error("Falha ao salvar dados no armazenamento local");
-  } finally {
-    // Libera o lock sempre, mesmo em caso de erro
-    isWriteLocked = false;
-  }
-};
-
-// Log de eventos de sessão para diagnóstico multiusuário
-type LogLevel = 'info' | 'warn' | 'error';
-interface SessionEvent {
-  sessionId: string;
-  timestamp: number;
-  level: LogLevel;
-  event: string;
-  details?: any;
-}
-
-// Armazenamento de eventos de sessão para diagnóstico
-const SESSION_EVENTS_KEY = 'session_events';
-const MAX_SESSION_EVENTS = 100;
-
-// Função para registrar eventos de sessão
-const logSessionEvent = (level: LogLevel, event: string, details?: any) => {
-  try {
-    // Criar novo evento de sessão
-    const newEvent: SessionEvent = {
-      sessionId: SESSION_ID,
-      timestamp: Date.now(),
-      level,
-      event,
-      details
-    };
-    
-    // Recuperar eventos existentes ou inicializar array vazio
-    let events: SessionEvent[] = [];
-    const storedEvents = localStorage.getItem(SESSION_EVENTS_KEY);
-    
-    if (storedEvents) {
-      try {
-        events = JSON.parse(storedEvents);
-      } catch (e) {
-        console.warn('Erro ao processar eventos de sessão armazenados');
-        events = [];
-      }
-    }
-    
-    // Adicionar novo evento e limitar o tamanho do histórico
-    events.push(newEvent);
-    if (events.length > MAX_SESSION_EVENTS) {
-      events = events.slice(-MAX_SESSION_EVENTS); // Manter apenas os mais recentes
-    }
-    
-    // Salvar eventos atualizados
-    localStorage.setItem(SESSION_EVENTS_KEY, JSON.stringify(events));
-  } catch (e) {
-    // Falha silenciosa em caso de erro no log (não deve interromper a operação principal)
-    console.warn('Falha ao registrar evento de sessão:', e);
-  }
-};
-
-// Notifica observadores sobre mudanças nos dados
-const notifyDataChangeListeners = (data: PriceData): void => {
-  dataChangeListeners.forEach(listener => {
-    try {
-      listener(data);
-    } catch (error) {
-      console.error('Erro ao notificar listener sobre mudança de dados:', error);
-      logSessionEvent('error', 'listener_notification_error', { error: String(error) });
-    }
-  });
-};
-
 // Gera um ID único
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
@@ -271,6 +70,17 @@ const validateItem = (item: Partial<PriceItem>): string | null => {
   return null; // Item válido
 };
 
+// Notifica observadores sobre mudanças nos dados
+const notifyDataChangeListeners = (data: PriceData): void => {
+  dataChangeListeners.forEach(listener => {
+    try {
+      listener(data);
+    } catch (error) {
+      console.error('Erro ao notificar listener sobre mudança de dados:', error);
+    }
+  });
+};
+
 // Funções para manipular dados de preços
 export const PriceService = {
   // Adiciona um listener para mudanças de dados
@@ -284,28 +94,116 @@ export const PriceService = {
   },
   
   // Obtém todos os dados
-  getAllData: (): PriceData => {
-    return loadDataFromStorage();
+  getAllData: async (): Promise<PriceData> => {
+    try {
+      // Tentar carregar do Supabase
+      const { data, error } = await supabase
+        .from('price_data')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error) {
+        console.error('Erro ao carregar dados:', error);
+        // Se houver erro, retorna dados iniciais
+        return initialPriceData;
+      }
+      
+      if (!data || !data.data) {
+        // Se não existir dados, salva dados iniciais
+        await PriceService.saveDataToSupabase(initialPriceData);
+        return initialPriceData;
+      }
+      
+      // Dados recuperados com sucesso
+      return data.data as PriceData;
+    } catch (error) {
+      console.error('Erro ao obter dados:', error);
+      return initialPriceData;
+    }
+  },
+  
+  // Salvar dados no Supabase
+  saveDataToSupabase: async (data: PriceData): Promise<void> => {
+    try {
+      // Verificar se já existem dados
+      const { data: existingData, error: checkError } = await supabase
+        .from('price_data')
+        .select('id')
+        .limit(1)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Erro ao verificar dados existentes:', checkError);
+        throw new Error('Falha ao verificar dados existentes no banco');
+      }
+      
+      if (existingData) {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from('price_data')
+          .update({ 
+            data: data,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingData.id);
+          
+        if (error) {
+          console.error('Erro ao atualizar dados:', error);
+          throw new Error('Falha ao atualizar dados no banco');
+        }
+      } else {
+        // Inserir novo registro
+        const { error } = await supabase
+          .from('price_data')
+          .insert([{ 
+            data: data,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+          
+        if (error) {
+          console.error('Erro ao inserir dados:', error);
+          throw new Error('Falha ao inserir dados no banco');
+        }
+      }
+      
+      // Registrar atualização
+      await supabase
+        .from('price_data_updates')
+        .insert([{
+          type: 'data_update',
+          details: 'Dados de preços atualizados',
+          updated_at: new Date().toISOString()
+        }]);
+        
+      // Notificar observadores
+      notifyDataChangeListeners(data);
+    } catch (error) {
+      console.error('Erro ao salvar dados:', error);
+      throw error;
+    }
   },
   
   // Obtém uma categoria específica
-  getCategory: (categoryId: string): PriceCategory | null => {
+  getCategory: async (categoryId: string): Promise<PriceCategory | null> => {
     if (!categoryId) {
       console.error('ID de categoria inválido ou não fornecido');
       return null;
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     return data[categoryId] || null;
   },
   
   // Adiciona uma nova categoria
-  addCategory: (category: Omit<PriceCategory, 'id'>): PriceCategory => {
+  addCategory: async (category: Omit<PriceCategory, 'id'>): Promise<PriceCategory> => {
     if (!category.name || category.name.trim() === '') {
       throw new Error("Nome da categoria é obrigatório");
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     const id = category.name.toLowerCase().replace(/\s+/g, '-');
     
     // Verifica se a categoria já existe
@@ -320,17 +218,17 @@ export const PriceService = {
     };
     
     data[id] = newCategory;
-    saveDataToStorage(data);
+    await PriceService.saveDataToSupabase(data);
     return newCategory;
   },
   
   // Atualiza uma categoria
-  updateCategory: (categoryId: string, updates: Partial<PriceCategory>): PriceCategory => {
+  updateCategory: async (categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     
     if (!data[categoryId]) {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
@@ -347,28 +245,28 @@ export const PriceService = {
       id: categoryId
     };
     
-    saveDataToStorage(data);
+    await PriceService.saveDataToSupabase(data);
     return data[categoryId];
   },
   
   // Remove uma categoria
-  deleteCategory: (categoryId: string): void => {
+  deleteCategory: async (categoryId: string): Promise<void> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     
     if (!data[categoryId]) {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
     delete data[categoryId];
-    saveDataToStorage(data);
+    await PriceService.saveDataToSupabase(data);
   },
   
   // Adiciona um item a uma categoria
-  addItem: (categoryId: string, item: Omit<PriceItem, 'id'>): PriceItem => {
+  addItem: async (categoryId: string, item: Omit<PriceItem, 'id'>): Promise<PriceItem> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
     }
@@ -378,7 +276,7 @@ export const PriceService = {
       throw new Error(validationError);
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     
     if (!data[categoryId]) {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
@@ -415,12 +313,12 @@ export const PriceService = {
     };
     
     // Salva os dados atualizados
-    saveDataToStorage(updatedData);
+    await PriceService.saveDataToSupabase(updatedData);
     return newItem;
   },
   
   // Atualiza um item
-  updateItem: (categoryId: string, itemId: string, updates: Partial<PriceItem>): PriceItem => {
+  updateItem: async (categoryId: string, itemId: string, updates: Partial<PriceItem>): Promise<PriceItem> => {
     if (!categoryId || !itemId) {
       throw new Error("ID de categoria ou ID de item não fornecido");
     }
@@ -434,7 +332,7 @@ export const PriceService = {
       throw new Error("Nome do item não pode ser vazio");
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     
     if (!data[categoryId]) {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
@@ -471,17 +369,17 @@ export const PriceService = {
       price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price
     };
     
-    saveDataToStorage(data);
+    await PriceService.saveDataToSupabase(data);
     return data[categoryId].items[itemIndex];
   },
   
   // Remove um item
-  deleteItem: (categoryId: string, itemId: string): void => {
+  deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
     if (!categoryId || !itemId) {
       throw new Error("ID de categoria ou ID de item não fornecido");
     }
     
-    const data = loadDataFromStorage();
+    const data = await PriceService.getAllData();
     
     if (!data[categoryId]) {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
@@ -494,11 +392,11 @@ export const PriceService = {
     }
     
     data[categoryId].items.splice(itemIndex, 1);
-    saveDataToStorage(data);
+    await PriceService.saveDataToSupabase(data);
   },
   
   // Importa dados de JSON
-  importFromJSON: (jsonData: string): PriceData => {
+  importFromJSON: async (jsonData: string): Promise<PriceData> => {
     try {
       const parsedData = JSON.parse(jsonData);
       
@@ -508,7 +406,7 @@ export const PriceService = {
       }
       
       // Mescla com dados existentes
-      const existingData = loadDataFromStorage();
+      const existingData = await PriceService.getAllData();
       const mergedData = { ...existingData };
       
       Object.entries(parsedData).forEach(([categoryId, category]) => {
@@ -534,7 +432,7 @@ export const PriceService = {
         };
       });
       
-      saveDataToStorage(mergedData);
+      await PriceService.saveDataToSupabase(mergedData);
       return mergedData;
     } catch (error) {
       console.error('Erro ao importar dados JSON:', error);
@@ -544,7 +442,7 @@ export const PriceService = {
   },
   
   // Analisa e importa dados CSV
-  importFromCSV: (csvData: string): PriceData => {
+  importFromCSV: async (csvData: string): Promise<PriceData> => {
     try {
       const lines = csvData.split('\n');
       
@@ -566,7 +464,7 @@ export const PriceService = {
       }
       
       // Processa linhas de dados
-      const existingData = loadDataFromStorage();
+      const existingData = await PriceService.getAllData();
       const mergedData: PriceData = { ...existingData };
       let importedItems = 0;
       let invalidItems = 0;
@@ -635,7 +533,7 @@ export const PriceService = {
         importedItems++;
       }
       
-      saveDataToStorage(mergedData);
+      await PriceService.saveDataToSupabase(mergedData);
       
       if (invalidItems > 0) {
         toast.info(`Importados ${importedItems} itens. ${invalidItems} itens foram ignorados por terem formato inválido.`);
@@ -650,106 +548,63 @@ export const PriceService = {
   },
   
   // Reinicia dados para o estado inicial
-  resetData: (): PriceData => {
-    saveDataToStorage(initialPriceData);
+  resetData: async (): Promise<PriceData> => {
+    await PriceService.saveDataToSupabase(initialPriceData);
     return initialPriceData;
   },
   
-  // Nova funcionalidade: obter informações de diagnóstico multiusuário
-  getDiagnosticInfo: () => {
+  // Verificar se há conflitos de dados com outras sessões
+  checkForDataConflicts: async (): Promise<boolean> => {
     try {
-      // Recuperar eventos de sessão
-      const storedEvents = localStorage.getItem(SESSION_EVENTS_KEY) || '[]';
-      const events = JSON.parse(storedEvents) as SessionEvent[];
+      // Verifica se há atualizações mais recentes
+      const { data, error } = await supabase
+        .from('price_data_updates')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
       
-      return {
-        sessionId: SESSION_ID,
-        sessionStartTime,
-        sessionDuration: Date.now() - sessionStartTime,
-        lastUpdateTimestamp,
-        isWriteLocked,
-        activeListeners: dataChangeListeners.length,
-        recentEvents: events.slice(-20) // Retornar apenas os 20 eventos mais recentes
-      };
-    } catch (e) {
-      console.error('Erro ao obter informações de diagnóstico:', e);
-      return {
-        sessionId: SESSION_ID,
-        error: 'Falha ao obter informações de diagnóstico'
-      };
-    }
-  },
-  
-  // Nova funcionalidade: verificar se há conflitos de dados com outras sessões
-  checkForDataConflicts: () => {
-    try {
-      const storedData = localStorage.getItem(PRICE_DATA_KEY);
-      if (!storedData) return false;
-      
-      const parsedData = JSON.parse(storedData);
-      if (parsedData && parsedData.version && parsedData.version > lastUpdateTimestamp) {
-        // Conflito detectado: dados mais recentes disponíveis
-        logSessionEvent('info', 'conflict_check_detected_newer_data', { 
-          localTimestamp: lastUpdateTimestamp,
-          remoteTimestamp: parsedData.version 
-        });
-        return true;
+      if (error || !data) {
+        return false;
       }
-      return false;
+      
+      // Se houver dados e o usuário não tiver sincronizado ainda, há conflito
+      return true;
     } catch (e) {
       console.error('Erro ao verificar conflitos de dados:', e);
-      logSessionEvent('error', 'conflict_check_error', { error: String(e) });
       return false;
     }
   },
   
-  // Nova funcionalidade: forçar atualização de dados da fonte mais recente
-  forceRefreshFromLatestSource: (): PriceData => {
-    logSessionEvent('info', 'manual_refresh_requested');
-    const data = loadDataFromStorage();
+  // Forçar atualização de dados da fonte mais recente
+  forceRefreshFromLatestSource: async (): Promise<PriceData> => {
+    console.info('Forçando atualização de dados da fonte mais recente');
+    const data = await PriceService.getAllData();
     notifyDataChangeListeners(data);
     return data;
   },
   
   // Inicialização do serviço
-  initialize: () => {
-    // Registrar início de sessão
-    logSessionEvent('info', 'session_started', {
-      userAgent: navigator.userAgent,
-      timestamp: sessionStartTime
-    });
-    
-    // Verificar se existem dados armazenados
+  initialize: async () => {
     try {
-      const storedData = localStorage.getItem(PRICE_DATA_KEY);
-      if (!storedData) {
-        console.log('Inicializando dados da tabela de preços...');
-        saveDataToStorage(initialPriceData);
+      // Verificar se as tabelas necessárias existem
+      const { error } = await supabase
+        .from('price_data')
+        .select('id')
+        .limit(1);
+      
+      if (error && error.code === 'PGRST204') {
+        console.error('Tabela price_data não existe. Será necessário criá-la.');
       } else {
-        // Verifica a versão dos dados existentes
-        try {
-          const parsedData = JSON.parse(storedData);
-          if (parsedData && parsedData.version) {
-            lastUpdateTimestamp = parsedData.version;
-            logSessionEvent('info', 'loaded_versioned_data', { version: parsedData.version });
-          } else {
-            // Dados antigos sem versão - atualizar para o novo formato
-            const versionedData: VersionedData = {
-              data: parsedData,
-              version: Date.now()
-            };
-            localStorage.setItem(PRICE_DATA_KEY, JSON.stringify(versionedData));
-            logSessionEvent('info', 'migrated_to_versioned_data');
-          }
-        } catch (e) {
-          console.warn('Erro ao verificar versão dos dados:', e);
-        }
+        console.log('Conexão com banco de dados estabelecida.');
       }
+      
+      // Carregar dados iniciais se necessário
+      const data = await PriceService.getAllData();
+      console.log('Dados carregados com sucesso.');
     } catch (error) {
       console.error('Erro ao inicializar serviço de preços:', error);
       toast.error("Não foi possível inicializar o serviço de preços.");
-      
-      logSessionEvent('error', 'initialization_error', { error: String(error) });
     }
   }
 };

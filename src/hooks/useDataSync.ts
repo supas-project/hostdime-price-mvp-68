@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 // Chave para armazenar a última atualização
 const LAST_UPDATE_KEY = 'price_data_last_update';
@@ -16,16 +17,24 @@ export function useDataSync() {
   const { toast } = useToast();
 
   // Verificar se há atualizações disponíveis
-  const checkForUpdates = () => {
-    const lastUpdateStr = localStorage.getItem(LAST_UPDATE_KEY);
-    
-    if (!lastUpdateStr) {
-      return false;
-    }
-    
+  const checkForUpdates = async () => {
     try {
-      const lastStoredUpdate = JSON.parse(lastUpdateStr);
-      const storedTime = new Date(lastStoredUpdate.timestamp);
+      // Buscar a última atualização do banco de dados
+      const { data, error } = await supabase
+        .from('price_data_updates')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+        
+      if (error) {
+        console.error("Erro ao verificar atualizações:", error);
+        return false;
+      }
+      
+      if (!data) return false;
+      
+      const storedTime = new Date(data.updated_at);
       
       // Verificar se a última atualização é mais recente que o último sync
       if (lastSyncTime && storedTime > lastSyncTime) {
@@ -39,57 +48,77 @@ export function useDataSync() {
   };
 
   // Notificar sobre uma mudança nos dados
-  const notifyDataChange = (type: string, details: string, initiator = 'system') => {
-    // Salvar timestamp da atualização
-    const updateInfo = {
-      timestamp: new Date().toISOString(),
-      type,
-      details,
-      initiator
-    };
-    
-    localStorage.setItem(LAST_UPDATE_KEY, JSON.stringify(updateInfo));
-    
-    // Se for admin, apenas registra a mudança mas não notifica
-    if (isAdmin) {
-      console.log("Mudança de dados registrada:", updateInfo);
-      return;
+  const notifyDataChange = async (type: string, details: string, initiator = 'system') => {
+    try {
+      // Registrar atualização no banco de dados
+      const timestamp = new Date().toISOString();
+      
+      const { error } = await supabase
+        .from('price_data_updates')
+        .insert([
+          { 
+            type,
+            details,
+            initiator,
+            updated_at: timestamp
+          }
+        ]);
+        
+      if (error) {
+        console.error("Erro ao registrar atualização:", error);
+      }
+      
+      // Se for admin, apenas registra a mudança mas não notifica
+      if (isAdmin) {
+        console.log("Mudança de dados registrada:", { type, details, timestamp });
+        return;
+      }
+      
+      // Se não for admin, notifica sobre a mudança
+      toast.info("Dados atualizados", {
+        description: `O administrador realizou alterações: ${details}`,
+        duration: 5000
+      });
+      
+      // Marca que existem atualizações disponíveis
+      setHasUpdates(true);
+    } catch (error) {
+      console.error("Erro ao notificar mudança de dados:", error);
     }
-    
-    // Se não for admin, notifica sobre a mudança
-    toast.info("Dados atualizados", {
-      description: `O administrador realizou alterações: ${details}`,
-      duration: 5000
-    });
-    
-    // Marca que existem atualizações disponíveis
-    setHasUpdates(true);
   };
   
   // Registra uma atualização feita pelo admin
-  const registerAdminChange = (type: string, details: string) => {
+  const registerAdminChange = async (type: string, details: string) => {
     if (!isAdmin) return; // Apenas admin pode registrar mudanças
     
-    notifyDataChange(type, details, 'admin');
+    await notifyDataChange(type, details, 'admin');
     
     // Atualiza o tempo local de sincronização para o admin
     setLastSyncTime(new Date());
   };
   
   // Sincronizar com as últimas atualizações
-  const syncWithLatestData = () => {
-    const lastUpdateStr = localStorage.getItem(LAST_UPDATE_KEY);
-    
-    if (lastUpdateStr) {
-      try {
-        const lastStoredUpdate = JSON.parse(lastUpdateStr);
-        setLastSyncTime(new Date(lastStoredUpdate.timestamp));
-        setHasUpdates(false);
-        
-        return true;
-      } catch (error) {
-        console.error("Erro ao sincronizar com os dados mais recentes:", error);
+  const syncWithLatestData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('price_data_updates')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error) {
+        console.error("Erro ao buscar última atualização:", error);
+        return false;
       }
+      
+      if (data) {
+        setLastSyncTime(new Date(data.updated_at));
+        setHasUpdates(false);
+        return true;
+      }
+    } catch (error) {
+      console.error("Erro ao sincronizar com os dados mais recentes:", error);
     }
     
     return false;
@@ -102,8 +131,8 @@ export function useDataSync() {
       return;
     }
     
-    const intervalId = setInterval(() => {
-      const hasNewUpdates = checkForUpdates();
+    const intervalId = setInterval(async () => {
+      const hasNewUpdates = await checkForUpdates();
       
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
@@ -120,20 +149,29 @@ export function useDataSync() {
 
   // Inicializar o tempo de sincronização
   useEffect(() => {
-    const lastUpdateStr = localStorage.getItem(LAST_UPDATE_KEY);
-    
-    if (lastUpdateStr) {
+    const initSyncTime = async () => {
       try {
-        const lastStoredUpdate = JSON.parse(lastUpdateStr);
-        setLastSyncTime(new Date(lastStoredUpdate.timestamp));
+        const { data, error } = await supabase
+          .from('price_data_updates')
+          .select('updated_at')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          setLastSyncTime(new Date(data.updated_at));
+        } else {
+          // Se não houver registro anterior, inicializa com o tempo atual
+          setLastSyncTime(new Date());
+        }
       } catch (error) {
-        // Se houver erro, inicializa com o tempo atual
+        // Em caso de erro, inicializa com o tempo atual
+        console.error("Erro ao inicializar tempo de sincronização:", error);
         setLastSyncTime(new Date());
       }
-    } else {
-      // Se não houver registro anterior, inicializa com o tempo atual
-      setLastSyncTime(new Date());
-    }
+    };
+    
+    initSyncTime();
   }, []);
 
   return {
