@@ -2,6 +2,7 @@
 import { PriceData } from '@/types/pricing';
 import { saveData } from './data-persistence';
 import { notifyListeners } from '../listeners';
+import { syncDiskDataWithPriceService, initExternalStorageData } from '@/services/component-sync/initialization';
 
 /**
  * Resets the price data to its initial state
@@ -9,8 +10,6 @@ import { notifyListeners } from '../listeners';
 export async function resetData(): Promise<PriceData | null> {
   try {
     console.log("[PriceService] Resetting price data to initial state");
-    // Re-import initial data
-    const { syncDiskDataWithPriceService, initExternalStorageData } = await import('../../component-sync');
     
     // Create empty default data
     const defaultData: PriceData = {};

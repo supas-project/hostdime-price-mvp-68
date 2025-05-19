@@ -36,7 +36,7 @@ export function useDataLoader(
       // This ensures that the wizard components are properly synchronized
       try {
         console.log("Initializing server categories from price data");
-        await initializeServerCategories(data);
+        await initializeServerCategories();
         console.log("Server categories initialized successfully");
       } catch (initError) {
         console.error("Error initializing server categories:", initError);

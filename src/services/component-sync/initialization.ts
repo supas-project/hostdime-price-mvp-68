@@ -1,4 +1,3 @@
-
 import { PriceService } from '@/services/price-service';
 import { serverData } from '@/data/server-components';
 import { diskData } from '@/data/disk-data';
@@ -88,6 +87,87 @@ export async function initializeServerCategories(priceData?: PriceData): Promise
 }
 
 /**
+ * Initialize disk data and synchronize with price service
+ */
+export async function syncDiskDataWithPriceService(): Promise<boolean> {
+  try {
+    console.log('[ComponentSync] Synchronizing disk data with price service');
+    
+    // Get current data
+    const priceData = await PriceService.getAllData();
+    if (!priceData) {
+      console.error('[ComponentSync] No price data available for synchronization');
+      return false;
+    }
+    
+    // Initialize categories
+    await initializeServerCategories(priceData);
+    
+    return true;
+  } catch (error) {
+    console.error('[ComponentSync] Error synchronizing disk data:', error);
+    return false;
+  }
+}
+
+/**
+ * Initialize external storage data
+ */
+export async function initExternalStorageData(): Promise<boolean> {
+  try {
+    console.log('[ComponentSync] Initializing external storage data');
+    
+    // Get current data
+    const priceData = await PriceService.getAllData();
+    if (!priceData) {
+      console.error('[ComponentSync] No price data available');
+      return false;
+    }
+    
+    // Check if external storage category exists
+    if (!priceData.external_storage) {
+      console.log('[ComponentSync] Creating external storage category');
+      
+      // Create and save the external storage category
+      const externalStorageCategory = createExternalStorageCategory();
+      
+      // Add default external storage options
+      externalStorageCategory.items = storageData.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        type: item.type,
+        subtype: item.subtype,
+        specs: item.specs,
+        isHardware: true,
+        metadata: {
+          features: item.metadata.benefits
+        }
+      }));
+      
+      // Update price data with new category
+      const updatedData = {
+        ...priceData,
+        external_storage: externalStorageCategory
+      };
+      
+      // Save updated data
+      await PriceService.saveData(updatedData);
+      
+      console.log('[ComponentSync] External storage category initialized successfully');
+    } else {
+      console.log('[ComponentSync] External storage category already exists');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[ComponentSync] Error initializing external storage data:', error);
+    return false;
+  }
+}
+
+/**
  * Initialize internal disk data
  */
 async function initInternalDiskData(data: PriceData): Promise<PriceCategory | null> {
@@ -113,48 +193,6 @@ async function initInternalDiskData(data: PriceData): Promise<PriceCategory | nu
     return null;
   } catch (error) {
     console.error('[ComponentSync] Error initializing disk data:', error);
-    return null;
-  }
-}
-
-/**
- * Initialize external storage data
- */
-async function initExternalStorageData(data: PriceData): Promise<PriceCategory | null> {
-  try {
-    // Check if external storage data exists in price table
-    const existingCategory = data.external_storage;
-    
-    // If external storage category doesn't exist or has no items, create it
-    if (!existingCategory || existingCategory.items.length === 0) {
-      console.log('[ComponentSync] Creating external storage category with default items');
-      
-      // Create a new external storage category
-      const externalStorageCategory = createExternalStorageCategory();
-      
-      // Add default external storage options
-      externalStorageCategory.items = storageData.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        type: item.type,
-        subtype: item.subtype,
-        specs: item.specs,
-        isHardware: true,
-        metadata: {
-          features: item.metadata.benefits
-        }
-      }));
-      
-      console.log(`[ComponentSync] Added ${externalStorageCategory.items.length} external storage options`);
-      return externalStorageCategory;
-    }
-    
-    // Category exists with items, no need to change
-    return null;
-  } catch (error) {
-    console.error('[ComponentSync] Error initializing external storage data:', error);
     return null;
   }
 }
