@@ -18,21 +18,25 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   const [selectedDisks, setSelectedDisks] = useState<Array<{disk: PricedDiskOption, quantity: number}>>([]);
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
   
-  // Armazenar referência da função de callback para evitar recriação
+  // Store reference to update function to avoid recreations
   const updateDisksRef = useRef<() => void>();
 
-  // Carregar dados de disco da tabela de preços
+  // Load disk data from price table
   useEffect(() => {
     const loadDisksFromPriceTable = async () => {
       try {
+        if (!selectedDiskType) {
+          setAvailableDisks([]);
+          return;
+        }
+
         const diskCategory = await PriceService.getCategory('disk');
-        if (!diskCategory) return;
         
-        // Converter itens da tabela de preços para formato de disco
+        // Convert price table items to disk format
         const disks: PricedDiskOption[] = diskCategory.items
           .filter(item => item.subtype === selectedDiskType)
           .map(item => {
-            // Extrair capacidade do nome
+            // Extract capacity from name
             const capacityMatches = item.name.match(/(\d+)TB|(\d+\.?\d*)TB|(\d+)GB/i);
             let capacity = "";
             
@@ -42,7 +46,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               else if (capacityMatches[3]) capacity = `${capacityMatches[3]}GB`;
             }
             
-            // Normalizar para garantir que a capacidade tenha unidade
+            // Normalize to ensure capacity has a unit
             capacity = normalizeStorageCapacity(capacity);
             
             // Create properly formatted specs object
@@ -64,41 +68,40 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         
         setAvailableDisks(disks);
       } catch (error) {
-        console.error('Erro ao carregar discos:', error);
-        // Fallback para dados estáticos originais
-        const fallbackDisks = selectedDiskType ? 
-          diskData
+        console.error('Error loading disks:', error);
+        // Fallback to static original data
+        if (selectedDiskType) {
+          const fallbackDisks = diskData
             .filter(disk => disk.type === selectedDiskType)
             .map(disk => ({
               ...disk,
-              capacity: normalizeStorageCapacity(disk.capacity) // Normalizar capacidade
-            })) : 
-          [];
-        setAvailableDisks(fallbackDisks);
+              capacity: normalizeStorageCapacity(disk.capacity)
+            }));
+          setAvailableDisks(fallbackDisks);
+        } else {
+          setAvailableDisks([]);
+        }
       }
     };
 
-    // Carregar discos quando o tipo muda
-    if (selectedDiskType) {
-      loadDisksFromPriceTable();
-    } else {
-      setAvailableDisks([]);
-    }
+    // Load disks when type changes
+    loadDisksFromPriceTable();
   }, [selectedDiskType]);
 
-  // Registrar listener para atualização de dados
+  // Register listener for data updates
   useEffect(() => {
-    // Definir a função de atualização dos discos
+    // Define the update function
     const updateDisks = async () => {
-      if (selectedDiskType) {
+      if (!selectedDiskType) return;
+      
+      try {
         const diskCategory = await PriceService.getCategory('disk');
-        if (!diskCategory) return;
         
-        // Atualiza discos disponíveis quando os dados mudam
+        // Update available disks when data changes
         const disks: PricedDiskOption[] = diskCategory.items
           .filter(item => item.subtype === selectedDiskType)
           .map(item => {
-            // Extrair capacidade do nome
+            // Extract capacity from name
             const capacityMatches = item.name.match(/(\d+)TB|(\d+\.?\d*)TB|(\d+)GB/i);
             let capacity = "";
             
@@ -126,94 +129,30 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           });
         
         setAvailableDisks(disks);
+      } catch (error) {
+        console.error('Error updating disks:', error);
       }
     };
 
-    // Armazenar referência da função para usar depois
+    // Store reference to function to use later
     updateDisksRef.current = updateDisks;
     
-    // Registrar para mudanças na tabela de preços
-    if (updateDisksRef.current) {
-      PriceService.addDataChangeListener(updateDisksRef.current);
-    }
-    
-    // Limpar listener quando o componente é desmontado
-    return () => {
+    // Register for price table changes
+    const listener = async (data: any) => {
       if (updateDisksRef.current) {
-        PriceService.removeDataChangeListener(updateDisksRef.current);
+        updateDisksRef.current();
       }
+    };
+    
+    PriceService.addDataChangeListener(listener);
+    
+    // Clean up listener when component unmounts
+    return () => {
+      PriceService.removeDataChangeListener(listener);
     };
   }, [selectedDiskType]);
 
-  const handleCapacitySelect = (capacity: string) => {
-    setSelectedCapacity(capacity);
-    const disk = availableDisks.find(d => d.capacity === capacity);
-    
-    if (disk) {
-      // Verificar se este tipo e capacidade já existem
-      const existingDisk = selectedDisks.find(
-        item => item.disk.type === disk.type && item.disk.capacity === capacity
-      );
-
-      if (existingDisk) {
-        toast.error("Este tipo e capacidade de disco já está selecionado");
-        return;
-      }
-
-      const newDisk = { disk, quantity: 1 };
-      setSelectedDisks(prev => [...prev, newDisk]);
-      
-      if (onSelectDisk) {
-        onSelectDisk(disk, 1);
-      }
-
-      // Resetar capacidade mas manter tipo de disco para seleções adicionais
-      setSelectedCapacity("");
-      toast.success("Disco adicionado com sucesso");
-    }
-  };
-
-  const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
-    // Atualizar tipo selecionado
-    setSelectedDiskType(type);
-    setSelectedCapacity("");
-    
-    // Limpar seleção atual para evitar confusão
-    // Notificar o usuário sobre a mudança de contexto
-    if (selectedDisks.length > 0 && selectedDisks.some(item => item.disk.type !== type)) {
-      toast.info(`Agora você está configurando discos ${type.toUpperCase()}`, {
-        description: "Os discos já adicionados foram mantidos no seu carrinho"
-      });
-    }
-  };
-
-  const handleQuantityChange = (diskId: string, newQuantity: number) => {
-    setSelectedDisks(prev => prev.map(item => {
-      if (item.disk.id === diskId) {
-        if (onSelectDisk) {
-          onSelectDisk(item.disk, newQuantity);
-        }
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
-  };
-
-  const handleRemoveDisk = (diskId: string) => {
-    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
-    if (onSelectDisk) {
-      const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
-      if (diskToRemove) {
-        onSelectDisk({
-          ...diskToRemove.disk,
-          price: 0
-        }, 0);
-      }
-    }
-    toast.success("Disco removido com sucesso");
-  };
-
-  // Filtrar discos pelo tipo atualmente selecionado para exibição
+  // Filter disks by currently selected type for display
   const visibleDisks = selectedDisks.filter(
     item => selectedDiskType ? item.disk.type === selectedDiskType : true
   );
@@ -292,4 +231,72 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       )}
     </div>
   );
+  
+  // Define the missing handler functions
+  function handleCapacitySelect(capacity: string) {
+    setSelectedCapacity(capacity);
+    const disk = availableDisks.find(d => d.capacity === capacity);
+    
+    if (disk) {
+      // Check if this type and capacity already exist
+      const existingDisk = selectedDisks.find(
+        item => item.disk.type === disk.type && item.disk.capacity === capacity
+      );
+
+      if (existingDisk) {
+        toast.error("Este tipo e capacidade de disco já está selecionado");
+        return;
+      }
+
+      const newDisk = { disk, quantity: 1 };
+      setSelectedDisks(prev => [...prev, newDisk]);
+      
+      if (onSelectDisk) {
+        onSelectDisk(disk, 1);
+      }
+
+      // Reset capacity but keep disk type for additional selections
+      setSelectedCapacity("");
+      toast.success("Disco adicionado com sucesso");
+    }
+  }
+
+  function handleTypeSelect(type: "nvme" | "ssd" | "hdd") {
+    // Update selected type
+    setSelectedDiskType(type);
+    setSelectedCapacity("");
+    
+    // Notify user about context change
+    if (selectedDisks.length > 0 && selectedDisks.some(item => item.disk.type !== type)) {
+      toast.info(`Agora você está configurando discos ${type.toUpperCase()}`, {
+        description: "Os discos já adicionados foram mantidos no seu carrinho"
+      });
+    }
+  }
+
+  function handleQuantityChange(diskId: string, newQuantity: number) {
+    setSelectedDisks(prev => prev.map(item => {
+      if (item.disk.id === diskId) {
+        if (onSelectDisk) {
+          onSelectDisk(item.disk, newQuantity);
+        }
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }));
+  }
+
+  function handleRemoveDisk(diskId: string) {
+    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+    if (onSelectDisk) {
+      const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
+      if (diskToRemove) {
+        onSelectDisk({
+          ...diskToRemove.disk,
+          price: 0
+        }, 0);
+      }
+    }
+    toast.success("Disco removido com sucesso");
+  }
 }

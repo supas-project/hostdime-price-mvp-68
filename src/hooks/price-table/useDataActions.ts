@@ -4,20 +4,21 @@ import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasConflicts, setHasConflicts] = useState(false);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { isAdmin, user } = useAuth();
   const { registerAdminChange, syncWithLatestData } = useDataSync();
 
-  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  // Explicit check to ensure admin access
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
-  // Verificar periodicamente se há conflitos de dados
+  // Periodically check for data conflicts
   const checkForConflicts = async () => {
     try {
       const hasDataConflicts = await PriceService.checkForDataConflicts();
@@ -80,7 +81,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Update state with reset data
         setPriceData(resetData);
         
-        // Registre a alteração para notificar outros usuários
+        // Register change to notify other users
         await registerAdminChange("reset", "Todos os dados foram resetados para os valores padrão");
         
         toast.success("Dados resetados", {
@@ -96,19 +97,19 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
 
-  // Função para forçar atualização dos dados quando houver conflitos multiusuário
+  // Function to force data update when there are multi-user conflicts
   const handleRefreshData = async () => {
     try {
       setIsRefreshing(true);
       
-      // Força recarregar dados do Supabase (possivelmente atualizados por outro usuário)
+      // Force reload data from Supabase (possibly updated by another user)
       const refreshedData = await PriceService.forceRefreshFromLatestSource();
       
-      // Atualiza o estado com os dados atualizados
+      // Update state with updated data
       setPriceData(refreshedData);
       setHasConflicts(false);
       
-      // Atualiza o estado de sincronização
+      // Update sync state
       await syncWithLatestData();
       
       toast.success("Dados atualizados", {
@@ -123,7 +124,7 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
 
-  // Verifica se há conflitos de dados e notifica se necessário
+  // Check for data conflicts and notify if necessary
   const checkForDataConflicts = async (): Promise<boolean> => {
     return await PriceService.checkForDataConflicts();
   };

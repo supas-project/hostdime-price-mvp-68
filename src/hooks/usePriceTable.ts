@@ -4,6 +4,7 @@ import { PriceData, PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export function usePriceTable() {
   const [priceData, setPriceData] = useState<PriceData>({});
@@ -16,7 +17,7 @@ export function usePriceTable() {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [contractDuration, setContractDuration] = useState<string>("0"); // Add contractDuration state
   
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   // Load initial data
   const loadPriceData = async () => {
@@ -53,8 +54,7 @@ export function usePriceTable() {
     } catch (error) {
       toast({
         title: "Erro ao carregar dados",
-        description: "Não foi possível carregar a tabela de preços.",
-        variant: "destructive",
+        description: "Não foi possível carregar a tabela de preços."
       });
     } finally {
       setIsLoading(false);

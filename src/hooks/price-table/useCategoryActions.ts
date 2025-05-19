@@ -5,14 +5,15 @@ import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function useCategoryActions(setPriceData: (data: any) => void) {
   const [openAddCategory, setOpenAddCategory] = useState(false);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { registerAdminChange } = useDataSync();
   const { isAdmin, user } = useAuth();
   
-  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  // Explicit check to ensure admin access
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   const handleAddCategory = async (values: any) => {
@@ -35,7 +36,7 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
       
       setOpenAddCategory(false);
       
-      // Registra a mudança para notificação
+      // Register change for notification
       await registerAdminChange("add_category", `Categoria "${newCategory.name}" adicionada`);
       
       toast.success("Categoria adicionada", {
@@ -60,7 +61,7 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
     }
     
     try {
-      // Obtém o nome da categoria antes de excluí-la para a mensagem
+      // Get category name before deleting for message
       const category = await PriceService.getCategory(categoryId);
       const categoryName = category?.name || categoryId;
       
@@ -70,7 +71,7 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
       
-      // Registra a mudança para notificação
+      // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
       toast.success("Categoria excluída", {

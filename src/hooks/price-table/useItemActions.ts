@@ -5,6 +5,7 @@ import { PriceService } from "@/services/price-service";
 import { useToast } from "@/hooks/use-toast";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function useItemActions(
   activeTab: string,
@@ -14,11 +15,11 @@ export function useItemActions(
   const [openAddItem, setOpenAddItem] = useState(false);
   const [openEditItem, setOpenEditItem] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { registerAdminChange } = useDataSync();
   const { isAdmin, user } = useAuth();
 
-  // CORREÇÃO: Verificação explícita para garantir acesso de administrador
+  // Explicit check to ensure admin access
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   const handleInitiateEdit = (item: PriceItem) => {
@@ -34,7 +35,7 @@ export function useItemActions(
   };
 
   const handleAddItem = async (values: any) => {
-    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    // Check admin permission - Explicit check
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar itens."
@@ -80,7 +81,7 @@ export function useItemActions(
       
       // Get the category name for the notification
       const category = await PriceService.getCategory(activeTab);
-      // Registra a mudança para notificação
+      // Register change for notification
       await registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${category?.name || activeTab}`);
       
       toast.success("Item adicionado", {
@@ -99,7 +100,7 @@ export function useItemActions(
   };
 
   const handleEditItem = async (values: any, itemId?: string) => {
-    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    // Check admin permission - Explicit check
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
@@ -138,7 +139,7 @@ export function useItemActions(
       
       // Get category for notification
       const category = await PriceService.getCategory(activeTab);
-      // Registra a mudança para notificação
+      // Register change for notification
       await registerAdminChange("edit_item", `Item "${values.name}" atualizado na categoria ${category?.name || activeTab}`);
       
       // Close edit dialog and reset state
@@ -159,7 +160,7 @@ export function useItemActions(
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    // Verifica permissão de administrador - CORREÇÃO: Verificação explícita
+    // Check admin permission - Explicit check
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir itens."
@@ -170,7 +171,7 @@ export function useItemActions(
     if (!activeTab) return false;
     
     try {
-      // Obtém o nome do item antes de excluí-lo para a mensagem
+      // Get item name before deleting for message
       const category = await PriceService.getCategory(activeTab);
       const itemToDelete = category?.items.find(item => item.id === itemId);
       
@@ -180,7 +181,7 @@ export function useItemActions(
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
       
-      // Registra a mudança para notificação
+      // Register change for notification
       await registerAdminChange("delete_item", `Item "${itemToDelete?.name || itemId}" excluído da categoria ${category?.name || activeTab}`);
       
       toast.success("Item excluído", {

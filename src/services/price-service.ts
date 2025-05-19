@@ -1,9 +1,12 @@
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
 import { serverData } from "@/data/server-components";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-// Dados iniciais carregados dos componentes do servidor
+// Define Json type for Supabase
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
+// Initial price data loaded from server components
 const initialPriceData: PriceData = {
   cpu: { 
     id: 'cpu', 
@@ -43,16 +46,15 @@ const initialPriceData: PriceData = {
   connectivity: { id: 'connectivity', name: 'Conectividade', items: [] }
 };
 
-// Tipo para listeners (observadores)
+// Data change listeners
 type DataChangeListener = (data: PriceData) => void;
 let dataChangeListeners: DataChangeListener[] = [];
 
-// Gera um ID único
+// Helper functions
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 };
 
-// Validação de item
 const validateItem = (item: Partial<PriceItem>): string | null => {
   if (!item.name || item.name.trim() === '') {
     return "Nome do item é obrigatório";
@@ -69,33 +71,32 @@ const validateItem = (item: Partial<PriceItem>): string | null => {
   return null; // Item válido
 };
 
-// Notifica observadores sobre mudanças nos dados
+// Notify listeners about data changes
 const notifyDataChangeListeners = (data: PriceData): void => {
   dataChangeListeners.forEach(listener => {
     try {
       listener(data);
     } catch (error) {
-      console.error('Erro ao notificar listener sobre mudança de dados:', error);
+      console.error('Error notifying listener about data change:', error);
     }
   });
 };
 
-// Funções para manipular dados de preços
+// Price Service implementation
 export const PriceService = {
-  // Adiciona um listener para mudanças de dados
+  // Listener management
   addDataChangeListener: (listener: DataChangeListener): void => {
     dataChangeListeners.push(listener);
   },
   
-  // Remove um listener
   removeDataChangeListener: (listener: DataChangeListener): void => {
     dataChangeListeners = dataChangeListeners.filter(l => l !== listener);
   },
   
-  // Obtém todos os dados
+  // Get all price data - FIXED to properly handle JSON types
   getAllData: async (): Promise<PriceData> => {
     try {
-      // Tentar carregar do Supabase
+      // Try to load from Supabase
       const { data, error } = await supabase
         .from('price_data')
         .select('*')
@@ -104,29 +105,28 @@ export const PriceService = {
         .single();
       
       if (error) {
-        console.error('Erro ao carregar dados:', error);
-        // Se houver erro, retorna dados iniciais
+        console.error('Error loading data:', error);
         return initialPriceData;
       }
       
       if (!data || !data.data) {
-        // Se não existir dados, salva dados iniciais
+        // If no data exists, save initial data
         await PriceService.saveDataToSupabase(initialPriceData);
         return initialPriceData;
       }
       
-      // Dados recuperados com sucesso
-      return data.data as PriceData;
+      // Convert from Json to PriceData
+      return data.data as unknown as PriceData;
     } catch (error) {
-      console.error('Erro ao obter dados:', error);
+      console.error('Error retrieving data:', error);
       return initialPriceData;
     }
   },
   
-  // Salvar dados no Supabase
+  // Save data to Supabase - FIXED to handle JSON type conversion
   saveDataToSupabase: async (data: PriceData): Promise<void> => {
     try {
-      // Verificar se já existem dados
+      // Check if data already exists
       const { data: existingData, error: checkError } = await supabase
         .from('price_data')
         .select('id')
@@ -134,61 +134,61 @@ export const PriceService = {
         .single();
       
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Erro ao verificar dados existentes:', checkError);
-        throw new Error('Falha ao verificar dados existentes no banco');
+        console.error('Error checking existing data:', checkError);
+        throw new Error('Failed to check for existing data');
       }
       
       if (existingData) {
-        // Atualizar registro existente
+        // Update existing record
         const { error } = await supabase
           .from('price_data')
           .update({ 
-            data: data,
+            data: data as unknown as Json,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingData.id);
           
         if (error) {
-          console.error('Erro ao atualizar dados:', error);
-          throw new Error('Falha ao atualizar dados no banco');
+          console.error('Error updating data:', error);
+          throw new Error('Failed to update data');
         }
       } else {
-        // Inserir novo registro
+        // Insert new record
         const { error } = await supabase
           .from('price_data')
-          .insert([{ 
-            data: data,
+          .insert({
+            data: data as unknown as Json,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }]);
+          });
           
         if (error) {
-          console.error('Erro ao inserir dados:', error);
-          throw new Error('Falha ao inserir dados no banco');
+          console.error('Error inserting data:', error);
+          throw new Error('Failed to insert data');
         }
       }
       
-      // Registrar atualização
+      // Record update
       await supabase
         .from('price_data_updates')
-        .insert([{
+        .insert({
           type: 'data_update',
-          details: 'Dados de preços atualizados',
+          details: 'Price data updated',
           updated_at: new Date().toISOString()
-        }]);
+        });
         
-      // Notificar observadores
+      // Notify listeners
       notifyDataChangeListeners(data);
     } catch (error) {
-      console.error('Erro ao salvar dados:', error);
+      console.error('Error saving data:', error);
       throw error;
     }
   },
   
-  // Obtém uma categoria específica - Modificado para retornar diretamente o objeto
+  // Get a specific category - now properly awaits promise
   getCategory: async (categoryId: string): Promise<PriceCategory> => {
     if (!categoryId) {
-      console.error('ID de categoria inválido ou não fornecido');
+      console.error('Invalid or missing category ID');
       return { id: '', name: '', items: [] };
     }
     
@@ -196,7 +196,7 @@ export const PriceService = {
     return data[categoryId] || { id: categoryId, name: categoryId, items: [] };
   },
   
-  // Adiciona uma nova categoria
+  // Rest of the service methods with proper Promise handling
   addCategory: async (category: Omit<PriceCategory, 'id'>): Promise<PriceCategory> => {
     if (!category.name || category.name.trim() === '') {
       throw new Error("Nome da categoria é obrigatório");
@@ -221,7 +221,6 @@ export const PriceService = {
     return newCategory;
   },
   
-  // Atualiza uma categoria
   updateCategory: async (categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
@@ -248,7 +247,6 @@ export const PriceService = {
     return data[categoryId];
   },
   
-  // Remove uma categoria
   deleteCategory: async (categoryId: string): Promise<void> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
@@ -583,30 +581,30 @@ export const PriceService = {
     return data;
   },
   
-  // Inicialização do serviço
+  // Initialize service
   initialize: async () => {
     try {
-      // Verificar se as tabelas necessárias existem
+      // Check if required tables exist
       const { error } = await supabase
         .from('price_data')
         .select('id')
         .limit(1);
       
       if (error && error.code === 'PGRST204') {
-        console.error('Tabela price_data não existe. Será necessário criá-la.');
+        console.error('price_data table does not exist, need to create it.');
       } else {
-        console.log('Conexão com banco de dados estabelecida.');
+        console.log('Database connection established.');
       }
       
-      // Carregar dados iniciais se necessário
-      const data = await PriceService.getAllData();
-      console.log('Dados carregados com sucesso.');
+      // Load initial data if needed
+      await PriceService.getAllData();
+      console.log('Data loaded successfully.');
     } catch (error) {
-      console.error('Erro ao inicializar serviço de preços:', error);
-      toast.error("Não foi possível inicializar o serviço de preços.");
+      console.error('Error initializing price service:', error);
+      toast.error("Could not initialize price service.");
     }
   }
 };
 
-// Inicializa serviço quando o arquivo é importado
+// Initialize service on import
 PriceService.initialize();

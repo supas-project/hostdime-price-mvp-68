@@ -3,23 +3,24 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-// Chave para armazenar a última atualização
+// Key for storing last update
 const LAST_UPDATE_KEY = 'price_data_last_update';
 
-// Intervalo de verificação de atualizações (em ms)
-const CHECK_INTERVAL = 10000; // 10 segundos
+// Check interval (in ms)
+const CHECK_INTERVAL = 10000; // 10 seconds
 
 export function useDataSync() {
   const { isAdmin } = useAuth();
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [hasUpdates, setHasUpdates] = useState(false);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
-  // Verificar se há atualizações disponíveis
+  // Check for available updates
   const checkForUpdates = async () => {
     try {
-      // Buscar a última atualização do banco de dados
+      // Fetch the latest update from the database
       const { data, error } = await supabase
         .from('price_data_updates')
         .select('updated_at')
@@ -28,7 +29,7 @@ export function useDataSync() {
         .single();
         
       if (error) {
-        console.error("Erro ao verificar atualizações:", error);
+        console.error("Error checking for updates:", error);
         return false;
       }
       
@@ -36,21 +37,21 @@ export function useDataSync() {
       
       const storedTime = new Date(data.updated_at);
       
-      // Verificar se a última atualização é mais recente que o último sync
+      // Check if latest update is more recent than last sync
       if (lastSyncTime && storedTime > lastSyncTime) {
         return true;
       }
     } catch (error) {
-      console.error("Erro ao verificar atualizações:", error);
+      console.error("Error checking for updates:", error);
     }
     
     return false;
   };
 
-  // Notificar sobre uma mudança nos dados
+  // Notify about a data change
   const notifyDataChange = async (type: string, details: string, initiator = 'system') => {
     try {
-      // Registrar atualização no banco de dados
+      // Record update in database
       const timestamp = new Date().toISOString();
       
       const { error } = await supabase
@@ -65,40 +66,39 @@ export function useDataSync() {
         ]);
         
       if (error) {
-        console.error("Erro ao registrar atualização:", error);
+        console.error("Error recording update:", error);
       }
       
-      // Se for admin, apenas registra a mudança mas não notifica
+      // If admin, just log the change but don't notify
       if (isAdmin) {
-        console.log("Mudança de dados registrada:", { type, details, timestamp });
+        console.log("Data change recorded:", { type, details, timestamp });
         return;
       }
       
-      // Se não for admin, notifica sobre a mudança
+      // If not admin, notify about the change
       toast({
         title: "Dados atualizados",
-        description: `O administrador realizou alterações: ${details}`,
-        duration: 5000
+        description: `O administrador realizou alterações: ${details}`
       });
       
-      // Marca que existem atualizações disponíveis
+      // Mark that there are available updates
       setHasUpdates(true);
     } catch (error) {
-      console.error("Erro ao notificar mudança de dados:", error);
+      console.error("Error notifying data change:", error);
     }
   };
   
-  // Registra uma atualização feita pelo admin
+  // Register an update made by admin
   const registerAdminChange = async (type: string, details: string) => {
-    if (!isAdmin) return; // Apenas admin pode registrar mudanças
+    if (!isAdmin) return; // Only admin can register changes
     
     await notifyDataChange(type, details, 'admin');
     
-    // Atualiza o tempo local de sincronização para o admin
+    // Update local sync time for admin
     setLastSyncTime(new Date());
   };
   
-  // Sincronizar com as últimas atualizações
+  // Sync with latest updates
   const syncWithLatestData = async () => {
     try {
       const { data, error } = await supabase
@@ -109,7 +109,7 @@ export function useDataSync() {
         .single();
       
       if (error) {
-        console.error("Erro ao buscar última atualização:", error);
+        console.error("Error fetching latest update:", error);
         return false;
       }
       
@@ -119,16 +119,16 @@ export function useDataSync() {
         return true;
       }
     } catch (error) {
-      console.error("Erro ao sincronizar com os dados mais recentes:", error);
+      console.error("Error syncing with latest data:", error);
     }
     
     return false;
   };
 
-  // Verificar periodicamente por mudanças (apenas para usuários não-admin)
+  // Periodically check for changes (non-admin users only)
   useEffect(() => {
     if (isAdmin) {
-      // Admins não precisam verificar - eles são os que fazem as mudanças
+      // Admins don't need to check - they are the ones making changes
       return;
     }
     
@@ -140,7 +140,7 @@ export function useDataSync() {
         
         toast({
           title: "Atualizações disponíveis",
-          description: "O administrador realizou alterações. Clique para atualizar.",
+          description: "O administrador realizou alterações. Clique para atualizar."
         });
       }
     }, CHECK_INTERVAL);
@@ -148,7 +148,7 @@ export function useDataSync() {
     return () => clearInterval(intervalId);
   }, [isAdmin, hasUpdates, lastSyncTime]);
 
-  // Inicializar o tempo de sincronização
+  // Initialize sync time
   useEffect(() => {
     const initSyncTime = async () => {
       try {
@@ -162,12 +162,12 @@ export function useDataSync() {
         if (data) {
           setLastSyncTime(new Date(data.updated_at));
         } else {
-          // Se não houver registro anterior, inicializa com o tempo atual
+          // If no previous record, initialize with current time
           setLastSyncTime(new Date());
         }
       } catch (error) {
-        // Em caso de erro, inicializa com o tempo atual
-        console.error("Erro ao inicializar tempo de sincronização:", error);
+        // In case of error, initialize with current time
+        console.error("Error initializing sync time:", error);
         setLastSyncTime(new Date());
       }
     };

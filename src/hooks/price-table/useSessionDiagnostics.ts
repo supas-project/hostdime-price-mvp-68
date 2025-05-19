@@ -1,61 +1,77 @@
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export function useSessionDiagnostics() {
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [sessionStatus, setSessionStatus] = useState<"authenticated" | "unauthenticated" | "loading">("loading");
+  const [sessionDetails, setSessionDetails] = useState<{[key: string]: any} | null>(null);
+  const [serverTime, setServerTime] = useState<Date | null>(null);
   
-  // Fetch diagnostic information
+  // Fetch session information
   useEffect(() => {
-    const fetchDiagnosticInfo = async () => {
+    const fetchSessionInfo = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        const { data: { user }, error } = await supabase.auth.getUser();
         
-        // Get session information
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw new Error(`Session error: ${sessionError.message}`);
+        if (error) {
+          setSessionStatus("unauthenticated");
+          setUser(null);
+          return;
         }
         
-        // Get system information
-        const systemInfo = {
-          userAgent: navigator.userAgent,
-          language: navigator.language,
-          platform: navigator.platform,
-          connectionType: (navigator as any).connection ? 
-            (navigator as any).connection.effectiveType : 'unknown'
-        };
+        if (user) {
+          setUser(user);
+          setSessionStatus("authenticated");
+          
+          // Fetch the session to get more details
+          const { data: session, error: sessionError } = await supabase.auth.getSession();
+          
+          if (!sessionError && session) {
+            setSessionDetails({
+              sessionCreatedAt: session.session?.created_at,
+              lastActivity: new Date().toISOString(),
+              expiresAt: session.session?.expires_at,
+              provider: session.session?.user.app_metadata.provider,
+              lastSignIn: user.last_sign_in_at // Corrected property access
+            });
+          }
+        } else {
+          setSessionStatus("unauthenticated");
+        }
         
-        // Combine all diagnostic information
-        setSessionInfo({
-          user: user ? {
-            id: user.id,
-            email: user.email,
-            lastLogin: user.lastSignInAt
-          } : 'No user authenticated',
-          session: sessionData?.session ? {
-            id: sessionData.session.access_token?.substring(0, 8) + '...',
-            expiresAt: new Date(sessionData.session.expires_at || 0).toLocaleString()
-          } : 'No active session',
-          system: systemInfo
-        });
-        
-      } catch (err: any) {
-        setError(`Failed to load diagnostic info: ${err.message}`);
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+        // Get server time for syncing
+        // This is just an approximation since we can't directly query the server's time
+        setServerTime(new Date());
+      } catch (error) {
+        console.error("Error fetching session info:", error);
+        setSessionStatus("unauthenticated");
       }
     };
     
-    fetchDiagnosticInfo();
-  }, [user]);
+    fetchSessionInfo();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        setSessionStatus("authenticated");
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setSessionStatus("unauthenticated");
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
-  return { sessionInfo, isLoading, error };
+  return {
+    user,
+    sessionStatus,
+    sessionDetails,
+    serverTime,
+  };
 }

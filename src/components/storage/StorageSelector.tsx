@@ -10,7 +10,7 @@ import { useWizard } from "@/contexts/WizardContext";
 import { InternalStoragePanel } from "./InternalStoragePanel";
 import { ExternalStoragePanel } from "./ExternalStoragePanel";
 import { TabHeader } from "./tab-header/TabHeader";
-import { useStorageTypes } from "./hooks/useStorageTypes";
+import { useStorageTypes, StorageType } from "./hooks/useStorageTypes";
 import { useStorageHandlers } from "./handlers/useStorageHandlers";
 import { PricedDiskOption } from "@/types/storage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -57,6 +57,20 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   };
 
   const isNVMe = selectedDiskType === 'nvme';
+
+  // Convert the storage types array to object format expected by ExternalStoragePanel
+  const storageTypesFormatted = storageTypes.reduce((acc, type) => {
+    acc[type.id] = {
+      name: type.name,
+      pricePerGB: type.price / 100, // Assuming price is per 100GB
+      iops: type.specs.find(s => s.toLowerCase().includes('iops'))?.split(': ')[1] || 'N/A',
+      throughput: type.specs.find(s => s.toLowerCase().includes('throughput'))?.split(': ')[1] || 'N/A',
+      description: type.description,
+      throughputAdd: 0, // Default value
+      maxThroughput: type.specs.find(s => s.toLowerCase().includes('max'))?.split(': ')[1] || 'N/A'
+    };
+    return acc;
+  }, {} as {[key: string]: any});
 
   return (
     <Card className={cn(
@@ -124,7 +138,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
             <div className="animate-fade-in">
               <ExternalStoragePanel 
                 onSelectStorage={handleSelectExternalStorage} 
-                storageTypes={storageTypes}
+                storageTypes={storageTypesFormatted}
               />
             </div>
           </TabsContent>
