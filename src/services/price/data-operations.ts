@@ -36,7 +36,11 @@ export async function getAllData(): Promise<PriceData> {
       return {};
     }
 
-    console.log("[PriceService] Successfully retrieved price data");
+    console.log("[PriceService] Successfully retrieved price data:", 
+      Object.keys(jsonData).length > 0 ? 
+      `Found ${Object.keys(jsonData).length} categories` : 
+      "Empty data object");
+    
     // Type assertion with proper cast - first to unknown then to PriceData
     return jsonData as unknown as PriceData;
   } catch (err: any) {
@@ -50,7 +54,7 @@ export async function getAllData(): Promise<PriceData> {
  */
 export async function saveData(data: PriceData): Promise<void> {
   try {
-    console.log("[PriceService] Saving price data");
+    console.log("[PriceService] Saving price data with categories:", Object.keys(data).join(", "));
     // Verificar se o usuário está autenticado antes de salvar dados
     const { data: session, error: sessionError } = await supabase.auth.getSession();
     
@@ -83,6 +87,12 @@ export async function saveData(data: PriceData): Promise<void> {
     }
 
     console.log("[PriceService] Price data saved successfully");
+    toast.success("Dados salvos com sucesso", { 
+      description: "Os componentes foram salvos e sincronizados." 
+    });
+
+    // Notificar listeners após salvar os dados com sucesso
+    notifyListeners();
   } catch (err: any) {
     console.error("[PriceService] Error in saveData:", err);
     throw new Error(err.message || "Failed to save price data.");
@@ -139,14 +149,39 @@ export async function checkForDataConflicts(): Promise<boolean> {
 export async function forceRefreshFromLatestSource(): Promise<PriceData | null> {
   try {
     console.log("[PriceService] Forcing refresh of price data from latest source");
+    
     // Re-fetch all data from the source
-    const newData = await getAllData();
+    const { data: priceData, error } = await supabase
+      .from(PRICE_DATA_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+      
+    if (error) {
+      console.error("[PriceService] Error refreshing data from source:", error);
+      toast.error("Erro ao atualizar dados", { description: error.message });
+      return null;
+    }
+    
+    if (!priceData || priceData.length === 0) {
+      console.warn("[PriceService] No data found during refresh");
+      return {};
+    }
+    
+    // Process the fetched data
+    const jsonData = priceData[0].data as unknown as PriceData;
+    
+    // Log categories found
+    if (jsonData) {
+      const categories = Object.keys(jsonData);
+      console.log(`[PriceService] Refreshed data with ${categories.length} categories:`, categories.join(", "));
+    }
     
     // Notify listeners
     notifyListeners();
     
     console.log("[PriceService] Price data refreshed successfully");
-    return newData;
+    return jsonData;
   } catch (error) {
     console.error("[PriceService] Error refreshing data from source:", error);
     return null;

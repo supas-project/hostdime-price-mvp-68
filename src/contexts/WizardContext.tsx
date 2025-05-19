@@ -1,3 +1,4 @@
+
 import { createContext, useContext, ReactNode, useEffect, useState } from "react";
 import { WizardContextType } from "@/types/wizard";
 import { useComponentSelection, normalizeComponentType } from "@/hooks/use-component-selection";
@@ -6,6 +7,7 @@ import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { useLocalStorage } from "@/hooks/component-selection/use-local-storage";
 import { PriceService } from "@/services/price-service";
+import { initializeServerCategories } from "@/services/component-sync-service";
 
 export const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
@@ -16,7 +18,13 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initData = async () => {
       try {
+        // Primeiro, forçar atualização dos dados do serviço de preços
         await PriceService.forceRefreshFromLatestSource();
+        
+        // Então inicializar categorias necessárias se estiverem faltando
+        await initializeServerCategories();
+        
+        // Marcar como inicializado
         setDataInitialized(true);
       } catch (error) {
         console.error("Erro ao carregar dados iniciais:", error);

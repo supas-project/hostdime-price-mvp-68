@@ -1,191 +1,238 @@
-import { StorageDataItem } from "@/data/storage-pricing";
-import { diskData } from "@/data/disk-data";
-import { PriceService } from "./price-service";
-import { normalizeStorageCapacity } from "@/utils/storage-utils";
-import { PriceCategory } from "@/types/pricing";
 
-// Function to sync disk data with price service
-export async function syncDiskDataWithPriceService() {
+// Arquivo já existente, vamos adicionar funções para sincronização de componentes
+
+import { PriceService } from "./price-service";
+import { PriceCategory, PriceItem } from "@/types/pricing";
+import { serverData } from "@/data/server-components";
+import { diskData } from "@/data/disk-data";
+import { storageData } from "@/data/storage-pricing";
+import { toast } from "sonner";
+
+/**
+ * Inicializa as categorias básicas necessárias para o servidor funcionar
+ */
+export async function initializeServerCategories(): Promise<void> {
   try {
-    // Get or create disk category
-    let diskCategory = await PriceService.getCategory('disk');
-    if (!diskCategory) {
-      diskCategory = await PriceService.addCategory({
-        name: 'Discos',
-        id: 'disk'
-      });
-    }
+    console.log("[ComponentSyncService] Initializing server categories");
     
-    // For each disk in static data, check if it exists in price service
-    for (const disk of diskData) {
-      const existingItem = diskCategory.items.find(
-        item => item.subtype === disk.type && 
-               item.name.includes(normalizeStorageCapacity(disk.capacity))
-      );
-      
-      if (!existingItem) {
-        // Add disk to price service if it doesn't exist
-        await PriceService.addItem('disk', {
-          name: `${disk.type.toUpperCase()} ${normalizeStorageCapacity(disk.capacity)}`,
-          description: `Disco ${disk.type.toUpperCase()} com capacidade de ${normalizeStorageCapacity(disk.capacity)}`,
-          price: disk.price,
-          type: 'disk',
-          subtype: disk.type,
-          specs: [
-            `Velocidade de leitura: ${disk.specs.readSpeed}`,
-            `Velocidade de escrita: ${disk.specs.writeSpeed}`,
-            `IOPS: ${disk.specs.iops}`,
-            ...disk.specs.recommended.map(rec => `Recomendado para: ${rec}`)
-          ],
-          tags: ['Hardware'],
-          isHardware: true,
-          metadata: {
-            features: disk.specs.recommended,
-            unitPrice: disk.price
-          }
-        });
+    // Primeiro, obter todos os dados atuais
+    const currentData = await PriceService.getAllData();
+    
+    // Lista de categorias básicas necessárias para o configurador de servidor funcionar
+    const requiredCategories = [
+      { id: "datacenter", name: "Data Center" },
+      { id: "contract", name: "Contrato" },
+      { id: "cpu", name: "Processador" },
+      { id: "memory", name: "Memória" },
+      { id: "storage", name: "Armazenamento" },
+      { id: "connectivity", name: "Conectividade" },
+      { id: "os", name: "Sistema Operacional" },
+      { id: "services", name: "Serviços Adicionais" }
+    ];
+    
+    let dataUpdated = false;
+    
+    // Verificar e adicionar categorias ausentes
+    for (const category of requiredCategories) {
+      if (!currentData[category.id]) {
+        console.log(`[ComponentSyncService] Adding missing category: ${category.id}`);
+        
+        // Criar a categoria se não existir
+        const newCategory: PriceCategory = {
+          id: category.id,
+          name: category.name,
+          items: []
+        };
+        
+        // Adicionar a categoria ao objeto de dados
+        currentData[category.id] = newCategory;
+        dataUpdated = true;
       }
     }
     
-    return true;
+    // Sincronizar com dados estáticos para cada categoria que não tenha itens
+    // Isso garante que haja pelo menos alguns itens básicos
+    dataUpdated = await populateCategoriesFromStaticData(currentData) || dataUpdated;
+    
+    // Se houve alguma atualização, salvar os dados
+    if (dataUpdated) {
+      await PriceService.saveData(currentData);
+      console.log("[ComponentSyncService] Categories initialized successfully");
+      toast.success("Categorias sincronizadas com sucesso");
+    } else {
+      console.log("[ComponentSyncService] No category updates needed");
+    }
   } catch (error) {
-    console.error('Error syncing disk data:', error);
-    return false;
+    console.error("[ComponentSyncService] Error initializing server categories:", error);
+    toast.error("Erro ao inicializar categorias", { 
+      description: "Verifique os logs para mais detalhes." 
+    });
   }
 }
 
-// Function to initialize external storage data
-export async function initExternalStorageData() {
-  try {
-    // Get or create storage category
-    let storageCategory = await PriceService.getCategory('storage');
-    if (!storageCategory) {
-      storageCategory = await PriceService.addCategory({
-        name: 'Storage Externo',
-        id: 'storage'
-      });
+/**
+ * Preenche categorias vazias com dados estáticos
+ */
+async function populateCategoriesFromStaticData(currentData: any): Promise<boolean> {
+  let dataUpdated = false;
+  
+  // Para cada componente no serverData
+  for (const component of serverData.componentes) {
+    const normalizedType = component.type.toLowerCase().replace(/\s+/g, '');
+    let categoryId: string;
+    
+    // Mapear o tipo do componente para o ID da categoria
+    switch (normalizedType) {
+      case 'datacenter':
+        categoryId = 'datacenter';
+        break;
+      case 'contrato':
+      case 'duracaodocontrato':
+        categoryId = 'contract';
+        break;  
+      case 'processador':
+        categoryId = 'cpu';
+        break;
+      case 'memoria':
+      case 'memoriaram':
+        categoryId = 'memory';
+        break;
+      case 'armazenamento':
+        categoryId = 'storage';
+        break;
+      case 'conectividade':
+      case 'opcoesdeconectividade':
+        categoryId = 'connectivity';
+        break;
+      case 'sistemaoperacional':
+        categoryId = 'os';
+        break;
+      case 'servicosadicionals':
+      case 'servicospersonalizados':
+        categoryId = 'services';
+        break;
+      default:
+        console.warn(`[ComponentSyncService] Unknown component type: ${component.type}`);
+        continue;
     }
     
-    // If storage category is empty, populate it
-    if (storageCategory.items.length === 0) {
-      // Get storage data items from where they're defined in your application
-      // We'll use static definitions here since the original storageData import is no longer available
-      const storageItems: StorageDataItem[] = [
-        {
-          id: "ssd-block-storage",
-          name: "SSD Block Storage",
-          description: "High-performance SSD storage for applications",
-          price: 0.10, // price per GB
-          type: "storage",
-          subtype: "block",
-          specs: [
-            "IOPS: 6000",
-            "Throughput: 150 MB/s",
-            "Low latency",
-            "Ideal for databases"
-          ],
-          tags: ["ssd", "block", "high-performance"],
-          metadata: {
-            benefits: [
-              "Fast and reliable performance",
-              "Ideal for databases",
-              "Supports snapshotting",
-              "99.9% durability"
-            ],
-            minCapacity: 100,
-            maxCapacity: 16000,
-            capacityUnit: "GB",
-            capacityStep: 50
-          }
-        },
-        {
-          id: "hdd-block-storage",
-          name: "HDD Block Storage",
-          description: "Cost-effective storage for backups and archives",
-          price: 0.03, // price per GB
-          type: "storage",
-          subtype: "block",
-          specs: [
-            "IOPS: 1500",
-            "Throughput: 90 MB/s",
-            "High capacity",
-            "Cost efficient"
-          ],
-          tags: ["hdd", "block", "cost-effective"],
-          metadata: {
-            benefits: [
-              "Cost-effective storage solution",
-              "Perfect for backups",
-              "High capacity options",
-              "99.9% durability"
-            ],
-            minCapacity: 500,
-            maxCapacity: 32000,
-            capacityUnit: "GB",
-            capacityStep: 500
-          }
-        },
-        {
-          id: "nvme-block-storage",
-          name: "NVMe Block Storage",
-          description: "Ultra high-performance storage for critical workloads",
-          price: 0.20, // price per GB
-          type: "storage",
-          subtype: "block",
-          specs: [
-            "IOPS: 20000",
-            "Throughput: 500 MB/s",
-            "Ultra-low latency",
-            "Highest performance"
-          ],
-          tags: ["nvme", "block", "ultra-performance"],
-          metadata: {
-            benefits: [
-              "Extreme performance characteristics",
-              "Perfect for critical workloads",
-              "Ultra-low latency",
-              "99.99% durability"
-            ],
-            minCapacity: 100,
-            maxCapacity: 8000,
-            capacityUnit: "GB",
-            capacityStep: 100
-          }
-        }
-      ];
+    // Verificar se a categoria existe e está vazia
+    if (currentData[categoryId] && (!currentData[categoryId].items || currentData[categoryId].items.length === 0)) {
+      console.log(`[ComponentSyncService] Populating category ${categoryId} with static data`);
       
-      // Add each storage item to price service
-      for (const item of storageItems) {
-        await PriceService.addItem('storage', {
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          type: item.type,
-          subtype: item.subtype,
-          specs: item.specs,
-          tags: item.tags,
-          isHardware: false,
-          metadata: {
-            features: item.metadata.benefits,
-            discount: 0,
-            quantity: 1,
-            unitPrice: item.price,
-            // Store the additional metadata as JSON string
-            unitInfo: JSON.stringify({
-              minCapacity: item.metadata.minCapacity,
-              maxCapacity: item.metadata.maxCapacity,
-              capacityUnit: item.metadata.capacityUnit,
-              capacityStep: item.metadata.capacityStep,
-              benefits: item.metadata.benefits
-            })
-          }
-        });
-      }
+      // Converter os itens estáticos para o formato da PriceItem
+      currentData[categoryId].items = component.options.map(option => ({
+        id: option.id,
+        name: option.name,
+        description: option.description || "",
+        price: option.price || 0,
+        type: component.type,
+        specs: option.specs || [],
+        isHardware: option.isHardware || false,
+        metadata: option.metadata || {}
+      }));
+      
+      dataUpdated = true;
+    }
+  }
+  
+  return dataUpdated;
+}
+
+/**
+ * Sincroniza dados de discos com o serviço de preços
+ */
+export async function syncDiskDataWithPriceService(): Promise<void> {
+  try {
+    console.log("[ComponentSyncService] Syncing disk data with price service");
+    
+    // Obter dados atuais
+    const currentData = await PriceService.getAllData();
+    
+    // Verificar se a categoria disks existe, se não, criar
+    if (!currentData.disks) {
+      currentData.disks = {
+        id: 'disks',
+        name: 'Discos',
+        items: []
+      };
     }
     
-    return true;
+    // Verificar se há itens na categoria
+    if (!currentData.disks.items || currentData.disks.items.length === 0) {
+      console.log("[ComponentSyncService] Adding disk items to price service");
+      
+      // Converter dados de disco para itens de preço
+      currentData.disks.items = diskData.map(disk => ({
+        id: `disk-${disk.type}-${disk.capacity}`,
+        name: `${disk.type.toUpperCase()} ${disk.capacity}GB`,
+        description: `Disco ${disk.type.toUpperCase()} de ${disk.capacity}GB`,
+        price: disk.price,
+        type: 'disk',
+        isHardware: true,
+        specs: [`Tipo: ${disk.type}`, `Capacidade: ${disk.capacity}GB`],
+        metadata: { unitPrice: disk.price }
+      }));
+      
+      // Salvar dados atualizados
+      await PriceService.saveData(currentData);
+      console.log("[ComponentSyncService] Disk data synced successfully");
+    } else {
+      console.log("[ComponentSyncService] Disk items already exist, no sync needed");
+    }
   } catch (error) {
-    console.error('Error initializing external storage data:', error);
-    return false;
+    console.error("[ComponentSyncService] Error syncing disk data:", error);
+  }
+}
+
+/**
+ * Inicializa dados de armazenamento externo
+ */
+export async function initExternalStorageData(): Promise<void> {
+  try {
+    console.log("[ComponentSyncService] Initializing external storage data");
+    
+    // Obter dados atuais
+    const currentData = await PriceService.getAllData();
+    
+    // Verificar se a categoria storage existe, se não, criar
+    if (!currentData.external_storage) {
+      currentData.external_storage = {
+        id: 'external_storage',
+        name: 'Storage Externo',
+        items: []
+      };
+    }
+    
+    // Verificar se há itens na categoria
+    if (!currentData.external_storage.items || currentData.external_storage.items.length === 0) {
+      console.log("[ComponentSyncService] Adding external storage items to price service");
+      
+      // Converter dados de storage para itens de preço
+      currentData.external_storage.items = storageData.map(storage => ({
+        id: storage.id,
+        name: storage.name,
+        description: storage.description,
+        price: storage.basePrice,
+        type: 'external_storage',
+        isHardware: true,
+        specs: storage.specs,
+        metadata: { 
+          pricePerGB: storage.pricePerGB,
+          unitInfo: JSON.stringify({
+            baseCapacity: storage.baseCapacity,
+            basePrice: storage.basePrice
+          })
+        }
+      }));
+      
+      // Salvar dados atualizados
+      await PriceService.saveData(currentData);
+      console.log("[ComponentSyncService] External storage data synced successfully");
+    } else {
+      console.log("[ComponentSyncService] External storage items already exist, no sync needed");
+    }
+  } catch (error) {
+    console.error("[ComponentSyncService] Error initializing external storage data:", error);
   }
 }

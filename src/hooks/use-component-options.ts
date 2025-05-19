@@ -5,6 +5,42 @@ import { PriceService } from "@/services/price-service";
 import { findMatchingComponent } from "@/utils/component-matching";
 import { toast } from "sonner";
 
+// Esta função mapeia os nomes de categoria amigáveis para os IDs usados no PriceService
+function mapCategoryNameToId(categoryName: string): string {
+  // Normalizar para minúsculas e remover espaços
+  const normalized = categoryName.toLowerCase().replace(/\s+/g, '');
+  
+  switch (normalized) {
+    case 'datacenter':
+      return 'datacenter';
+    case 'contrato':
+    case 'duracaodocontrato':
+      return 'contract';
+    case 'processador':
+      return 'cpu';
+    case 'memoria':
+    case 'memoriaram':
+      return 'memory';
+    case 'armazenamento':
+      return 'storage';
+    case 'conectividade':
+    case 'opcoesdeconectividade':
+      return 'connectivity';
+    case 'sistemaoperacional':
+      return 'os';
+    case 'servicosadicionals':
+    case 'servicospersonalizados':
+      return 'services';
+    case 'discos':
+      return 'disks';
+    case 'storageexterno':
+      return 'external_storage';
+    default:
+      console.warn(`[useComponentOptions] No mapping found for category: ${categoryName}`);
+      return categoryName.toLowerCase();
+  }
+}
+
 export function useComponentOptions(categoryId: string, selectedOption?: ComponentOption | null) {
   const [options, setOptions] = useState<ComponentOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,10 +49,20 @@ export function useComponentOptions(categoryId: string, selectedOption?: Compone
 
   useEffect(() => {
     const loadOptions = async () => {
+      if (!categoryId) {
+        setOptions([]);
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       try {
+        // Mapear o ID da categoria para o formato esperado pelo PriceService
+        const mappedCategoryId = mapCategoryNameToId(categoryId);
+        console.log(`[useComponentOptions] Loading options for category '${categoryId}' (mapped to '${mappedCategoryId}')`);
+        
         // Get category data from price service
-        const category = await PriceService.getCategory(categoryId);
+        const category = await PriceService.getCategory(mappedCategoryId);
         
         if (category && Array.isArray(category.items) && category.items.length > 0) {
           // Convert price items to component options
@@ -41,7 +87,7 @@ export function useComponentOptions(categoryId: string, selectedOption?: Compone
             setMatchedSelectedOption(matchedOption || selectedOption);
           }
         } else {
-          console.warn(`[useComponentOptions] No items found for category: ${categoryId}`);
+          console.warn(`[useComponentOptions] No items found for category: ${categoryId} (mapped: ${mappedCategoryId})`);
           setOptions([]);
         }
         
@@ -58,13 +104,7 @@ export function useComponentOptions(categoryId: string, selectedOption?: Compone
       }
     };
     
-    if (categoryId) {
-      loadOptions();
-    } else {
-      setOptions([]);
-      setIsLoading(false);
-      setError(null);
-    }
+    loadOptions();
   }, [categoryId, selectedOption]);
 
   return { options, isLoading, error, matchedSelectedOption };

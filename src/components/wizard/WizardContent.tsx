@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { initializeServerCategories } from "@/services/component-sync-service";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -34,7 +35,10 @@ export function WizardContent() {
     try {
       setIsLoadingData(true);
       await PriceService.forceRefreshFromLatestSource();
-      toast.success("Dados sincronizados com sucesso!");
+      await initializeServerCategories();
+      toast.success("Dados sincronizados com sucesso!", {
+        description: "Todas as categorias e itens atualizados."
+      });
     } catch (error) {
       console.error("Erro ao sincronizar dados:", error);
       toast.error("Falha ao sincronizar dados", {
@@ -49,7 +53,7 @@ export function WizardContent() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await PriceService.forceRefreshFromLatestSource();
+        await refreshData();
       } catch (error) {
         console.error("Erro ao inicializar dados:", error);
       } finally {
