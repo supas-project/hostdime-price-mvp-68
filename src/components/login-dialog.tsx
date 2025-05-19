@@ -39,10 +39,7 @@ export function LoginDialog() {
         </div>
         
         <div className="flex items-center gap-2">
-          {isAdminAccess && <Button variant="ghost" size="sm" onClick={() => navigate("/price-table")} className="text-primary hover:bg-primary/10">
-              <Database className="w-4 h-4 mr-2 shrink-0" />
-              
-            </Button>}
+          {isAdminAccess}
           
           <Button variant="outline" size="sm" onClick={async () => {
           try {
