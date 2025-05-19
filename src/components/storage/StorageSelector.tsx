@@ -8,6 +8,7 @@ import { InternalStoragePanel } from './InternalStoragePanel';
 import { ExternalStoragePanel } from './ExternalStoragePanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StorageHeader } from './storage-header';
+import { HardDrive } from 'lucide-react';
 
 export interface StorageSelectorProps {
   onSelectInternalDisk: (disk: PricedDiskOption, quantity: number) => void;
@@ -48,7 +49,11 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
 
   return (
     <div className="space-y-8">
-      <StorageHeader />
+      <StorageHeader 
+        icon={HardDrive}
+        title="Opções de Armazenamento"
+        tooltip="Escolha entre discos internos ou storage externo para o seu servidor"
+      />
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
         <TabsList className="grid grid-cols-2 w-full">
