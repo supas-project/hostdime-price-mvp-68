@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { OSSelector } from "./os/OSSelector";
 import { findMatchingComponent } from "@/utils/component-matching";
-import { useToast } from "@/hooks/use-toast";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface OSContentProps {
   // Make options optional by adding the ? modifier
@@ -20,11 +21,10 @@ export function OSContent({
   onSelectOption 
 }: OSContentProps) {
   // Use propOptions if provided, otherwise fetch from the price service
-  const { options, isLoading, error, matchedSelectedOption } = useComponentOptions('os', selectedOption);
+  const { options, isLoading, error } = useComponentOptions('os');
   const finalOptions = propOptions || options; // Use propOptions if available, fall back to fetched options
   
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
-  const { toast } = useToast();
   
   useEffect(() => {
     // Log information about options for debugging
@@ -36,7 +36,7 @@ export function OSContent({
         description: "Não foram encontradas opções de sistemas operacionais. Verifique a configuração."
       });
     }
-  }, [finalOptions, toast, isLoading]);
+  }, [finalOptions, isLoading]);
   
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {

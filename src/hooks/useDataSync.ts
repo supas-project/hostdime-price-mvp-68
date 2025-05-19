@@ -77,7 +77,6 @@ export function useDataSync() {
       
       // If not admin, notify about the change
       toast({
-        title: "Dados atualizados",
         description: `O administrador realizou alterações: ${details}`
       });
       
@@ -139,7 +138,6 @@ export function useDataSync() {
         setHasUpdates(true);
         
         toast({
-          title: "Atualizações disponíveis",
           description: "O administrador realizou alterações. Clique para atualizar."
         });
       }

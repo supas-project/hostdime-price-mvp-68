@@ -1,323 +1,319 @@
 
-import { toast } from "sonner";
+import { storageData } from "@/data/storage-pricing";
 import { PriceService } from "./price-service";
-import { serverData } from "@/data/server-components";
-import { diskData } from "@/data/disk-data";
-import { osComponents } from "@/data/os-components";
-import { storageComponents } from "@/data/storage-components";
+import { PriceCategory } from "@/types/pricing";
 
 /**
- * Service to sync component data with price table
+ * Service for synchronizing component data
  */
 const ComponentSyncService = {
   /**
-   * Syncs CPU data from static component data to price table
+   * Synchronizes CPU data
    */
-  syncCpuData: async (): Promise<boolean> => {
+  syncCpuData: async (): Promise<void> => {
     try {
-      console.log("Syncing CPU data...");
-      const cpuComponent = serverData.componentes.find(c => c.type === "Processador");
+      const cpuCategory = await PriceService.getCategory("cpu");
       
-      if (!cpuComponent || !cpuComponent.options) {
-        console.error("CPU component data not found");
-        return false;
+      if (Array.isArray(cpuCategory.items) && cpuCategory.items.length > 0) {
+        console.log("CPU data already synced");
+        return;
       }
       
-      // Get or create CPU category
-      const cpuCategory = await PriceService.getCategory('cpu');
-      
-      // Convert component options to price items
-      const cpuItems = cpuComponent.options.map(option => ({
-        id: option.id,
-        name: option.name,
-        description: option.description || "",
-        price: option.price,
-        type: "cpu",
-        subtype: "Intel", // Default CPU subtype
-        isHardware: true,
-        specs: option.specs || [],
-        tags: ["Hardware"],
-        metadata: option.metadata || {}
-      }));
-      
-      // Update category items
-      const updatedCategory = {
-        ...cpuCategory,
+      // Add default CPU options
+      await PriceService.updateCategory("cpu", {
         name: "Processadores",
-        items: cpuItems
-      };
+        items: [
+          {
+            id: "xeon-e-2386g",
+            name: "Intel Xeon E-2386G",
+            description: "Processador de alto desempenho para servidores (12 MB Cache, até 5.10 GHz)",
+            price: 520,
+            specs: [
+              "Cores: 6",
+              "Threads: 12",
+              "Cache: 12 MB Intel® Smart Cache",
+              "Base Frequency: 3.50 GHz",
+              "Max Turbo Frequency: 5.10 GHz"
+            ],
+            type: "Processador",
+            subtype: "Intel Xeon"
+          },
+          {
+            id: "xeon-gold-6338",
+            name: "Intel Xeon Gold 6338",
+            description: "Processador de alta capacidade para servidores (48 MB Cache, até 3.20 GHz)",
+            price: 1200,
+            specs: [
+              "Cores: 32",
+              "Threads: 64",
+              "Cache: 48 MB Intel® Smart Cache",
+              "Base Frequency: 2.00 GHz",
+              "Max Turbo Frequency: 3.20 GHz"
+            ],
+            type: "Processador",
+            subtype: "Intel Xeon"
+          }
+        ]
+      });
       
-      // Update the category
-      await PriceService.updateCategory('cpu', updatedCategory);
       console.log("CPU data synced successfully");
-      return true;
     } catch (error) {
       console.error("Error syncing CPU data:", error);
-      toast.error("Failed to sync CPU data");
-      return false;
+      throw error;
     }
   },
-  
+
   /**
-   * Syncs memory data from static component data to price table
+   * Synchronizes Memory data
    */
-  syncMemoryData: async (): Promise<boolean> => {
+  syncMemoryData: async (): Promise<void> => {
     try {
-      console.log("Syncing memory data...");
-      const memoryComponent = serverData.componentes.find(c => c.type === "Memória");
+      const memoryCategory = await PriceService.getCategory("memory");
       
-      if (!memoryComponent || !memoryComponent.options) {
-        console.error("Memory component data not found");
-        return false;
+      if (Array.isArray(memoryCategory.items) && memoryCategory.items.length > 0) {
+        console.log("Memory data already synced");
+        return;
       }
       
-      // Get or create memory category
-      const memoryCategory = await PriceService.getCategory('memory');
-      
-      // Convert component options to price items
-      const memoryItems = memoryComponent.options.map(option => ({
-        id: option.id,
-        name: option.name,
-        description: option.description || "",
-        price: option.price,
-        type: "memory",
-        subtype: option.subtype || "DDR4", // Default memory type
-        isHardware: true,
-        specs: option.specs || [],
-        tags: ["Hardware"],
-        metadata: option.metadata || {}
-      }));
-      
-      // Update category items
-      const updatedCategory = {
-        ...memoryCategory,
+      // Add default Memory options
+      await PriceService.updateCategory("memory", {
         name: "Memória",
-        items: memoryItems
-      };
+        items: [
+          {
+            id: "ddr4-16gb",
+            name: "16 GB DDR4",
+            description: "16 GB de memória RAM DDR4 3200 MHz",
+            price: 100,
+            specs: [
+              "Tipo: DDR4",
+              "Capacidade: 16 GB",
+              "Frequência: 3200 MHz",
+              "ECC: Sim"
+            ],
+            type: "Memória",
+            subtype: "DDR4"
+          },
+          {
+            id: "ddr4-32gb",
+            name: "32 GB DDR4",
+            description: "32 GB de memória RAM DDR4 3200 MHz",
+            price: 200,
+            specs: [
+              "Tipo: DDR4",
+              "Capacidade: 32 GB",
+              "Frequência: 3200 MHz",
+              "ECC: Sim"
+            ],
+            type: "Memória",
+            subtype: "DDR4"
+          },
+          {
+            id: "ddr4-64gb",
+            name: "64 GB DDR4",
+            description: "64 GB de memória RAM DDR4 3200 MHz",
+            price: 380,
+            specs: [
+              "Tipo: DDR4",
+              "Capacidade: 64 GB",
+              "Frequência: 3200 MHz",
+              "ECC: Sim"
+            ],
+            type: "Memória",
+            subtype: "DDR4"
+          }
+        ]
+      });
       
-      // Update the category
-      await PriceService.updateCategory('memory', updatedCategory);
       console.log("Memory data synced successfully");
-      return true;
     } catch (error) {
-      console.error("Error syncing memory data:", error);
-      toast.error("Failed to sync memory data");
-      return false;
+      console.error("Error syncing Memory data:", error);
+      throw error;
     }
   },
-  
+
   /**
-   * Syncs disk data from static data to price table
+   * Synchronizes Disk data
    */
-  syncDiskData: async (): Promise<boolean> => {
+  syncDiskData: async (): Promise<void> => {
     try {
-      console.log("Syncing disk data...");
+      const diskCategory = await PriceService.getCategory("disk");
       
-      // Get or create disk category
-      const diskCategory = await PriceService.getCategory('disk');
+      if (Array.isArray(diskCategory.items) && diskCategory.items.length > 0) {
+        console.log("Disk data already synced");
+        return;
+      }
       
-      // Convert disk data to price items
-      const diskItems = diskData.map(disk => {
-        // Determine readable name
-        const diskName = `${disk.type.toUpperCase()} ${disk.capacity}`;
-        
-        // Calculate read/write speeds based on disk type
-        let readSpeed = "500 MB/s";
-        let writeSpeed = "400 MB/s";
-        let iops = "10,000";
-        
-        if (disk.type === "ssd") {
-          readSpeed = "550 MB/s";
-          writeSpeed = "520 MB/s";
-          iops = "100,000";
-        } else if (disk.type === "nvme") {
-          readSpeed = "3500 MB/s";
-          writeSpeed = "3000 MB/s";
-          iops = "500,000";
-        }
-        
-        const specs = [
-          `Velocidade de leitura: ${readSpeed}`,
-          `Velocidade de escrita: ${writeSpeed}`,
-          `IOPS: ${iops}`,
-          disk.type === "nvme" ? "Recomendado para alta performance" : "",
-          disk.type === "ssd" ? "Recomendado para uso geral" : "",
-          disk.type === "hdd" ? "Recomendado para armazenamento em massa" : ""
-        ].filter(Boolean);
-        
-        return {
-          id: `disk-${disk.type}-${disk.capacity}`,
-          name: diskName,
-          description: `Disco ${disk.type.toUpperCase()} com ${disk.capacity} de capacidade`,
-          price: disk.price,
-          type: "disk",
-          subtype: disk.type,
-          isHardware: true,
-          specs,
-          tags: ["Hardware"],
-          metadata: {}
-        };
-      });
-      
-      // Update category items
-      const updatedCategory = {
-        ...diskCategory,
+      // Add default Disk options
+      await PriceService.updateCategory("disk", {
         name: "Discos",
-        items: diskItems
-      };
-      
-      // Update the category
-      await PriceService.updateCategory('disk', updatedCategory);
-      console.log("Disk data synced successfully");
-      return true;
-    } catch (error) {
-      console.error("Error syncing disk data:", error);
-      toast.error("Failed to sync disk data");
-      return false;
-    }
-  },
-  
-  /**
-   * Syncs OS data from static data to price table
-   */
-  syncOSData: async (): Promise<boolean> => {
-    try {
-      console.log("Syncing OS data...");
-      
-      // Get or create OS category
-      const osCategory = await PriceService.getCategory('os');
-      
-      // Convert OS options to price items
-      const osItems = osComponents.options.map(os => {
-        return {
-          id: os.id,
-          name: os.name,
-          description: os.description || "",
-          price: os.price,
-          type: "os",
-          subtype: os.subtype || "",
-          isHardware: false,
-          specs: [],
-          tags: ["Software"],
-          metadata: {}
-        };
+        items: [
+          {
+            id: "ssd-480gb",
+            name: "SSD 480 GB",
+            description: "SSD de 480 GB para armazenamento rápido",
+            price: 120,
+            specs: [
+              "Tipo: SSD",
+              "Capacidade: 480 GB",
+              "Interface: SATA",
+              "Velocidade de leitura: 550 MB/s",
+              "Velocidade de escrita: 520 MB/s"
+            ],
+            type: "Disco",
+            subtype: "SSD"
+          },
+          {
+            id: "ssd-960gb",
+            name: "SSD 960 GB",
+            description: "SSD de 960 GB para armazenamento rápido",
+            price: 220,
+            specs: [
+              "Tipo: SSD",
+              "Capacidade: 960 GB",
+              "Interface: SATA",
+              "Velocidade de leitura: 550 MB/s",
+              "Velocidade de escrita: 520 MB/s"
+            ],
+            type: "Disco",
+            subtype: "SSD"
+          },
+          {
+            id: "nvme-1tb",
+            name: "NVMe 1 TB",
+            description: "SSD NVMe de 1 TB para desempenho máximo",
+            price: 320,
+            specs: [
+              "Tipo: NVMe",
+              "Capacidade: 1 TB",
+              "Interface: PCIe 4.0",
+              "Velocidade de leitura: 7000 MB/s",
+              "Velocidade de escrita: 5300 MB/s"
+            ],
+            type: "Disco",
+            subtype: "NVMe"
+          }
+        ]
       });
       
-      // Update category items
-      const updatedCategory = {
-        ...osCategory,
-        name: "Sistemas Operacionais",
-        items: osItems
-      };
+      console.log("Disk data synced successfully");
+    } catch (error) {
+      console.error("Error syncing Disk data:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Synchronizes OS data
+   */
+  syncOSData: async (): Promise<void> => {
+    try {
+      const osCategory = await PriceService.getCategory("os");
       
-      // Update the category
-      await PriceService.updateCategory('os', updatedCategory);
+      if (Array.isArray(osCategory.items) && osCategory.items.length > 0) {
+        console.log("OS data already synced");
+        return;
+      }
+      
+      // Add default OS options
+      await PriceService.updateCategory("os", {
+        name: "Sistemas Operacionais",
+        items: [
+          {
+            id: "windows-server-2022",
+            name: "Windows Server 2022",
+            description: "Sistema operacional Windows Server 2022 Standard",
+            price: 160,
+            specs: [
+              "Versão: 2022",
+              "Edição: Standard",
+              "Licença: Por CPU",
+              "Inclui: 2 VMs"
+            ],
+            type: "SistemaOperacional",
+            subtype: "Windows"
+          },
+          {
+            id: "centos-7",
+            name: "CentOS 7",
+            description: "Sistema operacional CentOS 7",
+            price: 0,
+            specs: [
+              "Versão: 7",
+              "Edição: Community Enterprise OS",
+              "Licença: Open Source",
+              "Suporte: Comunidade"
+            ],
+            type: "SistemaOperacional",
+            subtype: "Linux"
+          },
+          {
+            id: "ubuntu-20-04",
+            name: "Ubuntu Server 20.04 LTS",
+            description: "Sistema operacional Ubuntu Server 20.04 Long Term Support",
+            price: 0,
+            specs: [
+              "Versão: 20.04 LTS",
+              "Edição: Server",
+              "Licença: Open Source",
+              "Suporte: 5 anos"
+            ],
+            type: "SistemaOperacional",
+            subtype: "Linux"
+          }
+        ]
+      });
+      
       console.log("OS data synced successfully");
-      return true;
     } catch (error) {
       console.error("Error syncing OS data:", error);
-      toast.error("Failed to sync OS data");
-      return false;
+      throw error;
     }
   },
-  
+
   /**
-   * Syncs storage data from static data to price table
+   * Synchronizes Storage data
    */
-  syncStorageData: async (): Promise<boolean> => {
+  syncStorageData: async (): Promise<void> => {
     try {
-      console.log("Syncing storage data...");
+      const storageCategory = await PriceService.getCategory("storage");
       
-      // Get or create storage category
-      const storageCategory = await PriceService.getCategory('storage');
+      if (Array.isArray(storageCategory.items) && storageCategory.items.length > 0) {
+        console.log("Storage data already synced");
+        return;
+      }
       
-      // Create storage price items
-      const storageItems = [
-        {
-          id: "storage-block",
-          name: "Block Storage",
-          description: "Block-level storage optimized for databases and applications",
-          price: 0.15, // per GB
-          type: "storage",
-          subtype: "block",
-          isHardware: true,
-          specs: [
-            "IOPS: 3,000 por TB",
-            "Throughput: 150 MB/s",
-            "Latência: 2-5ms"
-          ],
-          tags: ["Hardware"],
-          metadata: {
-            minCapacity: 100,
-            maxCapacity: 16000,
-            capacityUnit: "GB",
-            capacityStep: 100,
-            benefits: ["Ideal para bancos de dados", "Alta performance", "Baixa latência"]
-          }
-        },
-        {
-          id: "storage-object",
-          name: "Object Storage",
-          description: "Cost-effective storage for data archives and backups",
-          price: 0.05, // per GB
-          type: "storage",
-          subtype: "object",
-          isHardware: true,
-          specs: [
-            "Throughput: 50 MB/s",
-            "Acesso via RESTful API",
-            "Redundância geográfica"
-          ],
-          tags: ["Hardware"],
-          metadata: {
-            minCapacity: 500,
-            maxCapacity: 100000,
-            capacityUnit: "GB",
-            capacityStep: 500,
-            benefits: ["Custo-efetivo", "Escalável", "Durável"]
-          }
+      // Transform the metadata structure to match PriceItem
+      const storageItems = storageData.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        type: item.type,
+        subtype: item.subtype,
+        isHardware: true,
+        specs: item.specs || [],
+        tags: item.tags || [],
+        metadata: {
+          // Use the compatible metadata structure
+          discount: 0,
+          features: item.metadata.benefits,
+          quantity: 1,
+          unitPrice: item.price
         }
-      ];
-      
-      // Update category items
-      const updatedCategory = {
-        ...storageCategory,
+      }));
+
+      // Add default Storage options
+      await PriceService.updateCategory("storage", {
         name: "Storage",
         items: storageItems
-      };
+      });
       
-      // Update the category
-      await PriceService.updateCategory('storage', updatedCategory);
       console.log("Storage data synced successfully");
-      return true;
     } catch (error) {
-      console.error("Error syncing storage data:", error);
-      toast.error("Failed to sync storage data");
-      return false;
+      console.error("Error syncing Storage data:", error);
+      throw error;
     }
   },
-  
-  /**
-   * Syncs all component data to price table
-   */
-  syncAllData: async (): Promise<boolean> => {
-    try {
-      await Promise.all([
-        ComponentSyncService.syncCpuData(),
-        ComponentSyncService.syncMemoryData(),
-        ComponentSyncService.syncDiskData(),
-        ComponentSyncService.syncOSData(),
-        ComponentSyncService.syncStorageData()
-      ]);
-      
-      toast.success("All component data synced successfully");
-      return true;
-    } catch (error) {
-      console.error("Error syncing all data:", error);
-      toast.error("Failed to sync some component data");
-      return false;
-    }
-  }
 };
 
 export default ComponentSyncService;

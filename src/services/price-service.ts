@@ -115,8 +115,8 @@ export const PriceService = {
         return initialPriceData;
       }
       
-      // Convert from Json to PriceData
-      return data.data as unknown as PriceData;
+      // Convert from Json to PriceData with type assertion
+      return data.data as PriceData;
     } catch (error) {
       console.error('Error retrieving data:', error);
       return initialPriceData;
@@ -139,7 +139,7 @@ export const PriceService = {
       }
       
       if (existingData) {
-        // Update existing record
+        // Update existing record - convert PriceData to Json
         const { error } = await supabase
           .from('price_data')
           .update({ 
@@ -153,7 +153,7 @@ export const PriceService = {
           throw new Error('Failed to update data');
         }
       } else {
-        // Insert new record
+        // Insert new record - convert PriceData to Json
         const { error } = await supabase
           .from('price_data')
           .insert({
@@ -185,7 +185,7 @@ export const PriceService = {
     }
   },
   
-  // Get a specific category - now properly awaits promise
+  // Get a specific category
   getCategory: async (categoryId: string): Promise<PriceCategory> => {
     if (!categoryId) {
       console.error('Invalid or missing category ID');
@@ -262,7 +262,7 @@ export const PriceService = {
     await PriceService.saveDataToSupabase(data);
   },
   
-  // Adiciona um item a uma categoria
+  // Adds an item to a category
   addItem: async (categoryId: string, item: Omit<PriceItem, 'id'>): Promise<PriceItem> => {
     if (!categoryId) {
       throw new Error("ID de categoria não fornecido");
@@ -279,10 +279,10 @@ export const PriceService = {
       throw new Error(`Categoria com ID "${categoryId}" não encontrada`);
     }
     
-    // Normaliza o nome para uma verificação mais robusta de duplicidade
+    // Normalize item name for more robust duplication check
     const normalizedItemName = item.name.trim().toLowerCase();
     
-    // Verifica se já existe um item com o mesmo nome (normalizado)
+    // Check if an item with the same name (normalized) already exists
     const existingItem = data[categoryId].items.find(i => 
       i.name.toLowerCase().trim() === normalizedItemName
     );
@@ -297,10 +297,10 @@ export const PriceService = {
       name: item.name.trim(),
       description: item.description?.trim() || '',
       specs: item.specs || [],
-      price: Number(item.price) // Garantir que o preço seja um número
+      price: Number(item.price) // Ensure price is a number
     };
     
-    // Cria uma nova cópia dos dados para garantir atomicidade
+    // Create a new copy of the data to ensure atomicity
     const updatedData = {
       ...data,
       [categoryId]: {
@@ -309,18 +309,18 @@ export const PriceService = {
       }
     };
     
-    // Salva os dados atualizados
+    // Save the updated data
     await PriceService.saveDataToSupabase(updatedData);
     return newItem;
   },
   
-  // Atualiza um item
+  // Update an item
   updateItem: async (categoryId: string, itemId: string, updates: Partial<PriceItem>): Promise<PriceItem> => {
     if (!categoryId || !itemId) {
       throw new Error("ID de categoria ou ID de item não fornecido");
     }
     
-    // Validar campos atualizados
+    // Validate updated fields
     if (updates.price !== undefined && (isNaN(Number(updates.price)) || Number(updates.price) < 0)) {
       throw new Error("Preço deve ser um número positivo");
     }
@@ -341,7 +341,7 @@ export const PriceService = {
       throw new Error(`Item com ID "${itemId}" não encontrado na categoria ${categoryId}`);
     }
     
-    // Verificar se estamos alterando o nome para um nome já existente
+    // Check if we're changing name to an already existing one
     if (updates.name) {
       const duplicateName = data[categoryId].items.find(i => 
         i.name.toLowerCase() === updates.name?.toLowerCase() && i.id !== itemId
@@ -352,17 +352,17 @@ export const PriceService = {
       }
     }
     
-    // Atualizar o item com os novos valores
+    // Update the item with the new values
     data[categoryId].items[itemIndex] = {
       ...data[categoryId].items[itemIndex],
       ...updates,
-      // Garantir que o ID não seja alterado
+      // Ensure ID isn't changed
       id: itemId,
-      // Processar campos de texto para remover espaços extras
+      // Process text fields to remove extra spaces
       name: updates.name !== undefined ? updates.name.trim() : data[categoryId].items[itemIndex].name,
       description: updates.description !== undefined ? 
         updates.description.trim() : data[categoryId].items[itemIndex].description,
-      // Garantir que o preço seja um número
+      // Ensure price is a number
       price: updates.price !== undefined ? Number(updates.price) : data[categoryId].items[itemIndex].price
     };
     
@@ -370,7 +370,7 @@ export const PriceService = {
     return data[categoryId].items[itemIndex];
   },
   
-  // Remove um item
+  // Remove an item
   deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
     if (!categoryId || !itemId) {
       throw new Error("ID de categoria ou ID de item não fornecido");
@@ -392,27 +392,27 @@ export const PriceService = {
     await PriceService.saveDataToSupabase(data);
   },
   
-  // Importa dados de JSON
+  // Import data from JSON
   importFromJSON: async (jsonData: string): Promise<PriceData> => {
     try {
       const parsedData = JSON.parse(jsonData);
       
-      // Valida a estrutura
+      // Validate structure
       if (typeof parsedData !== 'object' || parsedData === null) {
         throw new Error('Estrutura JSON inválida. Esperado um objeto.');
       }
       
-      // Mescla com dados existentes
+      // Merge with existing data
       const existingData = await PriceService.getAllData();
       const mergedData = { ...existingData };
       
       Object.entries(parsedData).forEach(([categoryId, category]) => {
-        // Valida a estrutura da categoria
-        if (typeof category !== 'object' || !('items' in category) || !Array.isArray(category.items)) {
+        // Validate category structure
+        if (typeof category !== 'object' || !('items' in category) || !Array.isArray((category as any).items)) {
           throw new Error(`Estrutura de categoria inválida para ${categoryId}`);
         }
         
-        // Cria ou atualiza a categoria
+        // Create or update category
         mergedData[categoryId] = {
           id: categoryId,
           name: (category as PriceCategory).name || categoryId,

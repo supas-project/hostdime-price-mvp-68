@@ -2,19 +2,22 @@
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
+import { findMatchingComponent } from "@/utils/component-matching";
 
-export function useComponentOptions(categoryId: string) {
+export function useComponentOptions(categoryId: string, selectedOption?: ComponentOption | null) {
   const [options, setOptions] = useState<ComponentOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [matchedSelectedOption, setMatchedSelectedOption] = useState<ComponentOption | null>(null);
 
   useEffect(() => {
     const loadOptions = async () => {
       setIsLoading(true);
       try {
+        // Get category data from price service
         const category = await PriceService.getCategory(categoryId);
         
-        // Check if the category exists and has items
-        if (category && category.items && category.items.length > 0) {
+        if (category && Array.isArray(category.items) && category.items.length > 0) {
           // Convert price items to component options
           const componentOptions = category.items.map(item => ({
             id: item.id,
@@ -28,13 +31,22 @@ export function useComponentOptions(categoryId: string) {
           }));
           
           setOptions(componentOptions);
+          
+          // If we have a selected option, try to find its match in the new options
+          if (selectedOption && componentOptions.length > 0) {
+            const matchedOption = findMatchingComponent(selectedOption, componentOptions);
+            setMatchedSelectedOption(matchedOption || selectedOption);
+          }
         } else {
           console.log(`No items found for category: ${categoryId}`);
           setOptions([]);
         }
-      } catch (error) {
-        console.error(`Error loading component options for ${categoryId}:`, error);
+        
+        setError(null);
+      } catch (err) {
+        console.error(`Error loading component options for ${categoryId}:`, err);
         setOptions([]);
+        setError(err instanceof Error ? err : new Error('Unknown error occurred'));
       } finally {
         setIsLoading(false);
       }
@@ -45,8 +57,9 @@ export function useComponentOptions(categoryId: string) {
     } else {
       setOptions([]);
       setIsLoading(false);
+      setError(null);
     }
-  }, [categoryId]);
+  }, [categoryId, selectedOption]);
 
-  return { options, isLoading };
+  return { options, isLoading, error, matchedSelectedOption };
 }

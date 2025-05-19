@@ -59,8 +59,10 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   const isNVMe = selectedDiskType === 'nvme';
 
   // Convert the storage types array to object format expected by ExternalStoragePanel
-  const storageTypesFormatted = storageTypes.reduce((acc, type) => {
-    acc[type.id] = {
+  const formattedStorageTypes: {[key: string]: any} = {};
+  
+  storageTypes.forEach(type => {
+    formattedStorageTypes[type.id] = {
       name: type.name,
       pricePerGB: type.price / 100, // Assuming price is per 100GB
       iops: type.specs.find(s => s.toLowerCase().includes('iops'))?.split(': ')[1] || 'N/A',
@@ -69,8 +71,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       throughputAdd: 0, // Default value
       maxThroughput: type.specs.find(s => s.toLowerCase().includes('max'))?.split(': ')[1] || 'N/A'
     };
-    return acc;
-  }, {} as {[key: string]: any});
+  });
 
   return (
     <Card className={cn(
@@ -138,7 +139,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
             <div className="animate-fade-in">
               <ExternalStoragePanel 
                 onSelectStorage={handleSelectExternalStorage} 
-                storageTypes={storageTypesFormatted}
+                storageTypes={formattedStorageTypes}
               />
             </div>
           </TabsContent>

@@ -19,7 +19,7 @@ export function MemoryContent({
   selectedOption, 
   onSelectOption 
 }: MemoryContentProps) {
-  const { options, isLoading, error, matchedSelectedOption } = useComponentOptions('memory', selectedOption);
+  const { options, isLoading, error } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
 
   // Sync selectedOption with local state
@@ -28,13 +28,6 @@ export function MemoryContent({
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
-
-  // Sync matchedSelectedOption with local state
-  useEffect(() => {
-    if (matchedSelectedOption && matchedSelectedOption.id !== localSelectedId) {
-      setLocalSelectedId(matchedSelectedOption.id);
-    }
-  }, [matchedSelectedOption, localSelectedId]);
 
   // Notify about errors
   useEffect(() => {

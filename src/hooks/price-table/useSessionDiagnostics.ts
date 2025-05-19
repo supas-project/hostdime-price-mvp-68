@@ -26,15 +26,15 @@ export function useSessionDiagnostics() {
           setSessionStatus("authenticated");
           
           // Fetch the session to get more details
-          const { data: session, error: sessionError } = await supabase.auth.getSession();
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (!sessionError && session) {
             setSessionDetails({
-              sessionCreatedAt: session.session?.created_at,
+              sessionCreatedAt: session?.created_at,
               lastActivity: new Date().toISOString(),
-              expiresAt: session.session?.expires_at,
-              provider: session.session?.user.app_metadata.provider,
-              lastSignIn: user.last_sign_in_at // Corrected property access
+              expiresAt: session?.expires_at,
+              provider: session?.user.app_metadata.provider,
+              lastSignIn: user.last_sign_in_at // Use the correct property name
             });
           }
         } else {

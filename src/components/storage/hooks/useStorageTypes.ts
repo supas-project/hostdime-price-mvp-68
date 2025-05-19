@@ -1,106 +1,67 @@
 
 import { useState, useEffect } from 'react';
-import { PriceService } from '@/services/price-service';
-import { storageComponents } from '@/data/storage-components';
+import { ComponentOption } from '@/types/component';
+import { PriceService } from "@/services/price-service";
 
 export interface StorageType {
   id: string;
   name: string;
-  type: string;
   description: string;
   price: number;
+  pricePerGB: number;
+  type: string;
+  subtype: string;
+  specs: string[];
   minCapacity: number;
   maxCapacity: number;
   capacityUnit: string;
   capacityStep: number;
-  specs: string[];
   benefits: string[];
 }
 
-// Define expected metadata structure
-interface StorageMetadata {
-  minCapacity?: number;
-  maxCapacity?: number;
-  capacityUnit?: string;
-  capacityStep?: number;
-  benefits?: string[];
-  discount?: number;
-  features?: string[];
-  quantity?: number;
-  unitPrice?: number;
-}
-
 export function useStorageTypes() {
-  const [types, setTypes] = useState<StorageType[]>([]);
+  const [storageTypes, setStorageTypes] = useState<StorageType[]>([]);
 
   useEffect(() => {
     const loadStorageTypes = async () => {
       try {
-        // Try to load from price data
         const category = await PriceService.getCategory('storage');
-        
-        if (category && category.items && category.items.length > 0) {
+        if (category && Array.isArray(category.items) && category.items.length > 0) {
           // Convert price items to storage types
-          const storageTypes: StorageType[] = category.items.map(item => {
-            const metadata = item.metadata as StorageMetadata || {};
-            
+          const types: StorageType[] = category.items.map(item => {
+            // Access metadata carefully with optional chaining and defaults
+            const metadata = item.metadata || {};
             return {
               id: item.id,
               name: item.name,
-              type: item.subtype || 'storage',
-              description: item.description || '',
+              description: item.description,
               price: item.price,
-              minCapacity: metadata.minCapacity || 100,
-              maxCapacity: metadata.maxCapacity || 10000,
-              capacityUnit: metadata.capacityUnit || 'GB',
-              capacityStep: metadata.capacityStep || 100,
+              pricePerGB: item.price / 100, // Assuming price is per 100GB
+              type: item.type,
+              subtype: item.subtype,
               specs: item.specs || [],
-              benefits: metadata.benefits || []
+              // Use safe defaults if metadata properties don't exist
+              minCapacity: 100,  // Default values
+              maxCapacity: 1000,
+              capacityUnit: 'GB',
+              capacityStep: 100,
+              benefits: Array.isArray(metadata.features) ? metadata.features : []
             };
           });
-          
-          setTypes(storageTypes);
+
+          setStorageTypes(types);
         } else {
-          // Fallback to static data - need to convert to correct format
-          const componentOptions = storageComponents.options || [];
-          const formattedTypes = componentOptions.map(option => ({
-            id: option.id,
-            name: option.name,
-            type: option.subtype || 'storage',
-            description: option.description || '',
-            price: option.price,
-            minCapacity: 100,
-            maxCapacity: 10000,
-            capacityUnit: 'GB',
-            capacityStep: 100,
-            specs: option.specs || [],
-            benefits: []
-          }));
-          setTypes(formattedTypes);
+          console.warn('No storage types found');
+          setStorageTypes([]);
         }
       } catch (error) {
         console.error('Error loading storage types:', error);
-        // Fallback to static data with proper formatting
-        const componentOptions = storageComponents.options || [];
-        const formattedTypes = componentOptions.map(option => ({
-          id: option.id,
-          name: option.name,
-          type: option.subtype || 'storage',
-          description: option.description || '',
-          price: option.price,
-          minCapacity: 100,
-          maxCapacity: 10000,
-          capacityUnit: 'GB',
-          capacityStep: 100,
-          specs: option.specs || [],
-          benefits: []
-        }));
-        setTypes(formattedTypes);
+        setStorageTypes([]);
       }
     };
 
     loadStorageTypes();
   }, []);
 
-  return types;
+  return storageTypes;
 }

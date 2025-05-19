@@ -29,11 +29,13 @@ export const initializeServices = async () => {
     
     // Check if data already exists in price table
     const priceData = await PriceService.getAllData();
-    const hasCpuData = priceData.cpu && priceData.cpu.items.length > 0;
-    const hasMemoryData = priceData.memory && priceData.memory.items.length > 0;
-    const hasDiskData = priceData.disk && priceData.disk.items.length > 0;
-    const hasOsData = priceData.os && priceData.os.items.length > 0;
-    const hasStorageData = priceData.storage && priceData.storage.items.length > 0;
+
+    // Check for essential categories and initialize if needed
+    const hasCpuData = priceData?.cpu && priceData.cpu.items.length > 0;
+    const hasMemoryData = priceData?.memory && priceData.memory.items.length > 0;
+    const hasDiskData = priceData?.disk && priceData.disk.items.length > 0;
+    const hasOsData = priceData?.os && priceData.os.items.length > 0;
+    const hasStorageData = priceData?.storage && priceData.storage.items.length > 0;
     
     // If no data, initialize with default data
     if (!hasCpuData || !hasMemoryData || !hasDiskData || !hasOsData || !hasStorageData) {

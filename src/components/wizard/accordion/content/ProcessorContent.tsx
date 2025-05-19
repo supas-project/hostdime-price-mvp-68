@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
@@ -6,11 +7,13 @@ import { HelpTooltip } from "@/components/help-tooltip";
 import { ComponentSelector } from "@/components/component-selector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
+
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
   onSelectOption: (option: ComponentOption) => void;
 }
+
 export function ProcessorContent({
   selectedOption,
   onSelectOption
@@ -18,9 +21,8 @@ export function ProcessorContent({
   const {
     options,
     isLoading,
-    error,
-    matchedSelectedOption
-  } = useComponentOptions('cpu', selectedOption);
+    error
+  } = useComponentOptions('cpu');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
 
   // Sync selectedOption with local state
@@ -29,13 +31,6 @@ export function ProcessorContent({
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
-
-  // Sync matchedSelectedOption with local state
-  useEffect(() => {
-    if (matchedSelectedOption && matchedSelectedOption.id !== localSelectedId) {
-      setLocalSelectedId(matchedSelectedOption.id);
-    }
-  }, [matchedSelectedOption, localSelectedId]);
 
   // Notify about errors
   useEffect(() => {
@@ -90,8 +85,6 @@ export function ProcessorContent({
   }
   return <Card className="p-4 sm:p-6">
       <div className="flex flex-col gap-4">
-        
-
         <div className="w-full">
           <ComponentSelector label="Processador" options={options} value={localSelectedId} onChange={handleSelectionChange} tooltip="Escolha o processador que melhor atenda às suas necessidades computacionais." highlightSelection={true} />
         </div>
