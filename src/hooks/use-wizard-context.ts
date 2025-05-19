@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { ComponentOption, ConnectivityItem } from '@/types/component';
+import { ComponentOption } from '@/types/component';
 import { initializeServerCategories, registerComponentSyncListeners } from '@/services/component-sync';
 
 export function useWizardContext() {
@@ -15,6 +15,21 @@ export function useWizardContext() {
   
   // Special state for connectivity items (which can have multiple selections)
   const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption, quantity: number } }>({});
+  
+  // State for storage items
+  const [storageItems, setStorageItems] = useState<{ internal: ComponentOption[], external: ComponentOption[] }>({
+    internal: [],
+    external: []
+  });
+  
+  // State for custom services
+  const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
+  
+  // State for beginner mode
+  const [beginnerMode, setBeginnerMode] = useState(true);
+  
+  // State for showing final summary
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
   
   // Initialize categories from price table data
   useEffect(() => {
@@ -58,12 +73,85 @@ export function useWizardContext() {
   
   // Handle storage item selection (which is special because it can be internal or external)
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
-    const key = storageType === 'internal' ? 'storage_internal' : 'storage_external';
+    if (storageType === 'internal') {
+      setStorageItems(prev => ({
+        ...prev,
+        internal: [...prev.internal, option]
+      }));
+      
+      const key = 'storage_internal';
+      setSelectedComponents(prev => ({
+        ...prev,
+        [key]: option
+      }));
+    } else {
+      setStorageItems(prev => ({
+        ...prev,
+        external: [...prev.external, option]
+      }));
+      
+      const key = 'storage_external';
+      setSelectedComponents(prev => ({
+        ...prev,
+        [key]: option
+      }));
+    }
+  };
+  
+  // Handle removing a component
+  const handleRemoveComponent = (id: string, type?: string) => {
+    // Remove from selectedComponents if type is provided
+    if (type) {
+      setSelectedComponents(prev => {
+        const newComponents = { ...prev };
+        delete newComponents[type];
+        return newComponents;
+      });
+    }
     
-    setSelectedComponents(prev => ({
+    // Remove from internal storage
+    setStorageItems(prev => ({
       ...prev,
-      [key]: option
+      internal: prev.internal.filter(item => item.id !== id)
     }));
+    
+    // Remove from external storage
+    setStorageItems(prev => ({
+      ...prev,
+      external: prev.external.filter(item => item.id !== id)
+    }));
+    
+    // Remove from connectivity items
+    setConnectivityItems(prev => {
+      const newItems = { ...prev };
+      if (newItems[id]) {
+        delete newItems[id];
+      }
+      return newItems;
+    });
+    
+    // Remove from custom services
+    setCustomServices(prev => prev.filter(service => service.id !== id));
+  };
+  
+  // Add a custom service
+  const addCustomService = (service: ComponentOption) => {
+    setCustomServices(prev => [...prev, service]);
+  };
+  
+  // Remove a custom service
+  const removeCustomService = (id: string) => {
+    setCustomServices(prev => prev.filter(service => service.id !== id));
+  };
+  
+  // Restart the wizard
+  const handleRestart = () => {
+    setSelectedComponents({});
+    setCurrentStep(0);
+    setConnectivityItems({});
+    setStorageItems({ internal: [], external: [] });
+    setCustomServices([]);
+    setShowFinalSummary(false);
   };
   
   // Check if the current step is complete
@@ -83,6 +171,16 @@ export function useWizardContext() {
     handleSelectOption,
     handleSelectStorageItem,
     isStepComplete,
-    categoriesLoaded
+    categoriesLoaded,
+    storageItems,
+    customServices,
+    handleRemoveComponent,
+    handleRestart,
+    showFinalSummary,
+    setShowFinalSummary,
+    addCustomService,
+    removeCustomService,
+    beginnerMode,
+    setBeginnerMode
   };
 }

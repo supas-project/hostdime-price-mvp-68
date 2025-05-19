@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { ComponentOption, ConnectivityItem } from '@/types/component';
+import { ComponentOption } from '@/types/component';
 import { useWizardContext } from '@/hooks/use-wizard-context';
 
 interface WizardContextType {
@@ -14,6 +14,16 @@ interface WizardContextType {
   handleSelectStorageItem: (option: ComponentOption, storageType: 'internal' | 'external') => void;
   isStepComplete: (step: number) => boolean;
   categoriesLoaded: boolean;
+  storageItems: { internal: ComponentOption[], external: ComponentOption[] };
+  customServices: ComponentOption[];
+  handleRemoveComponent: (id: string, type?: string) => void;
+  handleRestart: () => void;
+  showFinalSummary: boolean;
+  setShowFinalSummary: React.Dispatch<React.SetStateAction<boolean>>;
+  addCustomService: (service: ComponentOption) => void;
+  removeCustomService: (id: string) => void;
+  beginnerMode: boolean;
+  setBeginnerMode: (value: boolean) => void;
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);

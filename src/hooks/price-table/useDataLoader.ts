@@ -1,72 +1,129 @@
-
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PriceService } from '@/services/price-service';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { PriceData, PriceCategory } from '@/types/pricing';
+import { toast } from '@/utils/toast-utils';
 
-export function useDataLoader(
-  isLoading: boolean,
-  setIsLoading: (loading: boolean) => void, 
-  setPriceData: (data: any) => void,
-  isAuthenticated: boolean
-) {
-  // Load price data
-  const loadPriceData = async () => {
+interface UseDataLoaderOptions {
+  autoLoad?: boolean;
+  showToasts?: boolean;
+}
+
+interface UseDataLoaderReturn {
+  data: PriceData | null;
+  categories: string[];
+  isLoading: boolean;
+  error: Error | null;
+  loadData: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  resetData: () => Promise<void>;
+}
+
+export function useDataLoader(options: UseDataLoaderOptions = {}): UseDataLoaderReturn {
+  const { autoLoad = true, showToasts = true } = options;
+  
+  const [data, setData] = useState<PriceData | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const loadData = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      if (!isAuthenticated) {
-        console.log("User not authenticated, not loading price data");
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("Loading price data for authenticated user");
-      const data = await PriceService.getAllData();
+      const priceData = await PriceService.getAllData();
       
-      if (!data) {
-        console.warn("No price data returned from service");
-        setIsLoading(false);
-        return;
+      if (priceData) {
+        setData(priceData);
+        setCategories(Object.keys(priceData));
+        if (showToasts) {
+          toast.success('Dados carregados com sucesso');
+        }
+      } else {
+        throw new Error('Não foi possível carregar os dados de preços');
       }
-      
-      console.log("Price data loaded successfully with categories:", Object.keys(data).join(", "));
-      setPriceData(data);
-    } catch (error) {
-      console.error('Error loading price data:', error);
-      toast.error("Error loading price data", {
-        description: "Please try again or check if you are authenticated."
-      });
+    } catch (err) {
+      console.error('Error loading price data:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      if (showToasts) {
+        toast.error('Erro ao carregar dados');
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToasts]);
 
-  // Initial data loading
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("User authenticated, loading initial price data");
-      loadPriceData();
-  
-      // Add listener for data changes
-      PriceService.addDataChangeListener((newData) => {
-        console.log('Price data updated:', newData ? Object.keys(newData).length : 0, 'categories');
-        if (newData) {
-          setPriceData(newData);
-        }
-      });
-    } else {
-      setPriceData(null);
-      console.log("User not authenticated, clearing price data");
-    }
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     
-    // Cleanup
-    return () => {
-      // Remove listener when unmounted
-      PriceService.removeDataChangeListener();
-    };
-  }, [isAuthenticated, setPriceData]);
+    try {
+      // Pass an empty object or appropriate parameter to fix the error
+      await PriceService.forceRefreshFromLatestSource({});
+      
+      const priceData = await PriceService.getAllData();
+      
+      if (priceData) {
+        setData(priceData);
+        setCategories(Object.keys(priceData));
+        if (showToasts) {
+          toast.success('Dados atualizados com sucesso');
+        }
+      } else {
+        throw new Error('Não foi possível atualizar os dados de preços');
+      }
+    } catch (err) {
+      console.error('Error refreshing price data:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      if (showToasts) {
+        toast.error('Erro ao atualizar dados');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToasts]);
+
+  const resetData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await PriceService.resetData();
+      const priceData = await PriceService.getAllData();
+      
+      if (priceData) {
+        setData(priceData);
+        setCategories(Object.keys(priceData));
+        if (showToasts) {
+          toast.success('Dados redefinidos com sucesso');
+        }
+      } else {
+        throw new Error('Não foi possível redefinir os dados de preços');
+      }
+    } catch (err) {
+      console.error('Error resetting price data:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      if (showToasts) {
+        toast.error('Erro ao redefinir dados');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToasts]);
+
+  useEffect(() => {
+    if (autoLoad) {
+      loadData();
+    }
+  }, [autoLoad, loadData]);
 
   return {
-    loadPriceData
+    data,
+    categories,
+    isLoading,
+    error,
+    loadData,
+    refreshData,
+    resetData
   };
 }
