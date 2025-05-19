@@ -1,7 +1,7 @@
 
 import { storageData } from "@/data/storage-pricing";
 import { PriceService } from "./price-service";
-import { PriceCategory } from "@/types/pricing";
+import { PriceCategory, PriceItem } from "@/types/pricing";
 
 /**
  * Service for synchronizing component data
@@ -283,18 +283,16 @@ const ComponentSyncService = {
       }
       
       // Transform the metadata structure to match PriceItem
-      const storageItems = storageData.map(item => ({
+      const storageItems: PriceItem[] = storageData.map(item => ({
         id: item.id,
         name: item.name,
         description: item.description,
         price: item.price,
         type: item.type,
         subtype: item.subtype,
-        isHardware: true,
         specs: item.specs || [],
-        tags: item.tags || [],
+        // Use the compatible metadata structure
         metadata: {
-          // Use the compatible metadata structure
           discount: 0,
           features: item.metadata.benefits,
           quantity: 1,

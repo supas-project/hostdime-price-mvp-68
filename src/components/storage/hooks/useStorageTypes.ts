@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
 import { PriceService } from "@/services/price-service";
+import { PriceItem } from '@/types/pricing';
 
 export interface StorageType {
   id: string;
@@ -31,16 +32,18 @@ export function useStorageTypes() {
           const types: StorageType[] = category.items.map(item => {
             // Access metadata carefully with optional chaining and defaults
             const metadata = item.metadata || {};
+            
+            // Set default values for storage type if metadata is missing specific properties
             return {
               id: item.id,
               name: item.name,
-              description: item.description,
-              price: item.price,
+              description: item.description || '',
+              price: item.price || 0,
               pricePerGB: item.price / 100, // Assuming price is per 100GB
-              type: item.type,
-              subtype: item.subtype,
+              type: item.type || 'storage',
+              subtype: item.subtype || 'block',
               specs: item.specs || [],
-              // Use safe defaults if metadata properties don't exist
+              // Use defaulted values for storage properties
               minCapacity: 100,  // Default values
               maxCapacity: 1000,
               capacityUnit: 'GB',

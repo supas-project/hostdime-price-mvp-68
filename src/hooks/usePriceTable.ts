@@ -10,7 +10,33 @@ export function usePriceTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [activeTab, setActiveTab] = useState('cpu');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
+  const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
+  const [contractDuration, setContractDuration] = useState(12);
+  
   const { hasUpdates, syncWithLatestData } = useDataSync();
+
+  // Filter function for items based on search term
+  const filterItems = (items: any[], term: string) => {
+    if (!term || term.trim() === '') return items;
+    const lowerTerm = term.toLowerCase();
+    return items.filter(item => 
+      item.name.toLowerCase().includes(lowerTerm) ||
+      item.description?.toLowerCase().includes(lowerTerm) ||
+      item.specs?.some((spec: string) => spec.toLowerCase().includes(lowerTerm))
+    );
+  };
+
+  // Toggle category collapse state
+  const toggleCategoryCollapse = (categoryId: string) => {
+    setCollapsedCategories(current => 
+      current.includes(categoryId)
+        ? current.filter(id => id !== categoryId)
+        : [...current, categoryId]
+    );
+  };
 
   // Load price data
   const loadPriceData = async () => {
@@ -20,9 +46,7 @@ export function usePriceTable() {
       setPriceData(data);
     } catch (error) {
       console.error('Error loading price data:', error);
-      toast({
-        description: 'Erro ao carregar dados de preço. Tente novamente mais tarde.'
-      });
+      toast("Erro ao carregar dados de preço. Tente novamente mais tarde.");
     } finally {
       setIsLoading(false);
     }
@@ -55,9 +79,7 @@ export function usePriceTable() {
     if (hasUpdates) {
       await syncWithLatestData();
       await loadPriceData();
-      toast({
-        description: 'Dados atualizados com sucesso!'
-      });
+      toast("Dados atualizados com sucesso!");
     }
   };
 
@@ -70,5 +92,16 @@ export function usePriceTable() {
     hasUpdates,
     handleSyncData,
     loadPriceData,
+    searchTerm,
+    setSearchTerm,
+    sortOrder,
+    setSortOrder,
+    displayMode,
+    setDisplayMode,
+    collapsedCategories,
+    toggleCategoryCollapse,
+    filterItems,
+    contractDuration,
+    setContractDuration,
   };
 }

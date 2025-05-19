@@ -115,8 +115,8 @@ export const PriceService = {
         return initialPriceData;
       }
       
-      // Convert from Json to PriceData with type assertion
-      return data.data as PriceData;
+      // Convert from Json to PriceData with proper type casting
+      return data.data as unknown as PriceData;
     } catch (error) {
       console.error('Error retrieving data:', error);
       return initialPriceData;

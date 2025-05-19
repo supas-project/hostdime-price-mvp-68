@@ -25,6 +25,9 @@ export default function PriceTable() {
     activeTab,
     setActiveTab,
     isLoading: dataLoading,
+    hasUpdates,
+    handleSyncData,
+    loadPriceData,
     lastSyncTime,
     searchTerm,
     setSearchTerm,
@@ -72,7 +75,7 @@ export default function PriceTable() {
   } = useDataActions(setPriceData);
   
   // Hook de sincronização
-  const { lastSyncTime: syncTime, hasUpdates } = useDataSync();
+  const { lastSyncTime: syncTime } = useDataSync();
 
   // Authentication - CORREÇÃO: Garantir que estamos obtendo corretamente o status de admin
   const { isAuthenticated, isAdmin, user } = useAuth();
@@ -92,7 +95,7 @@ export default function PriceTable() {
 
   // Filtrar categorias para remover a categoria de contratos
   const filteredPriceData = {...priceData};
-  if (filteredPriceData.contract) {
+  if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;
   }
 

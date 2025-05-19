@@ -75,10 +75,8 @@ export function useDataSync() {
         return;
       }
       
-      // If not admin, notify about the change
-      toast({
-        description: `O administrador realizou alterações: ${details}`
-      });
+      // If not admin, notify about the change - Fixed the toast props
+      toast(`O administrador realizou alterações: ${details}`);
       
       // Mark that there are available updates
       setHasUpdates(true);
@@ -137,9 +135,8 @@ export function useDataSync() {
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
         
-        toast({
-          description: "O administrador realizou alterações. Clique para atualizar."
-        });
+        // Fixed toast usage
+        toast("O administrador realizou alterações. Clique para atualizar.");
       }
     }, CHECK_INTERVAL);
     

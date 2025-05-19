@@ -48,13 +48,13 @@ export const initializeServices = async () => {
       if (!hasOsData) await ComponentSyncService.syncOSData();
       if (!hasStorageData) await ComponentSyncService.syncStorageData();
       
-      toast.success("Initial data loaded successfully");
+      toast("Initial data loaded successfully");
     } else {
       console.log("Price table data already exists. Synchronization not necessary.");
     }
   } catch (error) {
     console.error("Error during service initialization:", error);
-    toast.error("Error during service initialization");
+    toast("Error during service initialization");
   }
 };
 

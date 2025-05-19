@@ -1,150 +1,120 @@
 
-import { useState } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { StorageHeader } from "./storage-header";
-import { componentSpacing } from "../ui/shared-styles";
-import { cn } from "@/lib/utils";
-import { HardDrive, Info } from "lucide-react";
-import { useWizard } from "@/contexts/WizardContext";
-import { InternalStoragePanel } from "./InternalStoragePanel";
-import { ExternalStoragePanel } from "./ExternalStoragePanel";
-import { TabHeader } from "./tab-header/TabHeader";
-import { useStorageTypes, StorageType } from "./hooks/useStorageTypes";
-import { useStorageHandlers } from "./handlers/useStorageHandlers";
-import { PricedDiskOption } from "@/types/storage";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react';
+import { useStorageTypes, StorageType } from './hooks/useStorageTypes';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
 
 interface StorageSelectorProps {
-  onSelectInternalDisk?: (disk: PricedDiskOption, quantity: number) => void;
-  onSelectExternalStorage?: (type: string, capacity: number, price: number) => void;
+  onSelect: (storage: StorageType) => void;
+  selectedStorageId?: string | null;
 }
 
-export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
-  const [activeTab, setActiveTab] = useState<string>("internal");
-  const [selectedDiskType, setSelectedDiskType] = useState<string | null>(null);
-  const { handleSelectStorageItem } = useWizard();
+export function StorageSelector({ onSelect, selectedStorageId }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
-  const [showHelp, setShowHelp] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(selectedStorageId || null);
   
-  const { 
-    handleSelectInternalDiskInternal,
-    handleSelectExternalStorageInternal
-  } = useStorageHandlers({
-    onSelectInternalDisk,
-    onSelectExternalStorage,
-    handleSelectStorageItem
-  });
-
-  // Modified to mark all storage components as hardware and track disk type
-  const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Track the selected disk type for RAID compatibility display
-    setSelectedDiskType(disk.type.toLowerCase());
+  // Select first storage type if none is selected
+  useEffect(() => {
+    if (storageTypes.length > 0 && !selectedId) {
+      setSelectedId(storageTypes[0].id);
+      onSelect(storageTypes[0]);
+    }
+  }, [storageTypes, selectedId, onSelect]);
+  
+  // Update if selectedStorageId changes externally
+  useEffect(() => {
+    if (selectedStorageId !== selectedId) {
+      setSelectedId(selectedStorageId || null);
+    }
+  }, [selectedStorageId]);
+  
+  const handleSelect = (storage: StorageType) => {
+    setSelectedId(storage.id);
+    onSelect(storage);
+  };
+  
+  // Create a mapping for the storage performance indicators
+  const storagePerformanceMap: Record<string, {
+    name: string;
+    pricePerGB: number;
+    iops: string;
+    throughput: string;
+    description: string;
+  }> = {};
+  
+  // Populate the performance map from storage types
+  storageTypes.forEach(storage => {
+    // Extract IOPS from specs
+    const iopsSpec = storage.specs.find(spec => spec.toLowerCase().includes('iops'));
+    const iops = iopsSpec ? iopsSpec.split(':')[1]?.trim() : 'N/A';
     
-    // Mark the disk as hardware before passing it
-    const diskWithHardwareFlag = { ...disk, isHardware: true };
-    handleSelectInternalDiskInternal(diskWithHardwareFlag, quantity);
-  };
-
-  const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
-    // The useStorageHandlers will create a ComponentOption, we'll mark it as hardware there
-    handleSelectExternalStorageInternal(type, capacity, price, storageTypes);
-  };
-
-  const storageDescriptions = {
-    internal: "Os discos internos são instalados dentro do seu servidor físico. Escolha entre discos NVMe (mais rápidos), SSDs (equilíbrio entre velocidade e custo) ou HDDs (mais capacidade por custo).",
-    external: "Armazenamento externo é acessado pela rede, oferecendo flexibilidade para aumentar espaço sem modificar o servidor físico."
-  };
-
-  const isNVMe = selectedDiskType === 'nvme';
-
-  // Convert the storage types array to object format expected by ExternalStoragePanel
-  const formattedStorageTypes: {[key: string]: any} = {};
-  
-  storageTypes.forEach(type => {
-    formattedStorageTypes[type.id] = {
-      name: type.name,
-      pricePerGB: type.price / 100, // Assuming price is per 100GB
-      iops: type.specs.find(s => s.toLowerCase().includes('iops'))?.split(': ')[1] || 'N/A',
-      throughput: type.specs.find(s => s.toLowerCase().includes('throughput'))?.split(': ')[1] || 'N/A',
-      description: type.description,
-      throughputAdd: 0, // Default value
-      maxThroughput: type.specs.find(s => s.toLowerCase().includes('max'))?.split(': ')[1] || 'N/A'
+    // Extract throughput from specs
+    const throughputSpec = storage.specs.find(spec => spec.toLowerCase().includes('throughput'));
+    const throughput = throughputSpec ? throughputSpec.split(':')[1]?.trim() : 'N/A';
+    
+    storagePerformanceMap[storage.id] = {
+      name: storage.name,
+      pricePerGB: storage.pricePerGB,
+      iops,
+      throughput,
+      description: storage.description
     };
   });
 
   return (
-    <Card className={cn(
-      componentSpacing.card,
-      "bg-[#1e1e1e] border-[#2a2a2a] transition-all duration-300 relative"
-    )}>
-      <StorageHeader
-        icon={HardDrive}
-        title="Armazenamento"
-        tooltip="Escolha o tipo e capacidade de armazenamento ideal para seu servidor. Você pode adicionar múltiplos discos internos de diferentes tipos."
-      />
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Select Storage Type</h3>
       
-      {showHelp && (
-        <Alert className="mb-3 sm:mb-4 bg-primary/5 border-primary/20 text-foreground">
-          <AlertDescription className="text-xs sm:text-sm">
-            <strong>Dica:</strong> Para a maioria dos sites e aplicações, recomendamos 2 discos SSD (um para sistema e outro para dados) 
-            ou 1 disco NVMe para máximo desempenho.
-            <button 
-              onClick={() => setShowHelp(false)} 
-              className="text-xs text-primary hover:underline ml-2"
-            >
-              Entendi
-            </button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isNVMe && (
-        <Alert className="mb-3 bg-[#f58220]/5 border-[#f58220]/20 text-foreground">
-          <Info className="h-4 w-4 text-[#f58220]" />
-          <AlertDescription className="text-xs sm:text-sm ml-2">
-            <strong>Nota:</strong> Discos NVMe são compatíveis apenas com configuração RAID por software.
-            Hardware RAID não está disponível para este tipo de disco.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Tabs 
-        defaultValue="internal" 
-        className="w-full"
-        value={activeTab}
-        onValueChange={setActiveTab}
-      >
-        <TabHeader activeTab={activeTab} onTabChange={setActiveTab} />
-        
-        {activeTab === "internal" && (
-          <div className="text-xs text-muted-foreground mt-1 mb-3">
-            {storageDescriptions.internal}
-          </div>
-        )}
-        
-        {activeTab === "external" && (
-          <div className="text-xs text-muted-foreground mt-1 mb-3">
-            {storageDescriptions.external}
-          </div>
-        )}
-        
-        <div className="relative">
-          <TabsContent value="internal" className="mt-0 relative z-10">
-            <div className="animate-fade-in">
-              <InternalStoragePanel onSelectDisk={handleSelectInternalDisk} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {storageTypes.map(storage => (
+          <Card 
+            key={storage.id}
+            className={`p-4 cursor-pointer transition-all ${
+              selectedId === storage.id 
+              ? 'ring-2 ring-primary border-primary bg-primary/5' 
+              : 'hover:bg-muted/50'
+            }`}
+            onClick={() => handleSelect(storage)}
+          >
+            <div className="flex flex-col h-full">
+              <h4 className="font-medium text-lg">{storage.name}</h4>
+              
+              <div className="text-sm text-muted-foreground mb-2">
+                {storage.description}
+              </div>
+              
+              <div className="mt-auto space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>IOPS:</span>
+                  <span className="font-medium">
+                    {storagePerformanceMap[storage.id]?.iops || 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span>Throughput:</span>
+                  <span className="font-medium">
+                    {storagePerformanceMap[storage.id]?.throughput || 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span>Price:</span>
+                  <span className="font-medium">
+                    ${storage.pricePerGB.toFixed(2)}/GB/mo
+                  </span>
+                </div>
+              </div>
+              
+              {selectedId === storage.id && (
+                <Button size="sm" className="w-full mt-3 bg-primary text-primary-foreground">
+                  Selected
+                </Button>
+              )}
             </div>
-          </TabsContent>
-          <TabsContent value="external" className="mt-0 relative z-10">
-            <div className="animate-fade-in">
-              <ExternalStoragePanel 
-                onSelectStorage={handleSelectExternalStorage} 
-                storageTypes={formattedStorageTypes}
-              />
-            </div>
-          </TabsContent>
-        </div>
-      </Tabs>
-    </Card>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
