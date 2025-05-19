@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -98,7 +97,7 @@ export function useDataSync() {
       if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
         toast.info("Alterações disponíveis", {
           description: `O administrador fez alterações: ${details}`,
-          icon: <AlertCircle />
+          icon: AlertCircle
         });
         setLastNotificationTime(now);
       }
@@ -126,7 +125,7 @@ export function useDataSync() {
     const now = Date.now();
     if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
       toast.success("Alterações registradas com sucesso", {
-        icon: <CheckCircle2 />
+        icon: CheckCircle2
       });
       setLastNotificationTime(now);
     }
@@ -188,7 +187,7 @@ export function useDataSync() {
         if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
           toast.info("Alterações disponíveis", {
             description: "O administrador fez alterações. Clique para atualizar.",
-            icon: <AlertCircle />
+            icon: AlertCircle
           });
           setLastNotificationTime(now);
         }
