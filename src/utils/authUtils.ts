@@ -35,7 +35,6 @@ export const createAdminUser = async (): Promise<void> => {
       email: ADMIN_EMAIL,
       password: DEFAULT_ADMIN_PASSWORD,
       options: {
-        emailRedirectTo: window.location.origin,
         data: {
           is_admin: true
         }
@@ -65,7 +64,8 @@ export const createAdminUser = async (): Promise<void> => {
 
 // Helper to check if user is admin
 export const isUserAdmin = (user: User | null): boolean => {
-  return user?.email === ADMIN_EMAIL;
+  if (!user) return false;
+  return user.email === ADMIN_EMAIL;
 };
 
 // Authentication service functions with improved error handling
@@ -103,7 +103,13 @@ export const authService = {
   logout: async (): Promise<void> => {
     try {
       console.log("Iniciando processo de logout");
-      const { error } = await supabase.auth.signOut();
+      
+      // Force-clear local storage for auth before calling signOut
+      localStorage.removeItem('hostdime_auth');
+      
+      const { error } = await supabase.auth.signOut({
+        scope: 'local' // Only sign out from this browser tab
+      });
       
       if (error) {
         console.error("Erro ao fazer logout no Supabase:", error);

@@ -23,31 +23,55 @@ export default function LoginPage() {
 
   // Enhanced effect for handling authenticated users and redirecting properly
   useEffect(() => {
-    if (isSupabaseReady && isAuthenticated && !loading) {
+    console.log("Login page mount - Auth state:", { 
+      isAuthenticated, 
+      loading, 
+      isSupabaseReady,
+      userEmail: user?.email 
+    });
+    
+    if (isSupabaseReady && isAuthenticated && !loading && user) {
       console.log("Usuário autenticado, redirecionando...");
+      
       // If admin, redirect to price table
-      const isAdminEmail = user?.email === "admin@hostdime.com.br";
+      const isAdminEmail = user.email === "admin@hostdime.com.br";
       const redirectTo = isAdminEmail ? "/price-table" : "/configure";
       
       // Use the from if it exists, otherwise use the default redirectTo
-      const from = (location.state as any)?.from?.pathname || redirectTo;
+      const from = location.state && (location.state as any).from?.pathname 
+        ? (location.state as any).from?.pathname 
+        : redirectTo;
       
-      navigate(from, {
-        replace: true
-      });
+      console.log("Redirecionando para:", from);
+      
+      // Use timeout to ensure state updates are completed
+      setTimeout(() => {
+        navigate(from, {
+          replace: true
+        });
+      }, 100);
     }
   }, [isAuthenticated, loading, user, navigate, location.state, isSupabaseReady]);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
+      console.log("Tentando fazer login com:", email);
       const success = await login(email, password);
+      
       if (success) {
-        // Check if admin email to redirect to price table
+        // Check if admin email to show appropriate toast
         const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
         toast.success("Login realizado com sucesso", {
           description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
+        });
+        
+        // Login success is handled by the useEffect for redirection
+      } else {
+        toast.error("Credenciais inválidas", {
+          description: "Verifique seu email e senha e tente novamente."
         });
       }
     } catch (error) {
@@ -74,10 +98,18 @@ export default function LoginPage() {
   
   // If user is already authenticated, don't render the form
   if (isAuthenticated) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-foreground">Autenticado. Redirecionando...</p>
+        </div>
+      </div>
+    );
   }
   
-  return <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-2">
@@ -118,5 +150,6 @@ export default function LoginPage() {
           </CardFooter>
         </form>
       </Card>
-    </div>;
+    </div>
+  );
 }

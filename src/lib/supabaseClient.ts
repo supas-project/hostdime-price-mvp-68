@@ -10,10 +10,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
  */
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: localStorage,
-    persistSession: true,
+    storageKey: 'hostdime_auth',
     autoRefreshToken: true,
+    persistSession: true,
     detectSessionInUrl: false,
-    flowType: 'implicit',
   },
 });

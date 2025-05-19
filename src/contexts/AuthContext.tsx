@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode, useState } from "react";
+import React, { createContext, useContext, ReactNode, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useAuthState } from "@/hooks/useAuthState";
 import { authService } from "@/utils/authUtils";
@@ -19,14 +19,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isAdmin, user, session, loading, isSupabaseReady } = useAuthState();
+  const { 
+    isAuthenticated, 
+    isAdmin, 
+    user, 
+    session, 
+    loading, 
+    isSupabaseReady 
+  } = useAuthState();
+  
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Enhanced login function with comprehensive error handling
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+  const handleLogin = useCallback(async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log("Tentando login com", email);
       const success = await authService.login(email, password);
-      return success;
+      
+      if (success) {
+        console.log("Login bem sucedido");
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Erro ao fazer login", {
@@ -34,13 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return false;
     }
-  };
+  }, []);
 
   // Enhanced logout function with improved state tracking
-  const handleLogout = async (): Promise<void> => {
+  const handleLogout = useCallback(async (): Promise<void> => {
     try {
       setIsLoggingOut(true);
+      console.log("Iniciando logout...");
       await authService.logout();
+      console.log("Logout completo");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Erro ao fazer logout", {
@@ -49,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoggingOut(false);
     }
-  };
+  }, []);
   
   return (
     <AuthContext.Provider value={{ 

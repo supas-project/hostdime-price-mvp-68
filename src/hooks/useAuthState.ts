@@ -15,14 +15,17 @@ export function useAuthState() {
   const [loading, setLoading] = useState(true);
   const [isSupabaseReady, setIsSupabaseReady] = useState(false);
 
-  // Initialize session and set up auth listeners with improved ordering
   useEffect(() => {
     console.log("Inicializando hook de autenticação");
+    
+    let mounted = true;
     
     // 1. Set up the auth listener FIRST to catch immediate auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Estado de autenticação alterado:", event, currentSession?.user?.email);
+        
+        if (!mounted) return;
         
         if (currentSession) {
           // Update state SYNCHRONOUSLY to prevent race conditions
@@ -44,10 +47,12 @@ export function useAuthState() {
     );
 
     // 2. THEN check for existing session
-    const checkSession = async () => {
+    async function initializeAuthState() {
       try {
         console.log("Verificando sessão existente...");
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
         
         if (error) {
           console.error("Erro ao verificar sessão:", error);
@@ -74,19 +79,19 @@ export function useAuthState() {
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
       } finally {
-        setLoading(false);
-        setIsSupabaseReady(true);
+        if (mounted) {
+          setLoading(false);
+          setIsSupabaseReady(true);
+        }
       }
-    };
-
-    // Try to create admin user for system initialization
-    createAdminUser();
+    }
     
     // Execute session check
-    checkSession();
+    initializeAuthState();
 
-    // Cleanup subscription on unmount
+    // Cleanup function
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
