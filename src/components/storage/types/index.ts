@@ -13,3 +13,6 @@ export interface StorageHandlerConfig {
   onSelectInternalDisk?: (disk: any, quantity: number) => void;
   onSelectExternalStorage?: (type: string, capacity: number, price: number) => void;
 }
+
+// Re-export the storage type from storage-types.ts
+export { StorageType as StorageTypeDetailed } from './storage-types';
