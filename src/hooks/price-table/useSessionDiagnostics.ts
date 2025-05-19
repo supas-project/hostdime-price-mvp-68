@@ -29,8 +29,8 @@ export function useSessionDiagnostics() {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (!sessionError && session) {
-            // Use session.created_at if available, otherwise use current time
-            const sessionCreatedAt = session.created_at || new Date().toISOString();
+            // Use current time as session creation time since created_at is not available
+            const sessionCreatedAt = new Date().toISOString(); 
             
             setSessionDetails({
               sessionCreatedAt,

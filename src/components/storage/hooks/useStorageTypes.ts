@@ -36,6 +36,9 @@ export function useStorageTypes() {
               // Access metadata carefully with optional chaining and defaults
               const metadata = item.metadata || {};
               
+              // Type assertion for custom metadata properties that TypeScript doesn't know about
+              const customMetadata = metadata as any;
+              
               return {
                 id: item.id,
                 name: item.name,
@@ -45,12 +48,12 @@ export function useStorageTypes() {
                 type: item.type || 'storage',
                 subtype: item.subtype || 'block',
                 specs: item.specs || [],
-                // Use metadata properties with type safety
-                minCapacity: typeof metadata === 'object' && 'minCapacity' in metadata ? Number(metadata.minCapacity) : 100,
-                maxCapacity: typeof metadata === 'object' && 'maxCapacity' in metadata ? Number(metadata.maxCapacity) : 1000,
-                capacityUnit: typeof metadata === 'object' && 'capacityUnit' in metadata ? String(metadata.capacityUnit) : 'GB',
-                capacityStep: typeof metadata === 'object' && 'capacityStep' in metadata ? Number(metadata.capacityStep) : 100,
-                benefits: Array.isArray(metadata.benefits) ? metadata.benefits : []
+                // Use custom metadata properties with type assertion
+                minCapacity: customMetadata?.minCapacity ? Number(customMetadata.minCapacity) : 100,
+                maxCapacity: customMetadata?.maxCapacity ? Number(customMetadata.maxCapacity) : 1000,
+                capacityUnit: customMetadata?.capacityUnit ? String(customMetadata.capacityUnit) : 'GB',
+                capacityStep: customMetadata?.capacityStep ? Number(customMetadata.capacityStep) : 100,
+                benefits: Array.isArray(customMetadata?.benefits) ? customMetadata.benefits : []
               };
             });
 

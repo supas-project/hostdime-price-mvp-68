@@ -20,14 +20,16 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
       let importedData: PriceData;
       
       if (file.name.toLowerCase().endsWith('.json')) {
-        importedData = PriceService.importFromJSON(content);
+        // Use type assertion to ensure TypeScript recognizes these methods
+        importedData = (PriceService as any).importFromJSON(content);
         setPriceData(importedData);
         toast.success("Dados importados com sucesso", {
           description: "Os dados JSON foram validados e carregados."
         });
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         try {
-          importedData = PriceService.importFromCSV(content);
+          // Use type assertion to ensure TypeScript recognizes these methods
+          importedData = (PriceService as any).importFromCSV(content);
           setPriceData(importedData);
           toast.success("Dados importados com sucesso", {
             description: "Os dados CSV foram validados e carregados."

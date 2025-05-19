@@ -172,12 +172,14 @@ export async function initExternalStorageData() {
             discount: 0,
             quantity: 1,
             unitPrice: item.price,
-            // Custom properties will be available through dynamic access
-            minCapacity: item.metadata.minCapacity,
-            maxCapacity: item.metadata.maxCapacity,
-            capacityUnit: item.metadata.capacityUnit,
-            capacityStep: item.metadata.capacityStep,
-            benefits: item.metadata.benefits
+            // Using a custom field approach for storing additional metadata
+            customMetadata: {
+              minCapacity: item.metadata.minCapacity,
+              maxCapacity: item.metadata.maxCapacity,
+              capacityUnit: item.metadata.capacityUnit,
+              capacityStep: item.metadata.capacityStep,
+              benefits: item.metadata.benefits
+            }
           }
         });
       }

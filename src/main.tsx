@@ -3,11 +3,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-import { initializeServices } from './services/init-service'
+import { InitService } from './services/init-service'
 import { BrowserRouter } from 'react-router-dom'
 
 // Inicializar serviços antes da renderização
-initializeServices();
+InitService.initializeData();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

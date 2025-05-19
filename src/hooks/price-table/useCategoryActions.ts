@@ -25,10 +25,13 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
     }
     
     try {
-      const newCategory = await PriceService.addCategory({
+      // Only pass the allowed properties to addCategory
+      const categoryData = {
         name: values.name,
         id: values.id || undefined
-      });
+      };
+      
+      const newCategory = await PriceService.addCategory(categoryData);
       
       // Get the updated data after adding a category
       const updatedData = await PriceService.getAllData();
