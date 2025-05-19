@@ -98,7 +98,7 @@ export function useDataSync() {
       if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
         toast.info("Alterações disponíveis", {
           description: `O administrador fez alterações: ${details}`,
-          icon: AlertCircle
+          icon: () => <AlertCircle className="h-5 w-5" />
         });
         setLastNotificationTime(now);
       }
@@ -126,7 +126,7 @@ export function useDataSync() {
     const now = Date.now();
     if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
       toast.success("Alterações registradas com sucesso", {
-        icon: CheckCircle2
+        icon: () => <CheckCircle2 className="h-5 w-5" />
       });
       setLastNotificationTime(now);
     }
@@ -188,7 +188,7 @@ export function useDataSync() {
         if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
           toast.info("Alterações disponíveis", {
             description: "O administrador fez alterações. Clique para atualizar.",
-            icon: AlertCircle
+            icon: () => <AlertCircle className="h-5 w-5" />
           });
           setLastNotificationTime(now);
         }

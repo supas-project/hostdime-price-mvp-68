@@ -37,7 +37,7 @@ export class InitService {
           
           toast.success("Dados inicializados", {
             description: "Configuração padrão carregada com sucesso.",
-            icon: CheckCircle2
+            icon: () => <CheckCircle2 className="h-5 w-5" />
           });
 
           // Save current fetch time
@@ -53,7 +53,7 @@ export class InitService {
         if (initError instanceof Error && !initError.message.includes("Authentication")) {
           toast.error("Erro na inicialização", {
             description: "Não foi possível carregar os dados iniciais.",
-            icon: AlertCircle
+            icon: () => <AlertCircle className="h-5 w-5" />
           });
         }
         return false;
@@ -66,7 +66,7 @@ export class InitService {
       if (error instanceof Error && !error.message.includes("Authentication")) {
         toast.error("Erro na inicialização", {
           description: "Ocorreu um erro ao inicializar os dados.",
-          icon: AlertCircle
+          icon: () => <AlertCircle className="h-5 w-5" />
         });
       }
       return false;
