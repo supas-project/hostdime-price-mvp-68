@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -7,7 +6,6 @@ import { ItemForm } from "./forms/ItemForm";
 import { Plus, Download, RefreshCw } from "lucide-react";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { HelpTooltip } from "@/components/help-tooltip";
-
 interface TableActionsProps {
   activeTab: string;
   priceData: Record<string, PriceCategory>;
@@ -25,7 +23,6 @@ interface TableActionsProps {
   onExportData: () => void;
   onResetData: () => void;
 }
-
 export function TableActions({
   activeTab,
   priceData,
@@ -57,7 +54,6 @@ export function TableActions({
     onEditItem(values, itemId);
     handleCloseEditDialog();
   };
-  
   return <div className="flex flex-wrap gap-2">
       <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
         <DialogTrigger asChild>
@@ -83,7 +79,7 @@ export function TableActions({
                 <HelpTooltip title="Adicionar item" description={`Adiciona um novo item à categoria ${priceData[activeTab]?.name || ''}`} />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg px-[43px] py-0 mx-0 my-0">
               <DialogHeader>
                 <DialogTitle>Adicionar Item à {priceData[activeTab]?.name}</DialogTitle>
               </DialogHeader>
