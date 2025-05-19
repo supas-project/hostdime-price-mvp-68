@@ -46,7 +46,7 @@ export async function initializeServerCategories(): Promise<boolean> {
     }
 
     // Create/update external storage category
-    const externalStorageCategory = await initExternalStorageData(updatedData);
+    const externalStorageCategory = await initExternalStorageData();
     if (externalStorageCategory) {
       updatedData.external_storage = externalStorageCategory;
       hasChanges = true;
