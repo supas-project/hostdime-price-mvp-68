@@ -9,7 +9,6 @@ import { PriceTablePage } from "./PriceTablePage";
 import { InitService } from "@/services/init-service";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
-import { initializeServerCategories } from "@/services/component-sync";
 
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -57,7 +56,7 @@ export default function PriceTableContainer() {
     }
   }, [hasUpdates, handleRefreshData]);
 
-  // Ensure data is loaded and synchronized when component mounts
+  // Ensure data is loaded when component mounts
   useEffect(() => {
     async function initialize() {
       if (isAuthenticated) {
@@ -69,9 +68,6 @@ export default function PriceTableContainer() {
           
           // Then load price data
           await loadPriceData();
-          
-          // Explicitly synchronize server configuration components with price data
-          await initializeServerCategories();
           
           setIsInitialized(true);
         } catch (error) {
@@ -90,17 +86,7 @@ export default function PriceTableContainer() {
           checkForConflicts();
         }, 30000); // Check every 30 seconds
         
-        // Set up periodic component synchronization
-        const syncIntervalId = setInterval(() => {
-          initializeServerCategories().catch(err => 
-            console.error("Background component sync failed:", err)
-          );
-        }, 60000); // Sync every minute
-        
-        return () => {
-          clearInterval(intervalId);
-          clearInterval(syncIntervalId);
-        };
+        return () => clearInterval(intervalId);
       } else {
         console.log("User not authenticated, skipping initialization");
         setIsInitialized(true);

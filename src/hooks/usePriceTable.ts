@@ -29,14 +29,9 @@ export function usePriceTable() {
     setIsLoading
   } = usePriceTableState();
   
-  // Get the data loader hook with all its loading functionality
-  const { loadData, refreshData, resetData } = useDataLoader({
-    autoLoad: false, // We'll handle loading manually
-    showToasts: true
-  });
-  
+  const { loadPriceData } = useDataLoader(isLoading, setIsLoading, setPriceData, isAuthenticated);
   const { filterItems } = useItemFilter();
-  const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData(loadData);
+  const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData(loadPriceData);
   const tableActions = usePriceTableActions(activeTab, setPriceData);
 
   return {
@@ -48,7 +43,7 @@ export function usePriceTable() {
     tableActions,
     hasUpdates,
     handleSyncData,
-    loadPriceData: loadData, // Rename loadData to loadPriceData for consistent naming
+    loadPriceData,
     lastSyncTime,
     searchTerm,
     setSearchTerm,

@@ -1,3 +1,4 @@
+
 export interface RaidMetadata {
   type: string;
   description: string;
@@ -34,12 +35,6 @@ export interface ComponentOption {
   };
 }
 
-// Add ConnectivityItem interface that was referenced but missing
-export interface ConnectivityItem {
-  option: ComponentOption;
-  quantity: number;
-}
-
 export interface DataCenterOption extends ComponentOption {
   metadata: {
     features?: string[];
@@ -66,4 +61,3 @@ export interface StorageItems {
   internal: ComponentOption[];
   external: ComponentOption[];
 }
-

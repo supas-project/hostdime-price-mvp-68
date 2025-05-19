@@ -1,7 +1,6 @@
 
 import { useDataSync } from '@/hooks/useDataSync';
 import { toast } from '@/utils/toast-utils';
-import { initializeServerCategories } from '@/services/component-sync';
 
 export function useSyncData(loadPriceData: () => Promise<void>) {
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
@@ -12,10 +11,6 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
       if (hasUpdates) {
         await syncWithLatestData();
         await loadPriceData();
-        
-        // After loading the price data, also sync the wizard components
-        await initializeServerCategories();
-        
         toast.success("Data updated successfully!");
       }
     } catch (error) {
