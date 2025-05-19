@@ -35,9 +35,12 @@ export class InitService {
           // Sync disk data
           await syncDiskDataWithPriceService();
           
+          // Create an icon for the toast
+          const checkCircleIcon = CheckCircle2;
+          
           toast.success("Dados inicializados", {
             description: "Configuração padrão carregada com sucesso.",
-            icon: <CheckCircle2 />
+            icon: checkCircleIcon
           });
 
           // Save current fetch time
@@ -51,9 +54,12 @@ export class InitService {
       } catch (initError) {
         console.error("Error during data initialization:", initError);
         if (initError instanceof Error && !initError.message.includes("Authentication")) {
+          // Create an icon for the toast
+          const alertCircleIcon = AlertCircle;
+          
           toast.error("Erro na inicialização", {
             description: "Não foi possível carregar os dados iniciais.",
-            icon: <AlertCircle />
+            icon: alertCircleIcon
           });
         }
         return false;
@@ -64,9 +70,12 @@ export class InitService {
       console.error("Error checking authentication:", error);
       // Only show toast if it's not an authentication error
       if (error instanceof Error && !error.message.includes("Authentication")) {
+        // Create an icon for the toast
+        const alertCircleIcon = AlertCircle;
+        
         toast.error("Erro na inicialização", {
           description: "Ocorreu um erro ao inicializar os dados.",
-          icon: <AlertCircle />
+          icon: alertCircleIcon
         });
       }
       return false;

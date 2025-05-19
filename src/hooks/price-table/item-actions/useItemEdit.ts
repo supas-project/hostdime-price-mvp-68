@@ -4,7 +4,7 @@ import { PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 
 export function useItemEdit(
   activeTab: string,

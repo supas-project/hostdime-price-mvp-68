@@ -67,9 +67,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
       
+      // Create an icon element for the toast
+      const checkCircleIcon = CheckCircle2;
+      
       toast.success("Exportação concluída", {
         description: "Dados exportados com sucesso.",
-        icon: <CheckCircle2 />
+        icon: checkCircleIcon
       });
     } catch (error) {
       toast.error("Falha na exportação", {
@@ -103,9 +106,12 @@ export function useDataActions(setPriceData: (data: any) => void) {
           // Register change to notify other users
           await registerAdminChange("reset", "Todos os dados foram redefinidos para os valores padrão");
           
+          // Create an icon element for the toast
+          const checkCircleIcon = CheckCircle2;
+          
           toast.success("Dados redefinidos", {
             description: "Todos os dados foram redefinidos para os valores padrão.",
-            icon: <CheckCircle2 />
+            icon: checkCircleIcon
           });
         } else {
           toast.error("Falha na redefinição", {
@@ -141,10 +147,13 @@ export function useDataActions(setPriceData: (data: any) => void) {
         // Update sync state
         await syncWithLatestData();
         
+        // Create an icon element for the toast
+        const checkCircleIcon = CheckCircle2;
+        
         // Only show notification if it's been more than 2.5 seconds since the last one
         if (now - lastNotificationTime > 2500) {
           toast.success("Sincronização concluída com sucesso", {
-            icon: <CheckCircle2 />
+            icon: checkCircleIcon
           });
           setLastNotificationTime(now);
         }

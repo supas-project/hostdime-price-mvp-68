@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 
 export function useItemDelete(
   activeTab: string,
