@@ -96,12 +96,9 @@ export function useDataSync() {
       // If not admin, notify about the change (with duplicate prevention)
       const now = Date.now();
       if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
-        // Create an icon for the toast
-        const alertCircleIcon = AlertCircle;
-        
         toast.info("Alterações disponíveis", {
           description: `O administrador fez alterações: ${details}`,
-          icon: alertCircleIcon
+          icon: <AlertCircle />
         });
         setLastNotificationTime(now);
       }
@@ -125,14 +122,11 @@ export function useDataSync() {
     // Update local sync time for admin
     setLastSyncTime(new Date());
     
-    // Create an icon for the toast
-    const checkCircleIcon = CheckCircle2;
-    
     // Show success notification to admin (with duplicate prevention)
     const now = Date.now();
     if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
       toast.success("Alterações registradas com sucesso", {
-        icon: checkCircleIcon
+        icon: <CheckCircle2 />
       });
       setLastNotificationTime(now);
     }
@@ -189,15 +183,12 @@ export function useDataSync() {
       if (hasNewUpdates && !hasUpdates) {
         setHasUpdates(true);
         
-        // Create an icon for the toast
-        const alertCircleIcon = AlertCircle;
-        
         // Only show notification if it's been at least 2.5 seconds since the last one
         const now = Date.now();
         if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
           toast.info("Alterações disponíveis", {
             description: "O administrador fez alterações. Clique para atualizar.",
-            icon: alertCircleIcon
+            icon: <AlertCircle />
           });
           setLastNotificationTime(now);
         }

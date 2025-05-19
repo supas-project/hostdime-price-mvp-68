@@ -3,7 +3,7 @@ import { PriceService } from "@/services/price-service";
 import { StorageType } from '../types/storage-types';
 import { mapPriceItemToStorageType, mapStaticDataToStorageType } from '../utils/storage-mapper';
 import { storageData } from '@/data/storage-pricing';
-import { toast } from "sonner";
+import { toast } from "@/utils/toast-utils";
 
 /**
  * Loads storage types from the price service or falls back to static data
