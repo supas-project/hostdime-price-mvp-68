@@ -15,7 +15,7 @@ export function usePriceTableActions(
   const dataActions = useDataActions(setPriceData);
   const payBackActions = usePayBackActions(setPriceData);
 
-  // Envolver as funções para notificar listeners quando há mudanças
+  // Wrap functions to notify listeners when there are changes
   const handleAddCategory = async (...args: Parameters<typeof categoryActions.handleAddCategory>) => {
     const result = await categoryActions.handleAddCategory(...args);
     notifyListeners();
