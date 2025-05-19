@@ -71,22 +71,28 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
     }
     
     // Process the fetched data
-    const jsonData = priceData[0].data as PriceData;
+    const jsonData = priceData[0].data;
     
     // Log categories found
-    if (jsonData) {
+    if (jsonData && typeof jsonData === 'object' && !Array.isArray(jsonData)) {
       const categories = Object.keys(jsonData);
       console.log(`[PriceService] Refreshed data with ${categories.length} categories:`, categories.join(", "));
       
       // Save the current time as last fetch time
       localStorage.setItem('price_data_last_fetch', new Date().toISOString());
+      
+      // Type assertion with proper cast - first to unknown, then to PriceData
+      const typedData = jsonData as unknown as PriceData;
+      
+      // Notify listeners with the new data
+      notifyListeners(typedData);
+      
+      console.log("[PriceService] Price data refreshed successfully");
+      return typedData;
+    } else {
+      console.error("[PriceService] Invalid data format received");
+      return {};
     }
-    
-    // Notify listeners with the new data
-    notifyListeners(jsonData);
-    
-    console.log("[PriceService] Price data refreshed successfully");
-    return jsonData;
   } catch (error) {
     console.error("[PriceService] Error refreshing data from source:", error);
     return null;

@@ -40,8 +40,14 @@ export async function getAllData(): Promise<PriceData> {
       `Found ${Object.keys(jsonData).length} categories` : 
       "Empty data object");
     
-    // Type assertion with proper cast
-    return jsonData as PriceData;
+    // First ensure we're dealing with an object, not an array
+    if (Array.isArray(jsonData)) {
+      console.error("[PriceService] Expected object data but received array");
+      return {};
+    }
+    
+    // Type assertion with proper cast - first to unknown, then to PriceData
+    return jsonData as unknown as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
     throw new Error(err.message || "Failed to retrieve price data.");
