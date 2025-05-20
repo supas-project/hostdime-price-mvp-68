@@ -55,7 +55,10 @@ export default function PriceTableContainer() {
   // Effect to force update when hasUpdates is true
   useEffect(() => {
     if (hasUpdates) {
-      handleRefreshData();
+      handleRefreshData().then(() => {
+        // Notify WizardContent component about the data change
+        window.dispatchEvent(new CustomEvent('price-table-data-updated'));
+      });
     }
   }, [hasUpdates, handleRefreshData]);
 
@@ -74,6 +77,11 @@ export default function PriceTableContainer() {
       // Set up event listeners for synchronization
       const handleDataRefreshed = () => {
         console.log("Data-refreshed event received, reloading price data");
+        loadPriceData();
+      };
+      
+      const handleServerDataUpdated = () => {
+        console.log("Server-data-updated event received, reloading price data");
         loadPriceData();
       };
       
@@ -111,6 +119,7 @@ export default function PriceTableContainer() {
       
       // Add event listeners
       window.addEventListener('data-refreshed', handleDataRefreshed);
+      window.addEventListener('server-data-updated', handleServerDataUpdated);
       window.addEventListener('item-deleted', handleItemDeleted as EventListener);
       window.addEventListener('category-deleted', handleCategoryDeleted as EventListener);
       window.addEventListener('storage', handleStorageEvent);
@@ -121,6 +130,7 @@ export default function PriceTableContainer() {
       // Return cleanup function
       return () => {
         window.removeEventListener('data-refreshed', handleDataRefreshed);
+        window.removeEventListener('server-data-updated', handleServerDataUpdated);
         window.removeEventListener('item-deleted', handleItemDeleted as EventListener);
         window.removeEventListener('category-deleted', handleCategoryDeleted as EventListener);
         window.removeEventListener('storage', handleStorageEvent);
@@ -197,7 +207,11 @@ export default function PriceTableContainer() {
   // Called when user explicitly requests data initialization
   const handleRequestInitialization = () => {
     setUserHasRequestedInit(true);
-    InitService.initializeData().then(() => loadPriceData());
+    InitService.initializeData().then(() => {
+      loadPriceData();
+      // Notify server component about the data change
+      window.dispatchEvent(new CustomEvent('price-table-data-updated'));
+    });
     toast.info("Inicializando categorias padrão");
   };
 

@@ -13,6 +13,7 @@ import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
+
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -37,6 +38,9 @@ export function WizardContent() {
       await PriceService.forceRefreshFromLatestSource();
       // Initialize server categories including connectivity ones
       await initializeServerCategories();
+      // Dispatch a global event to notify other components about the data refresh
+      window.dispatchEvent(new CustomEvent('server-data-updated'));
+      
       toast.success("Dados sincronizados com sucesso!", {
         description: "Todas as categorias e itens atualizados."
       });
@@ -62,7 +66,20 @@ export function WizardContent() {
       }
     };
     initializeData();
+    
+    // Add listener for data updates from price table
+    const handlePriceTableDataUpdated = () => {
+      console.log("[WizardContent] Received price-table-data-updated event, refreshing data...");
+      refreshData();
+    };
+    
+    window.addEventListener('price-table-data-updated', handlePriceTableDataUpdated);
+    
+    return () => {
+      window.removeEventListener('price-table-data-updated', handlePriceTableDataUpdated);
+    };
   }, []);
+  
   const getSelectedOption = (component: ServerComponent): ComponentOption | null => {
     if (!component) return null;
     const normalizedType = normalizeComponentType(component.type);
@@ -86,13 +103,16 @@ export function WizardContent() {
     }
     return null;
   };
+  
   const currentComponent = serverData.componentes[currentStep];
+  
   if (isLoadingData) {
     return <div className="space-y-4 w-full p-4 animate-pulse">
         <Skeleton className="h-8 w-40 bg-muted-foreground/20" />
         <Skeleton className="h-64 w-full bg-muted-foreground/10" />
       </div>;
   }
+  
   return <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
       <div className="flex items-center justify-between mb-2 sm:mb-4">
         <Button variant="outline" size="sm" onClick={() => setShowAllSteps(!showAllSteps)} className={cn("flex items-center gap-1", "text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3", "h-auto transition-colors")}>
@@ -105,7 +125,21 @@ export function WizardContent() {
             </>}
         </Button>
 
-        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={refreshData} 
+          disabled={isLoadingData}
+          className={cn(
+            "flex items-center gap-1", 
+            "text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3", 
+            "h-auto transition-colors",
+            isLoadingData ? "opacity-50 cursor-not-allowed" : ""
+          )}
+        >
+          <RefreshCw className={cn("h-3 w-3 sm:h-4 sm:w-4", isLoadingData && "animate-spin")} />
+          <span className="whitespace-nowrap">Atualizar dados</span>
+        </Button>
       </div>
 
       {showAllSteps ? <ScrollArea className="max-h-[calc(100vh-200px)] pr-0 sm:pr-2 overflow-x-hidden">
