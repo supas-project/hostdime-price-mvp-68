@@ -34,6 +34,15 @@ const WizardContainer = () => {
     storageItemsMap[item.id] = { option: item, quantity: item.metadata?.quantity || 1 };
   });
 
+  // Criar um mapa para serviços personalizados no formato esperado
+  const customServicesMap: { [key: string]: { option: ComponentOption; quantity: number } } = {};
+  customServices.forEach(service => {
+    customServicesMap[service.id] = { 
+      option: service, 
+      quantity: service.metadata?.quantity || 1 
+    };
+  });
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <main className={cn(
@@ -78,7 +87,7 @@ const WizardContainer = () => {
             onRestart={handleRestart}
             storageItems={storageItemsMap}
             connectivityItems={connectivityItems}
-            customServices={convertCustomServicesToArray(customServices)}
+            customServices={customServicesMap}
           />
         )}
       </main>

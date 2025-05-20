@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ import {
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
-import { StorageItems, ConnectivityItemsMap } from "@/types/wizard";
+import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
 
 interface FinalSummaryProps {
@@ -44,19 +43,6 @@ interface FinalSummaryProps {
 }
 
 export function FinalSummary({ selectedComponents, onRestart, storageItems: storageItemsMap, customServices: customServicesMap, connectivityItems }: FinalSummaryProps) {
-  const { storageItems: contextStorageItems, customServices: contextCustomServices, connectivityItems: contextConnectivityItems, handleRemoveComponent } = useWizard();
-  
-  // Use provided items or fall back to context items
-  const effectiveStorageItems = storageItemsMap 
-    ? convertStorageItemsMapToArray(storageItemsMap)
-    : contextStorageItems;
-    
-  const effectiveCustomServices = customServicesMap 
-    ? convertCustomServicesToArray(customServicesMap)
-    : contextCustomServices;
-    
-  const effectiveConnectivityItems = connectivityItems || contextConnectivityItems;
-  
   const [profitMargin, setProfitMargin] = useState(25);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -76,6 +62,19 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
     numeroContato: "(11) 4766-4840",
     emailContato: "vendas@hostdime.com.br"
   });
+  
+  const { storageItems: contextStorageItems, customServices: contextCustomServices, connectivityItems: contextConnectivityItems, handleRemoveComponent } = useWizard();
+  
+  // Use provided items or fall back to context items
+  const effectiveStorageItems = storageItemsMap 
+    ? convertStorageItemsMapToArray(storageItemsMap)
+    : contextStorageItems;
+    
+  const effectiveCustomServices = customServicesMap 
+    ? convertCustomServicesToArray(customServicesMap)
+    : contextCustomServices;
+    
+  const effectiveConnectivityItems = connectivityItems || contextConnectivityItems;
   
   const handleSaveQuote = async () => {
     setIsSaving(true);
