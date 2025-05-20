@@ -1,3 +1,4 @@
+import { RaidMetadata } from "@/types/component";
 
 export interface PriceItem {
   id: string;

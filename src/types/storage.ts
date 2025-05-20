@@ -26,9 +26,19 @@ export interface PricedDiskOption extends DiskOption {
   price: number;
   name?: string; 
   description?: string;
-  raid?: boolean; // Adicionada a propriedade raid como boolean
+  raid?: boolean;
   iops?: string;
   throughput?: string;
+  metadata?: {
+    quantity?: number;
+    capacity?: string;
+    readSpeed?: string;
+    writeSpeed?: string;
+    iops?: string;
+    throughput?: string;
+    recommended?: string[];
+    raid?: boolean;
+  };
 }
 
 // Adding the StorageTier interface that was missing

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -79,6 +78,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
                 recommended: Array.isArray(item.metadata?.recommended) 
                   ? item.metadata.recommended 
                   : []
+              },
+              metadata: {
+                capacity: item.metadata?.capacity,
+                readSpeed: item.metadata?.readSpeed,
+                writeSpeed: item.metadata?.writeSpeed,
+                iops: item.metadata?.iops,
+                throughput: item.metadata?.throughput,
+                recommended: item.metadata?.recommended,
+                raid: hasRaid,
+                quantity: item.metadata?.quantity
               }
             } as PricedDiskOption;
           });
@@ -189,6 +198,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
               recommended: Array.isArray(item.metadata?.recommended) 
                 ? item.metadata.recommended 
                 : []
+            },
+            metadata: {
+              quantity: item.metadata?.quantity || 1,
+              capacity: item.metadata?.capacity,
+              readSpeed: item.metadata?.readSpeed,
+              writeSpeed: item.metadata?.writeSpeed,
+              iops: item.metadata?.iops,
+              throughput: item.metadata?.throughput,
+              recommended: item.metadata?.recommended,
+              raid: hasRaid
             }
           } as PricedDiskOption;
         });
