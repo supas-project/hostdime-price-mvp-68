@@ -4,12 +4,29 @@ import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
+import { useEffect } from "react";
 
 interface StorageStepProps {
   onSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
 }
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
+  // Set up a global listener for storage selections
+  useEffect(() => {
+    const handleStorageSelectionSync = (event: CustomEvent) => {
+      if (event.detail && event.detail.type === 'internal' && event.detail.disk) {
+        handleSelectInternalDisk(event.detail.disk, event.detail.quantity || 0);
+      }
+    };
+
+    // Cast the event as any since CustomEvent is not recognized directly
+    window.addEventListener('storage-selection', handleStorageSelectionSync as any);
+    
+    return () => {
+      window.removeEventListener('storage-selection', handleStorageSelectionSync as any);
+    };
+  }, [onSelectStorageItem]);
+
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
     // Normalize capacity to ensure it has a unit
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
@@ -55,7 +72,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
         console.error("Could not update localStorage with removed disk", e);
       }
       
-      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} removido`);
+      console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} removed from summary`);
       return;
     }
     
@@ -91,7 +108,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       console.error("Could not update localStorage for re-added disk", e);
     }
     
-    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} added/updated in summary with quantity ${quantity}`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {

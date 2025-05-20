@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 
 interface UseDiskManagementProps {
@@ -27,19 +27,23 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
   const handleQuantityChange = useCallback(
     (diskId: string, newQuantity: number) => {
       setSelectedDisks((currentDisks) => {
-        return currentDisks.map((item) => {
+        const updatedDisks = currentDisks.map((item) => {
           if (item.disk.id === diskId) {
-            const updatedItem = { ...item, quantity: newQuantity };
-            
             // Notify parent component if callback provided
-            if (onSelectDisk) {
-              onSelectDisk(item.disk, newQuantity);
-            }
-            
+            const updatedItem = { ...item, quantity: newQuantity };
             return updatedItem;
           }
           return item;
         });
+        
+        // Find the updated disk to notify parent component
+        const updatedDisk = updatedDisks.find(item => item.disk.id === diskId);
+        
+        if (updatedDisk && onSelectDisk) {
+          onSelectDisk(updatedDisk.disk, newQuantity);
+        }
+        
+        return updatedDisks;
       });
     },
     [onSelectDisk]
@@ -49,10 +53,21 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
   const handleRemoveDisk = useCallback(
     (diskId: string) => {
       setSelectedDisks((currentDisks) => {
-        return currentDisks.filter((item) => item.disk.id !== diskId);
+        // Find disk before removal to notify parent
+        const diskToRemove = currentDisks.find(item => item.disk.id === diskId);
+        
+        // Remove the disk from state
+        const updatedDisks = currentDisks.filter((item) => item.disk.id !== diskId);
+        
+        // Notify parent of removal with quantity = 0
+        if (diskToRemove && onSelectDisk) {
+          onSelectDisk(diskToRemove.disk, 0);
+        }
+        
+        return updatedDisks;
       });
     },
-    []
+    [onSelectDisk]
   );
 
   // Compute visible disks based on selected type
@@ -60,6 +75,17 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
     if (!selectedDiskType) return [];
     return selectedDisks.filter((item) => item.disk.type === selectedDiskType);
   }, [selectedDiskType, selectedDisks]);
+
+  // Ensure synchronization with server summary on selected disks change
+  useEffect(() => {
+    // This effect ensures that we notify the parent of all selected disks
+    // when the component mounts or when selectedDisks change
+    if (onSelectDisk) {
+      selectedDisks.forEach(item => {
+        onSelectDisk(item.disk, item.quantity);
+      });
+    }
+  }, [onSelectDisk]);
 
   return {
     selectedDiskType,

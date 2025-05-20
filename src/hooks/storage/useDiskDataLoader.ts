@@ -10,6 +10,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(Date.now());
+  const [loadAttempted, setLoadAttempted] = useState(false);
   
   // Store reference to update function to avoid recreations
   const updateDisksRef = useRef<() => Promise<void>>();
@@ -18,6 +19,8 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
   const loadDisksFromPriceTable = useCallback(async () => {
     if (!selectedDiskType) {
       setAvailableDisks([]);
+      setIsLoading(false);
+      setLoadAttempted(true);
       return;
     }
 
@@ -145,12 +148,21 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
       }
     } finally {
       setIsLoading(false);
+      setLoadAttempted(true);
     }
   }, [selectedDiskType]);
 
   // Load disks when type changes
   useEffect(() => {
-    loadDisksFromPriceTable();
+    if (selectedDiskType) {
+      // Reset load attempted state when type changes
+      setLoadAttempted(false);
+      loadDisksFromPriceTable();
+    } else {
+      // Clear disks when no type is selected
+      setAvailableDisks([]);
+      setIsLoading(false);
+    }
     
     // Store update function for data change listener
     updateDisksRef.current = loadDisksFromPriceTable;
@@ -161,52 +173,48 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     };
   }, [selectedDiskType, loadDisksFromPriceTable]);
   
-  // Check for updates when coming back to the page
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (!document.hidden) {
-        console.log("Page visibility changed to visible, checking for data changes");
-        // Force refresh data when coming back to the page
-        if (updateDisksRef.current) {
-          updateDisksRef.current();
-        }
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  // Register listener for data updates
+  // Register listener for data updates with error handling
   useEffect(() => {
     // Define the update function that will be called when data changes
     const handleDataChange = () => {
       if (updateDisksRef.current) {
-        console.log("Data change detected, reloading disk data");
-        updateDisksRef.current();
-        setLastUpdated(Date.now()); // Force re-render when data changes
+        try {
+          console.log("Data change detected, reloading disk data");
+          updateDisksRef.current();
+          setLastUpdated(Date.now()); // Force re-render when data changes
+        } catch (error) {
+          console.error("Error handling data change:", error);
+          toast.error("Erro ao atualizar dados de disco");
+        }
       }
     };
     
-    // Register for price table changes
-    PriceService.addDataChangeListener(handleDataChange);
-    
-    // Clean up listener when component unmounts
-    return () => {
-      PriceService.removeDataChangeListener();
-    };
+    try {
+      // Register for price table changes
+      PriceService.addDataChangeListener(handleDataChange);
+      
+      // Clean up listener when component unmounts
+      return () => {
+        PriceService.removeDataChangeListener();
+      };
+    } catch (error) {
+      console.error("Error setting up data change listener:", error);
+      return () => {}; // Empty cleanup in case of error
+    }
   }, []);
 
   // Force refresh method that can be called externally
   const refreshData = useCallback(async () => {
     if (updateDisksRef.current) {
-      await updateDisksRef.current();
-      toast.success("Dados de disco atualizados", {
-        description: "As opções de disco foram sincronizadas com sucesso."
-      });
+      try {
+        await updateDisksRef.current();
+        toast.success("Dados de disco atualizados", {
+          description: "As opções de disco foram sincronizadas com sucesso."
+        });
+      } catch (error) {
+        console.error("Error refreshing disk data:", error);
+        toast.error("Erro ao atualizar dados de disco");
+      }
     }
   }, []);
 
@@ -214,6 +222,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     availableDisks,
     isLoading,
     refreshData,
-    lastUpdated
+    lastUpdated,
+    loadAttempted
   };
 }

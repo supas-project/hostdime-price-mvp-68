@@ -13,7 +13,7 @@ import { useInitialDiskLoader } from "@/hooks/storage/useInitialDiskLoader";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, HardDrive } from "lucide-react";
+import { Loader2, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InternalStoragePanelProps {
@@ -38,7 +38,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   } = useDiskManagement({ onSelectDisk });
 
   // Load disk data using the data loader hook
-  const { availableDisks, isLoading, refreshData } = useDiskDataLoader(selectedDiskType);
+  const { availableDisks, isLoading, refreshData, loadAttempted } = useDiskDataLoader(selectedDiskType);
 
   // Use the persistence hook
   const { hasLocalChanges, setHasLocalChanges, persistSelectionsToDatabase } = useDiskPersistence();
@@ -71,8 +71,15 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       
       // Set flag that we have changes to persist
       setHasLocalChanges(true);
+      
+      // Notify parent component about all selected disks
+      if (onSelectDisk) {
+        selectedDisks.forEach(item => {
+          onSelectDisk(item.disk, item.quantity);
+        });
+      }
     }
-  }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges]);
+  }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges, onSelectDisk]);
 
   // Find the selected disk based on capacity for adding to configuration
   const handleAddSelectedDisk = () => {
@@ -93,7 +100,8 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           toast.success(`Quantidade do disco ${selectedDiskType.toUpperCase()} ${selectedCapacity} aumentada`);
         } else {
           // Add new disk with quantity 1
-          setSelectedDisks(prev => [...prev, { disk: diskToAdd, quantity: 1 }]);
+          const newSelectedDisks = [...selectedDisks, { disk: diskToAdd, quantity: 1 }];
+          setSelectedDisks(newSelectedDisks);
           setHasLocalChanges(true);
           
           if (onSelectDisk) {
@@ -108,6 +116,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       }
     }
   };
+
+  // Determine if we should show loading or no disk message
+  const showLoadingOrNoDiskMessage = 
+    (isLoading || (loadAttempted && availableDisks.length === 0)) && 
+    !!selectedDiskType;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -149,17 +162,19 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         </div>
       )}
 
-      {isLoading ? (
+      {showLoadingOrNoDiskMessage ? (
         <div className="py-8 flex flex-col items-center justify-center text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-          <p className="text-muted-foreground">Carregando opções de disco...</p>
-        </div>
-      ) : !availableDisks.length && selectedDiskType ? (
-        <div className="py-8 flex flex-col items-center justify-center text-center">
-          <p className="text-muted-foreground">
-            Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
-            Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
-          </p>
+          {isLoading ? (
+            <>
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-muted-foreground">Carregando opções de disco...</p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">
+              Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
+              Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
+            </p>
+          )}
         </div>
       ) : (
         <>

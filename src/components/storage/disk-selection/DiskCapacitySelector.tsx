@@ -9,8 +9,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PricedDiskOption } from '@/types/storage';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
 
 interface DiskCapacitySelectorProps {
   selectedCapacity: string;
@@ -36,11 +34,6 @@ export function DiskCapacitySelector({
     const valueB = parseFloat(b.replace(/[^0-9.]/g, ''));
     return valueA - valueB;
   });
-
-  // Find the current selected disk based on capacity
-  const selectedDisk = selectedCapacity 
-    ? availableDisks.find(disk => disk.capacity === selectedCapacity) 
-    : undefined;
 
   if (isLoading) {
     return (
@@ -73,7 +66,7 @@ export function DiskCapacitySelector({
             ))
           ) : (
             <SelectItem value="none" disabled className="text-gray-400">
-              Nenhuma capacidade disponível
+              {disabled ? "Selecione o tipo de disco primeiro" : "Nenhuma capacidade disponível"}
             </SelectItem>
           )}
         </SelectContent>
