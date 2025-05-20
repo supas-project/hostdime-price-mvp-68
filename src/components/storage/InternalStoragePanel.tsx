@@ -83,7 +83,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Save selections whenever they change
   useEffect(() => {
-    // Ensure both values are strictly boolean using strict equality operators
+    // Convert to strictly boolean values using strict equality comparison
     const initialLoadComplete = isInitialLoad === false;
     const dataIsRefreshed = isDataRefreshed === true;
     
