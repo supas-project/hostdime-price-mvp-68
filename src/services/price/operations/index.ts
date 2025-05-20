@@ -1,7 +1,7 @@
 
 // Re-export everything from the individual operation files
 export * from './data-retrieval';
-export * from './data-persistence';
+export { saveData } from './data-persistence';
 export * from './data-sync';
 export * from './data-reset';
 export * from './category-operations/add-category';
