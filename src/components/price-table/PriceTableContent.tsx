@@ -44,7 +44,23 @@ export function PriceTableContent({
 }: PriceTableContentProps) {
   
   // Debug para verificar os dados recebidos
-  console.log("PriceTableContent received categories:", Object.keys(priceData).join(", "));
+  console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
+  
+  // Garantir que priceData é um objeto válido
+  if (!priceData || typeof priceData !== 'object' || Object.keys(priceData).length === 0) {
+    console.warn("PriceTableContent: Received invalid or empty priceData");
+    return (
+      <div className="p-6 text-center animate-fade-in">
+        <h3 className="text-lg font-medium mb-2">Nenhuma categoria cadastrada</h3>
+        <p className="text-muted-foreground mb-4">
+          {isAdmin 
+            ? "Comece adicionando uma nova categoria ou importe dados existentes."
+            : "Entre como administrador para gerenciar a tabela de preços."
+          }
+        </p>
+      </div>
+    );
+  }
   
   // Garantir que todas as categorias tenham a propriedade 'items' como array
   Object.keys(priceData).forEach(key => {
@@ -58,39 +74,25 @@ export function PriceTableContent({
       priceData[key].items = priceData[key].items || [];
     }
     
-    console.log(`Category ${key} has ${priceData[key].items.length} items`);
+    console.log(`PriceTableContent: Category ${key} has ${priceData[key].items.length} items`);
   });
   
   // Verificar categorias específicas
   if (priceData.storage) {
-    console.log("Storage category has", priceData.storage.items.length, "items");
+    console.log("PriceTableContent: Storage category has", priceData.storage.items.length, "items");
   }
   
   if (priceData.external_storage) {
-    console.log("External storage category has", priceData.external_storage.items.length, "items");
+    console.log("PriceTableContent: External storage category has", priceData.external_storage.items.length, "items");
   }
   
-  if (Object.keys(priceData).length === 0) {
-    return (
-      <div className="p-6 text-center animate-fade-in">
-        <h3 className="text-lg font-medium mb-2">Nenhuma categoria cadastrada</h3>
-        <p className="text-muted-foreground mb-4">
-          {isAdmin 
-            ? "Comece adicionando uma nova categoria ou importe dados existentes."
-            : "Entre como administrador para gerenciar a tabela de preços."
-          }
-        </p>
-      </div>
-    );
-  }
-
   // Verificar se alguma categoria está selecionada e existe
   if (activeTab && !priceData[activeTab]) {
-    console.log(`Active tab ${activeTab} não existe nas categorias disponíveis`);
+    console.log(`PriceTableContent: Active tab ${activeTab} não existe nas categorias disponíveis`);
     // Se a categoria ativa não existir, selecionar a primeira
     if (Object.keys(priceData).length > 0) {
       const firstCategory = Object.keys(priceData)[0];
-      console.log(`Alterando para a primeira categoria: ${firstCategory}`);
+      console.log(`PriceTableContent: Alterando para a primeira categoria: ${firstCategory}`);
       setTimeout(() => setActiveTab(firstCategory), 0);
     }
   }
@@ -107,12 +109,14 @@ export function PriceTableContent({
         {Object.values(priceData).map((category) => {
           // Garantir que category.items seja um array
           if (!Array.isArray(category.items)) {
-            console.warn(`Category ${category.id} items is not an array:`, category.items);
+            console.warn(`PriceTableContent: Category ${category.id} items is not an array:`, category.items);
             category.items = [];
           }
           
           const filteredItems = filterItems(category.items);
           const isCollapsed = collapsedCategories[category.id] || false;
+          
+          console.log(`PriceTableContent: Rendering category ${category.id} with ${filteredItems.length}/${category.items.length} items`);
           
           return (
             <TabsContent key={category.id} value={category.id} className="space-y-3">

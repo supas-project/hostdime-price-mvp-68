@@ -52,6 +52,7 @@ export default function PriceTableContainer() {
   // Effect to force update when hasUpdates is true
   useEffect(() => {
     if (hasUpdates) {
+      console.log("PriceTableContainer: Updates detected, refreshing data");
       handleRefreshData();
     }
   }, [hasUpdates, handleRefreshData]);
@@ -61,7 +62,7 @@ export default function PriceTableContainer() {
     async function initialize() {
       if (isAuthenticated) {
         try {
-          console.log("Authenticated user, attempting to initialize data");
+          console.log("PriceTableContainer: Authenticated user, attempting to initialize data");
           
           // Initialize data if needed
           await InitService.initializeData();
@@ -71,48 +72,52 @@ export default function PriceTableContainer() {
           
           // Log all categories para debug
           if (priceData) {
-            console.log("Available categories:", Object.keys(priceData).join(", "));
+            console.log("PriceTableContainer: Available categories:", Object.keys(priceData).join(", "));
             
             // Verificar todas as categorias para garantir que estão estruturadas corretamente
             Object.keys(priceData).forEach(cat => {
               const category = priceData[cat];
               if (!category) {
-                console.error(`Category ${cat} is undefined`);
+                console.error(`PriceTableContainer: Category ${cat} is undefined`);
                 return;
               }
               
               if (!Array.isArray(category.items)) {
-                console.error(`Category ${cat} has invalid items property:`, category.items);
+                console.error(`PriceTableContainer: Category ${cat} has invalid items property:`, category.items);
+                // Corrigir imediatamente
+                priceData[cat].items = priceData[cat].items || [];
               } else {
-                console.log(`Category ${cat} has ${category.items.length} items`);
+                console.log(`PriceTableContainer: Category ${cat} has ${category.items.length} items`);
               }
             });
             
             // Verificar storage e external_storage especificamente
             if (priceData.storage) {
               if (Array.isArray(priceData.storage.items)) {
-                console.log("Storage category items:", priceData.storage.items.length);
+                console.log("PriceTableContainer: Storage category items:", priceData.storage.items.length);
               } else {
-                console.error("Storage category items is not an array:", priceData.storage.items);
+                console.error("PriceTableContainer: Storage category items is not an array:", priceData.storage.items);
+                priceData.storage.items = [];
               }
             } else {
-              console.log("Storage category not found");
+              console.log("PriceTableContainer: Storage category not found");
             }
             
             if (priceData.external_storage) {
               if (Array.isArray(priceData.external_storage.items)) {
-                console.log("External storage category items:", priceData.external_storage.items.length);
+                console.log("PriceTableContainer: External storage category items:", priceData.external_storage.items.length);
               } else {
-                console.error("External storage category items is not an array:", priceData.external_storage.items);
+                console.error("PriceTableContainer: External storage category items is not an array:", priceData.external_storage.items);
+                priceData.external_storage.items = [];
               }
             } else {
-              console.log("External storage category not found");
+              console.log("PriceTableContainer: External storage category not found");
             }
           }
           
           setIsInitialized(true);
         } catch (error) {
-          console.error("Error initializing price table:", error);
+          console.error("PriceTableContainer: Error initializing price table:", error);
           if (error instanceof Error && !error.message.includes("Authentication")) {
             toast.error("Erro ao inicializar tabela", {
               description: "Por favor, tente novamente ou contate o suporte.",
@@ -129,7 +134,7 @@ export default function PriceTableContainer() {
         
         return () => clearInterval(intervalId);
       } else {
-        console.log("User not authenticated, skipping initialization");
+        console.log("PriceTableContainer: User not authenticated, skipping initialization");
         setIsInitialized(true);
       }
     }
@@ -140,17 +145,27 @@ export default function PriceTableContainer() {
   // Effect para garantir que o priceData seja processado após ser carregado
   useEffect(() => {
     if (priceData) {
+      console.log("PriceTableContainer: Processing loaded price data");
+      
       // Verificar todas as categorias para garantir que os items são arrays
-      Object.keys(priceData).forEach(key => {
-        if (!priceData[key]) return;
+      const fixedData = {...priceData};
+      let needsUpdate = false;
+      
+      Object.keys(fixedData).forEach(key => {
+        if (!fixedData[key]) return;
         
-        if (!Array.isArray(priceData[key].items)) {
+        if (!Array.isArray(fixedData[key].items)) {
           console.warn(`PriceTableContainer: Items is not an array for category ${key}, fixing...`);
-          priceData[key].items = priceData[key].items || [];
-          // Forçar atualização do estado
-          setPriceData({...priceData});
+          fixedData[key].items = fixedData[key].items || [];
+          needsUpdate = true;
         }
       });
+      
+      // Forçar atualização do estado apenas se necessário
+      if (needsUpdate) {
+        console.log("PriceTableContainer: Updating price data with fixed arrays");
+        setPriceData({...fixedData});
+      }
     }
   }, [priceData, setPriceData]);
 

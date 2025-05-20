@@ -15,14 +15,26 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
     
     if (!category) {
       console.warn(`[PriceService] Category ${categoryId} not found when fetching item ${itemId}`);
+      
+      // Tentativa alternativa para storage/external_storage
+      if (categoryId === 'storage') {
+        console.log('[PriceService] Trying to find item in external_storage instead');
+        return getItem('external_storage', itemId);
+      } else if (categoryId === 'external_storage') {
+        console.log('[PriceService] Trying to find item in storage instead');
+        return getItem('storage', itemId);
+      }
+      
       return null;
     }
     
     // Garantir que temos um array de itens
     if (!Array.isArray(category.items)) {
-      console.warn(`[PriceService] Items is not an array for category ${categoryId}`);
+      console.warn(`[PriceService] Items is not an array for category ${categoryId}, it is: ${typeof category.items}`);
       return null;
     }
+    
+    console.log(`[PriceService] Searching for item ${itemId} among ${category.items.length} items`);
     
     // Encontrar o item pelo ID (considerar correspondências exatas e parciais)
     const item = category.items.find(item => 
@@ -50,6 +62,16 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
     
     if (!category) {
       console.warn(`[PriceService] Category ${categoryId} not found when listing items`);
+      
+      // Tentativa alternativa para storage/external_storage
+      if (categoryId === 'storage') {
+        console.log('[PriceService] Trying to find items in external_storage instead');
+        return getCategoryItems('external_storage');
+      } else if (categoryId === 'external_storage') {
+        console.log('[PriceService] Trying to find items in storage instead');
+        return getCategoryItems('storage');
+      }
+      
       return [];
     }
     
