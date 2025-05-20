@@ -1,3 +1,6 @@
+
+import { ComponentOption } from "@/types/component";
+
 export interface StorageConfig {
   type: string;
   capacity: number;

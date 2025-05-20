@@ -1,4 +1,5 @@
 
+
 import { ComponentOption } from "./component";
 
 export interface StorageItems {
@@ -32,6 +33,11 @@ export interface WizardContextType {
   beginnerMode: boolean;
   setBeginnerMode: (value: boolean) => void; // Add the setter function
   categoriesLoaded: boolean; // Added this property to fix the TypeScript error
+}
+
+// Interface para lidar com ambos os formatos de armazenamento (array e objeto)
+export interface StorageItemsMap {
+  [key: string]: { option: ComponentOption; quantity: number };
 }
 
 // Add new helper interface to convert between formats

@@ -1,4 +1,5 @@
 
+
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
@@ -7,7 +8,8 @@ import { WizardProvider, useWizard } from "@/contexts/WizardContext";
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { serverData } from "@/data/server-components";
 import { cn } from "@/lib/utils";
-import { convertStorageItemsMapToArray } from "@/utils/storage-utils";
+import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
+import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 
 // Create a separate component to use the context
 const WizardContainer = () => {
@@ -23,6 +25,15 @@ const WizardContainer = () => {
     connectivityItems,
     customServices
   } = useWizard();
+
+  // Converter para o formato esperado pelo FinalSummary
+  const storageItemsMap: StorageItemsMap = {};
+  storageItems.internal.forEach(item => {
+    storageItemsMap[item.id] = { option: item, quantity: item.metadata?.quantity || 1 };
+  });
+  storageItems.external.forEach(item => {
+    storageItemsMap[item.id] = { option: item, quantity: item.metadata?.quantity || 1 };
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -66,8 +77,8 @@ const WizardContainer = () => {
           <FinalSummary 
             selectedComponents={selectedComponents}
             onRestart={handleRestart}
-            storageItems={storageItems}
-            customServices={customServices}
+            storageItems={storageItemsMap}
+            customServices={convertCustomServicesToArray(connectivityItems as ConnectivityItemsMap)}
             connectivityItems={connectivityItems}
           />
         )}
