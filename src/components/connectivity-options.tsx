@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ComponentOption } from "@/data/server-components";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,26 @@ export function ConnectivityOptions({
   onUpdateItems 
 }: ConnectivityOptionsProps) {
   const [selectedOption, setSelectedOption] = useState<string>("");
+  
+  // Debug para verificar as opções e itens selecionados
+  useEffect(() => {
+    console.log("ConnectivityOptions: Received", options.length, "options");
+    console.log("ConnectivityOptions: Current selected items:", Object.keys(selectedItems).length);
+    
+    // Separar por tipo para debug
+    const portOptions = options.filter(opt => opt.subtype === "porta");
+    const ipOptions = options.filter(opt => opt.subtype === "ip");
+    const otherOptions = options.filter(opt => opt.subtype !== "porta" && opt.subtype !== "ip");
+    
+    console.log(`ConnectivityOptions: port=${portOptions.length}, ip=${ipOptions.length}, other=${otherOptions.length}`);
+    
+    // Log dos itens selecionados
+    if (Object.keys(selectedItems).length > 0) {
+      Object.entries(selectedItems).forEach(([id, item]) => {
+        console.log(`Selected item: ${id} - ${item.option.name} (${item.option.subtype}) - Quantity: ${item.quantity}`);
+      });
+    }
+  }, [options, selectedItems]);
   
   const handleAddItem = () => {
     if (!selectedOption) return;
@@ -62,6 +82,21 @@ export function ConnectivityOptions({
     onUpdateItems(newItems);
   };
   
+  // Separar opções por tipo
+  const portOptions = options.filter(opt => opt.subtype === 'porta');
+  const ipOptions = options.filter(opt => opt.subtype === 'ip');
+  const otherOptions = options.filter(opt => opt.subtype !== 'porta' && opt.subtype !== 'ip');
+  
+  // Combinar opções para seletores, organizadas por tipo
+  const organizedOptions = [
+    ...(portOptions.length > 0 ? [{ id: 'port-header', name: '-- Velocidade de Porta --', price: 0, isHeader: true}] : []),
+    ...portOptions,
+    ...(ipOptions.length > 0 ? [{ id: 'ip-header', name: '-- Blocos de IP --', price: 0, isHeader: true }] : []),
+    ...ipOptions,
+    ...(otherOptions.length > 0 ? [{ id: 'other-header', name: '-- Outros --', price: 0, isHeader: true }] : []),
+    ...otherOptions
+  ];
+  
   return (
     <Card className="p-4">
       <CardHeader className="p-2">
@@ -79,15 +114,21 @@ export function ConnectivityOptions({
               <SelectValue placeholder="Selecione uma opção" />
             </SelectTrigger>
             <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  <div className="flex justify-between items-center w-full">
-                    <span>{option.name}</span>
-                    <span className="text-primary ml-2">
-                      {formatCurrency(option.price)}
-                    </span>
-                  </div>
-                </SelectItem>
+              {organizedOptions.map((option) => (
+                option.isHeader ? (
+                  <SelectItem key={option.id} value={option.id} disabled className="text-xs font-medium text-muted-foreground">
+                    {option.name}
+                  </SelectItem>
+                ) : (
+                  <SelectItem key={option.id} value={option.id}>
+                    <div className="flex justify-between items-center w-full">
+                      <span>{option.name}</span>
+                      <span className="text-primary ml-2">
+                        {formatCurrency(option.price)}
+                      </span>
+                    </div>
+                  </SelectItem>
+                )
               ))}
             </SelectContent>
           </Select>
@@ -95,7 +136,7 @@ export function ConnectivityOptions({
             variant="outline"
             size="icon" 
             onClick={handleAddItem}
-            disabled={!selectedOption}
+            disabled={!selectedOption || organizedOptions.find(opt => opt.id === selectedOption)?.isHeader}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -111,6 +152,11 @@ export function ConnectivityOptions({
               >
                 <div>
                   <div className="font-medium">{option.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {option.subtype === 'porta' ? 'Velocidade de Porta' : 
+                     option.subtype === 'ip' ? 'Bloco de IP' : 
+                     option.subtype || 'Conectividade'}
+                  </div>
                   <div className="text-sm text-muted-foreground">{formatCurrency(option.price)} / unidade</div>
                 </div>
                 

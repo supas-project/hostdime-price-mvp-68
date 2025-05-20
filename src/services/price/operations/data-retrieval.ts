@@ -95,6 +95,9 @@ export async function getAllData(): Promise<PriceData> {
     // Processamento especial para storage e external_storage
     handleStorageCategories(processedData);
     
+    // Processamento especial para categorias de conectividade
+    handleConnectivityCategories(processedData);
+    
     // Verificar e corrigir todas as categorias
     for (const categoryId of Object.keys(processedData)) {
       if (!processedData[categoryId]) {
@@ -116,7 +119,8 @@ export async function getAllData(): Promise<PriceData> {
       // Log detalhes para categorias de interesse
       if (categoryId === 'storage' || categoryId === 'external_storage' || 
           categoryId === 'disk' || categoryId === 'processor' || 
-          categoryId === 'memory') {
+          categoryId === 'memory' || categoryId === 'connectivity' ||
+          categoryId === 'port_speed' || categoryId === 'ip_blocks') {
         if (processedData[categoryId].items.length > 0) {
           console.log(`[PriceService] ${categoryId} items:`, 
             processedData[categoryId].items.map(item => 
@@ -244,6 +248,229 @@ function handleStorageCategories(processedData: any) {
         console.log(`[PriceService] Added ${externalItems.length} external storage items`);
       }
     }
+  }
+}
+
+/**
+ * Helper function to handle special processing for connectivity categories
+ */
+function handleConnectivityCategories(processedData: any) {
+  // Verificar se temos categorias vazias de port_speed ou ip_blocks
+  const connectivityIsEmpty = !processedData.connectivity || processedData.connectivity.items.length === 0;
+  const portSpeedIsEmpty = !processedData.port_speed || processedData.port_speed.items.length === 0;
+  const ipBlocksIsEmpty = !processedData.ip_blocks || processedData.ip_blocks.items.length === 0;
+  
+  // Importar dados de conectividade do arquivo estático
+  if (connectivityIsEmpty || portSpeedIsEmpty || ipBlocksIsEmpty) {
+    try {
+      // Importar dados de componentes de conectividade
+      const connectivityComponents = getConnectivityDefaults();
+      
+      if (!connectivityComponents || !connectivityComponents.options || connectivityComponents.options.length === 0) {
+        console.warn("[PriceService] No default connectivity data available");
+        return;
+      }
+      
+      console.log("[PriceService] Found default connectivity components:", connectivityComponents.options.length);
+      
+      // Separar itens por subtipo
+      const portItems = connectivityComponents.options
+        .filter(option => option.subtype === "porta")
+        .map(option => ({
+          id: option.id,
+          name: option.name,
+          description: option.description || `${option.name} - Velocidade de porta`,
+          price: option.price,
+          type: 'network',
+          subtype: 'porta',
+          isHardware: true
+        }));
+      
+      const ipItems = connectivityComponents.options
+        .filter(option => option.subtype === "ip")
+        .map(option => ({
+          id: option.id,
+          name: option.name,
+          description: option.description || `${option.name} - Bloco de IPs`,
+          price: option.price,
+          type: 'network',
+          subtype: 'ip',
+          isHardware: true
+        }));
+      
+      // Atualizar categoria de conectividade geral
+      if (connectivityIsEmpty && (portItems.length > 0 || ipItems.length > 0)) {
+        processedData.connectivity = {
+          id: 'connectivity',
+          name: 'Conectividade',
+          items: [...portItems, ...ipItems]
+        };
+        console.log(`[PriceService] Created connectivity category with ${processedData.connectivity.items.length} items`);
+      }
+      
+      // Atualizar categoria de velocidade de porta
+      if (portSpeedIsEmpty && portItems.length > 0) {
+        processedData.port_speed = {
+          id: 'port_speed',
+          name: 'Velocidade de Porta',
+          items: portItems
+        };
+        console.log(`[PriceService] Created port_speed category with ${portItems.length} items`);
+      }
+      
+      // Atualizar categoria de blocos de IP
+      if (ipBlocksIsEmpty && ipItems.length > 0) {
+        processedData.ip_blocks = {
+          id: 'ip_blocks',
+          name: 'Blocos de IP',
+          items: ipItems
+        };
+        console.log(`[PriceService] Created ip_blocks category with ${ipItems.length} items`);
+      }
+    } catch (error) {
+      console.error("[PriceService] Error setting up connectivity categories:", error);
+    }
+  }
+  
+  // Sincronizar categorias para garantir que todos tenham os mesmos itens
+  syncConnectivityCategories(processedData);
+}
+
+/**
+ * Sincroniza as categorias de conectividade para garantir consistência
+ */
+function syncConnectivityCategories(data: any) {
+  // Se houver dados em connectivity mas não em port_speed/ip_blocks, distribua
+  if (data.connectivity?.items?.length > 0) {
+    const connectivityItems = data.connectivity.items;
+    
+    // Separar itens por subtipo
+    const portItems = connectivityItems.filter(item => item.subtype === 'porta');
+    const ipItems = connectivityItems.filter(item => item.subtype === 'ip');
+    
+    // Atualizar port_speed se necessário
+    if (data.port_speed?.items?.length === 0 && portItems.length > 0) {
+      data.port_speed.items = portItems;
+      console.log(`[PriceService] Synchronized ${portItems.length} port items to port_speed category`);
+    }
+    
+    // Atualizar ip_blocks se necessário
+    if (data.ip_blocks?.items?.length === 0 && ipItems.length > 0) {
+      data.ip_blocks.items = ipItems;
+      console.log(`[PriceService] Synchronized ${ipItems.length} IP items to ip_blocks category`);
+    }
+  }
+  
+  // Se houver dados em port_speed/ip_blocks mas não em connectivity, combine
+  if (data.connectivity?.items?.length === 0 && 
+      (data.port_speed?.items?.length > 0 || data.ip_blocks?.items?.length > 0)) {
+    
+    const allItems = [
+      ...(data.port_speed?.items || []),
+      ...(data.ip_blocks?.items || [])
+    ];
+    
+    if (allItems.length > 0) {
+      data.connectivity.items = allItems;
+      console.log(`[PriceService] Combined ${allItems.length} items into connectivity category`);
+    }
+  }
+  
+  // Log para debugging
+  console.log(`[PriceService] After sync: connectivity=${data.connectivity?.items?.length || 0}, port_speed=${data.port_speed?.items?.length || 0}, ip_blocks=${data.ip_blocks?.items?.length || 0}`);
+}
+
+/**
+ * Recupera os dados padrão de conectividade do arquivo estático
+ */
+function getConnectivityDefaults() {
+  try {
+    // Esta função simula a importação do arquivo estático
+    // Em uma implementação real, você importaria o arquivo diretamente
+    return {
+      id: "connectivity",
+      type: "Conectividade",
+      friendlyName: "Opções de Conectividade",
+      description: "Configure a porta de rede e bloco IP do seu servidor",
+      icon: "network",
+      options: [
+        {
+          id: "network-1gbps",
+          type: "Conectividade",
+          subtype: "porta",
+          name: "1 Gbps",
+          description: "Porta de rede com velocidade de 1 Gbps",
+          price: 50
+        },
+        {
+          id: "network-10gbps",
+          type: "Conectividade",
+          subtype: "porta",
+          name: "10 Gbps",
+          description: "Porta de rede de alta velocidade (10 Gbps)",
+          price: 200
+        },
+        {
+          id: "ip-30",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /30",
+          description: "4 endereços IP (1 utilizável)",
+          price: 140
+        },
+        {
+          id: "ip-29",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /29",
+          description: "8 endereços IP (5 utilizáveis)",
+          price: 280
+        },
+        {
+          id: "ip-28",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /28",
+          description: "16 endereços IP (13 utilizáveis)",
+          price: 640
+        },
+        {
+          id: "ip-27",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /27",
+          description: "32 endereços IP (29 utilizáveis)",
+          price: 1440
+        },
+        {
+          id: "ip-26",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /26",
+          description: "64 endereços IP (61 utilizáveis)",
+          price: 3200
+        },
+        {
+          id: "ip-25",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /25",
+          description: "128 endereços IP (125 utilizáveis)",
+          price: 7680
+        },
+        {
+          id: "ip-24",
+          type: "Conectividade",
+          subtype: "ip",
+          name: "Bloco /24",
+          description: "256 endereços IP (253 utilizáveis)",
+          price: 17920
+        }
+      ]
+    };
+  } catch (error) {
+    console.error("[PriceService] Error loading default connectivity data:", error);
+    return null;
   }
 }
 

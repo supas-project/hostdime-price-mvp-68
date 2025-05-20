@@ -3,6 +3,7 @@ import { serverData } from '@/data/server-components';
 import { diskData } from '@/data/disk-data';
 import { storageData } from '@/data/storage-pricing';
 import { PriceData, PriceCategory } from '@/types/pricing';
+import { connectivityComponents } from '@/data/connectivity-components';
 import { 
   createDiskCategory, 
   createExternalStorageCategory, 
@@ -52,7 +53,10 @@ export async function initializeServerCategories(): Promise<boolean> {
     }
     
     // Process connectivity to ensure port speed and IP blocks are available
-    await ensureConnectivityCategories(updatedData);
+    const connectivityChanges = await ensureConnectivityCategories(updatedData);
+    if (connectivityChanges) {
+      hasChanges = true;
+    }
     
     // Process other server components
     for (const component of serverData.componentes) {
@@ -93,89 +97,131 @@ export async function initializeServerCategories(): Promise<boolean> {
  * Ensure Connectivity Categories (Port Speed and IP Blocks) Exist
  * This is specially needed for the "Velocidade de Porta" and "Bloco de IPs" categories
  */
-async function ensureConnectivityCategories(data: PriceData): Promise<void> {
+async function ensureConnectivityCategories(data: PriceData): Promise<boolean> {
   try {
     console.log('[ComponentSync] Checking connectivity categories');
     
-    // Find connectivity component in server data
-    const connectivityComponent = serverData.componentes.find(
-      component => component.type.toLowerCase() === 'conectividade'
-    );
-    
-    if (!connectivityComponent) {
-      console.warn('[ComponentSync] Connectivity component not found in server data');
-      return;
-    }
-    
-    // Check for port speed category
-    const portSpeedExists = Object.values(data).some(
-      category => category.name === 'Velocidade de Porta'
-    );
-    
-    // Check for IP blocks category
-    const ipBlocksExists = Object.values(data).some(
-      category => category.name === 'Bloco de IPs'
-    );
-    
     let hasChanges = false;
     
-    // Add port speed category if it doesn't exist
-    if (!portSpeedExists) {
-      console.log('[ComponentSync] Creating Port Speed category');
-      const portSpeedItems = connectivityComponent.options
-        .filter(option => option.subtype?.toLowerCase() === 'porta')
-        .map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description,
-          price: option.price,
-          type: option.type,
-          subtype: option.subtype,
-          isHardware: true
-        }));
-      
-      // Create and add the category
-      data.port_speed = {
-        id: 'port_speed',
-        name: 'Velocidade de Porta',
-        items: portSpeedItems
-      };
-      
-      hasChanges = true;
+    // Find connectivity component data
+    const connectivityComponentData = connectivityComponents;
+    
+    if (!connectivityComponentData || !connectivityComponentData.options) {
+      console.warn('[ComponentSync] Connectivity component data not found or invalid');
+      return false;
     }
     
-    // Add IP blocks category if it doesn't exist
-    if (!ipBlocksExists) {
-      console.log('[ComponentSync] Creating IP Blocks category');
-      const ipBlockItems = connectivityComponent.options
-        .filter(option => option.subtype?.toLowerCase() === 'ip')
-        .map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description,
-          price: option.price,
-          type: option.type,
-          subtype: option.subtype,
-          isHardware: true
-        }));
-      
-      // Create and add the category
-      data.ip_blocks = {
-        id: 'ip_blocks',
-        name: 'Bloco de IPs',
-        items: ipBlockItems
-      };
-      
-      hasChanges = true;
+    // Verificar cada categoria de conectividade
+    const categories = [
+      {id: 'connectivity', name: 'Conectividade', subtype: null},
+      {id: 'port_speed', name: 'Velocidade de Porta', subtype: 'porta'},
+      {id: 'ip_blocks', name: 'Bloco de IPs', subtype: 'ip'}
+    ];
+    
+    for (const category of categories) {
+      // Verificar se a categoria existe
+      if (!data[category.id]) {
+        console.log(`[ComponentSync] Creating ${category.name} category`);
+        
+        // Filtrar itens para esta categoria
+        const filteredItems = connectivityComponentData.options
+          .filter(option => {
+            if (!category.subtype) return true; // Para 'connectivity', pegamos todos
+            return option.subtype?.toLowerCase() === category.subtype;
+          })
+          .map(option => ({
+            id: option.id,
+            name: option.name,
+            description: option.description || `${option.name} - ${category.name}`,
+            price: option.price,
+            type: 'network',
+            subtype: option.subtype,
+            isHardware: true
+          }));
+        
+        // Criar categoria
+        data[category.id] = {
+          id: category.id,
+          name: category.name,
+          items: filteredItems
+        };
+        
+        console.log(`[ComponentSync] Added ${filteredItems.length} items to ${category.id} category`);
+        hasChanges = true;
+      } 
+      // Se categoria existe mas está vazia, adicionar itens
+      else if (data[category.id].items.length === 0) {
+        console.log(`[ComponentSync] ${category.id} exists but is empty, adding items`);
+        
+        // Filtrar itens para esta categoria
+        const filteredItems = connectivityComponentData.options
+          .filter(option => {
+            if (!category.subtype) return true; // Para 'connectivity', pegamos todos
+            return option.subtype?.toLowerCase() === category.subtype;
+          })
+          .map(option => ({
+            id: option.id,
+            name: option.name,
+            description: option.description || `${option.name} - ${category.name}`,
+            price: option.price,
+            type: 'network',
+            subtype: option.subtype,
+            isHardware: true
+          }));
+        
+        data[category.id].items = filteredItems;
+        console.log(`[ComponentSync] Added ${filteredItems.length} items to ${category.id} category`);
+        hasChanges = true;
+      } else {
+        console.log(`[ComponentSync] ${category.id} category already exists with ${data[category.id].items.length} items`);
+        
+        // Sincronizar itens de connectivity para port_speed e ip_blocks
+        if (category.id === 'connectivity' && data[category.id].items.length > 0) {
+          // Verificar se precisamos sincronizar com port_speed
+          if (data.port_speed.items.length === 0) {
+            const portItems = data[category.id].items.filter(item => item.subtype === 'porta');
+            if (portItems.length > 0) {
+              console.log(`[ComponentSync] Synchronizing ${portItems.length} port items to port_speed`);
+              data.port_speed.items = portItems;
+              hasChanges = true;
+            }
+          }
+          
+          // Verificar se precisamos sincronizar com ip_blocks
+          if (data.ip_blocks.items.length === 0) {
+            const ipItems = data[category.id].items.filter(item => item.subtype === 'ip');
+            if (ipItems.length > 0) {
+              console.log(`[ComponentSync] Synchronizing ${ipItems.length} IP items to ip_blocks`);
+              data.ip_blocks.items = ipItems;
+              hasChanges = true;
+            }
+          }
+        }
+        
+        // Sincronizar itens de port_speed e ip_blocks para connectivity
+        if ((category.id === 'port_speed' || category.id === 'ip_blocks') && 
+            data[category.id].items.length > 0 && 
+            data.connectivity.items.length === 0) {
+          
+          // Combinar todos os itens das categorias específicas
+          const combinedItems = [
+            ...(data.port_speed?.items || []),
+            ...(data.ip_blocks?.items || [])
+          ];
+          
+          if (combinedItems.length > 0) {
+            console.log(`[ComponentSync] Combining ${combinedItems.length} items into connectivity`);
+            data.connectivity.items = combinedItems;
+            hasChanges = true;
+          }
+        }
+      }
     }
     
-    // If changes were made, save the updated data
-    if (hasChanges) {
-      console.log('[ComponentSync] Saving data with connectivity categories');
-      await PriceService.saveData(data);
-    }
+    return hasChanges;
   } catch (error) {
     console.error('[ComponentSync] Error ensuring connectivity categories:', error);
+    return false;
   }
 }
 

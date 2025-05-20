@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
@@ -17,8 +18,26 @@ export function ConnectivityContent({
   connectivityItems,
   onUpdateConnectivityItems,
 }: ConnectivityContentProps) {
+  // Verificar se temos opções válidas
+  if (!options || options.length === 0) {
+    console.error("ConnectivityContent: No options provided");
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Não foi possível carregar opções de conectividade
+      </div>
+    );
+  }
+  
+  console.log("ConnectivityContent: Received", options.length, "options");
+  
+  // Separar as opções por tipo
   const portOptions = options.filter((opt) => opt.subtype === "porta");
   const ipOptions = options.filter((opt) => opt.subtype === "ip");
+  
+  console.log(`ConnectivityContent: Found ${portOptions.length} port options and ${ipOptions.length} IP options`);
+  
+  // Debug dos itens selecionados
+  console.log("ConnectivityContent: Current items:", Object.keys(connectivityItems).length);
 
   const handlePortSelect = (portId: string | null) => {
     if (!portId) {
