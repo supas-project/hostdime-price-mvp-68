@@ -61,6 +61,8 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
                 type: item.subtype as "nvme" | "ssd" | "hdd",
                 capacity,
                 price: item.price,
+                name: item.name,
+                description: item.description,
                 specs: specsObj
               };
             });

@@ -147,10 +147,16 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
             const capacity = capacitySpec ? capacitySpec.split('Capacity:')[1]?.trim() : '500GB';
             
             // Create a properly formatted disk object with all required properties
+            const diskType = item.type || 'ssd';
+            // Validate disk type is one of the allowed values
+            const validDiskType = (diskType === 'nvme' || diskType === 'ssd' || diskType === 'hdd') 
+              ? diskType as "nvme" | "ssd" | "hdd" 
+              : 'ssd' as "ssd";
+              
             const disk: PricedDiskOption = {
               id: item.id,
               name: item.name,
-              type: item.type || 'ssd' as "ssd" | "nvme" | "hdd",
+              type: validDiskType,
               capacity: capacity || '500GB',
               price: item.price || 0,
               description: item.description,
