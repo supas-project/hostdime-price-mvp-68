@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { PriceService } from "@/services/price-service";
 import { toast } from "@/utils/toast-utils";
+import { DeletedCategories, DeletedItems } from '@/types/pricing';
 
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -48,17 +49,64 @@ export function useDataActions(setPriceData: (data: any) => void) {
     }
   };
   
+  // Apply deleted items from localStorage to data to prevent reappearance
+  const applyDeletedItemsToData = (data: any) => {
+    try {
+      // Get deleted categories from localStorage
+      const deletedCategoriesStr = localStorage.getItem('deletedCategories');
+      if (deletedCategoriesStr) {
+        const deletedCategories: DeletedCategories = JSON.parse(deletedCategoriesStr);
+        
+        // Remove any categories that are marked as deleted
+        Object.keys(deletedCategories).forEach(categoryId => {
+          if (data[categoryId]) {
+            console.log(`Removing reappeared deleted category: ${categoryId}`);
+            delete data[categoryId];
+          }
+        });
+      }
+      
+      // Get deleted items from localStorage
+      const deletedItemsStr = localStorage.getItem('deletedItems');
+      if (deletedItemsStr) {
+        const deletedItems: DeletedItems = JSON.parse(deletedItemsStr);
+        
+        // Remove any items that are marked as deleted
+        Object.keys(deletedItems).forEach(categoryId => {
+          if (data[categoryId] && Array.isArray(data[categoryId].items)) {
+            const itemsToDelete = deletedItems[categoryId] || [];
+            if (itemsToDelete.length > 0) {
+              console.log(`Filtering out deleted items from category ${categoryId}`);
+              data[categoryId].items = data[categoryId].items.filter(
+                (item: any) => !itemsToDelete.includes(item.id)
+              );
+            }
+          }
+        });
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error applying deleted items to data:", error);
+      return data; // Return original data if error
+    }
+  };
+  
   // Refresh data from server
   const handleRefreshData = async () => {
     try {
       setIsRefreshing(true);
       console.log("Refreshing data from server");
       
+      // Get fresh data from server
       const data = await PriceService.getAllData();
       
       if (data) {
+        // Apply deleted items filter to prevent reappearance 
+        const cleanedData = applyDeletedItemsToData(data);
+        
         // Update state with fresh data
-        setPriceData(data);
+        setPriceData(cleanedData);
         
         // Update last fetch time
         localStorage.setItem('price_data_last_fetch', new Date().toISOString());
@@ -69,6 +117,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
         toast.info("Dados atualizados", {
           description: "Os dados foram sincronizados com o servidor."
         });
+        
+        // Trigger a custom event to notify other components about the data update
+        window.dispatchEvent(new CustomEvent('data-refreshed'));
       } else {
         toast.error("Erro na atualização", {
           description: "Não foi possível obter os dados do servidor."
@@ -97,6 +148,10 @@ export function useDataActions(setPriceData: (data: any) => void) {
         const data = await PriceService.getAllData();
         
         if (data) {
+          // Clear deleted items tracking since we're resetting to defaults
+          localStorage.removeItem('deletedCategories');
+          localStorage.removeItem('deletedItems');
+          
           // Update state with default data
           setPriceData(data);
           
@@ -106,6 +161,9 @@ export function useDataActions(setPriceData: (data: any) => void) {
           toast.success("Dados redefinidos", {
             description: "Os dados foram restaurados para os valores padrão."
           });
+          
+          // Trigger a custom event to notify other components about the data reset
+          window.dispatchEvent(new CustomEvent('data-reset'));
         }
       } else {
         toast.error("Erro na redefinição", {

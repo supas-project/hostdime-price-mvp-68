@@ -39,6 +39,11 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
       };
       localStorage.setItem('deletedCategories', JSON.stringify(deletedCategories));
       console.log(`[PriceService] Category ${categoryId} marked as deleted in localStorage`);
+      
+      // Dispatch event to notify components of category deletion
+      window.dispatchEvent(new CustomEvent('category-deleted', {
+        detail: { categoryId, categoryName }
+      }));
     } catch (storageErr) {
       console.error("Could not update localStorage with deleted category", storageErr);
     }

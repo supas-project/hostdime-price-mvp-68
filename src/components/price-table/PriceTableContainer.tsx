@@ -15,6 +15,7 @@ export default function PriceTableContainer() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [skipAutoInit, setSkipAutoInit] = useState(false);
   const [userHasRequestedInit, setUserHasRequestedInit] = useState(false);
+  const [listenersAttached, setListenersAttached] = useState(false);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -66,6 +67,72 @@ export default function PriceTableContainer() {
       setSkipAutoInit(true);
     }
   }, [priceData]);
+  
+  // Setup global event listeners for data synchronization
+  useEffect(() => {
+    if (!listenersAttached && isAuthenticated) {
+      // Set up event listeners for synchronization
+      const handleDataRefreshed = () => {
+        console.log("Data-refreshed event received, reloading price data");
+        loadPriceData();
+      };
+      
+      const handleItemDeleted = (e: CustomEvent) => {
+        console.log("Item-deleted event received", e.detail);
+        // Refresh data after deletion to ensure consistency
+        checkForConflicts().then(hasConflicts => {
+          if (hasConflicts) {
+            handleRefreshData();
+          }
+        });
+      };
+      
+      const handleCategoryDeleted = (e: CustomEvent) => {
+        console.log("Category-deleted event received", e.detail);
+        // Refresh data after deletion to ensure consistency
+        checkForConflicts().then(hasConflicts => {
+          if (hasConflicts) {
+            handleRefreshData();
+          }
+        });
+      };
+      
+      // Listen for storage events from other tabs
+      const handleStorageEvent = (e: StorageEvent) => {
+        if (e.key === 'deletedItems' || e.key === 'deletedCategories' || e.key === 'price_data_last_fetch') {
+          console.log("Storage event detected, checking for conflicts");
+          checkForConflicts().then(hasConflicts => {
+            if (hasConflicts) {
+              handleRefreshData();
+            }
+          });
+        }
+      };
+      
+      // Add event listeners
+      window.addEventListener('data-refreshed', handleDataRefreshed);
+      window.addEventListener('item-deleted', handleItemDeleted as EventListener);
+      window.addEventListener('category-deleted', handleCategoryDeleted as EventListener);
+      window.addEventListener('storage', handleStorageEvent);
+      
+      // Mark listeners as attached
+      setListenersAttached(true);
+      
+      // Return cleanup function
+      return () => {
+        window.removeEventListener('data-refreshed', handleDataRefreshed);
+        window.removeEventListener('item-deleted', handleItemDeleted as EventListener);
+        window.removeEventListener('category-deleted', handleCategoryDeleted as EventListener);
+        window.removeEventListener('storage', handleStorageEvent);
+      };
+    }
+  }, [
+    isAuthenticated, 
+    listenersAttached, 
+    loadPriceData, 
+    checkForConflicts, 
+    handleRefreshData
+  ]);
 
   // Ensure data is loaded when component mounts and when returning to this page
   useEffect(() => {
