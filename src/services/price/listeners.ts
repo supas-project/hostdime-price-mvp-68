@@ -3,36 +3,46 @@ import { PriceData } from '@/types/pricing';
 
 type DataChangeListener = () => void;
 
-// Singleton para gerenciamento global de listeners
-let currentListener: DataChangeListener | null = null;
+// Singleton for global listener management
+const listeners: DataChangeListener[] = [];
 
 /**
- * Adiciona um listener para mudanças nos dados de preço
+ * Adds a listener for price data changes
  */
 export function addDataChangeListener(listener: DataChangeListener): void {
-  if (currentListener) {
-    console.warn("[PriceService] Substituindo listener de mudança de dados existente");
+  // Check if listener already exists to avoid duplicates
+  const exists = listeners.some(l => l === listener);
+  if (!exists) {
+    listeners.push(listener);
+    console.log(`[PriceService] Data change listener added. Total listeners: ${listeners.length}`);
+  } else {
+    console.log("[PriceService] Listener already registered, ignoring duplicate");
   }
-  currentListener = listener;
-  console.log("[PriceService] Listener de mudança de dados adicionado");
 }
 
 /**
- * Remove o listener atual de mudança de dados
+ * Removes all listeners for price data changes
  */
 export function removeDataChangeListener(): void {
-  currentListener = null;
-  console.log("[PriceService] Listener de mudança de dados removido");
+  const count = listeners.length;
+  listeners.length = 0;
+  console.log(`[PriceService] ${count} data change listeners removed`);
 }
 
 /**
- * Notifica qualquer listener registrado sobre mudanças nos dados
+ * Notifies all registered listeners about data changes
  */
 export function notifyListeners(data: PriceData | null = null): void {
-  if (currentListener) {
-    console.log("[PriceService] Notificando listener de mudança de dados");
-    currentListener();
+  if (listeners.length > 0) {
+    console.log(`[PriceService] Notifying ${listeners.length} data change listeners`);
+    listeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error("[PriceService] Error in listener callback:", error);
+      }
+    });
   } else {
-    console.log("[PriceService] Nenhum listener de mudança de dados registrado, notificação ignorada");
+    console.log("[PriceService] No data change listeners registered, notification skipped");
   }
 }

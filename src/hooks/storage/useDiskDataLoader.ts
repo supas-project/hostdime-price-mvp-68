@@ -7,27 +7,31 @@ import { PricedDiskOption } from "@/types/storage";
 
 export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | undefined) {
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Store reference to update function to avoid recreations
-  const updateDisksRef = useRef<() => void>();
+  const updateDisksRef = useRef<() => Promise<void>>();
 
   // Load disk data from price table
   useEffect(() => {
     const loadDisksFromPriceTable = async () => {
-      try {
-        if (!selectedDiskType) {
-          setAvailableDisks([]);
-          return;
-        }
+      if (!selectedDiskType) {
+        setAvailableDisks([]);
+        return;
+      }
 
+      setIsLoading(true);
+      try {
         // Start with empty array
         const disks: PricedDiskOption[] = [];
         
         try {
+          console.log(`Loading disks for type ${selectedDiskType}`);
+          
           // Try to get disk category from price table
           const diskCategory = await PriceService.getCategory('disk');
           
-          if (diskCategory && diskCategory.items) {
+          if (diskCategory && diskCategory.items && diskCategory.items.length > 0) {
             // Convert price table items to disk format
             const priceTableDisks = diskCategory.items
               .filter(item => item.subtype === selectedDiskType)
@@ -64,6 +68,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
             
             // Only use price table disks if we found some
             if (priceTableDisks.length > 0) {
+              console.log(`Found ${priceTableDisks.length} disks in price table for type ${selectedDiskType}`);
               disks.push(...priceTableDisks);
             }
           }
@@ -74,7 +79,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
         
         // If we didn't get any disks from price table, use static data
         if (disks.length === 0) {
-          console.log('Falling back to static disk data');
+          console.log('Falling back to static disk data for type', selectedDiskType);
           const staticDisks = diskData
             .filter(disk => disk.type === selectedDiskType)
             .map(disk => ({
@@ -85,7 +90,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
           disks.push(...staticDisks);
         }
         
-        console.log(`Loaded ${disks.length} disks for type ${selectedDiskType}`, disks);
+        console.log(`Loaded ${disks.length} disks for type ${selectedDiskType}`);
         setAvailableDisks(disks);
       } catch (error) {
         console.error('Error loading disks:', error);
@@ -101,6 +106,8 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
         } else {
           setAvailableDisks([]);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -121,6 +128,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     // Define the update function that will be called when data changes
     const handleDataChange = () => {
       if (updateDisksRef.current) {
+        console.log("Data change detected, reloading disk data");
         updateDisksRef.current();
       }
     };
@@ -135,6 +143,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
   }, []);
 
   return {
-    availableDisks
+    availableDisks,
+    isLoading
   };
 }

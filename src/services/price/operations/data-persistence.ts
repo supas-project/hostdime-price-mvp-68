@@ -27,12 +27,20 @@ export async function saveData(data: PriceData): Promise<void> {
 
     // Check if user is admin
     const userEmail = session.session.user.email;
-    if (userEmail !== "admin@hostdime.com.br") {
-      console.error("[PriceService] Usuário não autorizado a salvar dados:", userEmail);
-      throw new Error("Permissão negada: Apenas administradores podem modificar dados de preço");
+    const isAdmin = userEmail === "admin@hostdime.com.br";
+    
+    // Always allow certain operations (like saving disk selections) for all authenticated users
+    const allowedCategories = ['discos_internos', 'disk', 'external_storage'];
+    const hasOnlyAllowedCategories = Object.keys(data).every(category => 
+      allowedCategories.includes(category) || data[category]?.items?.length === 0
+    );
+    
+    if (!isAdmin && !hasOnlyAllowedCategories) {
+      console.error("[PriceService] Usuário não autorizado a salvar todos os dados:", userEmail);
+      throw new Error("Permissão negada: Apenas administradores podem modificar certos dados de preço");
     }
     
-    console.log("[PriceService] Salvando dados com admin autenticado:", userEmail);
+    console.log("[PriceService] Salvando dados com usuário autenticado:", userEmail);
 
     // First check for existing records to determine if we should update or insert
     const { data: existingData, error: fetchError } = await supabase
@@ -83,14 +91,14 @@ export async function saveData(data: PriceData): Promise<void> {
       .from('price_data_updates')
       .insert({
         type: 'update',
-        details: 'Full data update by admin',
-        initiator: 'admin',
+        details: 'Data update by ' + (isAdmin ? 'admin' : 'user'),
+        initiator: userEmail || 'unknown',
         updated_at: new Date().toISOString()
       });
 
     console.log("[PriceService] Dados de preço salvos com sucesso");
     toast.success("Dados salvos com sucesso", { 
-      description: "Componentes foram salvos e sincronizados." 
+      description: "As alterações foram salvas e sincronizadas." 
     });
 
     // Notificar listeners após salvamento bem-sucedido

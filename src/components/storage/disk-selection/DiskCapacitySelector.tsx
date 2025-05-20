@@ -1,50 +1,61 @@
 
+import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
 import { PricedDiskOption } from "@/types/storage";
+import { Loader2 } from "lucide-react";
 
 interface DiskCapacitySelectorProps {
   selectedCapacity: string;
   onCapacitySelect: (capacity: string) => void;
   availableDisks: PricedDiskOption[];
-  disabled: boolean;
+  disabled?: boolean;
+  isLoading?: boolean;
 }
 
-export function DiskCapacitySelector({ 
-  selectedCapacity, 
-  onCapacitySelect, 
+export function DiskCapacitySelector({
+  selectedCapacity,
+  onCapacitySelect,
   availableDisks,
-  disabled 
+  disabled = false,
+  isLoading = false
 }: DiskCapacitySelectorProps) {
+  // Sort capacities by size (numeric)
+  const sortedDisks = [...availableDisks].sort((a, b) => {
+    // Extract numeric value from capacity strings
+    const aSize = parseFloat(a.capacity.replace(/[^\d.]/g, ''));
+    const bSize = parseFloat(b.capacity.replace(/[^\d.]/g, ''));
+    return aSize - bSize;
+  });
+
+  // Get unique capacities
+  const uniqueCapacities = Array.from(new Set(sortedDisks.map(disk => disk.capacity)));
+  
   return (
-    <Select 
-      value={selectedCapacity} 
-      onValueChange={onCapacitySelect}
-      disabled={disabled}
-    >
-      <SelectTrigger 
-        className={cn(
-          "bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors w-full",
-          "text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4 min-h-[40px]",
-          !disabled ? "hover:border-[#f58220]" : "opacity-50",
-          "touch-target"
-        )}
+    <div className="space-y-2">
+      <label className="text-sm font-medium">Capacidade do Disco</label>
+      <Select
+        value={selectedCapacity || ""}
+        onValueChange={onCapacitySelect}
+        disabled={disabled || uniqueCapacities.length === 0}
       >
-        <SelectValue placeholder="Capacidade" />
-      </SelectTrigger>
-      <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px]">
-        {availableDisks.map((disk) => (
-          <SelectItem key={disk.id} value={disk.capacity} className="sm:py-2.5 py-2">
-            <div className="flex justify-between items-center gap-2 sm:gap-4 w-full">
-              <span>{disk.capacity}</span>
-              <span className="text-[#f58220] text-xs sm:text-sm font-medium whitespace-nowrap">
-                {formatCurrency(disk.price)}/mês
-              </span>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={
+            isLoading ? (
+              <div className="flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span>Carregando...</span>
+              </div>
+            ) : "Selecione a capacidade"
+          } />
+        </SelectTrigger>
+        <SelectContent>
+          {uniqueCapacities.map((capacity) => (
+            <SelectItem key={capacity} value={capacity}>
+              {capacity}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

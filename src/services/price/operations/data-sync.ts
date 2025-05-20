@@ -25,12 +25,14 @@ export async function checkForDataConflicts(): Promise<boolean> {
     }
     
     if (!updates || updates.length === 0) {
+      console.log("[PriceService] No updates found in database");
       return false;
     }
     
     // Get the last time we fetched data
     const lastFetchTime = localStorage.getItem('price_data_last_fetch');
     if (!lastFetchTime) {
+      console.log("[PriceService] No local fetch time recorded, suggesting conflict");
       return true; // We haven't fetched data yet, so there might be conflicts
     }
     
@@ -38,7 +40,18 @@ export async function checkForDataConflicts(): Promise<boolean> {
     const lastFetch = new Date(lastFetchTime);
     
     // If there's an update newer than our last fetch, there's a conflict
-    return lastUpdateTime > lastFetch;
+    const hasConflict = lastUpdateTime > lastFetch;
+    
+    if (hasConflict) {
+      console.log("Data conflicts detected", {
+        localTime: new Date(lastFetch).toISOString(),
+        serverTime: new Date(lastUpdateTime).toISOString()
+      });
+    } else {
+      console.log("[PriceService] No data conflicts detected");
+    }
+    
+    return hasConflict;
   } catch (error) {
     console.error("[PriceService] Error checking for data conflicts:", error);
     return false;
