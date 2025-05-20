@@ -9,9 +9,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriceService } from "@/services/price-service";
-import { PricedDiskOption } from "@/types/storage";
-import { SyncButton } from "./disk-selection/SyncButton";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
+import { PricedDiskOption } from "@/types/storage";
+
+interface SyncButtonProps {
+  onSync: () => Promise<void>;
+  isSyncing: boolean;
+}
+
+function SyncButton({ onSync, isSyncing }: SyncButtonProps) {
+  return (
+    <div className="mt-4">
+      <Button 
+        onClick={onSync} 
+        disabled={isSyncing}
+        variant="outline"
+        className="w-full"
+      >
+        {isSyncing ? "Sincronizando..." : "Sincronizar dados com servidor"}
+      </Button>
+      <p className="text-xs text-center mt-1 text-muted-foreground">
+        Isso substituirá quaisquer modificações locais
+      </p>
+    </div>
+  );
+}
 
 interface InternalStoragePanelProps {
   selectedDisks: { disk: PricedDiskOption; quantity: number }[];
@@ -38,7 +60,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         const category = await PriceService.getCategory('discos_internos');
         if (category && Array.isArray(category.items)) {
           const options = category.items.map(item => {
-            // Corrija o erro de tipo convertendo explicitamente para booleano
+            // Convert metadata.raid to boolean explicitly
             const hasRaid = Boolean(item.metadata?.raid);
             
             return {
@@ -54,7 +76,9 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
                 readSpeed: item.metadata?.readSpeed || 'N/A',
                 writeSpeed: item.metadata?.writeSpeed || 'N/A',
                 iops: item.metadata?.iops || 'N/A',
-                recommended: Array.isArray(item.metadata?.recommended) ? item.metadata.recommended : []
+                recommended: Array.isArray(item.metadata?.recommended) 
+                  ? item.metadata.recommended 
+                  : []
               }
             } as PricedDiskOption;
           });
@@ -101,7 +125,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         type: 'disk',
         subtype: item.disk.type,
         metadata: {
-          quantity: item.quantity
+          quantity: item.quantity,
+          // Add raid property if it exists in the original disk
+          ...(item.disk.raid !== undefined && { raid: item.disk.raid }),
+          // Add capacity for future reference
+          capacity: item.disk.capacity,
+          // Add specs data
+          readSpeed: item.disk.specs?.readSpeed,
+          writeSpeed: item.disk.specs?.writeSpeed,
+          iops: item.disk.specs?.iops,
+          recommended: item.disk.specs?.recommended
         },
         specs: [
           `Capacidade: ${item.disk.capacity}`,
@@ -137,7 +170,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       if (allData.discos_internos && Array.isArray(allData.discos_internos.items)) {
         // Convert price items to disk options
         const diskItems = allData.discos_internos.items.map(item => {
-          // Corrija o erro de tipo convertendo explicitamente para booleano
+          // Convert metadata.raid to boolean explicitly
           const hasRaid = Boolean(item.metadata?.raid);
           
           return {
@@ -153,7 +186,9 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
               readSpeed: item.metadata?.readSpeed || 'N/A',
               writeSpeed: item.metadata?.writeSpeed || 'N/A',
               iops: item.metadata?.iops || 'N/A',
-              recommended: Array.isArray(item.metadata?.recommended) ? item.metadata.recommended : []
+              recommended: Array.isArray(item.metadata?.recommended) 
+                ? item.metadata.recommended 
+                : []
             }
           } as PricedDiskOption;
         });
@@ -161,7 +196,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         // Update selected disks
         setSelectedDisks(diskItems.map(disk => ({
           disk,
-          quantity: 1
+          quantity: item.metadata?.quantity || 1
         })));
       }
     } catch (error) {

@@ -7,8 +7,9 @@ export * from './data-sync';
 export * from './category-operations';
 export * from './item-operations';
 
-// Import missing functions
-import { forceRefreshFromLatestSource, getAllData } from './data-retrieval';
+// Import functions directly from their respective modules
+import { forceRefreshFromLatestSource } from './data-sync';
+import { getAllData } from './data-persistence';
 
 // Function to check for data conflicts
 const checkForDataConflicts = async (): Promise<boolean> => {
