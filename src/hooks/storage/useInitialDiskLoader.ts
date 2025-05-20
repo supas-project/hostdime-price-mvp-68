@@ -11,36 +11,15 @@ export function useInitialDiskLoader(
 
   useEffect(() => {
     if (isInitialLoad) {
-      try {
-        // Check if there are stored selections in localStorage
-        const storedDisks = localStorage.getItem('selectedDisks');
-        
-        if (storedDisks) {
-          const parsedDisks = JSON.parse(storedDisks);
-          
-          // Only set selected disks if we have valid stored selections
-          if (Array.isArray(parsedDisks) && parsedDisks.length > 0) {
-            // Verify the stored disks have the proper structure before using them
-            const validDisks = parsedDisks.filter(item => 
-              item && 
-              item.disk && 
-              item.disk.id && 
-              item.disk.type && 
-              typeof item.quantity === 'number'
-            );
-            
-            if (validDisks.length > 0) {
-              setSelectedDisks(validDisks);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error restoring selected disks:", error);
-      } finally {
-        // Mark initial load as complete
-        setIsInitialLoad(false);
-        setIsDataRefreshed(true);
-      }
+      // Apenas definir as flags de inicialização sem carregar discos
+      // Isto impede que os discos sejam carregados no resumo automaticamente
+      setIsInitialLoad(false);
+      setIsDataRefreshed(true);
+      
+      // Removemos a lógica de recuperação automática do localStorage
+      // Isso garantirá que nenhum disco apareça no resumo até que o usuário explicitamente faça uma seleção
+      
+      console.log("Initial disk loader completed without auto-loading disks");
     }
   }, [isInitialLoad, setSelectedDisks]);
 

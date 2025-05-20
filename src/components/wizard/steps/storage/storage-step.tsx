@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
@@ -28,9 +27,9 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   }, [onSelectStorageItem]);
 
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Only proceed if disk is valid with all required fields
-    if (!disk || !disk.id || !disk.type || !disk.capacity) {
-      console.error("Invalid disk selected:", disk);
+    // Validação rigorosa: apenas aceitar discos com seleção explícita e válida
+    if (!disk || !disk.id || !disk.type || !disk.capacity || quantity <= 0) {
+      console.log("Ignoring invalid disk selection:", disk, "quantity:", quantity);
       return;
     }
     
@@ -76,31 +75,23 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       return;
     }
     
-    // Ensure quantity is a valid number greater than 0
-    const validQuantity = typeof quantity === 'number' && !isNaN(quantity) && quantity > 0 ? quantity : 0;
-    
-    // Only proceed with valid quantity
-    if (validQuantity <= 0) {
-      console.log(`Invalid quantity (${quantity}) for disk ${disk.type.toUpperCase()} ${normalizedCapacity}, skipping`);
-      return;
-    }
-    
+    // Validação adicional - certificar que é uma seleção explícita do usuário
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
       name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      price: disk.price * validQuantity,
+      price: disk.price * quantity,
       metadata: {
-        quantity: validQuantity,
+        quantity: quantity,
         features: [`Tipo: ${disk.type}`],
         unitPrice: disk.price // Store original unit price
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
         `Capacidade: ${normalizedCapacity}`,
-        `Quantidade: ${validQuantity}`
+        `Quantidade: ${quantity}`
       ]
     };
     
@@ -117,7 +108,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       console.error("Could not update localStorage for re-added disk", e);
     }
     
-    console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} added/updated in summary with quantity ${validQuantity}`);
+    console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} added/updated in summary with quantity ${quantity}`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
@@ -148,3 +139,4 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     />
   );
 }
+

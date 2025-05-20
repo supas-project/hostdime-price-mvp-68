@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { useDiskManagement } from "@/hooks/storage/useDiskManagement";
@@ -50,44 +49,36 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     refreshData
   });
 
-  // Save selections whenever they change, but only if they're valid and user-selected
+  // Modificamos esse efeito para NÃO notificar o componente pai automaticamente durante a inicialização
   useEffect(() => {
-    // Only process after initial load is complete and data is refreshed
-    const initialLoadComplete = isInitialLoad === false;
-    const dataIsRefreshed = isDataRefreshed === true;
-    
-    if (initialLoadComplete && dataIsRefreshed && selectedDisks.length > 0) {
-      // Verify each disk has the required data before saving
+    // Apenas processar discos explicitamente selecionados pelo usuário após a inicialização,
+    // não os que vieram do localStorage
+    if (!isInitialLoad && isDataRefreshed && selectedDisks.length > 0) {
+      // Verificar que cada disco possui os dados necessários
       const validDisks = selectedDisks.filter(item => 
         item && 
         item.disk && 
         item.disk.id && 
         item.disk.type && 
         typeof item.quantity === 'number' && 
-        item.quantity > 0 // Only include disks with quantity > 0
+        item.quantity > 0
       );
       
+      // Armazenar validDisks para uso futuro em localStorage,
+      // mas NÃO enviar para o componente pai durante a inicialização
       if (validDisks.length > 0) {
-        // Store selections in localStorage immediately
         localStorage.setItem('selectedDisks', JSON.stringify(validDisks));
-        
-        // Set flag that we have changes to persist
         setHasLocalChanges(true);
         
-        // Notify parent component about all selected disks
-        if (onSelectDisk) {
-          validDisks.forEach(item => {
-            onSelectDisk(item.disk, item.quantity);
-          });
-        }
+        // NÃO notificar o componente pai durante a inicialização
+        // Agora só notificamos quando há uma ação explícita do usuário (via handleAddSelectedDisk)
       } else if (validDisks.length === 0 && selectedDisks.length > 0) {
-        // If we filtered out all disks but had some before, clear localStorage
         localStorage.removeItem('selectedDisks');
       }
     }
-  }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges, onSelectDisk]);
+  }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges]);
 
-  // Find the selected disk based on capacity for adding to configuration
+  // Aqui está a função que só é chamada quando o usuário explicitamente adiciona um disco
   const handleAddSelectedDisk = () => {
     if (selectedCapacity && selectedDiskType) {
       const diskToAdd = availableDisks.find(
@@ -110,6 +101,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           setSelectedDisks(newSelectedDisks);
           setHasLocalChanges(true);
           
+          // AQUI é onde notificamos o componente pai após uma ação EXPLÍCITA do usuário
           if (onSelectDisk) {
             onSelectDisk(diskToAdd, 1);
           }
@@ -117,7 +109,6 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           toast.success(`Disco ${selectedDiskType.toUpperCase()} ${selectedCapacity} adicionado`);
         }
         
-        // Reset capacity selection using the function from useDiskManagement
         handleCapacitySelect("");
       }
     }
