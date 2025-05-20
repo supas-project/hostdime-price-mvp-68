@@ -6,17 +6,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/utils/toast-utils";
 import { v4 as uuidv4 } from "uuid";
 
-export function useItemAdd(
-  activeTab: string,
-  setPriceData: (data: any) => void
-) {
-  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
+export function useItemAdd(activeTab: string, setPriceData: (data: any) => void) {
   const [openAddItem, setOpenAddItem] = useState(false);
+  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
-
+  
   const handleAddItem = async (values: any) => {
-    // Check authentication
     if (!isAuthenticated) {
       toast.error("Você precisa estar autenticado", {
         description: "Faça login para adicionar itens."
@@ -24,20 +20,16 @@ export function useItemAdd(
       return;
     }
     
-    // Check admin permission
-    if (!isAdminAccess) {
+    if (!isAdminAccess && activeTab !== 'disk' && activeTab !== 'discos_internos' && activeTab !== 'external_storage') {
       toast.error("Permissão negada", {
-        description: "Apenas administradores podem adicionar itens."
+        description: "Apenas administradores podem adicionar itens a esta categoria."
       });
       return;
     }
     
-    // Avoid multiple submissions
-    if (isSubmittingItem) return;
-    
     if (!activeTab) {
-      toast.error("Erro ao adicionar item", {
-        description: "Nenhuma categoria selecionada."
+      toast.error("Nenhuma categoria selecionada", {
+        description: "Selecione uma categoria para adicionar o item."
       });
       return;
     }
@@ -45,63 +37,67 @@ export function useItemAdd(
     try {
       setIsSubmittingItem(true);
       
-      // Generate a UUID for the new item
-      const itemId = uuidv4();
+      // Create metadata object for additional properties
+      const metadata: Record<string, any> = {};
       
+      // Add disk-specific metadata if present
+      if (values.capacity) {
+        metadata.capacity = values.capacity;
+      }
+      if (values.readSpeed) {
+        metadata.readSpeed = values.readSpeed;
+      }
+      if (values.writeSpeed) {
+        metadata.writeSpeed = values.writeSpeed;
+      }
+      if (values.iops) {
+        metadata.iops = values.iops;
+      }
+      if (values.throughput) {
+        metadata.throughput = values.throughput;
+      }
+      if (values.recommended) {
+        metadata.recommended = values.recommended;
+      }
+      
+      // Generate a UUID for the new item if not provided
       const itemData = {
-        id: itemId, // Add the ID to the item data
+        id: uuidv4(), // Add this required field
         name: values.name,
         description: values.description,
         price: values.price,
-        type: values.type || activeTab,
+        type: values.type,
         subtype: values.subtype,
-        specs: Array.isArray(values.specs) ? values.specs : [],
-        tags: Array.isArray(values.tags) ? values.tags : [],
-        // Set isHardware based on tags for backwards compatibility
-        isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
-        // Add capacity if it exists (especially for disk items)
-        capacity: values.capacity,
-        metadata: {
-          // Ensure critical disk fields are stored in metadata too
-          type: values.type || activeTab,
-          subtype: values.subtype,
-          capacity: values.capacity
-        }
+        specs: values.specs || [],
+        tags: values.tags || [],
+        isHardware: values.isHardware || false,
+        capacity: values.capacity, // Add directly to the item as well
+        metadata: metadata
       };
       
-      // Add item to service
-      await PriceService.addItem(activeTab, itemData);
+      const newItem = await PriceService.addItem(activeTab, itemData);
       
       // Ensure data is saved to the database
-      await PriceService.saveData(await PriceService.getAllData());
-      
-      // Reload data for consistency
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
       
-      // Close modal
       setOpenAddItem(false);
       
-      // Get the category name for the notification
-      const category = await PriceService.getCategory(activeTab);
       // Register change for notification
-      await registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${category?.name || activeTab}`);
-      
-      // Dispatch event for disk updates
-      window.dispatchEvent(new CustomEvent('storage-data-updated'));
+      await registerAdminChange(
+        "add_item",
+        `Item "${newItem.name}" adicionado à categoria "${activeTab}"`
+      );
       
       toast.success("Item adicionado", {
-        description: `O item ${values.name} foi adicionado com sucesso.`
+        description: `O item ${newItem.name} foi adicionado com sucesso.`
       });
     } catch (error) {
       toast.error("Erro ao adicionar item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
     } finally {
-      // Reset state after a period
-      setTimeout(() => {
-        setIsSubmittingItem(false);
-      }, 500);
+      setIsSubmittingItem(false);
     }
   };
 

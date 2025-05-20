@@ -77,5 +77,4 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
   }
 }
 
-// Additional exports for other data retrieval functions
-export { getAllData } from './data-persistence';
+// We don't export getAllData from here anymore

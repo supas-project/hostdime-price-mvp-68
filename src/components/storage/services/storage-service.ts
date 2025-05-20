@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export async function loadStorageTypes(): Promise<StorageType[]> {
   try {
-    // First check if user is authenticated
+    // First check if user is authenticated - use imported supabase client
     const { data: session } = await supabase.auth.getSession();
     const isAuthenticated = !!session.session;
     

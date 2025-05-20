@@ -2,22 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
   addCategory as addCategoryOperation,
-  addItem as addItemOperation,
-  deleteCategory as deleteCategoryOperation,
-  deleteItem as deleteItemOperation,
-  getAllData as getAllDataOperation,
-  getCategory as getCategoryOperation,
-  getItem as getItemOperation,
-  importData as importDataOperation,
-  saveData as saveDataOperation,
   updateCategory as updateCategoryOperation,
-  updateItem as updateItemOperation,
+  deleteCategory as deleteCategoryOperation,
+  getCategory as getCategoryOperation,
   checkForDataConflicts as checkForDataConflictsOperation,
   forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation,
+  getDiskOptions as getDiskOptionsOperation
 } from './price/operations';
+import { addItem, updateItem, deleteItem, getItem } from './price/operations/item-operations';
+import { getAllData, saveData } from './price/operations/data-persistence';
+import { importData } from './price/operations/data-import';
 import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
 import { PriceData } from '@/types/pricing';
-import { getDiskOptions } from './price/operations/data-retrieval';
 import { PricedDiskOption } from '@/types/storage';
 
 /**
@@ -33,7 +29,7 @@ export const PriceService = {
    * Gets all price data
    */
   getAllData: async (): Promise<PriceData> => {
-    return await getAllDataOperation();
+    return await getAllData();
   },
 
   /**
@@ -41,7 +37,7 @@ export const PriceService = {
    * @param data The price data to save
    */
   saveData: async (data: PriceData): Promise<void> => {
-    return await saveDataOperation(data);
+    return await saveData(data);
   },
 
   /**
@@ -50,7 +46,7 @@ export const PriceService = {
    * @param options The import options
    */
   importData: async (data: PriceData, options: { merge: boolean; overwrite: boolean }): Promise<void> => {
-    return await importDataOperation(data, options);
+    return await importData(data, options);
   },
 
   /**
@@ -75,7 +71,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to delete
    */
   deleteCategory: async (categoryId: string): Promise<void> => {
-    return await deleteCategoryOperation(categoryId);
+    await deleteCategoryOperation(categoryId);
   },
 
   /**
@@ -84,7 +80,7 @@ export const PriceService = {
    * @param item The item to add
    */
   addItem: async (categoryId: string, item: any): Promise<any | null> => {
-    return await addItemOperation(categoryId, item);
+    return await addItem(categoryId, item);
   },
 
   /**
@@ -94,7 +90,7 @@ export const PriceService = {
    * @param updates The updates to apply
    */
   updateItem: async (categoryId: string, itemId: string, updates: any): Promise<any | null> => {
-    return await updateItemOperation(categoryId, itemId, updates);
+    return await updateItem(categoryId, itemId, updates);
   },
 
   /**
@@ -103,7 +99,7 @@ export const PriceService = {
    * @param itemId The ID of the item to delete
    */
   deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
-    return await deleteItemOperation(categoryId, itemId);
+    await deleteItem(categoryId, itemId);
   },
 
   /**
@@ -120,7 +116,7 @@ export const PriceService = {
    * @param itemId The ID of the item to get
    */
   getItem: async (categoryId: string, itemId: string): Promise<any | null> => {
-    return await getItemOperation(categoryId, itemId);
+    return await getItem(categoryId, itemId);
   },
 
   /**
@@ -148,7 +144,7 @@ export const PriceService = {
   /**
    * Forces a refresh from the latest source
    */
-  forceRefreshFromLatestSource: async (): Promise<void> => {
+  forceRefreshFromLatestSource: async (): Promise<PriceData | null> => {
     return await forceRefreshFromLatestSourceOperation();
   },
   
@@ -156,7 +152,7 @@ export const PriceService = {
    * Gets disk options from the price data
    */
   getDiskOptions: async (): Promise<PricedDiskOption[]> => {
-    return await getDiskOptions();
+    return await getDiskOptionsOperation();
   },
 
   /**
@@ -188,7 +184,7 @@ export const PriceService = {
     try {
       // Implement a basic reset functionality that clears all data
       const emptyData = {};
-      await saveDataOperation(emptyData);
+      await saveData(emptyData as PriceData);
       return true;
     } catch (err) {
       console.error('Error resetting data to defaults:', err);

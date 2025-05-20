@@ -21,7 +21,7 @@ export class InitService {
     try {
       console.log("[InitService] Starting data initialization");
       
-      // Check if user is authenticated
+      // Check if user is authenticated - use the imported supabase client
       const { data: session } = await supabase.auth.getSession();
       
       if (!session.session) {
