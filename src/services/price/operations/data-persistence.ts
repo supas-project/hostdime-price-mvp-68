@@ -1,9 +1,41 @@
-
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from '../constants';
 import { toast } from 'sonner';
 import { notifyListeners } from '../listeners';
+
+/**
+ * Gets all price data from the database
+ */
+export async function getAllData(): Promise<PriceData> {
+  try {
+    console.log("[PriceService] Getting all price data");
+
+    // Get the most recent price data
+    const { data: priceData, error } = await supabase
+      .from(PRICE_DATA_TABLE)
+      .select('data')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error("[PriceService] Error getting price data:", error);
+      return {};
+    }
+
+    if (!priceData || !priceData.data) {
+      console.warn("[PriceService] No price data found, returning empty object");
+      return {};
+    }
+
+    console.log("[PriceService] Price data retrieved successfully");
+    return priceData.data as PriceData;
+  } catch (err: any) {
+    console.error("[PriceService] Error in getAllData:", err);
+    return {};
+  }
+}
 
 /**
  * Saves price data to the database

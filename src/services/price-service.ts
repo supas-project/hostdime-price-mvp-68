@@ -53,7 +53,7 @@ export const PriceService = {
    * Adds a new category
    * @param category The category to add
    */
-  addCategory: async (category: { id: string; name: string }): Promise<{ id: string; name: string } | null> => {
+  addCategory: async (category: { id: string; name: string }): Promise<{ id: string; name: string; items: any[] } | null> => {
     return await addCategoryOperation(category);
   },
 
@@ -62,7 +62,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to update
    * @param updates The updates to apply
    */
-  updateCategory: async (categoryId: string, updates: Partial<{ id: string; name: string }>): Promise<{ id: string; name: string } | null> => {
+  updateCategory: async (categoryId: string, updates: Partial<{ id: string; name: string }>): Promise<{ id: string; name: string; items: any[] } | null> => {
     return await updateCategoryOperation(categoryId, updates);
   },
 
@@ -147,8 +147,7 @@ export const PriceService = {
    * Forces a refresh from the latest source
    */
   forceRefreshFromLatestSource: async (): Promise<PriceData | null> => {
-    const result = await forceRefreshFromLatestSourceOperation();
-    return result;
+    return await forceRefreshFromLatestSourceOperation();
   },
   
   /**

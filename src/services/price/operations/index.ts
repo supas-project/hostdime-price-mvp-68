@@ -9,3 +9,5 @@ export {
   checkForDataConflicts,
   forceRefreshFromLatestSource 
 } from './data-reset';
+// Export category operations
+export * from './category-operations';
