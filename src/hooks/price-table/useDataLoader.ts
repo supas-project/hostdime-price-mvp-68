@@ -33,14 +33,19 @@ export function useDataLoader(
       console.log("Dados de preço carregados com sucesso com categorias:", Object.keys(data).join(", "));
       setPriceData(data);
       
-      // After loading price data, ensure server categories are initialized
-      // This ensures that the wizard components are properly synchronized
-      try {
-        console.log("Inicializando categorias de servidor a partir dos dados de preço");
-        await initializeServerCategories();
-        console.log("Categorias de servidor inicializadas com sucesso");
-      } catch (initError) {
-        console.error("Erro ao inicializar categorias de servidor:", initError);
+      // Check if we should initialize server categories - ONLY if there are NO categories
+      const hasNoCategories = Object.keys(data).length === 0;
+      
+      if (hasNoCategories) {
+        try {
+          console.log("Inicializando categorias de servidor porque não existem categorias");
+          await initializeServerCategories();
+          console.log("Categorias de servidor inicializadas com sucesso");
+        } catch (initError) {
+          console.error("Erro ao inicializar categorias de servidor:", initError);
+        }
+      } else {
+        console.log("Categorias já existem, não inicializando novamente");
       }
     } catch (error) {
       console.error('Erro ao carregar dados de preço:', error);

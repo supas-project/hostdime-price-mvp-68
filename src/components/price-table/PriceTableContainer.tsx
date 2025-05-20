@@ -13,6 +13,7 @@ import { AlertCircle } from "lucide-react";
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [skipAutoInit, setSkipAutoInit] = useState(false);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -56,6 +57,15 @@ export default function PriceTableContainer() {
     }
   }, [hasUpdates, handleRefreshData]);
 
+  // Check if we have any data to determine if initialization is needed
+  useEffect(() => {
+    // If we have price data with categories, skip automatic initialization
+    if (priceData && Object.keys(priceData).length > 0) {
+      console.log("Price data exists, skipping automatic initialization");
+      setSkipAutoInit(true);
+    }
+  }, [priceData]);
+
   // Ensure data is loaded when component mounts and when returning to this page
   useEffect(() => {
     async function initialize() {
@@ -64,8 +74,13 @@ export default function PriceTableContainer() {
           console.log("Authenticated user, attempting to initialize data");
           setIsInitialized(false);
           
-          // Initialize data if needed
-          await InitService.initializeData();
+          // Only initialize data if we don't have any data
+          // This prevents recreating deleted categories
+          if (!skipAutoInit) {
+            await InitService.initializeData();
+          } else {
+            console.log("Skipping initialization because data already exists");
+          }
           
           // Then load price data
           await loadPriceData();
@@ -109,7 +124,7 @@ export default function PriceTableContainer() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, skipAutoInit]);
 
   // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};

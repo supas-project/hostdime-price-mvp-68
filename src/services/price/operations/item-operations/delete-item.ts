@@ -16,6 +16,8 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
       return false;
     }
     
+    console.log(`[deleteItem] Deleting item ${itemId} from category ${categoryId}`);
+    
     // Filter out the item
     const updatedItems = allData[categoryId].items.filter(item => item.id !== itemId);
     
@@ -34,8 +36,24 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
     // Save the updated data
     await saveData(updatedData);
 
-    // Notificar listeners após a exclusão
+    // Notify listeners after the deletion
     notifyListeners(updatedData);
+    
+    // After successful deletion, update local storage to prevent recreation
+    try {
+      // Mark this item as explicitly deleted in localStorage to prevent recreation
+      const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
+      if (!deletedItems[categoryId]) {
+        deletedItems[categoryId] = [];
+      }
+      deletedItems[categoryId].push(itemId);
+      localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
+      
+      console.log(`[deleteItem] Item ${itemId} marked as deleted in localStorage`);
+    } catch (storageErr) {
+      console.warn("Could not update localStorage with deleted item", storageErr);
+    }
+    
     return true;
   } catch (err: any) {
     console.error(`Error in deleteItem for ${itemId} from ${categoryId}:`, err);

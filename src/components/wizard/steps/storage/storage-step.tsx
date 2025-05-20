@@ -45,6 +45,17 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       };
       
       onSelectStorageItem(removeDiskOption, 'internal');
+      
+      // Also track in localStorage that this disk was explicitly removed
+      try {
+        const removedDisks = JSON.parse(localStorage.getItem('removedDisks') || '{}');
+        removedDisks[diskId] = true;
+        localStorage.setItem('removedDisks', JSON.stringify(removedDisks));
+      } catch (e) {
+        console.error("Could not update localStorage with removed disk", e);
+      }
+      
+      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} removido`);
       return;
     }
     
@@ -69,11 +80,18 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     
     onSelectStorageItem(storageOption, 'internal');
     
-    if (quantity > 0) {
-      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
-    } else {
-      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} removido`);
+    // Remove from localStorage tracking if it was previously removed
+    try {
+      const removedDisks = JSON.parse(localStorage.getItem('removedDisks') || '{}');
+      if (removedDisks[diskId]) {
+        delete removedDisks[diskId];
+        localStorage.setItem('removedDisks', JSON.stringify(removedDisks));
+      }
+    } catch (e) {
+      console.error("Could not update localStorage for re-added disk", e);
     }
+    
+    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
