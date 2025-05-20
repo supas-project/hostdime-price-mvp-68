@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriceService } from "@/services/price-service";
 import { PricedDiskOption } from "@/types/storage";
-import { SyncButton } from "../disk-selection/SyncButton";
+import { SyncButton } from "./disk-selection/SyncButton";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 
 interface InternalStoragePanelProps {
@@ -45,10 +46,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
               name: item.name,
               description: item.description,
               price: item.price,
-              type: item.type,
+              type: item.type as 'nvme' | 'ssd' | 'hdd',
               subtype: item.subtype,
               capacity: item.metadata?.capacity || 'N/A',
               raid: hasRaid,
+              specs: {
+                readSpeed: item.metadata?.readSpeed || 'N/A',
+                writeSpeed: item.metadata?.writeSpeed || 'N/A',
+                iops: item.metadata?.iops || 'N/A',
+                recommended: Array.isArray(item.metadata?.recommended) ? item.metadata.recommended : []
+              }
             } as PricedDiskOption;
           });
           setDiskOptions(options);
@@ -138,10 +145,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
             name: item.name,
             description: item.description,
             price: item.price,
-            type: item.type,
+            type: item.type as 'nvme' | 'ssd' | 'hdd',
             subtype: item.subtype,
             capacity: item.metadata?.capacity || 'N/A',
             raid: hasRaid,
+            specs: {
+              readSpeed: item.metadata?.readSpeed || 'N/A',
+              writeSpeed: item.metadata?.writeSpeed || 'N/A',
+              iops: item.metadata?.iops || 'N/A',
+              recommended: Array.isArray(item.metadata?.recommended) ? item.metadata.recommended : []
+            }
           } as PricedDiskOption;
         });
         
@@ -211,7 +224,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       return;
     }
 
-    setSelectedDisks(prev => [...prev, { disk: selectedDisk, quantity }]);
+    setSelectedDisks([...selectedDisks, { disk: selectedDisk, quantity }]);
     setSelectedDisk(null);
     setQuantity(1);
     setIsPersisted(false);
@@ -221,7 +234,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
 
   // Handle quantity change
   const handleQuantityChange = (diskId: string, newQuantity: number) => {
-    setSelectedDisks(prev => prev.map(item => {
+    setSelectedDisks(selectedDisks.map(item => {
       if (item.disk.id === diskId) {
         return { ...item, quantity: newQuantity };
       }
@@ -233,7 +246,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
 
   // Handle remove disk
   const handleRemoveDisk = (diskId: string) => {
-    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+    setSelectedDisks(selectedDisks.filter(item => item.disk.id !== diskId));
     setIsPersisted(false);
     setHasLocalChanges(true);
     toast.success("Disco removido com sucesso");

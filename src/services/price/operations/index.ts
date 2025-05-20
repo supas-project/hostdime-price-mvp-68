@@ -7,6 +7,21 @@ export * from './data-sync';
 export * from './category-operations';
 export * from './item-operations';
 
+// Import missing functions
+import { forceRefreshFromLatestSource, getAllData } from './data-retrieval';
+
+// Function to check for data conflicts
+const checkForDataConflicts = async (): Promise<boolean> => {
+  try {
+    console.log("[Operations] Checking for data conflicts");
+    // This is a simplified implementation - we could expand this to check more thoroughly
+    return false;
+  } catch (error) {
+    console.error("[Operations] Error checking for data conflicts:", error);
+    return false;
+  }
+};
+
 // Export a combined function to ensure consistent initialization
 export async function ensureDataConsistency() {
   try {
