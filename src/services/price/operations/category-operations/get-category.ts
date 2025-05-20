@@ -44,36 +44,31 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       // Verificar número de itens
       console.log(`[PriceService] Category ${categoryId} has ${allData[categoryId].items.length} items`);
       
-      // Se for storage ou external_storage e não tiver itens, tentar pegar do disk
-      if ((categoryId === 'storage' || categoryId === 'external_storage') && 
-          allData[categoryId].items.length === 0 && 
-          allData.disk?.items?.length > 0) {
+      // Tentar completar dados de categorias específicas se estiverem vazias
+      if (allData[categoryId].items.length === 0) {
+        const relatedCategories = getRelatedCategories(categoryId);
         
-        console.log(`[PriceService] ${categoryId} is empty, trying to copy items from disk category`);
-        
-        // Filtrar itens de disk apropriados para esta categoria
-        const diskItems = allData.disk.items || [];
-        const isExternal = categoryId === 'external_storage';
-        
-        const filteredItems = diskItems
-          .filter(item => {
-            if (isExternal) {
-              return item.type === 'external' || item.subtype === 'external';
-            } else {
-              return item.type === 'internal' || !item.type;
+        for (const relatedCategory of relatedCategories) {
+          if (allData[relatedCategory]?.items?.length > 0) {
+            console.log(`[PriceService] ${categoryId} is empty, trying to copy items from ${relatedCategory} category`);
+            
+            // Converter itens da categoria relacionada
+            const adaptedItems = allData[relatedCategory].items.map(item => {
+              return {
+                ...item,
+                id: `${categoryId}-${item.id.replace(`${relatedCategory}-`, '')}`,
+                type: getDefaultTypeForCategory(categoryId),
+                subtype: getDefaultSubtypeForCategory(categoryId),
+                description: item.description || `${item.name} - ${getCategoryDisplayName(categoryId)}`
+              };
+            });
+            
+            if (adaptedItems.length > 0) {
+              console.log(`[PriceService] Added ${adaptedItems.length} items from ${relatedCategory} to ${categoryId}`);
+              allData[categoryId].items = adaptedItems;
+              break;
             }
-          })
-          .map(item => ({
-            ...item,
-            id: `${categoryId}-${item.id}`,
-            type: 'storage',
-            subtype: isExternal ? 'external' : 'block',
-            description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
-          }));
-          
-        if (filteredItems.length > 0) {
-          console.log(`[PriceService] Added ${filteredItems.length} items from disk to ${categoryId}`);
-          allData[categoryId].items = filteredItems;
+          }
         }
       }
       
@@ -113,96 +108,174 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       }
     }
     
-    // Tentativa especial para storage e external_storage
-    if (normalizedCategoryId === 'storage' && allData.external_storage) {
-      console.log(`[PriceService] Falling back to external_storage for storage request`);
+    // Tentativas especiais para aliases de categorias comuns
+    const categoryAliases: Record<string, string> = {
+      'storage': 'external_storage',
+      'external_storage': 'storage',
+      'memory': 'memória',
+      'memória': 'memory',
+      'processor': 'processador',
+      'processador': 'processor',
+      'os': 'sistemaoperacional'
+    };
+    
+    if (categoryAliases[normalizedCategoryId] && allData[categoryAliases[normalizedCategoryId]]) {
+      const aliasCategory = categoryAliases[normalizedCategoryId];
+      console.log(`[PriceService] Falling back to ${aliasCategory} for ${categoryId} request`);
       
       // Verificar número de itens
-      console.log(`[PriceService] external_storage has ${allData.external_storage.items?.length || 0} items`);
+      console.log(`[PriceService] ${aliasCategory} has ${allData[aliasCategory].items?.length || 0} items`);
       
       // Garantir que items seja sempre um array
-      if (!allData.external_storage.items) {
-        console.warn(`[PriceService] Items for external_storage is missing, adding empty array`);
-        allData.external_storage.items = [];
-      } else if (!Array.isArray(allData.external_storage.items)) {
-        console.warn(`[PriceService] Items for external_storage is not an array, fixing`);
-        allData.external_storage.items = [];
+      if (!allData[aliasCategory].items) {
+        console.warn(`[PriceService] Items for ${aliasCategory} is missing, adding empty array`);
+        allData[aliasCategory].items = [];
+      } else if (!Array.isArray(allData[aliasCategory].items)) {
+        console.warn(`[PriceService] Items for ${aliasCategory} is not an array, fixing`);
+        allData[aliasCategory].items = [];
       }
       
-      return {
-        ...allData.external_storage,
-        items: allData.external_storage.items || []
-      };
-    }
-    
-    if (normalizedCategoryId === 'external_storage' && allData.storage) {
-      console.log(`[PriceService] Falling back to storage for external_storage request`);
-      
-      // Verificar número de itens
-      console.log(`[PriceService] storage has ${allData.storage.items?.length || 0} items`);
-      
-      // Garantir que items seja sempre um array
-      if (!allData.storage.items) {
-        console.warn(`[PriceService] Items for storage is missing, adding empty array`);
-        allData.storage.items = [];
-      } else if (!Array.isArray(allData.storage.items)) {
-        console.warn(`[PriceService] Items for storage is not an array, fixing`);
-        allData.storage.items = [];
-      }
+      // Converter itens para o formato da categoria solicitada
+      const adaptedItems = allData[aliasCategory].items.map(item => {
+        return {
+          ...item,
+          id: `${categoryId}-${item.id.replace(`${aliasCategory}-`, '')}`,
+          type: getDefaultTypeForCategory(categoryId),
+          subtype: getDefaultSubtypeForCategory(categoryId),
+          description: item.description || `${item.name} - ${getCategoryDisplayName(categoryId)}`
+        };
+      });
       
       return {
-        ...allData.storage,
-        items: allData.storage.items || []
-      };
-    }
-    
-    // Se for storage ou external_storage e não encontramos nada, criar uma categoria básica
-    if (normalizedCategoryId === 'storage' || normalizedCategoryId === 'external_storage') {
-      console.log(`[PriceService] Creating base category for ${categoryId}`);
-      
-      const newCategory: PriceCategory = {
         id: categoryId,
-        name: categoryId === 'storage' ? 'Armazenamento' : 'Storage Externo',
-        items: []
+        name: getCategoryDisplayName(categoryId),
+        items: adaptedItems
       };
-      
-      // Tentar copiar itens do disk se disponível
-      if (allData.disk?.items?.length > 0) {
-        const diskItems = allData.disk.items;
-        const isExternal = categoryId === 'external_storage';
+    }
+    
+    // Para categorias não encontradas, criar uma categoria básica
+    console.log(`[PriceService] Creating base category for ${categoryId}`);
+    
+    const newCategory: PriceCategory = {
+      id: categoryId,
+      name: getCategoryDisplayName(categoryId),
+      items: []
+    };
+    
+    // Tentar copiar itens de categorias relacionadas
+    const relatedCategories = getRelatedCategories(categoryId);
+    
+    for (const relatedCategory of relatedCategories) {
+      if (allData[relatedCategory]?.items?.length > 0) {
+        console.log(`[PriceService] Trying to adapt items from ${relatedCategory} to ${categoryId}`);
         
-        const filteredItems = diskItems
-          .filter(item => {
-            if (isExternal) {
-              return item.type === 'external' || item.subtype === 'external';
-            } else {
-              return item.type === 'internal' || !item.type;
-            }
-          })
-          .map(item => ({
+        // Adaptar itens da categoria relacionada
+        const adaptedItems = allData[relatedCategory].items.map(item => {
+          return {
             ...item,
-            id: `${categoryId}-${item.id}`,
-            type: 'storage',
-            subtype: isExternal ? 'external' : 'block',
-            description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
-          }));
-          
-        if (filteredItems.length > 0) {
-          console.log(`[PriceService] Added ${filteredItems.length} items from disk to new ${categoryId} category`);
-          newCategory.items = filteredItems;
+            id: `${categoryId}-${item.id.replace(`${relatedCategory}-`, '')}`,
+            type: getDefaultTypeForCategory(categoryId),
+            subtype: getDefaultSubtypeForCategory(categoryId),
+            description: item.description || `${item.name} - ${getCategoryDisplayName(categoryId)}`
+          };
+        });
+        
+        if (adaptedItems.length > 0) {
+          console.log(`[PriceService] Added ${adaptedItems.length} items from ${relatedCategory} to new ${categoryId} category`);
+          newCategory.items = adaptedItems;
           
           // Atualizar allData para futuras referências
           allData[categoryId] = newCategory;
+          break;
         }
       }
-      
-      return newCategory;
     }
     
-    console.warn(`[PriceService] Category ${categoryId} not found after all search attempts`);
-    return null;
+    return newCategory;
   } catch (err: any) {
     console.error(`[PriceService] Error in getCategory for ${categoryId}:`, err);
     return null;
   }
+}
+
+/**
+ * Helper function to get related categories for a given category
+ */
+function getRelatedCategories(categoryId: string): string[] {
+  const categoryMap: Record<string, string[]> = {
+    'storage': ['disk', 'external_storage'],
+    'external_storage': ['disk', 'storage'],
+    'disk': ['storage', 'external_storage'],
+    'memory': ['memória'],
+    'memória': ['memory'],
+    'processor': ['processador'],
+    'processador': ['processor'],
+    'sistemaoperacional': ['os', 'operatingsystem'],
+    'os': ['sistemaoperacional'],
+    'operatingsystem': ['sistemaoperacional'],
+    'connectivity': ['conectividade'],
+    'conectividade': ['connectivity'],
+  };
+
+  return categoryMap[categoryId] || [];
+}
+
+/**
+ * Helper function to get default type for a category
+ */
+function getDefaultTypeForCategory(categoryId: string): string {
+  const typeMap: Record<string, string> = {
+    'storage': 'storage',
+    'external_storage': 'storage',
+    'disk': 'disk',
+    'memory': 'memory',
+    'processor': 'cpu',
+    'processador': 'cpu',
+    'sistemaoperacional': 'os',
+    'connectivity': 'network',
+    'conectividade': 'network',
+    'port_speed': 'network',
+  };
+  
+  return typeMap[categoryId] || categoryId;
+}
+
+/**
+ * Helper function to get default subtype for a category
+ */
+function getDefaultSubtypeForCategory(categoryId: string): string {
+  const subtypeMap: Record<string, string> = {
+    'storage': 'block',
+    'external_storage': 'external',
+    'disk': 'internal'
+  };
+  
+  return subtypeMap[categoryId] || '';
+}
+
+/**
+ * Helper function to get display name for a category
+ */
+function getCategoryDisplayName(categoryId: string): string {
+  const displayNames: Record<string, string> = {
+    'storage': 'Armazenamento',
+    'external_storage': 'Storage Externo',
+    'disk': 'Discos',
+    'memory': 'Memória',
+    'memória': 'Memória',
+    'processor': 'Processador',
+    'processador': 'Processador',
+    'sistemaoperacional': 'Sistema Operacional',
+    'os': 'Sistema Operacional',
+    'connectivity': 'Conectividade',
+    'conectividade': 'Conectividade',
+    'port_speed': 'Velocidade de Porta',
+    'datacenter': 'Data Center',
+    'contract': 'Contrato',
+    'contrato': 'Contrato',
+    'ip_blocks': 'Blocos de IP',
+    'serviçospersonalizados': 'Serviços Personalizados'
+  };
+  
+  return displayNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
 }

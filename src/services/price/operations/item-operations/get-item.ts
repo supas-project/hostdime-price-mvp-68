@@ -1,3 +1,4 @@
+
 import { PriceItem } from '@/types/pricing';
 import { getAllData } from '../data-retrieval';
 import { getCategory } from '../category-operations/get-category';
@@ -15,22 +16,19 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
     if (!category) {
       console.warn(`[PriceService] Category ${categoryId} not found when fetching item ${itemId}`);
       
-      // Tentativa alternativa para storage/external_storage
-      if (categoryId === 'storage' || categoryId === 'external_storage') {
-        console.log('[PriceService] Trying to find item in disk category as fallback');
-        const diskItem = await getItem('disk', itemId.replace(`${categoryId}-`, ''));
-        if (diskItem) {
-          // Adaptar o item de disco para storage
-          const storageItem: PriceItem = {
-            ...diskItem,
-            id: itemId,
-            type: 'storage',
-            subtype: categoryId === 'external_storage' ? 'external' : 'block',
-            description: diskItem.description || `${diskItem.name} - ${categoryId === 'external_storage' ? 'Storage externo' : 'Armazenamento'}`
-          };
+      // Tentativa alternativa para categorias especiais
+      if (["storage", "external_storage", "memory", "processor", "sistemaoperacional"].includes(categoryId)) {
+        // Tentar encontrar o item em outras categorias relacionadas
+        const relatedCategories = getCrossReferenceCategories(categoryId);
+        
+        for (const relatedCategory of relatedCategories) {
+          console.log(`[PriceService] Trying to find item in ${relatedCategory} category as fallback`);
           
-          console.log(`[PriceService] Successfully adapted disk item to ${categoryId} format`);
-          return storageItem;
+          const item = await getItemFromRelatedCategory(relatedCategory, itemId, categoryId);
+          if (item) {
+            console.log(`[PriceService] Found item in ${relatedCategory} and adapted to ${categoryId}`);
+            return item;
+          }
         }
       }
       
@@ -92,35 +90,17 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
     if (!category) {
       console.warn(`[PriceService] Category ${categoryId} not found when listing items`);
       
-      // Para storage e external_storage, tentar criar itens a partir da categoria disk
-      if (categoryId === 'storage' || categoryId === 'external_storage') {
-        console.log(`[PriceService] Trying to create ${categoryId} items from disk category`);
+      // Tentar buscar itens de categorias relacionadas
+      if (["storage", "external_storage", "memory", "processor", "sistemaoperacional"].includes(categoryId)) {
+        const relatedCategories = getCrossReferenceCategories(categoryId);
         
-        const allData = await getAllData();
-        const diskItems = allData.disk?.items || [];
-        
-        if (diskItems.length > 0) {
-          const isExternal = categoryId === 'external_storage';
+        for (const relatedCategory of relatedCategories) {
+          console.log(`[PriceService] Trying to create ${categoryId} items from ${relatedCategory} category`);
           
-          const filteredItems = diskItems
-            .filter(item => {
-              if (isExternal) {
-                return item.type === 'external' || item.subtype === 'external';
-              } else {
-                return item.type === 'internal' || !item.type;
-              }
-            })
-            .map(item => ({
-              ...item,
-              id: `${categoryId}-${item.id}`,
-              type: 'storage',
-              subtype: isExternal ? 'external' : 'block',
-              description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
-            }));
-            
-          if (filteredItems.length > 0) {
-            console.log(`[PriceService] Created ${filteredItems.length} ${categoryId} items from disk`);
-            return filteredItems;
+          const items = await getCrossReferenceItems(relatedCategory, categoryId);
+          if (items.length > 0) {
+            console.log(`[PriceService] Created ${items.length} ${categoryId} items from ${relatedCategory}`);
+            return items;
           }
         }
       }
@@ -141,10 +121,10 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
     
     console.log(`[PriceService] Found ${category.items.length} items in category ${categoryId}`);
     
-    // Se for storage ou external_storage, faz log detalhado dos itens
-    if (categoryId === 'storage' || categoryId === 'external_storage') {
+    // Se for uma categoria especial, faz log detalhado dos itens
+    if (["storage", "external_storage", "disk", "memory", "processor", "sistemaoperacional"].includes(categoryId)) {
       category.items.forEach(item => {
-        console.log(`[PriceService] Item ${item.id}: ${item.name} (type: ${item.type}/${item.subtype || 'unknown'}, price: ${item.price})`);
+        console.log(`[PriceService] Item ${item.id}: ${item.name} (type: ${item.type || 'unknown'}/${item.subtype || 'unknown'}, price: ${item.price})`);
       });
     }
     
@@ -205,4 +185,132 @@ export async function getAllItems(categoryIds?: string[]): Promise<{[key: string
     console.error(`[PriceService] Error in getAllItems:`, err);
     return {};
   }
+}
+
+/**
+ * Helper function to get cross-reference categories for a given category
+ */
+function getCrossReferenceCategories(categoryId: string): string[] {
+  const categoryMap: Record<string, string[]> = {
+    'storage': ['disk'],
+    'external_storage': ['disk', 'storage'],
+    'disk': ['storage', 'external_storage'],
+    'memory': ['memória'],
+    'memória': ['memory'],
+    'processor': ['processador'],
+    'processador': ['processor'],
+    'sistemaoperacional': ['os', 'operatingsystem'],
+    'os': ['sistemaoperacional'],
+    'operatingsystem': ['sistemaoperacional']
+  };
+
+  return categoryMap[categoryId] || [];
+}
+
+/**
+ * Helper function to get items from a related category
+ */
+async function getItemFromRelatedCategory(
+  relatedCategoryId: string, 
+  itemId: string, 
+  targetCategoryId: string
+): Promise<PriceItem | null> {
+  const allData = await getAllData();
+  if (!allData[relatedCategoryId]?.items) {
+    return null;
+  }
+
+  // Tentar encontrar o item na categoria relacionada
+  const relatedItems = allData[relatedCategoryId].items;
+  let sanitizedItemId = itemId.replace(`${targetCategoryId}-`, '');
+  
+  // Procurar por correspondências em IDs
+  const relatedItem = relatedItems.find(item => 
+    item?.id === sanitizedItemId || 
+    itemId.includes(item?.id || '') || 
+    (item?.id && item.id.includes(sanitizedItemId))
+  );
+  
+  if (!relatedItem) return null;
+  
+  // Adaptar o item para o formato da categoria alvo
+  return {
+    ...relatedItem,
+    id: itemId,
+    type: getDefaultTypeForCategory(targetCategoryId),
+    subtype: getDefaultSubtypeForCategory(targetCategoryId),
+    description: relatedItem.description || `${relatedItem.name} - ${getCategoryDisplayName(targetCategoryId)}`
+  };
+}
+
+/**
+ * Helper function to get items from a cross-reference category
+ */
+async function getCrossReferenceItems(
+  relatedCategoryId: string, 
+  targetCategoryId: string
+): Promise<PriceItem[]> {
+  const allData = await getAllData();
+  if (!allData[relatedCategoryId]?.items || allData[relatedCategoryId].items.length === 0) {
+    return [];
+  }
+  
+  // Obter itens da categoria relacionada
+  const relatedItems = allData[relatedCategoryId].items;
+  
+  // Converter os itens para o formato da categoria alvo
+  return relatedItems.map(item => ({
+    ...item,
+    id: `${targetCategoryId}-${item.id}`,
+    type: getDefaultTypeForCategory(targetCategoryId),
+    subtype: getDefaultSubtypeForCategory(targetCategoryId),
+    description: item.description || `${item.name} - ${getCategoryDisplayName(targetCategoryId)}`
+  }));
+}
+
+/**
+ * Helper function to get default type for a category
+ */
+function getDefaultTypeForCategory(categoryId: string): string {
+  const typeMap: Record<string, string> = {
+    'storage': 'storage',
+    'external_storage': 'storage',
+    'disk': 'disk',
+    'memory': 'memory',
+    'processor': 'cpu',
+    'sistemaoperacional': 'os',
+    'connectivity': 'network',
+    'port_speed': 'network'
+  };
+  
+  return typeMap[categoryId] || categoryId;
+}
+
+/**
+ * Helper function to get default subtype for a category
+ */
+function getDefaultSubtypeForCategory(categoryId: string): string {
+  const subtypeMap: Record<string, string> = {
+    'storage': 'block',
+    'external_storage': 'external',
+    'disk': 'internal'
+  };
+  
+  return subtypeMap[categoryId] || '';
+}
+
+/**
+ * Helper function to get display name for a category
+ */
+function getCategoryDisplayName(categoryId: string): string {
+  const displayNames: Record<string, string> = {
+    'storage': 'Armazenamento',
+    'external_storage': 'Storage Externo',
+    'disk': 'Discos',
+    'memory': 'Memória',
+    'processor': 'Processador',
+    'sistemaoperacional': 'Sistema Operacional'
+  };
+  
+  return displayNames[categoryId] || categoryId;
 }

@@ -64,45 +64,101 @@ export async function getAllData(): Promise<PriceData> {
     // Garantir que todas as categorias tenham um array de itens
     const processedData = {...jsonData};
     
-    // Verificar se há categorias storage e external_storage
-    if (!processedData.storage) {
-      console.log("[PriceService] Creating missing storage category");
-      processedData.storage = {
-        id: 'storage',
-        name: 'Armazenamento',
-        items: []
-      };
-    }
+    // Lista de todas as categorias esperadas no sistema
+    const expectedCategories = [
+      'storage', 'external_storage', 'disk', 'memory', 'processor', 
+      'contract', 'connectivity', 'port_speed', 'datacenter', 
+      'sistemaoperacional', 'ip_blocks', 'serviçospersonalizados'
+    ];
     
-    if (!processedData.external_storage) {
-      console.log("[PriceService] Creating missing external_storage category");
-      processedData.external_storage = {
-        id: 'external_storage',
-        name: 'Storage Externo',
-        items: []
-      };
-    }
-    
-    // Verificar se há categoria 'disk' com itens e 'storage'/'external_storage' sem itens
-    // Nesse caso, podemos tentar copiar os itens relevantes
-    if (processedData.disk?.items?.length > 0 && 
-        (!processedData.storage?.items || processedData.storage?.items?.length === 0) &&
-        (!processedData.external_storage?.items || processedData.external_storage?.items?.length === 0)) {
-      console.log("[PriceService] Detected disk items but no storage items, creating missing storage items");
-      
-      // Garantir que os items sejam arrays
-      if (!Array.isArray(processedData.storage.items)) {
-        processedData.storage.items = [];
+    // Verificar e criar categorias faltantes
+    for (const categoryId of expectedCategories) {
+      if (!processedData[categoryId]) {
+        console.log(`[PriceService] Creating missing category: ${categoryId}`);
+        processedData[categoryId] = {
+          id: categoryId,
+          name: getCategoryFriendlyName(categoryId),
+          items: []
+        };
       }
       
-      if (!Array.isArray(processedData.external_storage.items)) {
-        processedData.external_storage.items = [];
+      // Garantir que cada categoria tenha um array de itens válido
+      if (!processedData[categoryId].items) {
+        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
+        processedData[categoryId].items = [];
+      } else if (!Array.isArray(processedData[categoryId].items)) {
+        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
+        processedData[categoryId].items = [];
+      }
+    }
+    
+    // Processamento especial para storage e external_storage
+    handleStorageCategories(processedData);
+    
+    // Verificar e corrigir todas as categorias
+    for (const categoryId of Object.keys(processedData)) {
+      if (!processedData[categoryId]) {
+        console.warn(`[PriceService] Category ${categoryId} is undefined, skipping`);
+        continue;
       }
       
-      // Converter itens do disk para storage
-      const diskItems = processedData.disk.items || [];
+      if (!processedData[categoryId].items) {
+        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
+        processedData[categoryId].items = [];
+      } else if (!Array.isArray(processedData[categoryId].items)) {
+        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
+        processedData[categoryId].items = Array.isArray(processedData[categoryId].items) ? 
+          processedData[categoryId].items : [];
+      }
       
-      // Itens para storage (armazenamento interno)
+      console.log(`[PriceService] Category ${categoryId} has ${processedData[categoryId].items.length} items`);
+      
+      // Log detalhes para categorias de interesse
+      if (categoryId === 'storage' || categoryId === 'external_storage' || 
+          categoryId === 'disk' || categoryId === 'processor' || 
+          categoryId === 'memory') {
+        if (processedData[categoryId].items.length > 0) {
+          console.log(`[PriceService] ${categoryId} items:`, 
+            processedData[categoryId].items.map(item => 
+              `${item.id}: ${item.name} (${item.type || 'unknown'}/${item.subtype || 'unknown'})`
+            ).join(', '));
+        } else {
+          console.warn(`[PriceService] ${categoryId} has no items, check if this is expected`);
+        }
+      }
+    }
+    
+    return processedData as unknown as PriceData;
+  } catch (err: any) {
+    console.error("[PriceService] Error in getAllData:", err);
+    throw new Error(err.message || "Failed to retrieve price data.");
+  }
+}
+
+/**
+ * Helper function to handle special processing for storage categories
+ */
+function handleStorageCategories(processedData: any) {
+  // Verificar se há categoria 'disk' com itens e 'storage'/'external_storage' sem itens
+  if (processedData.disk?.items?.length > 0 && 
+      (processedData.storage?.items?.length === 0 || 
+      processedData.external_storage?.items?.length === 0)) {
+    console.log("[PriceService] Detected disk items but incomplete storage items, creating missing storage items");
+    
+    // Garantir que os items sejam arrays
+    if (!Array.isArray(processedData.storage.items)) {
+      processedData.storage.items = [];
+    }
+    
+    if (!Array.isArray(processedData.external_storage.items)) {
+      processedData.external_storage.items = [];
+    }
+    
+    // Converter itens do disk para storage e external_storage se ainda não existirem
+    const diskItems = processedData.disk.items || [];
+    
+    // Itens para storage (armazenamento interno)
+    if (processedData.storage.items.length === 0) {
       const internalItems = diskItems
         .filter(item => item.type === 'internal' || !item.type)
         .map(item => ({
@@ -113,14 +169,21 @@ export async function getAllData(): Promise<PriceData> {
           description: item.description || `${item.name} - Armazenamento interno`
         }));
         
-      // Itens para external_storage
+      if (internalItems.length > 0) {
+        processedData.storage.items = internalItems;
+        console.log(`[PriceService] Added ${internalItems.length} internal storage items`);
+      }
+    }
+        
+    // Itens para external_storage
+    if (processedData.external_storage.items.length === 0) {
       const externalItems = diskItems
         .filter(item => item.type === 'external' || item.subtype === 'external')
         .map(item => ({
           ...item,
           id: `external-${item.id}`,
           type: 'storage',
-          subtype: 'block',
+          subtype: 'external',
           description: item.description || `${item.name} - Armazenamento externo`
         }));
         
@@ -180,54 +243,28 @@ export async function getAllData(): Promise<PriceData> {
         processedData.external_storage.items = externalItems;
         console.log(`[PriceService] Added ${externalItems.length} external storage items`);
       }
-      
-      if (internalItems.length > 0) {
-        processedData.storage.items = internalItems;
-        console.log(`[PriceService] Added ${internalItems.length} internal storage items`);
-      }
     }
-    
-    // Verificar e corrigir todas as categorias
-    for (const categoryId of Object.keys(processedData)) {
-      if (!processedData[categoryId]) {
-        console.warn(`[PriceService] Category ${categoryId} is undefined, skipping`);
-        continue;
-      }
-      
-      if (!processedData[categoryId].items) {
-        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
-        processedData[categoryId].items = [];
-      } else if (!Array.isArray(processedData[categoryId].items)) {
-        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
-        processedData[categoryId].items = Array.isArray(processedData[categoryId].items) ? 
-          processedData[categoryId].items : [];
-      }
-      
-      console.log(`[PriceService] Category ${categoryId} has ${processedData[categoryId].items.length} items`);
-      
-      // Log detalhes para categorias de storage
-      if (categoryId === 'storage' || categoryId === 'external_storage') {
-        if (processedData[categoryId].items.length > 0) {
-          console.log(`[PriceService] ${categoryId} items:`, 
-            processedData[categoryId].items.map(item => 
-              `${item.id}: ${item.name} (${item.type}/${item.subtype || 'unknown'})`
-            ).join(', '));
-        } else {
-          console.warn(`[PriceService] ${categoryId} has no items, check if this is expected`);
-        }
-      }
-    }
-    
-    // Verifica se ambas categorias storage e external_storage existem e estão vazias
-    // Isso pode indicar um problema de sincronização
-    if ((processedData.storage?.items?.length === 0 && processedData.external_storage?.items?.length === 0) &&
-        (processedData.disk?.items?.length > 0)) {
-      console.warn("[PriceService] Both storage categories are empty but disk items exist, this might be a sync issue");
-    }
-    
-    return processedData as unknown as PriceData;
-  } catch (err: any) {
-    console.error("[PriceService] Error in getAllData:", err);
-    throw new Error(err.message || "Failed to retrieve price data.");
   }
+}
+
+/**
+ * Helper function to get friendly names for categories
+ */
+function getCategoryFriendlyName(categoryId: string): string {
+  const categoryNames: Record<string, string> = {
+    'storage': 'Armazenamento',
+    'external_storage': 'Storage Externo',
+    'disk': 'Discos',
+    'memory': 'Memória',
+    'processor': 'Processadores',
+    'contract': 'Contratos',
+    'connectivity': 'Conectividade',
+    'port_speed': 'Velocidade de Porta',
+    'datacenter': 'Data Center',
+    'sistemaoperacional': 'Sistema Operacional',
+    'ip_blocks': 'Blocos de IP',
+    'serviçospersonalizados': 'Serviços Personalizados'
+  };
+  
+  return categoryNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
 }
