@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
+import { PricedDiskOption } from '@/types/storage';
 import { PRICE_DATA_TABLE } from '../constants';
 
 /**
@@ -54,5 +55,48 @@ export async function getAllData(): Promise<PriceData> {
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
     throw new Error(err.message || "Failed to retrieve price data.");
+  }
+}
+
+/**
+ * Gets all disk options from the price data
+ */
+export async function getDiskOptions(): Promise<PricedDiskOption[]> {
+  try {
+    console.log("[PriceService] Getting disk options from price data");
+    
+    // Get all price data
+    const priceData = await getAllData();
+    
+    // Check if the disk category exists in the price data
+    if (!priceData || !priceData.disk || !Array.isArray(priceData.disk.items)) {
+      console.warn("[PriceService] No disk items found in price data");
+      return [];
+    }
+    
+    // Convert price data items to PricedDiskOption format
+    const diskOptions: PricedDiskOption[] = priceData.disk.items.map(item => {
+      // Extract disk information from item metadata or use defaults
+      const type = item.metadata?.type || "hdd";
+      const capacity = item.metadata?.capacity || item.name || "Unknown";
+      
+      return {
+        id: item.id || `disk-${type}-${capacity}`,
+        name: item.name || `${type.toUpperCase()} ${capacity}`,
+        type: type as "nvme" | "ssd" | "hdd",
+        capacity: capacity,
+        pricePerMonth: item.price || 0,
+        specs: item.metadata?.specs || [],
+        description: item.description || "",
+        iops: item.metadata?.iops || "N/A",
+        throughput: item.metadata?.throughput || "N/A",
+      };
+    });
+    
+    console.log(`[PriceService] Retrieved ${diskOptions.length} disk options`);
+    return diskOptions;
+  } catch (error) {
+    console.error("[PriceService] Error getting disk options:", error);
+    return [];
   }
 }
