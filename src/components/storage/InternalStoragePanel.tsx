@@ -12,16 +12,18 @@ import { PriceService } from "@/services/price-service";
 import { useDiskPersistence } from "@/hooks/storage/useDiskPersistence";
 import { useInitialDiskLoader } from "@/hooks/storage/useInitialDiskLoader";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
-import { DiskPanelHeader } from "./disk-selection/DiskPanelHeader";
-import { DiskSelectionArea } from "./disk-selection/DiskSelectionArea";
+import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
 }
 
 export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
-  // State for syncing
-  const [isSyncingData, setIsSyncingData] = useState<boolean>(false);
+  // State for disk selection
+  const [showSelectedDisks, setShowSelectedDisks] = useState<boolean>(true);
   
   // Use our custom hooks
   const {
@@ -58,29 +60,6 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     refreshData
   });
 
-  // Manual sync function to force refresh data
-  const handleSyncData = async () => {
-    setIsSyncingData(true);
-    try {
-      // First refresh data from the backend
-      await PriceService.forceRefreshFromLatestSource();
-      
-      // Then reload the disk data
-      await refreshData();
-      
-      toast.success("Dados de discos sincronizados", {
-        description: "As opções de discos foram atualizadas com sucesso."
-      });
-    } catch (error) {
-      console.error("Error syncing disk data:", error);
-      toast.error("Erro na sincronização", {
-        description: "Não foi possível sincronizar os dados de discos."
-      });
-    } finally {
-      setIsSyncingData(false);
-    }
-  };
-
   // Save selections whenever they change
   useEffect(() => {
     // Convert to strictly boolean values using strict equality comparison
@@ -101,12 +80,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <DiskPanelHeader 
-        onSyncData={handleSyncData}
-        isSyncingData={isSyncingData}
-      />
-      
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <DiskTypeSelector
           selectedType={selectedDiskType}
           onTypeSelect={handleTypeSelect}
@@ -122,16 +96,60 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
       <SelectedDiskTypeInfo selectedDiskType={selectedDiskType} />
 
-      <DiskSelectionArea
-        showLoadingOrNoDiskMessage={showLoadingOrNoDiskMessage}
-        isLoading={isLoading}
-        selectedDiskType={selectedDiskType}
-        visibleDisks={visibleDisks}
-        selectedDisks={selectedDisks}
-        onQuantityChange={handleQuantityChange}
-        onRemoveDisk={handleRemoveDisk}
-      />
-
+      {isLoading ? (
+        <div className="py-8 flex flex-col items-center justify-center text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <p className="text-muted-foreground">Carregando opções de disco...</p>
+        </div>
+      ) : showLoadingOrNoDiskMessage && !isLoading ? (
+        <div className="py-8 flex flex-col items-center justify-center text-center">
+          <p className="text-muted-foreground">
+            Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
+            Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
+          </p>
+        </div>
+      ) : (
+        <>
+          {visibleDisks.length > 0 ? (
+            <div className="space-y-4 bg-background/5 p-4 rounded-lg border border-[#2a2a2a]">
+              <div className="flex justify-between items-center">
+                <h4 className="text-sm font-medium">Discos selecionados</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSelectedDisks(!showSelectedDisks)}
+                  className={cn("text-xs px-2 py-1 h-auto")}
+                >
+                  {showSelectedDisks ? "Ocultar" : "Mostrar"}
+                </Button>
+              </div>
+              
+              {showSelectedDisks && (
+                <div className="space-y-4">
+                  {visibleDisks.map((item) => (
+                    <div key={item.disk.id} className="animate-fade-in">
+                      <SelectedDiskDisplay
+                        disk={item.disk}
+                        quantity={item.quantity}
+                        onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
+                        onRemove={() => handleRemoveDisk(item.disk.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            selectedDiskType && (
+              <div className="text-center py-4 text-muted-foreground">
+                <p>Nenhum disco {selectedDiskType.toUpperCase()} adicionado.</p>
+                <p className="text-sm mt-1">Selecione uma capacidade para adicionar.</p>
+              </div>
+            )
+          )}
+        </>
+      )}
+      
       <OtherDisksDisplay 
         selectedDisks={selectedDisks}
         selectedDiskType={selectedDiskType}

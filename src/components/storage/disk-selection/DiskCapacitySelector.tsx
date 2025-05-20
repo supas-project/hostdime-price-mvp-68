@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PricedDiskOption } from '@/types/storage';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 interface DiskCapacitySelectorProps {
   selectedCapacity: string;
@@ -35,8 +37,18 @@ export function DiskCapacitySelector({
     return valueA - valueB;
   });
 
+  // Find the current selected disk based on capacity
+  const selectedDisk = selectedCapacity 
+    ? availableDisks.find(disk => disk.capacity === selectedCapacity) 
+    : undefined;
+
   if (isLoading) {
-    return <Skeleton className="h-10 w-full" />;
+    return (
+      <div className="w-full">
+        <label className="block text-sm font-medium mb-2">Capacidade do Disco</label>
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
   }
 
   return (
@@ -44,28 +56,30 @@ export function DiskCapacitySelector({
       <label className="block text-sm font-medium mb-2">
         Capacidade do Disco
       </label>
-      <Select
-        value={selectedCapacity}
-        onValueChange={onCapacitySelect}
-        disabled={disabled || uniqueCapacities.length === 0}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecione a capacidade" />
-        </SelectTrigger>
-        <SelectContent>
-          {uniqueCapacities.length > 0 ? (
-            uniqueCapacities.map((capacity) => (
-              <SelectItem key={capacity} value={capacity}>
-                {capacity}
+      <div className="flex flex-col space-y-2">
+        <Select
+          value={selectedCapacity}
+          onValueChange={onCapacitySelect}
+          disabled={disabled || uniqueCapacities.length === 0}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecione a capacidade" />
+          </SelectTrigger>
+          <SelectContent>
+            {uniqueCapacities.length > 0 ? (
+              uniqueCapacities.map((capacity) => (
+                <SelectItem key={capacity} value={capacity}>
+                  {capacity}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="none" disabled>
+                Nenhuma capacidade disponível
               </SelectItem>
-            ))
-          ) : (
-            <SelectItem value="none" disabled>
-              Nenhuma capacidade disponível
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
