@@ -25,10 +25,18 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
         return getItem('storage', itemId);
       }
       
+      const allData = await getAllData();
+      console.log(`[PriceService] Available categories: ${Object.keys(allData).join(', ')}`);
       return null;
     }
     
     // Garantir que temos um array de itens
+    if (!category.items) {
+      console.error(`[PriceService] Items is missing for category ${categoryId}`);
+      category.items = [];
+      return null;
+    }
+    
     if (!Array.isArray(category.items)) {
       console.error(`[PriceService] Items is not an array for category ${categoryId}, it is: ${typeof category.items}`);
       return null;
@@ -38,14 +46,19 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
     
     // Encontrar o item pelo ID (considerar correspondências exatas e parciais)
     const item = category.items.find(item => 
-      item.id === itemId || 
-      item.id.toLowerCase() === itemId.toLowerCase()
+      item?.id === itemId || 
+      (item?.id && item.id.toLowerCase() === itemId.toLowerCase())
     );
     
     if (item) {
       console.log(`[PriceService] Item found: ${item.name}`);
     } else {
       console.log(`[PriceService] Item ${itemId} not found in category ${categoryId}`);
+      
+      // Log all item IDs for debugging
+      if (category.items.length > 0) {
+        console.log(`[PriceService] Available item IDs in ${categoryId}: ${category.items.map(i => i.id).join(', ')}`);
+      }
     }
     
     return item || null;
@@ -77,16 +90,31 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
         return getCategoryItems('storage');
       }
       
+      const allData = await getAllData();
+      console.log(`[PriceService] Available categories: ${Object.keys(allData).join(', ')}`);
       return [];
     }
     
     // Garantir que temos um array de itens
+    if (!category.items) {
+      console.warn(`[PriceService] Items is missing for category ${categoryId}, returning empty array`);
+      return [];
+    }
+    
     if (!Array.isArray(category.items)) {
       console.warn(`[PriceService] Items is not an array for category ${categoryId}, returning empty array`);
       return [];
     }
     
     console.log(`[PriceService] Found ${category.items.length} items in category ${categoryId}`);
+    
+    // Se for storage ou external_storage, faz log detalhado dos itens
+    if (categoryId === 'storage' || categoryId === 'external_storage') {
+      category.items.forEach(item => {
+        console.log(`[PriceService] Item ${item.id}: ${item.name} (type: ${item.type}/${item.subtype || 'unknown'}, price: ${item.price})`);
+      });
+    }
+    
     return category.items;
   } catch (err: any) {
     console.error(`[PriceService] Error in getCategoryItems for ${categoryId}:`, err);
@@ -121,6 +149,11 @@ export async function getAllItems(categoryIds?: string[]): Promise<{[key: string
     for (const categoryId of categories) {
       if (allData[categoryId]) {
         // Garantir que temos um array de itens
+        if (!allData[categoryId].items) {
+          console.warn(`[PriceService] Items is missing for category ${categoryId}, setting empty array`);
+          allData[categoryId].items = [];
+        }
+        
         if (!Array.isArray(allData[categoryId].items)) {
           console.warn(`[PriceService] Items is not an array for category ${categoryId}, setting empty array`);
           allData[categoryId].items = [];

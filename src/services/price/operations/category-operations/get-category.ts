@@ -33,9 +33,12 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       console.log(`[PriceService] Found category ${categoryId} by exact ID match`);
       
       // Garantir que items seja sempre um array
-      if (!Array.isArray(allData[categoryId].items)) {
+      if (!allData[categoryId].items) {
+        console.warn(`[PriceService] Items for category ${categoryId} is missing, adding empty array`);
+        allData[categoryId].items = [];
+      } else if (!Array.isArray(allData[categoryId].items)) {
         console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
-        allData[categoryId].items = allData[categoryId].items || [];
+        allData[categoryId].items = [];
       }
       
       // Verificar número de itens
@@ -49,6 +52,8 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
     
     // Busca alternativa: percorrer todas as categorias procurando por correspondências
     for (const [key, category] of Object.entries(allData)) {
+      if (!category) continue;
+      
       if (
         key.toLowerCase() === normalizedCategoryId || 
         (category.id && category.id.toLowerCase() === normalizedCategoryId) || 
@@ -57,9 +62,12 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
         console.log(`[PriceService] Found category by alternative match: ${key}`);
         
         // Garantir que items seja sempre um array
-        if (!Array.isArray(category.items)) {
+        if (!category.items) {
+          console.warn(`[PriceService] Items for category ${key} is missing, adding empty array`);
+          category.items = [];
+        } else if (!Array.isArray(category.items)) {
           console.warn(`[PriceService] Items for category ${key} is not an array, fixing`);
-          category.items = category.items || [];
+          category.items = [];
         }
         
         // Verificar número de itens
@@ -80,9 +88,12 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       console.log(`[PriceService] external_storage has ${allData.external_storage.items?.length || 0} items`);
       
       // Garantir que items seja sempre um array
-      if (!Array.isArray(allData.external_storage.items)) {
+      if (!allData.external_storage.items) {
+        console.warn(`[PriceService] Items for external_storage is missing, adding empty array`);
+        allData.external_storage.items = [];
+      } else if (!Array.isArray(allData.external_storage.items)) {
         console.warn(`[PriceService] Items for external_storage is not an array, fixing`);
-        allData.external_storage.items = allData.external_storage.items || [];
+        allData.external_storage.items = [];
       }
       
       return {
@@ -98,9 +109,12 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       console.log(`[PriceService] storage has ${allData.storage.items?.length || 0} items`);
       
       // Garantir que items seja sempre um array
-      if (!Array.isArray(allData.storage.items)) {
+      if (!allData.storage.items) {
+        console.warn(`[PriceService] Items for storage is missing, adding empty array`);
+        allData.storage.items = [];
+      } else if (!Array.isArray(allData.storage.items)) {
         console.warn(`[PriceService] Items for storage is not an array, fixing`);
-        allData.storage.items = allData.storage.items || [];
+        allData.storage.items = [];
       }
       
       return {

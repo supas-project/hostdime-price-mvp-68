@@ -98,7 +98,9 @@ export default function PriceTableContainer() {
             if (priceData.storage) {
               if (Array.isArray(priceData.storage.items)) {
                 console.log("PriceTableContainer: Storage category items:", priceData.storage.items.length);
-                console.log("Storage items:", priceData.storage.items.map(item => item.id).join(', '));
+                if (priceData.storage.items.length > 0) {
+                  console.log("Storage items:", priceData.storage.items.map(item => `${item.id}: ${item.name}`).join(', '));
+                }
               } else {
                 console.error("PriceTableContainer: Storage category items is not an array:", priceData.storage.items);
                 priceData.storage.items = [];
@@ -110,7 +112,9 @@ export default function PriceTableContainer() {
             if (priceData.external_storage) {
               if (Array.isArray(priceData.external_storage.items)) {
                 console.log("PriceTableContainer: External storage category items:", priceData.external_storage.items.length);
-                console.log("External Storage items:", priceData.external_storage.items.map(item => item.id).join(', '));
+                if (priceData.external_storage.items.length > 0) {
+                  console.log("External Storage items:", priceData.external_storage.items.map(item => `${item.id}: ${item.name}`).join(', '));
+                }
               } else {
                 console.error("PriceTableContainer: External storage category items is not an array:", priceData.external_storage.items);
                 priceData.external_storage.items = [];
@@ -157,12 +161,31 @@ export default function PriceTableContainer() {
       let needsUpdate = false;
       
       Object.keys(fixedData).forEach(key => {
-        if (!fixedData[key]) return;
-        
-        if (!Array.isArray(fixedData[key].items)) {
-          console.warn(`PriceTableContainer: Items is not an array for category ${key}, fixing...`);
-          fixedData[key].items = fixedData[key].items || [];
+        if (!fixedData[key]) {
+          console.warn(`PriceTableContainer: Category ${key} is undefined, removing it`);
+          delete fixedData[key];
           needsUpdate = true;
+          return;
+        }
+        
+        if (!fixedData[key].items) {
+          console.warn(`PriceTableContainer: Category ${key} has no items property, adding empty array`);
+          fixedData[key].items = [];
+          needsUpdate = true;
+        } else if (!Array.isArray(fixedData[key].items)) {
+          console.warn(`PriceTableContainer: Items is not an array for category ${key}, fixing...`);
+          fixedData[key].items = Array.isArray(fixedData[key].items) ? fixedData[key].items : [];
+          needsUpdate = true;
+        }
+        
+        // Verificar se há itens undefined na array de items
+        if (Array.isArray(fixedData[key].items)) {
+          const filteredItems = fixedData[key].items.filter(item => item !== undefined && item !== null);
+          if (filteredItems.length !== fixedData[key].items.length) {
+            console.warn(`PriceTableContainer: Found undefined/null items in category ${key}, removing them`);
+            fixedData[key].items = filteredItems;
+            needsUpdate = true;
+          }
         }
       });
       
@@ -170,6 +193,12 @@ export default function PriceTableContainer() {
       if (needsUpdate) {
         console.log("PriceTableContainer: Updating price data with fixed arrays");
         setPriceData({...fixedData});
+      }
+      
+      // Verificar se temos dados em storage e external_storage
+      if (fixedData.storage && fixedData.storage.items.length === 0 && 
+          fixedData.external_storage && fixedData.external_storage.items.length === 0) {
+        console.warn("PriceTableContainer: Both storage categories are empty, consider refreshing data");
       }
     }
   }, [priceData, setPriceData]);

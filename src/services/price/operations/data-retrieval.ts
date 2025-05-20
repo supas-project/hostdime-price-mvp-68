@@ -65,6 +65,11 @@ export async function getAllData(): Promise<PriceData> {
     const processedData = {...jsonData};
     
     for (const categoryId of Object.keys(processedData)) {
+      if (!processedData[categoryId]) {
+        console.warn(`[PriceService] Category ${categoryId} is undefined, skipping`);
+        continue;
+      }
+      
       if (!processedData[categoryId].items) {
         console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
         processedData[categoryId].items = [];
@@ -79,8 +84,17 @@ export async function getAllData(): Promise<PriceData> {
       // Log detalhes para categorias de storage
       if (categoryId === 'storage' || categoryId === 'external_storage') {
         console.log(`[PriceService] ${categoryId} items:`, 
-          processedData[categoryId].items.map(item => `${item.id}: ${item.name}`).join(', '));
+          processedData[categoryId].items.map(item => 
+            `${item.id}: ${item.name} (${item.type}/${item.subtype || 'unknown'})`
+          ).join(', '));
       }
+    }
+    
+    // Verifica se ambas categorias storage e external_storage existem e estão vazias
+    // Isso pode indicar um problema de sincronização
+    if ((processedData.storage?.items?.length === 0 && processedData.external_storage?.items?.length === 0) &&
+        (processedData.disk?.items?.length > 0)) {
+      console.warn("[PriceService] Both storage categories are empty but disk items exist, this might be a sync issue");
     }
     
     // Type assertion with proper cast - first to unknown, then to PriceData
