@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -39,7 +38,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   const { availableDisks, isLoading, refreshData } = useDiskDataLoader(selectedDiskType);
 
   // Function to persist selections to the database
-  const persistSelectionsToDatabase = async (disks: any[]) => {
+  const persistSelectionsToDatabase = async (disks: {disk: PricedDiskOption, quantity: number}[]) => {
     try {
       // Get current data from the database first
       const allData = await PriceService.getAllData();
@@ -50,20 +49,20 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       }
       
       // Transform selected disks for storage
-      const disksToStore = disks.map(disk => ({
-        id: disk.disk.id,
-        name: disk.disk.name || `${disk.disk.type} ${disk.disk.capacity}`,
-        description: disk.disk.description || `${disk.disk.type} disk with ${disk.disk.capacity} capacity`,
-        price: disk.disk.price,
-        type: disk.disk.type,
+      const disksToStore = disks.map(item => ({
+        id: item.disk.id,
+        name: item.disk.name || `${item.disk.type} ${item.disk.capacity}`,
+        description: item.disk.description || `${item.disk.type} disk with ${item.disk.capacity} capacity`,
+        price: item.disk.price,
+        type: item.disk.type,
         specs: [
-          `Type: ${disk.disk.type}`,
-          `Capacity: ${disk.disk.capacity}`,
-          `Quantity: ${disk.quantity}`
+          `Type: ${item.disk.type}`,
+          `Capacity: ${item.disk.capacity}`,
+          `Quantity: ${item.quantity}`
         ],
         metadata: {
-          quantity: disk.quantity,
-          unitPrice: disk.disk.price
+          quantity: item.quantity,
+          unitPrice: item.disk.price
         }
       }));
       
@@ -112,24 +111,62 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         
         // If we have local selections, use them initially
         if (savedSelections && savedSelections.length > 0) {
-          setSelectedDisks(savedSelections);
+          // Make sure each disk has the required specs property
+          const validatedSelections = savedSelections.map(item => {
+            // Ensure disk has all required properties
+            const validatedDisk: PricedDiskOption = {
+              id: item.disk.id,
+              type: item.disk.type as "nvme" | "ssd" | "hdd",
+              capacity: item.disk.capacity,
+              price: item.disk.price,
+              specs: item.disk.specs || {
+                readSpeed: "N/A",
+                writeSpeed: "N/A",
+                iops: "N/A",
+                recommended: []
+              },
+              name: item.disk.name,
+              description: item.disk.description
+            };
+            
+            return {
+              disk: validatedDisk,
+              quantity: item.quantity
+            };
+          });
+          
+          setSelectedDisks(validatedSelections);
         }
 
         // Then check database for most up-to-date data
         const allData = await PriceService.getAllData();
         
         if (allData && allData.disk && allData.disk.items) {
-          const dbSelections = allData.disk.items.map(item => ({
-            disk: {
+          const dbSelections = allData.disk.items.map(item => {
+            const capacitySpec = item.specs?.find(spec => spec.includes('Capacity:'));
+            const capacity = capacitySpec ? capacitySpec.split('Capacity:')[1]?.trim() : '500GB';
+            
+            // Create a properly formatted disk object with all required properties
+            const disk: PricedDiskOption = {
               id: item.id,
               name: item.name,
-              type: item.type || 'ssd',
-              capacity: item.specs?.find(spec => spec.includes('Capacity:'))?.split('Capacity:')[1]?.trim() || '500GB',
+              type: item.type || 'ssd' as "ssd" | "nvme" | "hdd",
+              capacity: capacity || '500GB',
               price: item.price || 0,
-              description: item.description
-            },
-            quantity: item.metadata?.quantity || 1
-          }));
+              description: item.description,
+              specs: {
+                readSpeed: "N/A",
+                writeSpeed: "N/A", 
+                iops: "N/A",
+                recommended: []
+              }
+            };
+            
+            return {
+              disk,
+              quantity: item.metadata?.quantity || 1
+            };
+          });
           
           // Only if we have database selections and we're on initial load, use them
           if (dbSelections.length > 0 && isInitialLoad) {
@@ -195,7 +232,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
                 console.log("[InternalStoragePanel] Disk data refreshed from latest source");
                 
                 // After refreshing server data, reload data in the UI
-                refreshData();
+                if (refreshData) {
+                  refreshData();
+                }
               })
               .catch(error => {
                 if (!error.message.includes("Authentication")) {
@@ -229,6 +268,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     };
   }, [hasLocalChanges, selectedDisks, refreshData]);
 
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-2 gap-4">
