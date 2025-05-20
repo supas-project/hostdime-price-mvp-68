@@ -33,11 +33,15 @@ export class InitService {
       // First cleanup any duplicate categories to avoid issues
       await cleanupDuplicateCategories();
       
-      // Then initialize all server categories
-      await initializeServerCategories();
+      // Before initializing data, check if we have a record of deliberately deleted items/categories
+      const deletedCategories = JSON.parse(localStorage.getItem('deletedCategories') || '{}');
+      const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
       
-      // Sync disk data for storage categories
-      await syncDiskDataWithPriceService();
+      // Only initialize missing categories that aren't in the deletedCategories list
+      await initializeServerCategories(deletedCategories);
+      
+      // Sync disk data but ensure we don't recreate deleted items
+      await syncDiskDataWithPriceService(deletedItems);
       
       console.log("[InitService] Data initialization completed successfully");
       

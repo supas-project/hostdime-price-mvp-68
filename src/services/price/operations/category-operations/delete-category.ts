@@ -19,12 +19,29 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
       return false;
     }
     
+    // Get the category name before removing it
+    const categoryName = allData[categoryId].name;
+    
     // Remove the category
     const { [categoryId]: removed, ...updatedData } = allData;
     console.log(`[PriceService] Category ${categoryId} removed, saving updated data`);
     
     // Save the updated data
     await saveData(updatedData);
+    
+    // Track this deletion in localStorage to prevent recreation
+    try {
+      const deletedCategories = JSON.parse(localStorage.getItem('deletedCategories') || '{}');
+      deletedCategories[categoryId] = {
+        id: categoryId,
+        name: categoryName,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('deletedCategories', JSON.stringify(deletedCategories));
+      console.log(`[PriceService] Category ${categoryId} marked as deleted in localStorage`);
+    } catch (storageErr) {
+      console.error("Could not update localStorage with deleted category", storageErr);
+    }
     
     // Notify listeners of the change
     console.log(`[PriceService] Notifying listeners about category ${categoryId} deletion`);

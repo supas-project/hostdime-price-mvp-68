@@ -18,6 +18,10 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
     
     console.log(`[deleteItem] Deleting item ${itemId} from category ${categoryId}`);
     
+    // Get item details before deletion for tracking
+    const itemToDelete = allData[categoryId].items.find(item => item.id === itemId);
+    const itemName = itemToDelete?.name || itemId;
+    
     // Filter out the item
     const updatedItems = allData[categoryId].items.filter(item => item.id !== itemId);
     
@@ -39,17 +43,21 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
     // Notify listeners after the deletion
     notifyListeners(updatedData);
     
-    // After successful deletion, update local storage to prevent recreation
+    // Track this deletion in localStorage to prevent recreation
     try {
       // Mark this item as explicitly deleted in localStorage to prevent recreation
       const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
       if (!deletedItems[categoryId]) {
         deletedItems[categoryId] = [];
       }
-      deletedItems[categoryId].push(itemId);
-      localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
       
-      console.log(`[deleteItem] Item ${itemId} marked as deleted in localStorage`);
+      // Add this item ID to the list if not already there
+      if (!deletedItems[categoryId].includes(itemId)) {
+        deletedItems[categoryId].push(itemId);
+      }
+      
+      localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
+      console.log(`[deleteItem] Item ${itemId} (${itemName}) marked as deleted in localStorage`);
     } catch (storageErr) {
       console.warn("Could not update localStorage with deleted item", storageErr);
     }

@@ -14,6 +14,7 @@ export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const [skipAutoInit, setSkipAutoInit] = useState(false);
+  const [userHasRequestedInit, setUserHasRequestedInit] = useState(false);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -74,12 +75,12 @@ export default function PriceTableContainer() {
           console.log("Authenticated user, attempting to initialize data");
           setIsInitialized(false);
           
-          // Only initialize data if we don't have any data
+          // Only initialize data if explicitly requested or if there's no data
           // This prevents recreating deleted categories
-          if (!skipAutoInit) {
+          if (!skipAutoInit || userHasRequestedInit) {
             await InitService.initializeData();
           } else {
-            console.log("Skipping initialization because data already exists");
+            console.log("Skipping initialization because data already exists or not requested");
           }
           
           // Then load price data
@@ -124,7 +125,14 @@ export default function PriceTableContainer() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isAuthenticated, skipAutoInit]);
+  }, [isAuthenticated, skipAutoInit, userHasRequestedInit]);
+
+  // Called when user explicitly requests data initialization
+  const handleRequestInitialization = () => {
+    setUserHasRequestedInit(true);
+    InitService.initializeData().then(() => loadPriceData());
+    toast.info("Inicializando categorias padrão");
+  };
 
   // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};
@@ -142,6 +150,7 @@ export default function PriceTableContainer() {
       hasConflicts={hasConflicts}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
+      onRequestInitialization={handleRequestInitialization}
     />
   );
 }

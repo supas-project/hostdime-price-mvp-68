@@ -1,3 +1,4 @@
+
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
 
@@ -87,6 +88,28 @@ export function useDiskActions({
         ...diskToRemove.disk,
         price: 0
       }, 0);
+    }
+    
+    // Track deleted disk in localStorage to prevent recreation
+    try {
+      // Get the current list of deleted disks
+      const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
+      
+      // If we don't have an entry for disk category, create one
+      if (!deletedItems.disk) {
+        deletedItems.disk = [];
+      }
+      
+      // Add this disk ID to the list if not already there
+      if (!deletedItems.disk.includes(diskId)) {
+        deletedItems.disk.push(diskId);
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
+      console.log(`[useDiskActions] Added disk ${diskId} to deletedItems to prevent recreation`);
+    } catch (error) {
+      console.error("Error tracking deleted disk:", error);
     }
     
     toast.success("Disco removido com sucesso");
