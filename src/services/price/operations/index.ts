@@ -1,7 +1,7 @@
 
 // Re-export all functionality from individual modules
 export * from './data-retrieval';
-export * from './data-persistence';
+export { saveData as persistData } from './data-persistence'; // Renamed to avoid conflict
 export * from './data-reset';
 export * from './data-sync';
 export * from './data-import';

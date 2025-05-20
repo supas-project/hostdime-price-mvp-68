@@ -42,3 +42,68 @@ export async function saveData(data: PriceData): Promise<boolean> {
     throw new Error(err.message || "Failed to save price data.");
   }
 }
+
+/**
+ * Checks if there are any conflicts between local data and remote data
+ */
+export async function checkForDataConflicts(): Promise<boolean> {
+  try {
+    console.log("[PriceService] Checking for data conflicts");
+    
+    // Get last update time from updates table
+    const { data: updateData, error: updateError } = await supabase
+      .from('price_data_updates')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (updateError) {
+      console.warn("[PriceService] Error checking for updates:", updateError);
+      return false;
+    }
+
+    // If there's no update data, there can't be conflicts
+    if (!updateData) {
+      return false;
+    }
+
+    // Compare timestamps to determine if there are conflicts
+    const lastUpdateTime = new Date(updateData.updated_at).getTime();
+    const localUpdateTime = localStorage.getItem('price_data_last_updated');
+    
+    if (!localUpdateTime) {
+      // No local timestamp, consider it as a conflict to be safe
+      return true;
+    }
+
+    // If remote is newer than local, we have a conflict
+    return lastUpdateTime > parseInt(localUpdateTime);
+  } catch (err: any) {
+    console.error("[PriceService] Error checking for conflicts:", err);
+    return false;
+  }
+}
+
+/**
+ * Forces a refresh of data from the latest source
+ */
+export async function forceRefreshFromLatestSource(): Promise<PriceData | null> {
+  try {
+    console.log("[PriceService] Force refreshing data from latest source");
+    
+    // Get latest data
+    const latestData = await getAllData();
+    
+    if (latestData) {
+      // Update local timestamp
+      localStorage.setItem('price_data_last_updated', new Date().getTime().toString());
+      return latestData;
+    }
+    
+    return null;
+  } catch (err: any) {
+    console.error("[PriceService] Error force refreshing data:", err);
+    return null;
+  }
+}
