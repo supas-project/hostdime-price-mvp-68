@@ -9,6 +9,7 @@ import { serverData } from "@/data/server-components";
 import { cn } from "@/lib/utils";
 import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
 import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
+import { ComponentOption } from "@/types/component"; // Added import for ComponentOption
 
 // Create a separate component to use the context
 const WizardContainer = () => {
