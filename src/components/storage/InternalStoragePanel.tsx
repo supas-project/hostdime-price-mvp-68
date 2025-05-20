@@ -103,8 +103,8 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           toast.success(`Disco ${selectedDiskType.toUpperCase()} ${selectedCapacity} adicionado`);
         }
         
-        // Reset capacity selection
-        setSelectedCapacity("");
+        // Reset capacity selection using the function from useDiskManagement
+        handleCapacitySelect("");
       }
     }
   };
@@ -196,3 +196,4 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     </div>
   );
 }
+
