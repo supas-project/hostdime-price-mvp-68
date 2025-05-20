@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 
@@ -7,8 +6,8 @@ interface UseDiskManagementProps {
 }
 
 export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
-  // State for disk selection
-  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd">();
+  // State for disk selection - starting with undefined/empty values
+  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisks, setSelectedDisks] = useState<{ disk: PricedDiskOption; quantity: number }[]>([]);
 
@@ -27,20 +26,31 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
   const handleQuantityChange = useCallback(
     (diskId: string, newQuantity: number) => {
       setSelectedDisks((currentDisks) => {
-        const updatedDisks = currentDisks.map((item) => {
-          if (item.disk.id === diskId) {
-            // Notify parent component if callback provided
-            const updatedItem = { ...item, quantity: newQuantity };
-            return updatedItem;
-          }
-          return item;
-        });
+        // Validate that newQuantity is a positive number
+        const validQuantity = typeof newQuantity === 'number' && !isNaN(newQuantity) ? 
+                              Math.max(0, newQuantity) : 0;
         
-        // Find the updated disk to notify parent component
-        const updatedDisk = updatedDisks.find(item => item.disk.id === diskId);
+        let updatedDisks = [...currentDisks];
         
-        if (updatedDisk && onSelectDisk) {
-          onSelectDisk(updatedDisk.disk, newQuantity);
+        if (validQuantity <= 0) {
+          // If quantity is 0 or negative, remove the disk
+          updatedDisks = updatedDisks.filter(item => item.disk.id !== diskId);
+        } else {
+          // Otherwise update the quantity
+          updatedDisks = updatedDisks.map((item) => {
+            if (item.disk.id === diskId) {
+              return { ...item, quantity: validQuantity };
+            }
+            return item;
+          });
+        }
+        
+        // Find the affected disk to notify parent component
+        const affectedDisk = currentDisks.find(item => item.disk.id === diskId);
+        
+        if (affectedDisk && onSelectDisk) {
+          // Notify with either the updated quantity or 0 if removed
+          onSelectDisk(affectedDisk.disk, validQuantity);
         }
         
         return updatedDisks;
@@ -75,17 +85,6 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
     if (!selectedDiskType) return [];
     return selectedDisks.filter((item) => item.disk.type === selectedDiskType);
   }, [selectedDiskType, selectedDisks]);
-
-  // Ensure synchronization with server summary on selected disks change
-  useEffect(() => {
-    // This effect ensures that we notify the parent of all selected disks
-    // when the component mounts or when selectedDisks change
-    if (onSelectDisk) {
-      selectedDisks.forEach(item => {
-        onSelectDisk(item.disk, item.quantity);
-      });
-    }
-  }, [onSelectDisk]);
 
   return {
     selectedDiskType,

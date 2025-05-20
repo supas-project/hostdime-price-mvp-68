@@ -50,24 +50,39 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     refreshData
   });
 
-  // Save selections whenever they change
+  // Save selections whenever they change, but only if they're valid and user-selected
   useEffect(() => {
-    // Convert to strictly boolean values using strict equality comparison
+    // Only process after initial load is complete and data is refreshed
     const initialLoadComplete = isInitialLoad === false;
     const dataIsRefreshed = isDataRefreshed === true;
     
     if (initialLoadComplete && dataIsRefreshed && selectedDisks.length > 0) {
-      // Store selections in localStorage immediately
-      localStorage.setItem('selectedDisks', JSON.stringify(selectedDisks));
+      // Verify each disk has the required data before saving
+      const validDisks = selectedDisks.filter(item => 
+        item && 
+        item.disk && 
+        item.disk.id && 
+        item.disk.type && 
+        typeof item.quantity === 'number' && 
+        item.quantity > 0 // Only include disks with quantity > 0
+      );
       
-      // Set flag that we have changes to persist
-      setHasLocalChanges(true);
-      
-      // Notify parent component about all selected disks
-      if (onSelectDisk) {
-        selectedDisks.forEach(item => {
-          onSelectDisk(item.disk, item.quantity);
-        });
+      if (validDisks.length > 0) {
+        // Store selections in localStorage immediately
+        localStorage.setItem('selectedDisks', JSON.stringify(validDisks));
+        
+        // Set flag that we have changes to persist
+        setHasLocalChanges(true);
+        
+        // Notify parent component about all selected disks
+        if (onSelectDisk) {
+          validDisks.forEach(item => {
+            onSelectDisk(item.disk, item.quantity);
+          });
+        }
+      } else if (validDisks.length === 0 && selectedDisks.length > 0) {
+        // If we filtered out all disks but had some before, clear localStorage
+        localStorage.removeItem('selectedDisks');
       }
     }
   }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges, onSelectDisk]);
