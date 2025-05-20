@@ -5,7 +5,7 @@ import { PricedDiskOption } from "@/types/storage";
 type SetSelectedDisksFunction = React.Dispatch<React.SetStateAction<{ disk: PricedDiskOption; quantity: number }[]>>;
 
 export function useInitialDiskLoader(setSelectedDisks: SetSelectedDisksFunction) {
-  // Explicitamente criar e tipar estas variáveis como boolean
+  // Explicitly create and type these variables as boolean
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [isDataRefreshed, setIsDataRefreshed] = useState<boolean>(false);
 
@@ -34,11 +34,11 @@ export function useInitialDiskLoader(setSelectedDisks: SetSelectedDisksFunction)
     }
   }, [isInitialLoad, setSelectedDisks]);
 
-  // Return pure boolean values, ensuring type safety
+  // Return values with definite boolean type
   return {
-    isInitialLoad: isInitialLoad as boolean,
+    isInitialLoad: Boolean(isInitialLoad),
     setIsInitialLoad,
-    isDataRefreshed: isDataRefreshed as boolean,
+    isDataRefreshed: Boolean(isDataRefreshed),
     setIsDataRefreshed
   };
 }
