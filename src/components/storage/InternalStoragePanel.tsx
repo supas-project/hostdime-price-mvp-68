@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -41,7 +42,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   // Use the persistence hook
   const { hasLocalChanges, setHasLocalChanges, persistSelectionsToDatabase } = useDiskPersistence();
 
-  // Use the initial loader hook with proper type handling
+  // Use the initial loader hook com tipagem boolean explícita
   const { 
     isInitialLoad, 
     setIsInitialLoad, 
@@ -82,8 +83,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Save selections whenever they change
   useEffect(() => {
-    // Only proceed when both conditions are met (strictly boolean checks)
-    if (isInitialLoad === false && isDataRefreshed === true && selectedDisks.length > 0) {
+    // Convert to boolean explicitly and use strict equality
+    const initialLoadComplete = Boolean(isInitialLoad) === false;
+    const dataHasRefreshed = Boolean(isDataRefreshed) === true;
+    
+    if (initialLoadComplete && dataHasRefreshed && selectedDisks.length > 0) {
       // Store selections in localStorage immediately
       localStorage.setItem('selectedDisks', JSON.stringify(selectedDisks));
       
