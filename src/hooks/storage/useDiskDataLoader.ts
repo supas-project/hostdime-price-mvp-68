@@ -14,11 +14,24 @@ export function useDiskDataLoader(selectedDiskType?: "nvme" | "ssd" | "hdd") {
       setIsLoading(true);
       console.log("[useDiskDataLoader] Loading disk options...");
       
-      // Use the PriceService.getDiskOptions method
+      // Get all data from PriceService
+      const allData = await PriceService.getAllData();
+      
+      // Make sure the disk category exists and has items
+      if (!allData.disk || !Array.isArray(allData.disk.items) || allData.disk.items.length === 0) {
+        console.log("[useDiskDataLoader] No disk category or items found");
+        setAvailableDisks([]);
+        return;
+      }
+      
+      console.log("[useDiskDataLoader] Found disk items:", allData.disk.items.length);
+      
+      // Use the PriceService's getDiskOptions method to get formatted disk options
       const diskOptions = await PriceService.getDiskOptions();
       
+      console.log("[useDiskDataLoader] Received disk options:", diskOptions.length);
+      
       setAvailableDisks(diskOptions);
-      console.log(`[useDiskDataLoader] Successfully loaded ${diskOptions.length} disk options`);
       
       if (diskOptions.length === 0) {
         console.log("[useDiskDataLoader] No disk options found");
@@ -40,6 +53,20 @@ export function useDiskDataLoader(selectedDiskType?: "nvme" | "ssd" | "hdd") {
   // Initial data load
   useEffect(() => {
     refreshData();
+  }, [refreshData]);
+
+  // Add a listener for storage-data-updated events
+  useEffect(() => {
+    const handleStorageDataUpdated = () => {
+      console.log("[useDiskDataLoader] Storage data updated event received, refreshing data");
+      refreshData();
+    };
+    
+    window.addEventListener('storage-data-updated', handleStorageDataUpdated);
+    
+    return () => {
+      window.removeEventListener('storage-data-updated', handleStorageDataUpdated);
+    };
   }, [refreshData]);
 
   // Filter disks based on selected type

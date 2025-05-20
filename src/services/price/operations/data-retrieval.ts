@@ -75,31 +75,39 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
     }
     
     console.log("[PriceService] Found disk items:", priceData.disk.items.length);
+    // Log complete disk data for debugging
+    console.log("[PriceService] Raw disk items:", JSON.stringify(priceData.disk.items, null, 2));
     
     // Convert price data items to PricedDiskOption format
     const diskOptions: PricedDiskOption[] = priceData.disk.items.map(item => {
       // Extract disk information from item properties
       const metadata = item.metadata || {};
       
+      // CRITICAL: Get the type from multiple possible locations
       // Get the type from either subtype, type or default to "hdd"
-      const type = item.subtype || item.type || "hdd";
+      const type = item.subtype || 
+                 item.type || 
+                 (metadata.subtype as string) || 
+                 (metadata.type as string) || 
+                 "hdd";
       
+      // CRITICAL: Get capacity from multiple possible locations
       // Get capacity from either capacity property, metadata or extract from name
       const capacity = item.capacity || 
-                      (metadata && typeof metadata === 'object' && 'capacity' in metadata ? metadata.capacity as string : null) || 
+                      (metadata.capacity as string) || 
                       extractCapacityFromName(item.name);
+      
+      console.log(`[PriceService] Processing disk: id=${item.id}, name=${item.name}, type=${type}, capacity=${capacity}`);
       
       // Create disk spec object with safe defaults
       const specs = {
-        readSpeed: metadata && typeof metadata === 'object' && 'readSpeed' in metadata ? metadata.readSpeed as string : "N/A",
-        writeSpeed: metadata && typeof metadata === 'object' && 'writeSpeed' in metadata ? metadata.writeSpeed as string : "N/A",
-        iops: metadata && typeof metadata === 'object' && 'iops' in metadata ? metadata.iops as string : "N/A",
-        recommended: metadata && typeof metadata === 'object' && 'recommended' in metadata && Array.isArray(metadata.recommended) 
-          ? metadata.recommended as string[] 
-          : []
+        readSpeed: metadata.readSpeed as string || "N/A",
+        writeSpeed: metadata.writeSpeed as string || "N/A",
+        iops: metadata.iops as string || "N/A",
+        recommended: Array.isArray(metadata.recommended) ? metadata.recommended as string[] : []
       };
       
-      // Construct the disk option
+      // Construct the disk option with type assertion to match expected type
       return {
         id: item.id || `disk-${type}-${capacity}`,
         name: item.name || `${type.toUpperCase()} ${capacity}`,

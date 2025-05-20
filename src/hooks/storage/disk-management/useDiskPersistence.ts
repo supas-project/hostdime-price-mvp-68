@@ -37,10 +37,11 @@ export function useDiskPersistence() {
         name: item.disk.name || `${item.disk.type.toUpperCase()} ${item.disk.capacity}`,
         description: item.disk.description || `${item.disk.type.toUpperCase()} disk with ${item.disk.capacity} capacity`,
         price: item.disk.price,
+        // CRITICAL: Store type at root level
         type: item.disk.type,
-        // Explicitly save subtype
+        // CRITICAL: Store subtype at root level
         subtype: item.disk.type, 
-        // Explicitly save capacity
+        // CRITICAL: Store capacity at root level
         capacity: item.disk.capacity, 
         specs: [
           `Tipo: ${item.disk.type.toUpperCase()}`,
@@ -48,17 +49,12 @@ export function useDiskPersistence() {
           `Quantidade: ${item.quantity}`
         ],
         metadata: {
-          // Include all important disk metadata directly
           quantity: item.quantity,
           unitPrice: item.disk.price,
+          // CRITICAL: Also store in metadata for redundancy
           type: item.disk.type,
           subtype: item.disk.type,
-          capacity: item.disk.capacity,
-          // Add performance specs in metadata
-          readSpeed: item.disk.specs.readSpeed,
-          writeSpeed: item.disk.specs.writeSpeed,
-          iops: item.disk.specs.iops,
-          recommended: item.disk.specs.recommended
+          capacity: item.disk.capacity
         }
       }));
       

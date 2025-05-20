@@ -35,15 +35,15 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
     const updatedItem = {
       ...currentItem,
       ...updates,
-      // Make sure we preserve the capacity field
+      // Explicitly preserve capacity field at root level
       capacity: updates.capacity || currentItem.capacity,
-      // Make sure we preserve the subtype field
+      // Explicitly preserve subtype field at root level
       subtype: updates.subtype || currentItem.subtype,
       // Ensure metadata is properly merged, not overwritten
       metadata: {
         ...(currentItem.metadata || {}),
         ...(updates.metadata || {}),
-        // Ensure disk-specific metadata is preserved
+        // Explicitly preserve disk-specific metadata
         type: updates.type || currentItem.type,
         subtype: updates.subtype || (currentItem.metadata?.subtype || currentItem.subtype),
         capacity: updates.capacity || (currentItem.metadata?.capacity || currentItem.capacity),

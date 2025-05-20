@@ -22,7 +22,7 @@ export const itemFormSchema = z.object({
   subtype: z.string().optional(),
   specs: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
-  capacity: z.string().optional(),
+  capacity: z.string().optional(), // Explicitly include capacity
   // Include metadata to avoid validation errors
   metadata: z.any().optional(),
 });

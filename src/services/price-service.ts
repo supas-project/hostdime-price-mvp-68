@@ -1,106 +1,155 @@
-
-import { PriceCategory, PriceData, PriceItem, ImportOptions } from '@/types/pricing';
-import { supabase } from '@/lib/supabase';
-
-// Import all the functionality from the modular files
-import { 
-  getCategory, 
-  addCategory, 
-  updateCategory, 
-  deleteCategory 
-} from './price/operations/category-operations';
-
 import {
-  addItem,
-  updateItem,
-  deleteItem
-} from './price/operations/item-operations';
-
-import {
-  getAllData,
-  saveData,
-  resetData,
-  checkForDataConflicts,
-  forceRefreshFromLatestSource,
-  importFromJSON,
-  importFromCSV,
-  getDiskOptions
-} from './price/operations';
-
-import {
-  addDataChangeListener,
-  removeDataChangeListener,
-  notifyListeners
-} from './price/listeners';
+  addCategory as addCategoryOperation,
+  addItem as addItemOperation,
+  deleteCategory as deleteCategoryOperation,
+  deleteItem as deleteItemOperation,
+  getAllData as getAllDataOperation,
+  getCategory as getCategoryOperation,
+  getItem as getItemOperation,
+  importData as importDataOperation,
+  saveData as saveDataOperation,
+  updateCategory as updateCategoryOperation,
+  updateItem as updateItemOperation,
+  checkForDataConflicts as checkForDataConflictsOperation,
+  forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation,
+} from './services/price/operations';
+import { notifyListeners } from './services/price/listeners';
+import { PriceData } from '@/types/pricing';
+import { getDiskOptions } from './services/price/operations/data-retrieval';
+import { PricedDiskOption } from '@/types/storage';
 
 /**
  * Service for managing price data
  */
-export class PriceService {
-  static readonly PRICE_DATA_TABLE = 'price_data';
-  static readonly supabase = supabase; // Expose supabase client for auth checks
+export const PriceService = {
+  /**
+   * Gets all price data
+   */
+  getAllData: async (): Promise<PriceData> => {
+    return await getAllDataOperation();
+  },
 
-  // Data retrieval
-  static getAllData = getAllData;
-  static getCategory = getCategory;
-  static getDiskOptions = getDiskOptions;
-  
-  // Category operations
-  static addCategory = addCategory;
-  static updateCategory = updateCategory;
-  static deleteCategory = deleteCategory;
-  
-  // Item operations
-  static addItem = addItem;
-  static updateItem = updateItem;
-  static deleteItem = deleteItem;
-  
-  // Data change listeners
-  static addDataChangeListener = addDataChangeListener;
-  static removeDataChangeListener = removeDataChangeListener;
-  
-  // Data operations
-  static resetData = resetData;
-  static checkForDataConflicts = checkForDataConflicts;
-  static forceRefreshFromLatestSource = forceRefreshFromLatestSource;
-  
-  // Import/export operations
-  static importFromJSON = importFromJSON;
-  static importFromCSV = importFromCSV;
-  
-  // Private method - exposed here for backwards compatibility
-  static saveData = saveData;
+  /**
+   * Saves price data
+   * @param data The price data to save
+   */
+  saveData: async (data: PriceData): Promise<void> => {
+    return await saveDataOperation(data);
+  },
 
-  // Get last modified time of price data
-  static async getLastModifiedTime(): Promise<string | null> {
-    try {
-      const { data, error } = await supabase
-        .from('price_data_updates')
-        .select('updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (error || !data) {
-        console.error('[PriceService] Error getting last modified time:', error);
-        return null;
-      }
-      
-      return data.updated_at;
-    } catch (error) {
-      console.error('[PriceService] Error in getLastModifiedTime:', error);
-      return null;
-    }
-  }
+  /**
+   * Imports price data
+   * @param data The price data to import
+   * @param options The import options
+   */
+  importData: async (data: PriceData, options: { merge: boolean; overwrite: boolean }): Promise<void> => {
+    return await importDataOperation(data, options);
+  },
 
-  // Reset data to defaults
-  static async resetToDefaults(): Promise<boolean> {
-    try {
-      const newData = await resetData();
-      return !!newData;
-    } catch (error) {
-      console.error('[PriceService] Error in resetToDefaults:', error);
-      return false;
-    }
-  }
-}
+  /**
+   * Adds a new category
+   * @param category The category to add
+   */
+  addCategory: async (category: { id: string; name: string }): Promise<{ id: string; name: string } | null> => {
+    return await addCategoryOperation(category);
+  },
+
+  /**
+   * Updates an existing category
+   * @param categoryId The ID of the category to update
+   * @param updates The updates to apply
+   */
+  updateCategory: async (categoryId: string, updates: Partial<{ id: string; name: string }>): Promise<{ id: string; name: string } | null> => {
+    return await updateCategoryOperation(categoryId, updates);
+  },
+
+  /**
+   * Deletes a category
+   * @param categoryId The ID of the category to delete
+   */
+  deleteCategory: async (categoryId: string): Promise<void> => {
+    return await deleteCategoryOperation(categoryId);
+  },
+
+  /**
+   * Adds a new item to a category
+   * @param categoryId The ID of the category to add the item to
+   * @param item The item to add
+   */
+  addItem: async (categoryId: string, item: { id: string; name: string; description: string; price: number }): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+    return await addItemOperation(categoryId, item);
+  },
+
+  /**
+   * Updates an existing item in a category
+   * @param categoryId The ID of the category the item belongs to
+   * @param itemId The ID of the item to update
+   * @param updates The updates to apply
+   */
+  updateItem: async (categoryId: string, itemId: string, updates: Partial<{ id: string; name: string; description: string; price: number }>): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+    return await updateItemOperation(categoryId, itemId, updates);
+  },
+
+  /**
+   * Deletes an item from a category
+   * @param categoryId The ID of the category the item belongs to
+   * @param itemId The ID of the item to delete
+   */
+  deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
+    return await deleteItemOperation(categoryId, itemId);
+  },
+
+  /**
+   * Gets a category by ID
+   * @param categoryId The ID of the category to get
+   */
+  getCategory: async (categoryId: string): Promise<{ id: string; name: string; items: any[] } | null> => {
+    return await getCategoryOperation(categoryId);
+  },
+
+  /**
+   * Gets an item by ID from a category
+   * @param categoryId The ID of the category the item belongs to
+   * @param itemId The ID of the item to get
+   */
+  getItem: async (categoryId: string, itemId: string): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+    return await getItemOperation(categoryId, itemId);
+  },
+
+  /**
+   * Registers a listener for price data changes
+   * @param listener The listener to register
+   */
+  registerListener: (listener: (data: PriceData) => void): void => {
+    notifyListeners.addListener(listener);
+  },
+
+  /**
+   * Unregisters a listener for price data changes
+   * @param listener The listener to unregister
+   */
+  unregisterListener: (listener: (data: PriceData) => void): void => {
+    notifyListeners.removeListener(listener);
+  },
+
+  /**
+   * Checks for data conflicts
+   */
+  checkForDataConflicts: async (): Promise<boolean> => {
+    return await checkForDataConflictsOperation();
+  },
+
+  /**
+   * Forces a refresh from the latest source
+   */
+  forceRefreshFromLatestSource: async (): Promise<void> => {
+    return await forceRefreshFromLatestSourceOperation();
+  },
+  
+  /**
+   * Gets disk options from the price data
+   */
+  getDiskOptions: async (): Promise<PricedDiskOption[]> => {
+    return await getDiskOptions();
+  },
+};

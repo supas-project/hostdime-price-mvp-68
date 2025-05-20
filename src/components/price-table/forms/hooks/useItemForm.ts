@@ -44,11 +44,11 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
       description: item?.description || "",
       price: item?.price || 0,
       type: item?.type || defaultType || "",
-      // Ensure we get the subtype from item or its metadata
+      // CRITICAL: Ensure we get the subtype from multiple possible locations
       subtype: item?.subtype || (item?.metadata?.subtype as string) || "",
       specs: item?.specs || [],
       tags: getInitialTags(),
-      // Ensure we get the capacity from item or its metadata
+      // CRITICAL: Ensure we get the capacity from multiple possible locations
       capacity: item?.capacity || (item?.metadata?.capacity as string) || "",
     },
     mode: "onBlur", // Validate on blur
@@ -58,17 +58,25 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
   useEffect(() => {
     if (item) {
       console.log("[useItemForm] Resetting form with item:", item);
+      
+      // CRITICAL: For disk items, ensure capacity and subtype are extracted from all possible locations
+      const capacity = item.capacity || (item.metadata?.capacity as string) || "";
+      const subtype = item.subtype || (item.metadata?.subtype as string) || "";
+      
+      console.log("[useItemForm] Using capacity:", capacity);
+      console.log("[useItemForm] Using subtype:", subtype);
+      
       form.reset({
         name: item.name,
         description: item.description,
         price: item.price,
         type: item.type,
-        // Ensure we get the subtype from item or its metadata
-        subtype: item.subtype || (item.metadata?.subtype as string) || "",
+        // CRITICAL: Use extracted subtype
+        subtype: subtype,
         specs: item.specs || [],
         tags: getInitialTags(),
-        // Ensure we get the capacity from item or its metadata
-        capacity: item.capacity || (item.metadata?.capacity as string) || "",
+        // CRITICAL: Use extracted capacity
+        capacity: capacity,
       });
     }
   }, [item, form]);

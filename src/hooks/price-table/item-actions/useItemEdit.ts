@@ -31,6 +31,7 @@ export function useItemEdit(
       return;
     }
     
+    console.log("[useItemEdit] Initiating edit for item:", item);
     setItemToEdit(item);
     setOpenEditItem(true);
   };
@@ -60,7 +61,7 @@ export function useItemEdit(
     }
     
     try {
-      console.log("Starting edit of item:", itemId, "with values:", values);
+      console.log("[useItemEdit] Starting edit of item:", itemId, "with values:", values);
       setIsSubmittingItem(true);
       
       // Prepare metadata preserving existing values
@@ -69,35 +70,36 @@ export function useItemEdit(
       // Build complete metadata object
       const metadata = {
         ...existingMetadata,
-        // Capture disk-specific fields in metadata 
+        // CRITICAL: Capture disk-specific fields in metadata 
         type: values.type,
         subtype: values.subtype,
         capacity: values.capacity,
       };
       
+      // IMPORTANT: Always explicitly include capacity and subtype at root level
       const updatedItemData = {
         name: values.name,
         description: values.description,
         price: values.price,
         type: values.type,
-        // Ensure subtype is explicitly included
+        // Ensure subtype is explicitly included at root level
         subtype: values.subtype, 
         specs: Array.isArray(values.specs) ? values.specs : [],
         tags: Array.isArray(values.tags) ? values.tags : [],
         // Update isHardware based on tags for backwards compatibility
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
-        // For disk items, ensure capacity is preserved
-        capacity: values.capacity || itemToEdit?.capacity,
+        // CRITICAL: Ensure capacity is preserved at root level
+        capacity: values.capacity,
         // Preserve and extend metadata
         metadata: metadata
       };
       
-      console.log("Updated item data to save:", updatedItemData);
+      console.log("[useItemEdit] Updated item data to save:", updatedItemData);
       
       // Update item using existing method
       await PriceService.updateItem(activeTab, itemId, updatedItemData);
       
-      // Ensure data is saved to the database
+      // Force a trigger to save data to database
       await PriceService.saveData(await PriceService.getAllData());
       
       // Get fresh data
