@@ -1,8 +1,8 @@
 
 import { PriceCategory } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { saveData } from '../../operations';
-import { getAllData } from '../../operations';
+import { saveData } from '../data-persistence';
+import { getAllData } from '../data-retrieval';
 import { notifyListeners } from '../../listeners';
 
 /**

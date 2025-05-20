@@ -1,6 +1,7 @@
 
 import { PriceItem } from '@/types/pricing';
-import { getAllData, saveData } from '../../operations';
+import { getAllData } from '../data-retrieval';
+import { saveData } from '../data-persistence';
 import { notifyListeners } from '../../listeners';
 
 /**

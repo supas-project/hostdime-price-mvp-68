@@ -1,6 +1,6 @@
 
 // Re-export all functionality from the category operations modules
-export * from './add-category';
-export * from './update-category';
-export * from './delete-category';
-export * from './get-category';
+export { addCategory } from './add-category';
+export { updateCategory } from './update-category';
+export { deleteCategory } from './delete-category';
+export { getCategory } from './get-category';

@@ -1,7 +1,7 @@
 
 import { PriceCategory } from '@/types/pricing';
-import { saveData } from '../../operations';
-import { getAllData } from '../../operations';
+import { saveData } from '../data-persistence';
+import { getAllData } from '../data-retrieval';
 import { notifyListeners } from '../../listeners';
 
 /**

@@ -21,13 +21,16 @@ import {
 
 import {
   getAllData,
-  persistData as saveData,
+  saveData,
   resetData,
   checkForDataConflicts,
   forceRefreshFromLatestSource,
+} from './price/data-operations';
+
+import {
   importFromJSON,
-  importFromCSV
-} from './price/operations';
+  importFromCSV,
+} from './price/operations/data-import';
 
 import {
   addDataChangeListener,
