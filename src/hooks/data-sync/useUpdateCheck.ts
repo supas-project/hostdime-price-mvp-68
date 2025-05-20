@@ -7,28 +7,22 @@ import { toast } from '@/utils/toast-utils';
 // Time threshold to prevent duplicate notifications (ms)
 const NOTIFICATION_THRESHOLD = 2500; // 2.5 seconds
 
+// Check interval (in ms)
+const CHECK_INTERVAL = 10000; // 10 seconds
+
 /**
  * Hook for checking data updates
  */
 export function useUpdateCheck(lastSyncTime: Date | null, isAdminAccess: boolean) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [hasUpdates, setHasUpdates] = useState(false);
   const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
-  
-  // Verifica explicitamente se o usuário é admin@hostdime.com.br
-  const isAdmin = user?.email === "admin@hostdime.com.br";
 
-  // Check for available updates - agora só funciona sob demanda, não automaticamente
+  // Check for available updates
   const checkForUpdates = async () => {
     try {
       if (!isAuthenticated) {
         console.log("User not authenticated to check for updates");
-        return false;
-      }
-
-      // Somente o admin pode verificar atualizações
-      if (!isAdmin) {
-        console.log("Only admin can check for updates");
         return false;
       }
 
@@ -60,8 +54,38 @@ export function useUpdateCheck(lastSyncTime: Date | null, isAdminAccess: boolean
     return false;
   };
 
-  // Removemos a verificação periódica automática
-  // Mantemos apenas o estado e a função de verificação manual
+  // Periodically check for changes (non-admin users only)
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return; // Don't check if not authenticated
+    }
+    
+    if (isAdminAccess) {
+      // Admins don't need to check - they are the ones making changes
+      return;
+    }
+    
+    console.log("Setting up periodic check for updates");
+    
+    const intervalId = setInterval(async () => {
+      const hasNewUpdates = await checkForUpdates();
+      
+      if (hasNewUpdates && !hasUpdates) {
+        setHasUpdates(true);
+        
+        // Only show notification if it's been at least 2.5 seconds since the last one
+        const now = Date.now();
+        if (now - lastNotificationTime > NOTIFICATION_THRESHOLD) {
+          toast.info("Alterações disponíveis", {
+            description: "O administrador fez alterações. Clique para atualizar."
+          });
+          setLastNotificationTime(now);
+        }
+      }
+    }, CHECK_INTERVAL);
+    
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, isAdminAccess, hasUpdates, lastSyncTime]);
 
   return {
     hasUpdates,

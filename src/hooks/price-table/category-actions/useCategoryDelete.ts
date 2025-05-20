@@ -34,11 +34,8 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       
       await PriceService.deleteCategory(categoryId);
       
-      // Ensure data is saved to the database
+      // Get updated data after deletion
       const updatedData = await PriceService.getAllData();
-      await PriceService.saveData(updatedData);
-      
-      // Update local state
       setPriceData(updatedData);
       
       // Register change for notification

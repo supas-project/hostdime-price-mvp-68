@@ -25,14 +25,12 @@ export async function checkForDataConflicts(): Promise<boolean> {
     }
     
     if (!updates || updates.length === 0) {
-      console.log("[PriceService] No updates found in database");
       return false;
     }
     
     // Get the last time we fetched data
     const lastFetchTime = localStorage.getItem('price_data_last_fetch');
     if (!lastFetchTime) {
-      console.log("[PriceService] No local fetch time recorded, suggesting conflict");
       return true; // We haven't fetched data yet, so there might be conflicts
     }
     
@@ -40,18 +38,7 @@ export async function checkForDataConflicts(): Promise<boolean> {
     const lastFetch = new Date(lastFetchTime);
     
     // If there's an update newer than our last fetch, there's a conflict
-    const hasConflict = lastUpdateTime > lastFetch;
-    
-    if (hasConflict) {
-      console.log("Data conflicts detected", {
-        localTime: new Date(lastFetch).toISOString(),
-        serverTime: new Date(lastUpdateTime).toISOString()
-      });
-    } else {
-      console.log("[PriceService] No data conflicts detected");
-    }
-    
-    return hasConflict;
+    return lastUpdateTime > lastFetch;
   } catch (error) {
     console.error("[PriceService] Error checking for data conflicts:", error);
     return false;
@@ -64,19 +51,6 @@ export async function checkForDataConflicts(): Promise<boolean> {
 export async function forceRefreshFromLatestSource(): Promise<PriceData | null> {
   try {
     console.log("[PriceService] Forcing refresh of price data from latest source");
-    
-    // Verify user is authenticated before fetching data
-    const { data: session, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error("[PriceService] Authentication error:", sessionError);
-      return null;
-    }
-    
-    if (!session.session) {
-      console.error("[PriceService] No active session found");
-      return null;
-    }
     
     // Re-fetch all data from the source
     const { data: priceData, error } = await supabase
@@ -112,9 +86,6 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
       
       // Notify listeners with the new data
       notifyListeners(typedData);
-      
-      // Dispatch global events for components to update
-      window.dispatchEvent(new CustomEvent('data-refreshed'));
       
       console.log("[PriceService] Price data refreshed successfully");
       return typedData;

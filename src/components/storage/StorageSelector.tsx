@@ -18,7 +18,6 @@ export interface StorageSelectorProps {
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
   const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
-  const [selectedDisks, setSelectedDisks] = useState<{ disk: PricedDiskOption; quantity: number }[]>([]);
   
   // Create a mapping for the storage performance indicators
   const storagePerformanceMap: Record<string, {
@@ -48,56 +47,22 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     };
   });
 
-  // Handle disk selection
-  const handleDiskSelection = (disks: { disk: PricedDiskOption; quantity: number }[]) => {
-    setSelectedDisks(disks);
-    // Pass selected disk to parent component
-    if (disks.length > 0 && onSelectInternalDisk) {
-      disks.forEach(item => {
-        onSelectInternalDisk(item.disk, item.quantity);
-      });
-    }
-  };
-
-  // Listen for storage data updates
-  useEffect(() => {
-    const handleStorageDataUpdated = () => {
-      // This will be handled by child components listening to the same event
-      console.log("Storage data updated event received in StorageSelector");
-    };
-    
-    window.addEventListener('storage-data-updated', handleStorageDataUpdated);
-    
-    return () => {
-      window.removeEventListener('storage-data-updated', handleStorageDataUpdated);
-    };
-  }, []);
-
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <StorageHeader 
-          icon={HardDrive}
-          title="Opções de Armazenamento"
-          tooltip="Escolha entre discos internos ou storage externo para o seu servidor"
-        />
-      </div>
+      <StorageHeader 
+        icon={HardDrive}
+        title="Opções de Armazenamento"
+        tooltip="Escolha entre discos internos ou storage externo para o seu servidor"
+      />
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
-        <TabsList className="grid grid-cols-2 w-full bg-background/10 border border-[#2a2a2a]">
-          <TabsTrigger value="internal" className="data-[state=active]:bg-[#f58220] data-[state=active]:text-white">
-            Discos Internos
-          </TabsTrigger>
-          <TabsTrigger value="external" className="data-[state=active]:bg-[#f58220] data-[state=active]:text-white">
-            Storage Externo
-          </TabsTrigger>
+        <TabsList className="grid grid-cols-2 w-full">
+          <TabsTrigger value="internal">Discos Internos</TabsTrigger>
+          <TabsTrigger value="external">Storage Externo</TabsTrigger>
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">
-          <InternalStoragePanel 
-            selectedDisks={selectedDisks}
-            setSelectedDisks={handleDiskSelection}
-          />
+          <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
         </TabsContent>
         
         <TabsContent value="external" className="mt-4">

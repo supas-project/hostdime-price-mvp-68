@@ -5,7 +5,6 @@ import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface SyncIndicatorProps {
   lastSyncTime: Date | null;
@@ -23,16 +22,6 @@ export function SyncIndicator({
   const formattedTime = lastSyncTime 
     ? formatDistanceToNow(lastSyncTime, { addSuffix: true, locale: ptBR })
     : null;
-    
-  const { user } = useAuth();
-  
-  // Verifica se o usuário é admin@hostdime.com.br
-  const isAdmin = user?.email === "admin@hostdime.com.br";
-  
-  // Se não for admin, não mostra o componente
-  if (!isAdmin) {
-    return null;
-  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -70,7 +59,7 @@ export function SyncIndicator({
           {isRefreshing ? (
             "Sincronizando dados..."
           ) : hasConflicts ? (
-            "Clique para atualizar a tabela com as mudanças"
+            "Clique para atualizar a tabela com as mudanças feitas pelo administrador"
           ) : (
             `Última atualização: ${formattedTime}`
           )}

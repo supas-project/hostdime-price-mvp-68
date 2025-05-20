@@ -1,6 +1,7 @@
+
 import { PriceCategory } from '@/types/pricing';
-import { saveData } from '../data-persistence';
-import { PriceService } from '@/services/price-service';
+import { saveData } from '../../operations';
+import { getAllData } from '../../operations';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -9,7 +10,7 @@ import { notifyListeners } from '../../listeners';
 export async function updateCategory(categoryId: string, updates: Partial<PriceCategory>): Promise<PriceCategory | null> {
   try {
     // Get all existing data
-    const allData = await PriceService.getAllData();
+    const allData = await getAllData();
     
     // Find the category to update
     if (!allData[categoryId]) {

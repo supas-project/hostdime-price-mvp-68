@@ -1,8 +1,8 @@
 
 import { PriceCategory } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { saveData } from '../data-persistence';
-import { PriceService } from '@/services/price-service';
+import { saveData } from '../../operations';
+import { getAllData } from '../../operations';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -18,7 +18,7 @@ export async function addCategory(category: Omit<PriceCategory, "items">): Promi
     };
 
     // Get all existing data
-    const allData = await PriceService.getAllData();
+    const allData = await getAllData();
     
     // Add the new category
     const updatedData = {

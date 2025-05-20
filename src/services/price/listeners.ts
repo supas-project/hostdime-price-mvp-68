@@ -1,48 +1,46 @@
 
 import { PriceData } from '@/types/pricing';
 
-type DataChangeListener = () => void;
-
-// Singleton for global listener management
-const listeners: DataChangeListener[] = [];
+// Array to store listener callbacks
+type DataChangeListener = (data: PriceData | null) => void;
+let listeners: DataChangeListener[] = [];
 
 /**
- * Adds a listener for price data changes
+ * Adds a listener for data changes
  */
-export function addDataChangeListener(listener: DataChangeListener): void {
-  // Check if listener already exists to avoid duplicates
-  const exists = listeners.some(l => l === listener);
-  if (!exists) {
-    listeners.push(listener);
-    console.log(`[PriceService] Data change listener added. Total listeners: ${listeners.length}`);
+export function addDataChangeListener(callback: DataChangeListener): void {
+  if (typeof callback === 'function') {
+    listeners.push(callback);
+    console.log("[PriceService] Data change listener added, total listeners:", listeners.length);
   } else {
-    console.log("[PriceService] Listener already registered, ignoring duplicate");
+    console.error("[PriceService] Invalid listener callback provided");
   }
 }
 
 /**
- * Removes all listeners for price data changes
+ * Removes a listener from the array
  */
-export function removeDataChangeListener(): void {
-  const count = listeners.length;
-  listeners.length = 0;
-  console.log(`[PriceService] ${count} data change listeners removed`);
+export function removeDataChangeListener(callback?: DataChangeListener): void {
+  if (callback) {
+    listeners = listeners.filter(listener => listener !== callback);
+    console.log("[PriceService] Specific listener removed, remaining:", listeners.length);
+  } else {
+    // If no callback provided, remove all listeners
+    listeners = [];
+    console.log("[PriceService] All listeners removed");
+  }
 }
 
 /**
- * Notifies all registered listeners about data changes
+ * Notifies all listeners about data changes
  */
-export function notifyListeners(data: PriceData | null = null): void {
-  if (listeners.length > 0) {
-    console.log(`[PriceService] Notifying ${listeners.length} data change listeners`);
-    listeners.forEach(listener => {
-      try {
-        listener();
-      } catch (error) {
-        console.error("[PriceService] Error in listener callback:", error);
-      }
-    });
-  } else {
-    console.log("[PriceService] No data change listeners registered, notification skipped");
-  }
+export function notifyListeners(data?: PriceData): void {
+  console.log("[PriceService] Notifying", listeners.length, "listeners about data changes");
+  listeners.forEach(listener => {
+    try {
+      listener(data || null);
+    } catch (error) {
+      console.error("[PriceService] Error in listener callback:", error);
+    }
+  });
 }

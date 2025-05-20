@@ -1,76 +1,50 @@
 
-import React from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PricedDiskOption } from '@/types/storage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { PricedDiskOption } from "@/types/storage";
 
 interface DiskCapacitySelectorProps {
   selectedCapacity: string;
   onCapacitySelect: (capacity: string) => void;
   availableDisks: PricedDiskOption[];
   disabled: boolean;
-  isLoading: boolean;
 }
 
-export function DiskCapacitySelector({
-  selectedCapacity,
-  onCapacitySelect,
+export function DiskCapacitySelector({ 
+  selectedCapacity, 
+  onCapacitySelect, 
   availableDisks,
-  disabled,
-  isLoading
+  disabled 
 }: DiskCapacitySelectorProps) {
-  // Get unique capacities from available disks
-  const uniqueCapacities = Array.from(
-    new Set(availableDisks.map(disk => disk.capacity))
-  ).sort((a, b) => {
-    // Parse capacity values for sorting
-    const valueA = parseFloat(a.replace(/[^0-9.]/g, ''));
-    const valueB = parseFloat(b.replace(/[^0-9.]/g, ''));
-    return valueA - valueB;
-  });
-
-  if (isLoading) {
-    return (
-      <div className="w-full">
-        <label className="block text-sm font-medium mb-2 text-white">Capacidade</label>
-        <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full">
-      <label className="block text-sm font-medium mb-2 text-white">
-        Capacidade
-      </label>
-      <Select
-        value={selectedCapacity}
-        onValueChange={onCapacitySelect}
-        disabled={disabled || uniqueCapacities.length === 0}
+    <Select 
+      value={selectedCapacity} 
+      onValueChange={onCapacitySelect}
+      disabled={disabled}
+    >
+      <SelectTrigger 
+        className={cn(
+          "bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors w-full",
+          "text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4 min-h-[40px]",
+          !disabled ? "hover:border-[#f58220]" : "opacity-50",
+          "touch-target"
+        )}
       >
-        <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors hover:border-[#f58220] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4 min-h-[40px] touch-target">
-          <SelectValue placeholder="Selecione a capacidade" />
-        </SelectTrigger>
-        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
-          {uniqueCapacities.length > 0 ? (
-            uniqueCapacities.map((capacity) => (
-              <SelectItem key={capacity} value={capacity} className="hover:bg-[#2a2a2a] py-2">
-                {capacity}
-              </SelectItem>
-            ))
-          ) : (
-            <SelectItem value="none" disabled className="text-gray-400">
-              {disabled ? "Selecione o tipo de disco primeiro" : "Nenhuma capacidade disponível"}
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+        <SelectValue placeholder="Capacidade" />
+      </SelectTrigger>
+      <SelectContent className="z-[51] bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px]">
+        {availableDisks.map((disk) => (
+          <SelectItem key={disk.id} value={disk.capacity} className="sm:py-2.5 py-2">
+            <div className="flex justify-between items-center gap-2 sm:gap-4 w-full">
+              <span>{disk.capacity}</span>
+              <span className="text-[#f58220] text-xs sm:text-sm font-medium whitespace-nowrap">
+                {formatCurrency(disk.price)}/mês
+              </span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

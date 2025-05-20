@@ -3,4 +3,3 @@
 export * from './add-item';
 export * from './update-item';
 export * from './delete-item';
-export * from './get-item';
