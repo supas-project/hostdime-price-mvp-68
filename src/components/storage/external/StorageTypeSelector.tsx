@@ -25,6 +25,14 @@ export function StorageTypeSelector({
   selectedType, 
   onTypeChange 
 }: StorageTypeSelectorProps) {
+  // Log para debug
+  console.log('[StorageTypeSelector] Available storage types:', Object.keys(storageTypes));
+  
+  // Verificar se temos tipos de armazenamento
+  if (Object.keys(storageTypes).length === 0) {
+    console.warn('[StorageTypeSelector] No storage types available!');
+  }
+  
   // Get badge variant and icon based on storage type
   const getTypeVisuals = (type: string): {
     variant: "default" | "secondary" | "outline" | "success";
@@ -78,46 +86,52 @@ export function StorageTypeSelector({
         </div>
       </div>
       
-      <RadioGroup 
-        value={selectedType} 
-        onValueChange={onTypeChange} 
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2"
-      >
-        {Object.entries(storageTypes).map(([key, type]) => {
-          const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
-          
-          return (
-            <div key={key} className="relative">
-              <RadioGroupItem 
-                value={key} 
-                id={`storage-type-${key}`} 
-                className="sr-only peer"
-              />
-              <Label
-                htmlFor={`storage-type-${key}`}
-                className={cn(
-                  "flex flex-col gap-1 p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all text-center",
-                  "peer-focus-visible:ring-2 peer-focus-visible:ring-primary min-h-[85px] touch-target",
-                  selectedType === key 
-                    ? "border-primary bg-primary/10" 
-                    : "border-border hover:border-primary/30 hover:bg-primary/5"
-                )}
-              >
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                  {icon}
-                  <span className="font-medium text-xs sm:text-sm">{type.name}</span>
-                </div>
-                <Badge variant={variant} className="w-fit mx-auto text-xs">
-                  {label}
-                </Badge>
-                <div className="text-xs text-muted-foreground mt-1">
-                  R$ {type.pricePerGB.toFixed(2)}/GB
-                </div>
-              </Label>
-            </div>
-          );
-        })}
-      </RadioGroup>
+      {Object.keys(storageTypes).length === 0 ? (
+        <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground">
+          Nenhum tipo de storage disponível. Por favor, configure-os na Tabela de Preços.
+        </div>
+      ) : (
+        <RadioGroup 
+          value={selectedType} 
+          onValueChange={onTypeChange} 
+          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+        >
+          {Object.entries(storageTypes).map(([key, type]) => {
+            const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
+            
+            return (
+              <div key={key} className="relative">
+                <RadioGroupItem 
+                  value={key} 
+                  id={`storage-type-${key}`} 
+                  className="sr-only peer"
+                />
+                <Label
+                  htmlFor={`storage-type-${key}`}
+                  className={cn(
+                    "flex flex-col gap-1 p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all text-center",
+                    "peer-focus-visible:ring-2 peer-focus-visible:ring-primary min-h-[85px] touch-target",
+                    selectedType === key 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border hover:border-primary/30 hover:bg-primary/5"
+                  )}
+                >
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    {icon}
+                    <span className="font-medium text-xs sm:text-sm">{type.name}</span>
+                  </div>
+                  <Badge variant={variant} className="w-fit mx-auto text-xs">
+                    {label}
+                  </Badge>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    R$ {type.pricePerGB.toFixed(2)}/GB
+                  </div>
+                </Label>
+              </div>
+            );
+          })}
+        </RadioGroup>
+      )}
     </div>
   );
 }

@@ -64,6 +64,25 @@ export async function getAllData(): Promise<PriceData> {
     // Garantir que todas as categorias tenham um array de itens
     const processedData = {...jsonData};
     
+    // Verificar se há categorias storage e external_storage
+    if (!processedData.storage) {
+      console.log("[PriceService] Creating missing storage category");
+      processedData.storage = {
+        id: 'storage',
+        name: 'Armazenamento',
+        items: []
+      };
+    }
+    
+    if (!processedData.external_storage) {
+      console.log("[PriceService] Creating missing external_storage category");
+      processedData.external_storage = {
+        id: 'external_storage',
+        name: 'Storage Externo',
+        items: []
+      };
+    }
+    
     // Verificar se há categoria 'disk' com itens e 'storage'/'external_storage' sem itens
     // Nesse caso, podemos tentar copiar os itens relevantes
     if (processedData.disk?.items?.length > 0 && 
@@ -71,21 +90,13 @@ export async function getAllData(): Promise<PriceData> {
         (!processedData.external_storage?.items || processedData.external_storage?.items?.length === 0)) {
       console.log("[PriceService] Detected disk items but no storage items, creating missing storage items");
       
-      // Primeiro, garantir que todas as categorias existam
-      if (!processedData.storage) {
-        processedData.storage = {
-          id: 'storage',
-          name: 'Armazenamento',
-          items: []
-        };
+      // Garantir que os items sejam arrays
+      if (!Array.isArray(processedData.storage.items)) {
+        processedData.storage.items = [];
       }
       
-      if (!processedData.external_storage) {
-        processedData.external_storage = {
-          id: 'external_storage',
-          name: 'Storage Externo',
-          items: []
-        };
+      if (!Array.isArray(processedData.external_storage.items)) {
+        processedData.external_storage.items = [];
       }
       
       // Converter itens do disk para storage
@@ -113,20 +124,59 @@ export async function getAllData(): Promise<PriceData> {
           description: item.description || `${item.name} - Armazenamento externo`
         }));
         
-      // Se não houver itens específicos para external, copiar alguns do internal como exemplo
-      if (externalItems.length === 0 && internalItems.length > 0) {
-        const exampleExternalItems = internalItems.slice(0, 2).map(item => ({
-          ...item,
-          id: `external-${item.id}`,
-          name: `${item.name} (Externo)`,
-          description: `${item.name} - Armazenamento externo`,
-          type: 'storage',
-          subtype: 'external'
-        }));
+      // Se não houver itens específicos para external, criar alguns exemplos
+      if (externalItems.length === 0) {
+        console.log("[PriceService] No external storage items found, creating example items");
+        
+        // Criar itens de exemplo para external_storage
+        const exampleExternalItems = [
+          {
+            id: `external-storage-standard`,
+            name: "Standard Block Storage",
+            description: "Storage externo de baixo custo para dados acessados com pouca frequência",
+            price: 0.05, // por GB
+            type: 'storage',
+            subtype: 'external',
+            specs: [
+              "IOPS: 1500",
+              "Throughput: 60 MB/s",
+              "Ideal para backups"
+            ],
+            isHardware: true
+          },
+          {
+            id: `external-storage-performance`,
+            name: "Performance Block Storage",
+            description: "Storage externo balanceado com boa performance e custo",
+            price: 0.10, // por GB
+            type: 'storage',
+            subtype: 'external',
+            specs: [
+              "IOPS: 3000",
+              "Throughput: 150 MB/s",
+              "Bom para aplicações gerais"
+            ],
+            isHardware: true
+          },
+          {
+            id: `external-storage-premium`,
+            name: "Premium Block Storage",
+            description: "Storage externo de alto desempenho para cargas críticas",
+            price: 0.20, // por GB
+            type: 'storage',
+            subtype: 'external',
+            specs: [
+              "IOPS: 6000",
+              "Throughput: 300 MB/s",
+              "Para bancos de dados e aplicações críticas"
+            ],
+            isHardware: true
+          }
+        ];
         
         processedData.external_storage.items = exampleExternalItems;
         console.log(`[PriceService] Created ${exampleExternalItems.length} example external storage items`);
-      } else if (externalItems.length > 0) {
+      } else {
         processedData.external_storage.items = externalItems;
         console.log(`[PriceService] Added ${externalItems.length} external storage items`);
       }
@@ -157,10 +207,14 @@ export async function getAllData(): Promise<PriceData> {
       
       // Log detalhes para categorias de storage
       if (categoryId === 'storage' || categoryId === 'external_storage') {
-        console.log(`[PriceService] ${categoryId} items:`, 
-          processedData[categoryId].items.map(item => 
-            `${item.id}: ${item.name} (${item.type}/${item.subtype || 'unknown'})`
-          ).join(', '));
+        if (processedData[categoryId].items.length > 0) {
+          console.log(`[PriceService] ${categoryId} items:`, 
+            processedData[categoryId].items.map(item => 
+              `${item.id}: ${item.name} (${item.type}/${item.subtype || 'unknown'})`
+            ).join(', '));
+        } else {
+          console.warn(`[PriceService] ${categoryId} has no items, check if this is expected`);
+        }
       }
     }
     
@@ -171,7 +225,6 @@ export async function getAllData(): Promise<PriceData> {
       console.warn("[PriceService] Both storage categories are empty but disk items exist, this might be a sync issue");
     }
     
-    // Type assertion with proper cast - first to unknown, then to PriceData
     return processedData as unknown as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
