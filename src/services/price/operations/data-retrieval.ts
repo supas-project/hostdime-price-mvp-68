@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { PriceData } from '@/types/pricing';
+import { PriceData, PriceItem } from '@/types/pricing';
 import { PricedDiskOption } from '@/types/storage';
 import { PRICE_DATA_TABLE } from '../constants';
 
@@ -77,19 +77,28 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
     // Convert price data items to PricedDiskOption format
     const diskOptions: PricedDiskOption[] = priceData.disk.items.map(item => {
       // Extract disk information from item metadata or use defaults
-      const type = item.metadata?.type || "hdd";
-      const capacity = item.metadata?.capacity || item.name || "Unknown";
+      const metadata = item.metadata || {};
+      
+      // Create a customMetadata object by casting metadata to any to access custom properties
+      const customMetadata = metadata as any;
+      const type = customMetadata.type || "hdd";
+      const capacity = customMetadata.capacity || item.name || "Unknown";
       
       return {
         id: item.id || `disk-${type}-${capacity}`,
         name: item.name || `${type.toUpperCase()} ${capacity}`,
         type: type as "nvme" | "ssd" | "hdd",
         capacity: capacity,
-        pricePerMonth: item.price || 0,
-        specs: item.metadata?.specs || [],
+        price: item.price || 0, // Use price instead of pricePerMonth to match the interface
+        specs: {
+          readSpeed: customMetadata.readSpeed || "N/A",
+          writeSpeed: customMetadata.writeSpeed || "N/A",
+          iops: customMetadata.iops || "N/A",
+          recommended: customMetadata.recommended || []
+        },
         description: item.description || "",
-        iops: item.metadata?.iops || "N/A",
-        throughput: item.metadata?.throughput || "N/A",
+        iops: customMetadata.iops || "N/A",
+        throughput: customMetadata.throughput || "N/A",
       };
     });
     
