@@ -7,6 +7,7 @@ import { WizardProvider, useWizard } from "@/contexts/WizardContext";
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { serverData } from "@/data/server-components";
 import { cn } from "@/lib/utils";
+import { convertStorageItemsMapToArray } from "@/utils/storage-utils";
 
 // Create a separate component to use the context
 const WizardContainer = () => {

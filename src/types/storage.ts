@@ -1,4 +1,3 @@
-
 export interface StorageConfig {
   type: string;
   capacity: number;
@@ -33,4 +32,9 @@ export interface StorageTier {
   iops: string;
   throughput: string;
   description: string;
+}
+
+// Interface to handle both storage formats (array and object)
+export interface StorageItemsMap {
+  [key: string]: { option: ComponentOption; quantity: number };
 }

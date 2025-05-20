@@ -4,9 +4,10 @@ import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConnectivityItemsMap } from '@/types/wizard';
 
 interface ConnectivityListProps {
-  connectivityItems: { [key: string]: { option: ComponentOption, quantity: number } };
+  connectivityItems: ConnectivityItemsMap;
   onRemoveItem?: (itemId: string) => void;
 }
 

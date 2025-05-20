@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -12,6 +11,7 @@ import { serverData } from "@/data/server-components";
 import { syncDiskDataWithPriceService } from "@/services/component-sync";
 import { initExternalStorageData } from "@/services/component-sync";
 import { syncConnectivityData } from "@/services/component-sync"; // Nova importação
+import { ConnectivityItemsMap } from "@/types/wizard";
 
 interface WizardContextProps {
   currentStep: number;
@@ -36,14 +36,17 @@ interface WizardContextProps {
   setStepComplete: (stepIndex: number, complete: boolean) => void;
   completedSteps: boolean[];
   handleRestart: () => void;
-  // Adicionar estas propriedades para corrigir os erros
-  storageItems: { [key: string]: { option: ComponentOption; quantity: number } };
-  connectivityItems: { [key: string]: { option: ComponentOption; quantity: number } };
-  customServices: { [key: string]: { option: ComponentOption; quantity: number } };
+  // Propriedades para corrigir erros
+  storageItems: { 
+    internal: ComponentOption[]; 
+    external: ComponentOption[]; 
+  };
+  connectivityItems: ConnectivityItemsMap;
+  customServices: ComponentOption[];
   handleSelectOption: (option: ComponentOption) => void;
-  setConnectivityItems: (items: { [key: string]: { option: ComponentOption; quantity: number } }) => void;
+  setConnectivityItems: (items: ConnectivityItemsMap) => void;
   handleSelectStorageItem: (option: ComponentOption, storageType: 'internal' | 'external') => void;
-  handleRemoveComponent: (componentType: string, optionId: string) => void;
+  handleRemoveComponent: (componentType: string, optionId?: string) => void;
   categoriesLoaded: boolean;
   beginnerMode: boolean;
   setBeginnerMode: (mode: boolean) => void;
@@ -76,17 +79,17 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
   );
   const [beginnerMode, setBeginnerMode] = useState(true);
   
-  // Estados adicionados para corrigir erros
+  // Correct state types 
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [storageItems, setStorageItems] = useState<{
-    [key: string]: { option: ComponentOption; quantity: number };
-  }>({});
-  const [connectivityItems, setConnectivityItems] = useState<{
-    [key: string]: { option: ComponentOption; quantity: number };
-  }>({});
-  const [customServices, setCustomServices] = useState<{
-    [key: string]: { option: ComponentOption; quantity: number };
-  }>({});
+    internal: ComponentOption[];
+    external: ComponentOption[];
+  }>({
+    internal: [],
+    external: []
+  });
+  const [connectivityItems, setConnectivityItems] = useState<ConnectivityItemsMap>({});
+  const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
 
   const selectComponent = (
     componentType: string,
@@ -105,13 +108,15 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
 
   const handleSelectStorageItem = (option: ComponentOption, storageType: 'internal' | 'external') => {
     const key = storageType === 'internal' ? 'storage_internal' : 'storage_external';
-    setStorageItems(prev => ({
-      ...prev,
-      [option.id]: {
-        option,
-        quantity: 1
+    setStorageItems(prev => {
+      const updatedItems = { ...prev };
+      if (storageType === 'internal') {
+        updatedItems.internal = [...updatedItems.internal, option];
+      } else {
+        updatedItems.external = [...updatedItems.external, option];
       }
-    }));
+      return updatedItems;
+    });
     selectComponent(key, option, 1);
   };
 
@@ -136,9 +141,13 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
     });
   };
   
-  // Função de remoção adaptada para compatibilidade
-  const handleRemoveComponent = (componentType: string, optionId: string) => {
-    removeComponent(componentType, optionId);
+  // Update handler for removeComponent to make it compatible
+  const handleRemoveComponent = (componentType: string, optionId?: string) => {
+    if (optionId) {
+      removeComponent(componentType, optionId);
+    } else {
+      removeComponent(componentType, componentType);
+    }
   };
 
   const isComponentSelected = (componentType: string, optionId: string) => {
@@ -168,27 +177,17 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
     setSelectedComponents({});
     setShowFinalSummary(false);
     setCompletedSteps(new Array(serverData.componentes.length).fill(false));
-    setStorageItems({});
+    setStorageItems({ internal: [], external: [] });
     setConnectivityItems({});
-    setCustomServices({});
+    setCustomServices([]);
   };
 
   const addCustomService = (option: ComponentOption) => {
-    setCustomServices(prev => ({
-      ...prev,
-      [option.id]: {
-        option,
-        quantity: 1
-      }
-    }));
+    setCustomServices(prev => [...prev, option]);
   };
 
   const removeCustomService = (optionId: string) => {
-    setCustomServices(prev => {
-      const newServices = { ...prev };
-      delete newServices[optionId];
-      return newServices;
-    });
+    setCustomServices(prev => prev.filter(service => service.id !== optionId));
   };
 
   useEffect(() => {
@@ -220,7 +219,7 @@ export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
     setStepComplete,
     completedSteps,
     handleRestart,
-    // Novas propriedades
+    // Fixes for typed properties
     storageItems,
     connectivityItems,
     customServices,

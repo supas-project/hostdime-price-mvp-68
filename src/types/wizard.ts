@@ -33,3 +33,8 @@ export interface WizardContextType {
   setBeginnerMode: (value: boolean) => void; // Add the setter function
   categoriesLoaded: boolean; // Added this property to fix the TypeScript error
 }
+
+// Add new helper interface to convert between formats
+export interface ConnectivityItemsMap {
+  [key: string]: { option: ComponentOption; quantity: number };
+}

@@ -1,100 +1,98 @@
 
-/**
- * Normalizes storage capacity format to ensure consistency.
- * Examples: 
- * - "1" becomes "1GB" 
- * - "1GB" stays "1GB"
- * - "1TB" stays "1TB"
- * - "1000GB" becomes "1TB"
- * @param capacity The storage capacity string or number to normalize
- * @returns Normalized capacity string
- */
-export function normalizeStorageCapacity(capacity: string | number): string {
-  if (!capacity) return "0GB";
-  
-  // If it's a number, convert to string and assume GB
-  if (typeof capacity === "number") {
-    return capacity >= 1000 ? `${capacity / 1000}TB` : `${capacity}GB`;
-  }
-  
-  // Handle string format
-  const capacityStr = capacity.toString().trim();
-  
-  // If already has unit suffix, parse and normalize
-  if (capacityStr.toLowerCase().endsWith("tb")) {
-    return capacityStr;
-  }
-  
-  if (capacityStr.toLowerCase().endsWith("gb")) {
-    const valueGB = parseFloat(capacityStr.toLowerCase().replace("gb", ""));
-    return valueGB >= 1000 ? `${valueGB / 1000}TB` : capacityStr;
-  }
-  
-  // If no unit, assume GB
-  const value = parseFloat(capacityStr);
-  if (isNaN(value)) return "0GB";
-  
-  return value >= 1000 ? `${value / 1000}TB` : `${value}GB`;
-}
+import { ComponentOption } from "@/types/component";
+import { StorageItems, StorageItemsMap } from "@/types/wizard";
 
 /**
- * Formats a storage capacity number (in GB) to a human-readable string with appropriate units
- * @param capacityGB The capacity in gigabytes
- * @returns Formatted capacity string with units
+ * Extracts storage capacity from disk name/specs
  */
-export function formatStorageCapacity(capacityGB: number): string {
-  if (capacityGB >= 1000) {
-    return `${(capacityGB / 1000).toFixed(1)}TB`;
-  }
-  return `${Math.round(capacityGB)}GB`;
-}
-
-/**
- * Converts a capacity string (with units) to GB value
- * @param capacity The capacity string (e.g., "500GB", "1TB")
- * @returns The capacity value in GB
- */
-export function convertToGB(capacity: string): number {
-  if (!capacity) return 0;
-  
-  const match = capacity.toLowerCase().match(/(\d+\.?\d*)([tgm]b)?/);
-  if (!match) return 0;
-  
-  const value = parseFloat(match[1]);
-  const unit = match[2] || 'gb';
-  
-  switch(unit.toLowerCase()) {
-    case 'tb': return value * 1000;
-    case 'gb': return value;
-    case 'mb': return value / 1000;
-    default: return value;
-  }
-}
-
-/**
- * Utility function to extract storage capacity from disk name or specs
- * Replacement for the missing function referenced in components
- */
-export function extractStorageCapacity(disk: any): string {
-  // First check specs for capacity information
-  if (disk.specs && Array.isArray(disk.specs)) {
-    const capacitySpec = disk.specs.find((spec: string) => 
-      spec.toLowerCase().includes('capacidade:')
-    );
-    if (capacitySpec) {
-      const capacity = capacitySpec.split(':')[1]?.trim();
-      if (capacity) return normalizeStorageCapacity(capacity);
+export function extractStorageCapacity(disk: ComponentOption): string {
+  if (disk.specs && disk.specs.some(spec => spec.includes('Capacidade:'))) {
+    const spec = disk.specs.find(s => s.includes('Capacidade:'));
+    if (spec) {
+      return spec.split(':')[1].trim();
     }
   }
   
-  // Then try to extract from name
-  if (disk.name) {
-    const nameMatch = disk.name.match(/(\d+)\s*([GT]B)/i);
-    if (nameMatch) {
-      return `${nameMatch[1]}${nameMatch[2].toUpperCase()}`;
-    }
+  // Try to extract from name
+  const matches = disk.name.match(/(\d+)\s*(TB|GB|MB)/i);
+  if (matches) {
+    return `${matches[1]}${matches[2]}`;
   }
   
-  // Default fallback
-  return "N/A";
+  return 'N/A';
+}
+
+/**
+ * Normalizes storage capacity formatting
+ */
+export function normalizeStorageCapacity(capacity: string): string {
+  if (!capacity) return 'N/A';
+  
+  // Clean up the string
+  const clean = capacity.trim().replace(/\s+/g, '');
+  
+  // Check if already has units
+  if (clean.match(/\d+(TB|GB|MB|TB)/i)) {
+    return clean.toUpperCase();
+  }
+  
+  // Try to extract just the number
+  const num = parseFloat(clean);
+  if (isNaN(num)) return capacity;
+  
+  // Determine appropriate unit based on size
+  if (num >= 1000) {
+    return `${num / 1000}TB`;
+  }
+  
+  return `${num}GB`;
+}
+
+/**
+ * Converts map-style storage items to array-style storage items
+ */
+export function convertStorageItemsMapToArray(storageMap: StorageItemsMap | undefined): StorageItems {
+  if (!storageMap) {
+    return {
+      internal: [],
+      external: []
+    };
+  }
+  
+  const result: StorageItems = {
+    internal: [],
+    external: []
+  };
+  
+  Object.values(storageMap).forEach(({option}) => {
+    if (option.subtype === 'external') {
+      result.external.push(option);
+    } else {
+      result.internal.push(option);
+    }
+  });
+  
+  return result;
+}
+
+/**
+ * Converts connectivity items to array format
+ */
+export function convertConnectivityToArray(connectivityMap: {[key: string]: {option: ComponentOption, quantity: number}}): ComponentOption[] {
+  if (!connectivityMap) {
+    return [];
+  }
+  
+  return Object.values(connectivityMap).map(item => item.option);
+}
+
+/**
+ * Converts custom services map to array
+ */
+export function convertCustomServicesToArray(servicesMap: {[key: string]: {option: ComponentOption, quantity: number}}): ComponentOption[] {
+  if (!servicesMap) {
+    return [];
+  }
+  
+  return Object.values(servicesMap).map(item => item.option);
 }

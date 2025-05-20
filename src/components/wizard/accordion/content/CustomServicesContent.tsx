@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +55,7 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
 
     if (onAddCustomService) {
       onAddCustomService(newService);
-    } else {
+    } else if (addCustomService) {
       addCustomService(newService);
     }
 
@@ -67,8 +68,10 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
   };
 
   const handleRemoveService = (serviceId: string) => {
-    removeCustomService(serviceId);
-    toast.success("Serviço personalizado removido");
+    if (removeCustomService) {
+      removeCustomService(serviceId);
+      toast.success("Serviço personalizado removido");
+    }
   };
 
   return (
@@ -174,7 +177,7 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
         </CardContent>
       </Card>
 
-      {customServices.length > 0 && (
+      {Array.isArray(customServices) && customServices.length > 0 && (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -199,8 +202,8 @@ export function CustomServicesContent({ onAddCustomService }: CustomServicesCont
                             <p className="text-sm text-muted-foreground">{service.description}</p>
                           )}
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{service.metadata?.quantity}x</span>
-                            <span>{formatCurrency(service.metadata?.unitPrice || 0)}</span>
+                            <span>{service.metadata?.quantity || 1}x</span>
+                            <span>{formatCurrency(service.metadata?.unitPrice || service.price)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">

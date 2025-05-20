@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { CustomService } from "@/types/wizard";
 import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
 import { usePayBackCalculation } from "@/hooks/usePayBackCalculation";
+import { ConnectivityItemsMap } from "@/types/wizard";
+import { convertStorageItemsMapToArray, convertConnectivityToArray } from "@/utils/storage-utils";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -86,13 +88,11 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     );
   
   // Calculate other prices normally (non-hardware components)
-  const customServicesPrice = customServices.reduce(
-    (sum, service) => sum + service.price,
-    0
-  );
+  const customServicesPrice = Array.isArray(customServices) ?
+    customServices.reduce((sum, service) => sum + service.price, 0) : 0;
   
-  const connectivityPrice = Object.values(connectivityItems)
-    .filter(item => item && item.option)
+  // Process connectivity items
+  const connectivityPrice = Object.values(connectivityItems || {})
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
   
   // Calculate final totals
@@ -123,6 +123,13 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     }
     return null;
   };
+
+  // Extract connectivity items for rendering
+  const connectivityItemsList = Object.entries(connectivityItems || {}).map(([itemId, item]) => ({
+    id: itemId,
+    option: item.option,
+    quantity: item.quantity
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -363,11 +370,11 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             )}
             
             {/* Connectivity Items */}
-            {Object.keys(connectivityItems).length > 0 && (
+            {Object.keys(connectivityItems || {}).length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Conectividade</h3>
-                {Object.entries(connectivityItems).map(([itemId, { option, quantity }]) => (
-                  <div key={itemId} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
+                {connectivityItemsList.map(({id, option, quantity}) => (
+                  <div key={id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium flex items-center gap-2">
@@ -385,7 +392,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                         {onRemoveItem && (
                           <button
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveItem(itemId)}
+                            onClick={() => handleRemoveItem(id)}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
                               <path d="M18 6 6 18"></path>
@@ -403,7 +410,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             )}
             
             {/* Custom Services */}
-            {customServices.length > 0 && (
+            {Array.isArray(customServices) && customServices.length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Serviços Personalizados</h3>
                 {customServices.map((service) => (
