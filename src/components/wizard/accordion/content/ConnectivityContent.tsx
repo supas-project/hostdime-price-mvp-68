@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EthernetPort, Network } from "lucide-react";
 import { QuantitySelector } from "@/components/quantity-selector";
 import { toast } from "sonner";
+import { useConnectivity } from "@/hooks/useConnectivity";
+import { useEffect } from "react";
 
 interface ConnectivityContentProps {
   options: ComponentOption[];
@@ -18,26 +20,25 @@ export function ConnectivityContent({
   connectivityItems,
   onUpdateConnectivityItems,
 }: ConnectivityContentProps) {
-  // Verificar se temos opções válidas
-  if (!options || options.length === 0) {
-    console.error("ConnectivityContent: No options provided");
-    return (
-      <div className="p-4 text-center text-muted-foreground">
-        Não foi possível carregar opções de conectividade
-      </div>
-    );
-  }
+  // Usar o hook de conectividade para garantir dados sincronizados
+  const { portOptions, ipOptions, isLoading } = useConnectivity();
   
-  console.log("ConnectivityContent: Received", options.length, "options");
+  // Usar as opções sincronizadas se estiverem disponíveis, caso contrário usar as opções fornecidas como prop
+  const finalPortOptions = portOptions.length > 0 ? portOptions : options.filter((opt) => opt.subtype === "porta");
+  const finalIpOptions = ipOptions.length > 0 ? ipOptions : options.filter((opt) => opt.subtype === "ip");
   
-  // Separar as opções por tipo
-  const portOptions = options.filter((opt) => opt.subtype === "porta");
-  const ipOptions = options.filter((opt) => opt.subtype === "ip");
-  
-  console.log(`ConnectivityContent: Found ${portOptions.length} port options and ${ipOptions.length} IP options`);
-  
-  // Debug dos itens selecionados
-  console.log("ConnectivityContent: Current items:", Object.keys(connectivityItems).length);
+  useEffect(() => {
+    console.log("ConnectivityContent: Received", options.length, "options");
+    console.log("ConnectivityContent: Using", finalPortOptions.length, "port options and", finalIpOptions.length, "IP options");
+    console.log("ConnectivityContent: Current items:", Object.keys(connectivityItems).length);
+    
+    // Debug dos itens selecionados
+    if (Object.keys(connectivityItems).length > 0) {
+      Object.entries(connectivityItems).forEach(([id, item]) => {
+        console.log(`Selected item: ${id} - ${item.option.name} (${item.option.subtype}) - Quantity: ${item.quantity}`);
+      });
+    }
+  }, [options, finalPortOptions, finalIpOptions, connectivityItems]);
 
   const handlePortSelect = (portId: string | null) => {
     if (!portId) {
@@ -51,7 +52,7 @@ export function ConnectivityContent({
       return;
     }
 
-    const port = portOptions.find((opt) => opt.id === portId);
+    const port = finalPortOptions.find((opt) => opt.id === portId);
     if (!port) return;
 
     const newItems = { ...connectivityItems };
@@ -87,7 +88,7 @@ export function ConnectivityContent({
       return;
     }
 
-    const ip = ipOptions.find((opt) => opt.id === ipId);
+    const ip = finalIpOptions.find((opt) => opt.id === ipId);
     if (!ip) return;
 
     const newItems = { ...connectivityItems };
@@ -111,6 +112,14 @@ export function ConnectivityContent({
     (item) => item.option.subtype === "ip"
   );
 
+  if (isLoading) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-muted-foreground">Carregando opções de conectividade...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 overflow-x-hidden w-full">
       <div className="space-y-4">
@@ -127,7 +136,7 @@ export function ConnectivityContent({
               <SelectValue placeholder="Selecione a velocidade da porta" />
             </SelectTrigger>
             <SelectContent className="z-[51]">
-              {portOptions.map((port) => (
+              {finalPortOptions.map((port) => (
                 <SelectItem key={port.id} value={port.id} className="py-2 sm:py-2.5">
                   <div className="flex justify-between items-center w-full gap-2 sm:gap-4 text-xs sm:text-sm">
                     <span>{port.name}</span>
@@ -172,7 +181,7 @@ export function ConnectivityContent({
             <SelectValue placeholder="Selecione um bloco de IPs" />
           </SelectTrigger>
           <SelectContent className="z-[51]">
-            {ipOptions.map((ip) => (
+            {finalIpOptions.map((ip) => (
               <SelectItem key={ip.id} value={ip.id} className="py-2 sm:py-2.5">
                 <div className="flex justify-between items-center w-full gap-2 sm:gap-4 text-xs sm:text-sm">
                   <span>{ip.name}</span>

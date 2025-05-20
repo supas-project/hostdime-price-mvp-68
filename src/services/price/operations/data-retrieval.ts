@@ -1,7 +1,7 @@
-
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from '../constants';
+import { connectivityComponents as getConnectivityDefaults } from '@/data/connectivity-components';
 
 /**
  * Gets all price data from the database
@@ -255,7 +255,7 @@ function handleStorageCategories(processedData: any) {
  * Helper function to handle special processing for connectivity categories
  */
 function handleConnectivityCategories(processedData: any) {
-  // Verificar se temos categorias vazias de port_speed ou ip_blocks
+  // Verificar se há categorias vazias de port_speed ou ip_blocks
   const connectivityIsEmpty = !processedData.connectivity || processedData.connectivity.items.length === 0;
   const portSpeedIsEmpty = !processedData.port_speed || processedData.port_speed.items.length === 0;
   const ipBlocksIsEmpty = !processedData.ip_blocks || processedData.ip_blocks.items.length === 0;
@@ -374,6 +374,25 @@ function syncConnectivityCategories(data: any) {
       data.connectivity.items = allItems;
       console.log(`[PriceService] Combined ${allItems.length} items into connectivity category`);
     }
+  }
+  
+  // Garantir que alterações feitas em categorias específicas sejam propagadas
+  // Propagação de port_speed para connectivity
+  if (data.port_speed?.items?.length > 0 && data.connectivity?.items) {
+    // Remover itens antigos de porta na conectividade
+    data.connectivity.items = data.connectivity.items.filter(item => item.subtype !== 'porta');
+    // Adicionar os itens atualizados de port_speed
+    data.connectivity.items.push(...data.port_speed.items);
+    console.log(`[PriceService] Updated connectivity with ${data.port_speed.items.length} port items`);
+  }
+  
+  // Propagação de ip_blocks para connectivity
+  if (data.ip_blocks?.items?.length > 0 && data.connectivity?.items) {
+    // Remover itens antigos de IP na conectividade
+    data.connectivity.items = data.connectivity.items.filter(item => item.subtype !== 'ip');
+    // Adicionar os itens atualizados de ip_blocks
+    data.connectivity.items.push(...data.ip_blocks.items);
+    console.log(`[PriceService] Updated connectivity with ${data.ip_blocks.items.length} IP items`);
   }
   
   // Log para debugging

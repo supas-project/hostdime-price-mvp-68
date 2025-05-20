@@ -22,7 +22,7 @@ export interface ComponentOption {
   subtype?: string;
   isHardware?: boolean;
   details?: string[];
-  isHeader?: boolean; // Adicionando a propriedade isHeader como opcional
+  isHeader?: boolean; // Propriedade para cabeçalhos de seção
   metadata?: {
     discount?: number;
     features?: string[];
@@ -61,4 +61,10 @@ export interface ServerConfiguration {
 export interface StorageItems {
   internal: ComponentOption[];
   external: ComponentOption[];
+}
+
+// Interface para melhorar a tipagem dos dados de conectividade
+export interface ConnectivityItems {
+  ports: ComponentOption[];
+  ips: ComponentOption[];
 }
