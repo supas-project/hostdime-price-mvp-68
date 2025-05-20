@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { PriceService } from "@/services/price-service";
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DataSyncHandlerProps {
   selectedDisks: { disk: PricedDiskOption; quantity: number }[];
@@ -17,51 +18,29 @@ export function useDataSyncHandler({
   persistSelectionsToDatabase,
   refreshData
 }: DataSyncHandlerProps) {
-  // Periodically save changes to the database if we have local changes
-  useEffect(() => {
-    if (hasLocalChanges) {
-      const timer = setTimeout(() => {
-        persistSelectionsToDatabase(selectedDisks);
-      }, 2000); // Save to database after 2 seconds of inactivity
-      
-      return () => clearTimeout(timer);
-    }
-  }, [selectedDisks, hasLocalChanges, persistSelectionsToDatabase]);
+  const { user } = useAuth();
+  
+  // Verifica se o usuário é admin@hostdime.com.br
+  const isAdmin = user?.email === "admin@hostdime.com.br";
+  
+  // Salva mudanças apenas quando explicitamente solicitado pelo admin
+  // Removemos o useEffect que salvava automaticamente
 
-  // Add visibility state handler for leaving/returning to page
+  // Modificamos o handler de visibilidade para verificar apenas para o admin
   useEffect(() => {
+    if (!isAdmin) return; // Só continua se for admin
+    
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
         console.log("[useDataSyncHandler] Page visibility changed to visible, checking for data changes");
         
         try {
-          // Check if there are any conflicts between our local state and the server
-          const conflict = await PriceService.checkForDataConflicts();
+          // O admin decide manualmente quando sincronizar
+          // Removemos o código de verificação automática de conflitos
           
-          if (conflict) {
-            console.log("[useDataSyncHandler] Data conflicts detected, refreshing from server");
-            
-            // If there are conflicts, refresh data from the server
-            await PriceService.forceRefreshFromLatestSource()
-              .then(() => {
-                console.log("[useDataSyncHandler] Disk data refreshed from latest source");
-                
-                // After refreshing server data, reload data in the UI
-                refreshData();
-              })
-              .catch(error => {
-                if (!error.message.includes("Authentication")) {
-                  console.error("[useDataSyncHandler] Error refreshing disk data:", error);
-                  toast.error("Erro ao atualizar dados de disco");
-                }
-              });
-          } else {
-            console.log("[useDataSyncHandler] No data conflicts detected");
-            
-            // If we have unsaved local changes, persist them now
-            if (hasLocalChanges) {
-              await persistSelectionsToDatabase(selectedDisks);
-            }
+          // Se tivermos mudanças locais não salvas, persistir
+          if (hasLocalChanges) {
+            await persistSelectionsToDatabase(selectedDisks);
           }
         } catch (error) {
           console.error("[useDataSyncHandler] Error checking for data conflicts:", error);
@@ -74,15 +53,17 @@ export function useDataSyncHandler({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       
-      // Always persist changes when component unmounts
-      if (hasLocalChanges && selectedDisks.length > 0) {
+      // Sempre persistir mudanças quando componente desmontar (apenas para admin)
+      if (isAdmin && hasLocalChanges && selectedDisks.length > 0) {
         persistSelectionsToDatabase(selectedDisks);
       }
     };
-  }, [hasLocalChanges, selectedDisks, refreshData, persistSelectionsToDatabase]);
+  }, [isAdmin, hasLocalChanges, selectedDisks, refreshData, persistSelectionsToDatabase]);
 
-  // Listen for storage data updates from other components
+  // Listen for storage data updates from other components - apenas para admin
   useEffect(() => {
+    if (!isAdmin) return; // Só escuta eventos se for admin
+    
     const handleStorageDataUpdated = () => {
       console.log("[useDataSyncHandler] Storage data updated event received");
       refreshData();
@@ -93,7 +74,7 @@ export function useDataSyncHandler({
     return () => {
       window.removeEventListener('storage-data-updated', handleStorageDataUpdated);
     };
-  }, [refreshData]);
+  }, [refreshData, isAdmin]);
 
   return {};
 }

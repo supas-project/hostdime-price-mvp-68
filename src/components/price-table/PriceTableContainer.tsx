@@ -11,11 +11,14 @@ import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 
 export default function PriceTableContainer() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const [skipAutoInit, setSkipAutoInit] = useState(false);
   const [userHasRequestedInit, setUserHasRequestedInit] = useState(false);
   const [listenersAttached, setListenersAttached] = useState(false);
+  
+  // Verifica explicitamente se o usuário é admin@hostdime.com.br
+  const isAdminUser = user?.email === "admin@hostdime.com.br";
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -52,15 +55,15 @@ export default function PriceTableContainer() {
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing || !isInitialized;
 
-  // Effect to force update when hasUpdates is true
+  // Effect to force update when hasUpdates is true - apenas para admin
   useEffect(() => {
-    if (hasUpdates) {
+    if (hasUpdates && isAdminUser) {
       handleRefreshData().then(() => {
         // Notify WizardContent component about the data change
         window.dispatchEvent(new CustomEvent('price-table-data-updated'));
       });
     }
-  }, [hasUpdates, handleRefreshData]);
+  }, [hasUpdates, handleRefreshData, isAdminUser]);
 
   // Check if we have any data to determine if initialization is needed
   useEffect(() => {
@@ -71,9 +74,9 @@ export default function PriceTableContainer() {
     }
   }, [priceData]);
   
-  // Setup global event listeners for data synchronization
+  // Setup global event listeners for data synchronization - limitado apenas para admin
   useEffect(() => {
-    if (!listenersAttached && isAuthenticated) {
+    if (!listenersAttached && isAuthenticated && isAdminUser) {
       // Set up event listeners for synchronization
       const handleDataRefreshed = () => {
         console.log("Data-refreshed event received, reloading price data");
@@ -89,7 +92,7 @@ export default function PriceTableContainer() {
         console.log("Item-deleted event received", e.detail);
         // Refresh data after deletion to ensure consistency
         checkForConflicts().then(hasConflicts => {
-          if (hasConflicts) {
+          if (hasConflicts && isAdminUser) {
             handleRefreshData();
           }
         });
@@ -99,18 +102,18 @@ export default function PriceTableContainer() {
         console.log("Category-deleted event received", e.detail);
         // Refresh data after deletion to ensure consistency
         checkForConflicts().then(hasConflicts => {
-          if (hasConflicts) {
+          if (hasConflicts && isAdminUser) {
             handleRefreshData();
           }
         });
       };
       
-      // Listen for storage events from other tabs
+      // Listen for storage events from other tabs - apenas para admin
       const handleStorageEvent = (e: StorageEvent) => {
         if (e.key === 'deletedItems' || e.key === 'deletedCategories' || e.key === 'price_data_last_fetch') {
           console.log("Storage event detected, checking for conflicts");
           checkForConflicts().then(hasConflicts => {
-            if (hasConflicts) {
+            if (hasConflicts && isAdminUser) {
               handleRefreshData();
             }
           });
@@ -141,7 +144,8 @@ export default function PriceTableContainer() {
     listenersAttached, 
     loadPriceData, 
     checkForConflicts, 
-    handleRefreshData
+    handleRefreshData,
+    isAdminUser
   ]);
 
   // Ensure data is loaded when component mounts and when returning to this page
@@ -175,12 +179,14 @@ export default function PriceTableContainer() {
           setIsInitialized(true); // Still mark as initialized to avoid loading forever
         }
         
-        // Set up periodic conflict checks
-        const intervalId = setInterval(() => {
-          checkForConflicts();
-        }, 30000); // Check every 30 seconds
-        
-        return () => clearInterval(intervalId);
+        // Set up periodic conflict checks - apenas para admin
+        if (isAdminUser) {
+          const intervalId = setInterval(() => {
+            checkForConflicts();
+          }, 30000); // Check every 30 seconds
+          
+          return () => clearInterval(intervalId);
+        }
       } else {
         console.log("User not authenticated, skipping initialization");
         setIsInitialized(true);
@@ -189,9 +195,9 @@ export default function PriceTableContainer() {
     
     initialize();
     
-    // Add this effect to refresh data when the user returns to this page
+    // Add this effect to refresh data when the user returns to this page - apenas para admin
     const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated && isInitialized) {
+      if (!document.hidden && isAuthenticated && isInitialized && isAdminUser) {
         console.log("Page visibility changed to visible, refreshing data");
         loadPriceData();
       }
@@ -202,7 +208,7 @@ export default function PriceTableContainer() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isAuthenticated, skipAutoInit, userHasRequestedInit]);
+  }, [isAuthenticated, skipAutoInit, userHasRequestedInit, isAdminUser]);
 
   // Called when user explicitly requests data initialization
   const handleRequestInitialization = () => {

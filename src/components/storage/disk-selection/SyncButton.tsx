@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SyncButtonProps {
   onSync: () => Promise<void>;
@@ -8,6 +9,16 @@ interface SyncButtonProps {
 }
 
 export function SyncButton({ onSync, isSyncing }: SyncButtonProps) {
+  const { user } = useAuth();
+  
+  // Verifica se o usuário é admin@hostdime.com.br
+  const isAdmin = user?.email === "admin@hostdime.com.br";
+  
+  // Se não for admin, não mostra o botão
+  if (!isAdmin) {
+    return null;
+  }
+  
   return (
     <Button 
       onClick={onSync} 
