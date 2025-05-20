@@ -64,6 +64,80 @@ export async function getAllData(): Promise<PriceData> {
     // Garantir que todas as categorias tenham um array de itens
     const processedData = {...jsonData};
     
+    // Verificar se há categoria 'disk' com itens e 'storage'/'external_storage' sem itens
+    // Nesse caso, podemos tentar copiar os itens relevantes
+    if (processedData.disk?.items?.length > 0 && 
+        (!processedData.storage?.items || processedData.storage?.items?.length === 0) &&
+        (!processedData.external_storage?.items || processedData.external_storage?.items?.length === 0)) {
+      console.log("[PriceService] Detected disk items but no storage items, creating missing storage items");
+      
+      // Primeiro, garantir que todas as categorias existam
+      if (!processedData.storage) {
+        processedData.storage = {
+          id: 'storage',
+          name: 'Armazenamento',
+          items: []
+        };
+      }
+      
+      if (!processedData.external_storage) {
+        processedData.external_storage = {
+          id: 'external_storage',
+          name: 'Storage Externo',
+          items: []
+        };
+      }
+      
+      // Converter itens do disk para storage
+      const diskItems = processedData.disk.items || [];
+      
+      // Itens para storage (armazenamento interno)
+      const internalItems = diskItems
+        .filter(item => item.type === 'internal' || !item.type)
+        .map(item => ({
+          ...item,
+          id: `storage-${item.id}`,
+          type: 'storage',
+          subtype: item.subtype || 'block',
+          description: item.description || `${item.name} - Armazenamento interno`
+        }));
+        
+      // Itens para external_storage
+      const externalItems = diskItems
+        .filter(item => item.type === 'external' || item.subtype === 'external')
+        .map(item => ({
+          ...item,
+          id: `external-${item.id}`,
+          type: 'storage',
+          subtype: 'block',
+          description: item.description || `${item.name} - Armazenamento externo`
+        }));
+        
+      // Se não houver itens específicos para external, copiar alguns do internal como exemplo
+      if (externalItems.length === 0 && internalItems.length > 0) {
+        const exampleExternalItems = internalItems.slice(0, 2).map(item => ({
+          ...item,
+          id: `external-${item.id}`,
+          name: `${item.name} (Externo)`,
+          description: `${item.name} - Armazenamento externo`,
+          type: 'storage',
+          subtype: 'external'
+        }));
+        
+        processedData.external_storage.items = exampleExternalItems;
+        console.log(`[PriceService] Created ${exampleExternalItems.length} example external storage items`);
+      } else if (externalItems.length > 0) {
+        processedData.external_storage.items = externalItems;
+        console.log(`[PriceService] Added ${externalItems.length} external storage items`);
+      }
+      
+      if (internalItems.length > 0) {
+        processedData.storage.items = internalItems;
+        console.log(`[PriceService] Added ${internalItems.length} internal storage items`);
+      }
+    }
+    
+    // Verificar e corrigir todas as categorias
     for (const categoryId of Object.keys(processedData)) {
       if (!processedData[categoryId]) {
         console.warn(`[PriceService] Category ${categoryId} is undefined, skipping`);

@@ -44,6 +44,39 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       // Verificar número de itens
       console.log(`[PriceService] Category ${categoryId} has ${allData[categoryId].items.length} items`);
       
+      // Se for storage ou external_storage e não tiver itens, tentar pegar do disk
+      if ((categoryId === 'storage' || categoryId === 'external_storage') && 
+          allData[categoryId].items.length === 0 && 
+          allData.disk?.items?.length > 0) {
+        
+        console.log(`[PriceService] ${categoryId} is empty, trying to copy items from disk category`);
+        
+        // Filtrar itens de disk apropriados para esta categoria
+        const diskItems = allData.disk.items || [];
+        const isExternal = categoryId === 'external_storage';
+        
+        const filteredItems = diskItems
+          .filter(item => {
+            if (isExternal) {
+              return item.type === 'external' || item.subtype === 'external';
+            } else {
+              return item.type === 'internal' || !item.type;
+            }
+          })
+          .map(item => ({
+            ...item,
+            id: `${categoryId}-${item.id}`,
+            type: 'storage',
+            subtype: isExternal ? 'external' : 'block',
+            description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
+          }));
+          
+        if (filteredItems.length > 0) {
+          console.log(`[PriceService] Added ${filteredItems.length} items from disk to ${categoryId}`);
+          allData[categoryId].items = filteredItems;
+        }
+      }
+      
       return {
         ...allData[categoryId],
         items: allData[categoryId].items || []
@@ -121,6 +154,49 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
         ...allData.storage,
         items: allData.storage.items || []
       };
+    }
+    
+    // Se for storage ou external_storage e não encontramos nada, criar uma categoria básica
+    if (normalizedCategoryId === 'storage' || normalizedCategoryId === 'external_storage') {
+      console.log(`[PriceService] Creating base category for ${categoryId}`);
+      
+      const newCategory: PriceCategory = {
+        id: categoryId,
+        name: categoryId === 'storage' ? 'Armazenamento' : 'Storage Externo',
+        items: []
+      };
+      
+      // Tentar copiar itens do disk se disponível
+      if (allData.disk?.items?.length > 0) {
+        const diskItems = allData.disk.items;
+        const isExternal = categoryId === 'external_storage';
+        
+        const filteredItems = diskItems
+          .filter(item => {
+            if (isExternal) {
+              return item.type === 'external' || item.subtype === 'external';
+            } else {
+              return item.type === 'internal' || !item.type;
+            }
+          })
+          .map(item => ({
+            ...item,
+            id: `${categoryId}-${item.id}`,
+            type: 'storage',
+            subtype: isExternal ? 'external' : 'block',
+            description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
+          }));
+          
+        if (filteredItems.length > 0) {
+          console.log(`[PriceService] Added ${filteredItems.length} items from disk to new ${categoryId} category`);
+          newCategory.items = filteredItems;
+          
+          // Atualizar allData para futuras referências
+          allData[categoryId] = newCategory;
+        }
+      }
+      
+      return newCategory;
     }
     
     console.warn(`[PriceService] Category ${categoryId} not found after all search attempts`);

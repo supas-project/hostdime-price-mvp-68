@@ -23,6 +23,13 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
       } else if (categoryId.toLowerCase() === 'external_storage') {
         console.log('[PriceService] Trying to find item in storage instead');
         return getItem('storage', itemId);
+      } else if (categoryId.toLowerCase() === 'disk') {
+        // Tentar buscar em storage e external_storage
+        console.log('[PriceService] Trying to find disk item in storage categories');
+        const storageItem = await getItem('storage', itemId);
+        if (storageItem) return storageItem;
+        
+        return getItem('external_storage', itemId);
       }
       
       const allData = await getAllData();
@@ -59,6 +66,25 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
       if (category.items.length > 0) {
         console.log(`[PriceService] Available item IDs in ${categoryId}: ${category.items.map(i => i.id).join(', ')}`);
       }
+      
+      // Se estamos buscando em storage/external_storage, tentar em disk como fallback
+      if (categoryId === 'storage' || categoryId === 'external_storage') {
+        console.log(`[PriceService] Trying to find ${itemId} in disk category as fallback`);
+        const diskItem = await getItem('disk', itemId);
+        if (diskItem) {
+          // Adaptar o item de disco para parecer com item de storage
+          const storageItem: PriceItem = {
+            ...diskItem,
+            id: `${categoryId}-${diskItem.id}`,
+            type: 'storage',
+            subtype: categoryId === 'external_storage' ? 'external' : 'block',
+            description: diskItem.description || `${diskItem.name} - ${categoryId === 'external_storage' ? 'Storage externo' : 'Armazenamento'}`
+          };
+          
+          console.log(`[PriceService] Successfully adapted disk item to ${categoryId} format`);
+          return storageItem;
+        }
+      }
     }
     
     return item || null;
@@ -88,6 +114,39 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
       } else if (categoryId.toLowerCase() === 'external_storage') {
         console.log('[PriceService] Trying to find items in storage instead');
         return getCategoryItems('storage');
+      }
+      
+      // Para storage e external_storage, tentar criar itens a partir da categoria disk
+      if (categoryId === 'storage' || categoryId === 'external_storage') {
+        console.log(`[PriceService] Trying to create ${categoryId} items from disk category`);
+        
+        const allData = await getAllData();
+        const diskItems = allData.disk?.items || [];
+        
+        if (diskItems.length > 0) {
+          const isExternal = categoryId === 'external_storage';
+          
+          const filteredItems = diskItems
+            .filter(item => {
+              if (isExternal) {
+                return item.type === 'external' || item.subtype === 'external';
+              } else {
+                return item.type === 'internal' || !item.type;
+              }
+            })
+            .map(item => ({
+              ...item,
+              id: `${categoryId}-${item.id}`,
+              type: 'storage',
+              subtype: isExternal ? 'external' : 'block',
+              description: item.description || `${item.name} - ${isExternal ? 'Storage externo' : 'Armazenamento'}`
+            }));
+            
+          if (filteredItems.length > 0) {
+            console.log(`[PriceService] Created ${filteredItems.length} ${categoryId} items from disk`);
+            return filteredItems;
+          }
+        }
       }
       
       const allData = await getAllData();

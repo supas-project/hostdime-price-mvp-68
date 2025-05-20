@@ -6,6 +6,49 @@ import { storageData } from '@/data/storage-pricing';
 import { toast } from "@/utils/toast-utils";
 
 /**
+ * Tenta obter os dados de armazenamento diretamente do disco se necessário
+ * Esta é uma medida de emergência para casos em que os dados não estão nas categorias corretas
+ */
+async function tryGetStorageItemsFromDisk(): Promise<StorageType[]> {
+  try {
+    console.log('[tryGetStorageItemsFromDisk] Tentando obter dados de armazenamento do disco');
+    
+    // Obter itens da categoria 'disk'
+    const diskItems = await PriceService.getCategoryItems('disk');
+    
+    if (!diskItems || diskItems.length === 0) {
+      console.log('[tryGetStorageItemsFromDisk] Sem itens de disco disponíveis');
+      return [];
+    }
+    
+    console.log(`[tryGetStorageItemsFromDisk] Encontrados ${diskItems.length} itens de disco`);
+    
+    // Converter itens de disco para o formato StorageType
+    const storageTypes = diskItems.map(item => {
+      try {
+        // Modificar o item para parecer com um item de armazenamento
+        const storageItem = {
+          ...item,
+          type: item.type || 'storage',
+          subtype: item.subtype || 'block'
+        };
+        
+        return mapPriceItemToStorageType(storageItem);
+      } catch (err) {
+        console.error(`[tryGetStorageItemsFromDisk] Erro ao mapear item ${item.id}:`, err);
+        return null;
+      }
+    }).filter(Boolean);
+    
+    console.log(`[tryGetStorageItemsFromDisk] Convertidos ${storageTypes.length} itens para StorageType`);
+    return storageTypes;
+  } catch (error) {
+    console.error('[tryGetStorageItemsFromDisk] Erro ao obter itens de disco:', error);
+    return [];
+  }
+}
+
+/**
  * Loads storage types from the price service or falls back to static data
  * @returns A promise that resolves to an array of storage types
  */
@@ -108,6 +151,17 @@ export async function loadStorageTypes(): Promise<StorageType[]> {
         const existingIds = new Set(storageItems.map(item => item.id));
         const newItems = allData.storage.items.filter(item => !existingIds.has(item.id));
         storageItems.push(...newItems);
+      }
+    }
+    
+    // Se ainda não encontrou itens, tente obtê-los da categoria 'disk' como último recurso
+    if (storageItems.length === 0) {
+      console.log('[loadStorageTypes] No storage items found in standard categories, trying disk category');
+      const diskStorageItems = await tryGetStorageItemsFromDisk();
+      
+      if (diskStorageItems.length > 0) {
+        console.log(`[loadStorageTypes] Successfully converted ${diskStorageItems.length} disk items to storage types`);
+        return diskStorageItems;
       }
     }
     
