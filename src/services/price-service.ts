@@ -1,20 +1,20 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import {
-  addCategory as addCategoryOperation,
-  updateCategory as updateCategoryOperation,
-  deleteCategory as deleteCategoryOperation,
-  getCategory as getCategoryOperation,
-} from './price/operations/category-operations';
-import { 
-  checkForDataConflicts as checkForDataConflictsOperation,
-  forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation 
-} from './price/operations/data-sync';
-import { getDiskOptions as getDiskOptionsOperation } from './price/operations/data-retrieval';
-import { addItem, updateItem, deleteItem } from './price/operations/item-operations';
-import { getItem } from './price/operations/item-operations/get-item';
-import { getAllData, saveData } from './price/operations/data-persistence';
-import { importData } from './price/operations/data-import';
+  addCategory,
+  updateCategory,
+  deleteCategory,
+  getCategory,
+  checkForDataConflicts,
+  forceRefreshFromLatestSource,
+  getDiskOptions,
+  addItem,
+  updateItem,
+  deleteItem,
+  getItem,
+  getAllData,
+  saveData,
+  importData
+} from './price/operations';
 import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
 import { PriceData } from '@/types/pricing';
 import { PricedDiskOption } from '@/types/storage';
@@ -57,7 +57,7 @@ export const PriceService = {
    * @param category The category to add
    */
   addCategory: async (category: { id: string; name: string }): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await addCategoryOperation(category);
+    return await addCategory(category);
   },
 
   /**
@@ -66,7 +66,7 @@ export const PriceService = {
    * @param updates The updates to apply
    */
   updateCategory: async (categoryId: string, updates: Partial<{ id: string; name: string }>): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await updateCategoryOperation(categoryId, updates);
+    return await updateCategory(categoryId, updates);
   },
 
   /**
@@ -74,7 +74,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to delete
    */
   deleteCategory: async (categoryId: string): Promise<void> => {
-    await deleteCategoryOperation(categoryId);
+    await deleteCategory(categoryId);
     // Return void to match the expected return type
   },
 
@@ -112,7 +112,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to get
    */
   getCategory: async (categoryId: string): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await getCategoryOperation(categoryId);
+    return await getCategory(categoryId);
   },
 
   /**
@@ -143,21 +143,21 @@ export const PriceService = {
    * Checks for data conflicts
    */
   checkForDataConflicts: async (): Promise<boolean> => {
-    return await checkForDataConflictsOperation();
+    return await checkForDataConflicts();
   },
 
   /**
    * Forces a refresh from the latest source
    */
   forceRefreshFromLatestSource: async (): Promise<PriceData | null> => {
-    return await forceRefreshFromLatestSourceOperation();
+    return await forceRefreshFromLatestSource();
   },
   
   /**
    * Gets disk options from the price data
    */
   getDiskOptions: async (): Promise<PricedDiskOption[]> => {
-    return await getDiskOptionsOperation();
+    return await getDiskOptions();
   },
 
   /**
