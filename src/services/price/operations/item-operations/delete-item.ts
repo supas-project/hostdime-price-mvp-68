@@ -1,5 +1,6 @@
 
-import { getAllData, saveData } from '../../operations';
+import { saveData } from '../data-persistence';
+import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -8,7 +9,7 @@ import { notifyListeners } from '../../listeners';
 export async function deleteItem(categoryId: string, itemId: string): Promise<boolean> {
   try {
     // Get all data
-    const allData = await getAllData();
+    const allData = await PriceService.getAllData();
     
     // Find the category
     if (!allData[categoryId]) {
@@ -58,6 +59,11 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
       
       localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
       console.log(`[deleteItem] Item ${itemId} (${itemName}) marked as deleted in localStorage`);
+      
+      // Dispatch event to notify components of deletion
+      window.dispatchEvent(new CustomEvent('item-deleted', {
+        detail: { categoryId, itemId }
+      }));
     } catch (storageErr) {
       console.warn("Could not update localStorage with deleted item", storageErr);
     }

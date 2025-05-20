@@ -8,6 +8,7 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OSContentProps {
   // Make options optional by adding the ? modifier
@@ -39,7 +40,7 @@ export function OSContent({
     // Try to load data from the price service, but don't show errors if not authenticated
     const updateFromPriceTable = async () => {
       try {
-        const { data: session } = await PriceService.supabase.auth.getSession();
+        const { data: session } = await supabase.auth.getSession();
         if (!session.session) {
           console.log("User not authenticated, skipping OS data refresh");
           return;

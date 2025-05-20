@@ -36,32 +36,37 @@ export function DiskCapacitySelector({
   });
 
   if (isLoading) {
-    return <Skeleton className="h-10 w-full" />;
+    return (
+      <div className="w-full">
+        <label className="block text-sm font-medium mb-2 text-white">Capacidade</label>
+        <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
+      </div>
+    );
   }
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium mb-2">
-        Capacidade do Disco
+      <label className="block text-sm font-medium mb-2 text-white">
+        Capacidade
       </label>
       <Select
         value={selectedCapacity}
         onValueChange={onCapacitySelect}
         disabled={disabled || uniqueCapacities.length === 0}
       >
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white transition-colors hover:border-[#f58220] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4 min-h-[40px] touch-target">
           <SelectValue placeholder="Selecione a capacidade" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a]">
           {uniqueCapacities.length > 0 ? (
             uniqueCapacities.map((capacity) => (
-              <SelectItem key={capacity} value={capacity}>
+              <SelectItem key={capacity} value={capacity} className="hover:bg-[#2a2a2a] py-2">
                 {capacity}
               </SelectItem>
             ))
           ) : (
-            <SelectItem value="none" disabled>
-              Nenhuma capacidade disponível
+            <SelectItem value="none" disabled className="text-gray-400">
+              {disabled ? "Selecione o tipo de disco primeiro" : "Nenhuma capacidade disponível"}
             </SelectItem>
           )}
         </SelectContent>

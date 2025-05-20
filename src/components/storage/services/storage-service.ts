@@ -4,6 +4,7 @@ import { StorageType } from '../types/storage-types';
 import { mapPriceItemToStorageType, mapStaticDataToStorageType } from '../utils/storage-mapper';
 import { storageData } from '@/data/storage-pricing';
 import { toast } from "@/utils/toast-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Loads storage types from the price service or falls back to static data
@@ -11,8 +12,8 @@ import { toast } from "@/utils/toast-utils";
  */
 export async function loadStorageTypes(): Promise<StorageType[]> {
   try {
-    // First check if user is authenticated
-    const { data: session } = await PriceService.supabase.auth.getSession();
+    // First check if user is authenticated - use imported supabase client
+    const { data: session } = await supabase.auth.getSession();
     const isAuthenticated = !!session.session;
     
     // If not authenticated, fall back to static data immediately
