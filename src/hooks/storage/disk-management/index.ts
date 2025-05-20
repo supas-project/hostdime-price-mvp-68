@@ -77,5 +77,5 @@ export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps = {})
   };
 }
 
-// Re-export the original function for backward compatibility
-export { useDiskManagement } from './useDiskManagementLegacy';
+// Re-export the legacy function with a different name to avoid conflicts
+export { useDiskManagement as useDiskManagementOriginal } from './useDiskManagementLegacy';
