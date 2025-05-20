@@ -113,6 +113,9 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
       // Notify listeners with the new data
       notifyListeners(typedData);
       
+      // Dispatch global events for components to update
+      window.dispatchEvent(new CustomEvent('data-refreshed'));
+      
       console.log("[PriceService] Price data refreshed successfully");
       return typedData;
     } else {

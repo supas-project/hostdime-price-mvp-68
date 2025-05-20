@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from '../constants';
@@ -29,7 +30,12 @@ export async function getAllData(): Promise<PriceData> {
       return {};
     }
 
-    console.log("[PriceService] Price data retrieved successfully");
+    console.log("[PriceService] Price data retrieved successfully with categories:", 
+      Object.keys(priceData.data).join(', '));
+    
+    // Save the current time as last fetch time to track conflicts
+    localStorage.setItem('price_data_last_fetch', new Date().toISOString());
+    
     return priceData.data as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
@@ -185,6 +191,11 @@ export async function saveData(data: PriceData): Promise<void> {
     
     // Track deleted categories and items for consistent deletion handling
     syncDeletedItemsWithLocalStorage(data);
+    
+    // Fire global events to notify other components
+    window.dispatchEvent(new CustomEvent('data-refreshed'));
+    window.dispatchEvent(new CustomEvent('server-data-updated'));
+    window.dispatchEvent(new CustomEvent('price-table-data-updated'));
     
   } catch (err: any) {
     console.error("[PriceService] Erro em saveData:", err);

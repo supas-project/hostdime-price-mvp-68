@@ -106,8 +106,9 @@ export function useItemEdit(
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
 
-      // Trigger storage data updated event for synchronized components
+      // Notify both components about the data change
       window.dispatchEvent(new CustomEvent('storage-data-updated'));
+      window.dispatchEvent(new CustomEvent('server-data-updated'));
       
       // Get category for notification
       const category = await PriceService.getCategory(activeTab);
