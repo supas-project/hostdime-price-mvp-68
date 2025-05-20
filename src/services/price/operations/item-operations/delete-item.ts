@@ -34,7 +34,8 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
     // Save the updated data
     await saveData(updatedData);
 
-    notifyListeners();
+    // Notificar listeners após a exclusão
+    notifyListeners(updatedData);
     return true;
   } catch (err: any) {
     console.error(`Error in deleteItem for ${itemId} from ${categoryId}:`, err);

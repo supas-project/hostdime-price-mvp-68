@@ -32,32 +32,6 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   // Load disk data using the data loader hook
   const { availableDisks, isLoading } = useDiskDataLoader(selectedDiskType);
 
-  // Check for saved disk data in the database on initial load
-  useEffect(() => {
-    const loadSelectedDisksFromDatabase = async () => {
-      try {
-        // Check if we already have disks in local storage
-        const localDisks = localStorage.getItem('selected_disks');
-        if (localDisks && JSON.parse(localDisks).length > 0) {
-          return; // Already have local data, no need to load from database
-        }
-
-        console.log("Checking for previously saved disk selections in database");
-        const data = await PriceService.getAllData();
-        
-        if (data && data.discos_internos && data.discos_internos.items && data.discos_internos.items.length > 0) {
-          console.log("Found saved disk selections in database:", data.discos_internos.items.length);
-          
-          // TODO: If needed, convert and restore disk selections from database
-        }
-      } catch (error) {
-        console.error("Error loading disk selections from database:", error);
-      }
-    };
-    
-    loadSelectedDisksFromDatabase();
-  }, []);
-
   // Add visibility state handler for leaving/returning to page
   useEffect(() => {
     const handleVisibilityChange = () => {

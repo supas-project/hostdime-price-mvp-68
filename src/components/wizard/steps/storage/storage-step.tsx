@@ -11,11 +11,42 @@ interface StorageStepProps {
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
+    // Normalize capacity to ensure it has a unit
+    const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    
+    // Only proceed if disk is valid
+    if (!disk || !disk.id) {
+      console.error("Invalid disk selected:", disk);
+      return;
+    }
+    
     // Create consistent ID without quantity to prevent duplicates
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
     
-    // Normalize capacity to ensure it has a unit
-    const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    // In case of removal (quantity = 0)
+    if (quantity === 0) {
+      const removeDiskOption: ComponentOption = {
+        id: diskId,
+        type: "Armazenamento",
+        subtype: "Disco Interno",
+        name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
+        description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
+        price: 0, // Zero price for removal
+        metadata: {
+          quantity: 0,
+          features: [`Tipo: ${disk.type}`],
+          unitPrice: disk.price // Store original unit price
+        },
+        specs: [
+          `Tipo: ${disk.type.toUpperCase()}`,
+          `Capacidade: ${normalizedCapacity}`,
+          `Quantidade: 0`
+        ]
+      };
+      
+      onSelectStorageItem(removeDiskOption, 'internal');
+      return;
+    }
     
     const storageOption: ComponentOption = {
       id: diskId,
@@ -37,7 +68,12 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     };
     
     onSelectStorageItem(storageOption, 'internal');
-    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    
+    if (quantity > 0) {
+      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    } else {
+      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} removido`);
+    }
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {

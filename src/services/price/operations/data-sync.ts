@@ -65,6 +65,19 @@ export async function forceRefreshFromLatestSource(): Promise<PriceData | null> 
   try {
     console.log("[PriceService] Forcing refresh of price data from latest source");
     
+    // Verify user is authenticated before fetching data
+    const { data: session, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("[PriceService] Authentication error:", sessionError);
+      return null;
+    }
+    
+    if (!session.session) {
+      console.error("[PriceService] No active session found");
+      return null;
+    }
+    
     // Re-fetch all data from the source
     const { data: priceData, error } = await supabase
       .from(PRICE_DATA_TABLE)
