@@ -15,37 +15,37 @@ export function useDataLoader(
     setIsLoading(true);
     try {
       if (!isAuthenticated) {
-        console.log("User not authenticated, not loading price data");
+        console.log("Usuário não autenticado, não carregando dados de preço");
         setIsLoading(false);
         return;
       }
 
-      console.log("Loading price data for authenticated user");
-      // Always fetch fresh data from the database
+      console.log("Carregando dados de preço para usuário autenticado");
+      // Sempre buscar dados atualizados do banco de dados
       const data = await PriceService.getAllData();
       
       if (!data) {
-        console.warn("No price data returned from service");
+        console.warn("Nenhum dado de preço retornado do serviço");
         setIsLoading(false);
         return;
       }
       
-      console.log("Price data loaded successfully with categories:", Object.keys(data).join(", "));
+      console.log("Dados de preço carregados com sucesso com categorias:", Object.keys(data).join(", "));
       setPriceData(data);
       
       // After loading price data, ensure server categories are initialized
       // This ensures that the wizard components are properly synchronized
       try {
-        console.log("Initializing server categories from price data");
+        console.log("Inicializando categorias de servidor a partir dos dados de preço");
         await initializeServerCategories();
-        console.log("Server categories initialized successfully");
+        console.log("Categorias de servidor inicializadas com sucesso");
       } catch (initError) {
-        console.error("Error initializing server categories:", initError);
+        console.error("Erro ao inicializar categorias de servidor:", initError);
       }
     } catch (error) {
-      console.error('Error loading price data:', error);
-      toast.error("Error loading price data", {
-        description: "Please try again or check if you are authenticated."
+      console.error('Erro ao carregar dados de preço:', error);
+      toast.error("Erro ao carregar dados de preço", {
+        description: "Por favor, tente novamente ou verifique se você está autenticado."
       });
     } finally {
       setIsLoading(false);
@@ -55,28 +55,28 @@ export function useDataLoader(
   // Initial data loading
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("User authenticated, loading initial price data");
-      // Clear any cached state before loading fresh data
+      console.log("Usuário autenticado, carregando dados de preço iniciais");
+      // Limpar qualquer estado em cache antes de carregar dados novos
       setPriceData(null);
       loadPriceData();
   
-      // Add listener for data changes
-      PriceService.addDataChangeListener((newData) => {
-        console.log('Price data updated:', newData ? Object.keys(newData).length : 0, 'categories');
-        if (newData) {
-          setPriceData(newData);
-        }
-      });
+      // Adicionar listener para mudanças de dados
+      const listener = () => {
+        console.log('Dados de preço atualizados, recarregando dados...');
+        loadPriceData();
+      };
+      
+      PriceService.addDataChangeListener(listener);
+      
+      // Cleanup
+      return () => {
+        // Remover listener ao desmontar
+        PriceService.removeDataChangeListener();
+      };
     } else {
       setPriceData(null);
-      console.log("User not authenticated, clearing price data");
+      console.log("Usuário não autenticado, limpando dados de preço");
     }
-    
-    // Cleanup
-    return () => {
-      // Remove listener when unmounted
-      PriceService.removeDataChangeListener();
-    };
   }, [isAuthenticated, setPriceData]);
 
   return {

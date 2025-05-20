@@ -123,19 +123,14 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Register listener for data updates
   useEffect(() => {
-    // Define the update function
-    const updateDisks = async () => {
+    // Define the update function that doesn't take parameters
+    const listener = () => {
       if (updateDisksRef.current) {
         updateDisksRef.current();
       }
     };
     
-    // Register for price table changes
-    const listener = async () => {
-      updateDisks();
-    };
-    
-    // The issue is here - we need to pass the listener without arguments to addDataChangeListener
+    // Register for price table changes - pass listener without parameters
     PriceService.addDataChangeListener(listener);
     
     // Clean up listener when component unmounts
@@ -224,7 +219,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     </div>
   );
   
-  // Define the missing handler functions
+  // Define the handler functions
   function handleCapacitySelect(capacity: string) {
     setSelectedCapacity(capacity);
     const disk = availableDisks.find(d => d.capacity === capacity);

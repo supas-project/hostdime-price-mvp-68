@@ -1,38 +1,38 @@
 
 import { PriceData } from '@/types/pricing';
 
-type DataChangeListener = (data: PriceData | null) => void;
+type DataChangeListener = () => void;
 
-// Singleton for global listener management
+// Singleton para gerenciamento global de listeners
 let currentListener: DataChangeListener | null = null;
 
 /**
- * Adds a listener for price data changes
+ * Adiciona um listener para mudanças nos dados de preço
  */
 export function addDataChangeListener(listener: DataChangeListener): void {
   if (currentListener) {
-    console.warn("[PriceService] Replacing existing data change listener");
+    console.warn("[PriceService] Substituindo listener de mudança de dados existente");
   }
   currentListener = listener;
-  console.log("[PriceService] Data change listener added");
+  console.log("[PriceService] Listener de mudança de dados adicionado");
 }
 
 /**
- * Removes the current data change listener
+ * Remove o listener atual de mudança de dados
  */
 export function removeDataChangeListener(): void {
   currentListener = null;
-  console.log("[PriceService] Data change listener removed");
+  console.log("[PriceService] Listener de mudança de dados removido");
 }
 
 /**
- * Notifies any registered listener about data changes
+ * Notifica qualquer listener registrado sobre mudanças nos dados
  */
 export function notifyListeners(data: PriceData | null = null): void {
   if (currentListener) {
-    console.log("[PriceService] Notifying data change listener");
-    currentListener(data);
+    console.log("[PriceService] Notificando listener de mudança de dados");
+    currentListener();
   } else {
-    console.log("[PriceService] No data change listener registered, notification skipped");
+    console.log("[PriceService] Nenhum listener de mudança de dados registrado, notificação ignorada");
   }
 }
