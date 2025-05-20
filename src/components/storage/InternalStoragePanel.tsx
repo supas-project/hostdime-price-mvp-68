@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -72,10 +71,10 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       
       if (!allData || !allData.disk) {
         console.warn("No disk category found in database, creating one to persist selections");
-        await PriceService.addCategory({
+        // Fix: Don't directly assign 'items' property to Omit<PriceCategory, "items"> type
+        const newCategory = await PriceService.addCategory({
           id: 'disk',
           name: 'Discos',
-          items: []
         });
         
         // Refresh data after creating the category
