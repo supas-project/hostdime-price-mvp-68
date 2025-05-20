@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -83,11 +82,8 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Save selections whenever they change
   useEffect(() => {
-    // Ensure we're working with strictly boolean values
-    const initialLoadComplete = isInitialLoad === false;
-    const dataHasRefreshed = isDataRefreshed === true;
-    
-    if (initialLoadComplete && dataHasRefreshed && selectedDisks.length > 0) {
+    // Work directly with boolean state variables, no conversion needed
+    if (isInitialLoad === false && isDataRefreshed === true && selectedDisks.length > 0) {
       // Store selections in localStorage immediately
       localStorage.setItem('selectedDisks', JSON.stringify(selectedDisks));
       
