@@ -7,12 +7,23 @@ import { forceRefreshFromLatestSource as refreshFromSource } from './data-retrie
 export { getDataFromPersistence, refreshFromSource };
 
 // Re-export all functionality from individual modules
-export * from './data-persistence';
+// except those we've explicitly renamed above
 export * from './data-import';
-export * from './data-retrieval';
 export * from './data-sync';
 export * from './category-operations';
 export * from './item-operations';
+
+// Explicitly re-export needed functions from data-persistence and data-retrieval
+// but exclude those we've already renamed
+export { 
+  saveData,
+  // Don't re-export getAllData here as it's already exported as getDataFromPersistence
+} from './data-persistence';
+
+export {
+  getDiskOptions,
+  // Don't re-export forceRefreshFromLatestSource as it's already exported as refreshFromSource
+} from './data-retrieval';
 
 // Function to check for data conflicts
 const checkForDataConflicts = async (): Promise<boolean> => {
