@@ -1,6 +1,7 @@
 
 import { PriceItem } from '@/types/pricing';
-import { getAllData, saveData } from '../../operations';
+import { saveData } from '../../operations/data-persistence';
+import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -11,7 +12,7 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
     console.log(`[updateItem] Updating item ${itemId} in category ${categoryId} with:`, updates);
     
     // Get all data
-    const allData = await getAllData();
+    const allData = await PriceService.getAllData();
     
     // Find the category
     if (!allData[categoryId]) {

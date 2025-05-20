@@ -1,5 +1,6 @@
 
-import { getAllData, saveData } from '../../operations';
+import { saveData } from '../../operations/data-persistence';
+import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -8,7 +9,7 @@ import { notifyListeners } from '../../listeners';
 export async function deleteItem(categoryId: string, itemId: string): Promise<boolean> {
   try {
     // Get all data
-    const allData = await getAllData();
+    const allData = await PriceService.getAllData();
     
     // Find the category
     if (!allData[categoryId]) {

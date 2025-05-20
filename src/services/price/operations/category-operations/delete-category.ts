@@ -1,6 +1,6 @@
 
-import { saveData } from '../../operations';
-import { getAllData } from '../../operations';
+import { saveData } from '../../operations/data-persistence';
+import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -11,7 +11,7 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
     console.log(`[PriceService] Attempting to delete category ${categoryId}`);
     
     // Get all existing data
-    const allData = await getAllData();
+    const allData = await PriceService.getAllData();
     
     // Check if the category exists
     if (!allData[categoryId]) {

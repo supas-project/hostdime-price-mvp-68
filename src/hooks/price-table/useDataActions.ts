@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { toast } from "@/utils/toast-utils";
@@ -7,8 +8,62 @@ import { useDataSync } from "@/hooks/useDataSync";
 export function useDataActions(setPriceData: (data: any) => void) {
   const [isExporting, setIsExporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasConflicts, setHasConflicts] = useState(false);
   const { isAuthenticated, isAdmin } = useAuth();
   const { registerAdminChange } = useDataSync();
+  
+  // Add function to check for conflicts
+  const checkForConflicts = async (): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+    
+    try {
+      const conflicts = await PriceService.checkForDataConflicts();
+      setHasConflicts(conflicts);
+      return conflicts;
+    } catch (error) {
+      console.error("Error checking for conflicts:", error);
+      return false;
+    }
+  };
+  
+  // Add function to refresh data
+  const handleRefreshData = async (): Promise<void> => {
+    if (!isAuthenticated) {
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para atualizar dados."
+      });
+      return;
+    }
+    
+    try {
+      setIsRefreshing(true);
+      
+      // Force refresh from the latest source
+      const updatedData = await PriceService.forceRefreshFromLatestSource();
+      
+      if (updatedData) {
+        setPriceData(updatedData);
+        
+        // Reset conflicts flag
+        setHasConflicts(false);
+        
+        toast.success("Dados atualizados", {
+          description: "Os dados foram atualizados com sucesso."
+        });
+        
+        // Dispatch an event to notify other components
+        window.dispatchEvent(new CustomEvent('data-refreshed'));
+      }
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast.error("Erro ao atualizar dados", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   const handleExportData = async () => {
     if (!isAuthenticated) {
@@ -122,7 +177,11 @@ export function useDataActions(setPriceData: (data: any) => void) {
   return {
     isExporting,
     isResetting,
+    isRefreshing,
+    hasConflicts,
     handleExportData,
-    handleResetData
+    handleResetData,
+    handleRefreshData,
+    checkForConflicts
   };
 }

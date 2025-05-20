@@ -71,7 +71,8 @@ export const PriceService = {
    * @param categoryId The ID of the category to delete
    */
   deleteCategory: async (categoryId: string): Promise<void> => {
-    await deleteCategoryOperation(categoryId);
+    const success = await deleteCategoryOperation(categoryId);
+    // Return void to match the expected return type
   },
 
   /**
@@ -99,7 +100,8 @@ export const PriceService = {
    * @param itemId The ID of the item to delete
    */
   deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
-    await deleteItem(categoryId, itemId);
+    const success = await deleteItem(categoryId, itemId);
+    // Return void to match the expected return type
   },
 
   /**
@@ -145,7 +147,8 @@ export const PriceService = {
    * Forces a refresh from the latest source
    */
   forceRefreshFromLatestSource: async (): Promise<PriceData | null> => {
-    return await forceRefreshFromLatestSourceOperation();
+    const result = await forceRefreshFromLatestSourceOperation();
+    return result;
   },
   
   /**

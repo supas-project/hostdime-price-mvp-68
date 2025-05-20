@@ -6,10 +6,9 @@ export * from './operations/data-persistence';
 export * from './operations/data-import';
 // Export from data-retrieval without the conflicting functions
 export { getDiskOptions } from './operations/data-retrieval';
-// Explicitly re-export from data-sync to avoid conflicts
+// Explicitly re-export from data-sync and data-reset to avoid conflicts
 export { 
-  // Don't re-export checkForDataConflicts and forceRefreshFromLatestSource here
-  // as they're already exported from data-reset
-} from './operations/data-sync';
-// Export from data-reset
-export * from './operations/data-reset';
+  // Only export these from one source to avoid conflicts
+  checkForDataConflicts,
+  forceRefreshFromLatestSource 
+} from './operations/data-reset';
