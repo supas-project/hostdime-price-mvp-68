@@ -65,7 +65,8 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
           },
           description: item.description || `${item.type.toUpperCase()} ${capacity}`,
           iops: iops,
-          throughput: metadata.throughput || 'N/A'
+          throughput: metadata.throughput || 'N/A',
+          raid: Boolean(metadata.raid)
         };
       });
     

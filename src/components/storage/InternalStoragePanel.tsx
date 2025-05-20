@@ -196,7 +196,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         // Update selected disks
         setSelectedDisks(diskItems.map(disk => ({
           disk,
-          quantity: item.metadata?.quantity || 1
+          quantity: disk.metadata?.quantity || 1
         })));
       }
     } catch (error) {

@@ -8,8 +8,8 @@ export * from './category-operations';
 export * from './item-operations';
 
 // Import functions directly from their respective modules
-import { forceRefreshFromLatestSource } from './data-sync';
-import { getAllData } from './data-persistence';
+import { forceRefreshFromLatestSource as refreshFromLatestSource } from './data-sync';
+import { getAllData as getData } from './data-persistence';
 
 // Function to check for data conflicts
 const checkForDataConflicts = async (): Promise<boolean> => {
@@ -33,11 +33,11 @@ export async function ensureDataConsistency() {
     if (hasConflicts) {
       console.log("[Operations] Data conflicts detected, refreshing from latest source");
       // If conflicts, refresh data to make sure we have the latest
-      return await forceRefreshFromLatestSource();
+      return await refreshFromLatestSource();
     }
     
     // No conflicts, get current data
-    const currentData = await getAllData();
+    const currentData = await getData();
     return currentData;
   } catch (error) {
     console.error("[Operations] Error ensuring data consistency:", error);

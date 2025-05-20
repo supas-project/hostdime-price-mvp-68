@@ -26,7 +26,7 @@ export interface PriceItem {
     iops?: string;
     throughput?: string;
     recommended?: string[];
-    raid?: boolean; // Add the missing raid property
+    raid?: boolean | RaidMetadata; // Alterado para aceitar tanto boolean quanto RaidMetadata
   };
 }
 

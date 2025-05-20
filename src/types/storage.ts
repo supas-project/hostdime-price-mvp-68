@@ -24,8 +24,11 @@ export interface DiskOption {
 export interface PricedDiskOption extends DiskOption {
   type: "nvme" | "ssd" | "hdd";
   price: number;
-  name?: string; // Added optional name property
-  description?: string; // Added optional description property
+  name?: string; 
+  description?: string;
+  raid?: boolean; // Adicionada a propriedade raid como boolean
+  iops?: string;
+  throughput?: string;
 }
 
 // Adding the StorageTier interface that was missing
