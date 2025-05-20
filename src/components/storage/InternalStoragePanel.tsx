@@ -82,8 +82,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Save selections whenever they change
   useEffect(() => {
-    // Using direct boolean comparison
-    if (isInitialLoad === false && isDataRefreshed === true && selectedDisks.length > 0) {
+    // Ensure we have boolean values with strict comparison
+    const initialLoadComplete = isInitialLoad === false;
+    const dataHasRefreshed = isDataRefreshed === true;
+    
+    if (initialLoadComplete && dataHasRefreshed && selectedDisks.length > 0) {
       // Store selections in localStorage immediately
       localStorage.setItem('selectedDisks', JSON.stringify(selectedDisks));
       
