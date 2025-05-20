@@ -39,7 +39,11 @@ export function useItemDelete(
       const category = await PriceService.getCategory(activeTab);
       const itemToDelete = category?.items.find(item => item.id === itemId);
       
+      // Delete the item
       await PriceService.deleteItem(activeTab, itemId);
+      
+      // Ensure data is saved to the database
+      await PriceService.saveData(await PriceService.getAllData());
       
       // Get fresh data
       const updatedData = await PriceService.getAllData();

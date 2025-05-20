@@ -21,6 +21,7 @@ export function useDataLoader(
       }
 
       console.log("Loading price data for authenticated user");
+      // Always fetch fresh data from the database
       const data = await PriceService.getAllData();
       
       if (!data) {
@@ -55,6 +56,8 @@ export function useDataLoader(
   useEffect(() => {
     if (isAuthenticated) {
       console.log("User authenticated, loading initial price data");
+      // Clear any cached state before loading fresh data
+      setPriceData(null);
       loadPriceData();
   
       // Add listener for data changes

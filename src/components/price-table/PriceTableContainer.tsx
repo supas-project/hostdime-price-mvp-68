@@ -56,12 +56,13 @@ export default function PriceTableContainer() {
     }
   }, [hasUpdates, handleRefreshData]);
 
-  // Ensure data is loaded when component mounts
+  // Ensure data is loaded when component mounts and when returning to this page
   useEffect(() => {
     async function initialize() {
       if (isAuthenticated) {
         try {
           console.log("Authenticated user, attempting to initialize data");
+          setIsInitialized(false);
           
           // Initialize data if needed
           await InitService.initializeData();
@@ -94,6 +95,20 @@ export default function PriceTableContainer() {
     }
     
     initialize();
+    
+    // Add this effect to refresh data when the user returns to this page
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && isInitialized) {
+        console.log("Page visibility changed to visible, refreshing data");
+        loadPriceData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isAuthenticated]);
 
   // Filter categories to remove contract category

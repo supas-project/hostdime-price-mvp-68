@@ -34,6 +34,9 @@ export function useCategoryAdd(setPriceData: (data: any) => void) {
       
       const newCategory = await PriceService.addCategory(categoryData);
       
+      // Ensure data is saved to the database
+      await PriceService.saveData(await PriceService.getAllData());
+      
       // Get the updated data after adding a category
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);

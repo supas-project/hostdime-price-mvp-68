@@ -60,6 +60,9 @@ export function useItemAdd(
       // Add item to service
       await PriceService.addItem(activeTab, itemData);
       
+      // Ensure data is saved to the database
+      await PriceService.saveData(await PriceService.getAllData());
+      
       // Reload data for consistency
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);

@@ -77,6 +77,9 @@ export function useItemEdit(
       // Update item using existing method
       await PriceService.updateItem(activeTab, itemId, updatedItemData);
       
+      // Ensure data is saved to the database
+      await PriceService.saveData(await PriceService.getAllData());
+      
       // Get fresh data
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);

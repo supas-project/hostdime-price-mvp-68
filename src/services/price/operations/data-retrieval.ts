@@ -46,6 +46,9 @@ export async function getAllData(): Promise<PriceData> {
       return {};
     }
     
+    // Update local cache timestamp to track when data was last fetched
+    localStorage.setItem('price_data_last_fetch', new Date().toISOString());
+    
     // Type assertion with proper cast - first to unknown, then to PriceData
     return jsonData as unknown as PriceData;
   } catch (err: any) {
