@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ComponentOption } from "@/data/server-components";
+import { ComponentOption } from "@/types/component";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,14 @@ interface ConnectivityOptionsProps {
   options: ComponentOption[];
   selectedItems: { [key: string]: { option: ComponentOption, quantity: number } };
   onUpdateItems: (items: { [key: string]: { option: ComponentOption, quantity: number } }) => void;
+}
+
+// Interface para os cabeçalhos de seção
+interface SectionHeader {
+  id: string;
+  name: string;
+  price: number;
+  isHeader: boolean;
 }
 
 export function ConnectivityOptions({ 
@@ -88,12 +96,12 @@ export function ConnectivityOptions({
   const otherOptions = options.filter(opt => opt.subtype !== 'porta' && opt.subtype !== 'ip');
   
   // Combinar opções para seletores, organizadas por tipo
-  const organizedOptions = [
-    ...(portOptions.length > 0 ? [{ id: 'port-header', name: '-- Velocidade de Porta --', price: 0, isHeader: true}] : []),
+  const organizedOptions: (ComponentOption | SectionHeader)[] = [
+    ...(portOptions.length > 0 ? [{ id: 'port-header', name: '-- Velocidade de Porta --', price: 0, isHeader: true } as SectionHeader] : []),
     ...portOptions,
-    ...(ipOptions.length > 0 ? [{ id: 'ip-header', name: '-- Blocos de IP --', price: 0, isHeader: true }] : []),
+    ...(ipOptions.length > 0 ? [{ id: 'ip-header', name: '-- Blocos de IP --', price: 0, isHeader: true } as SectionHeader] : []),
     ...ipOptions,
-    ...(otherOptions.length > 0 ? [{ id: 'other-header', name: '-- Outros --', price: 0, isHeader: true }] : []),
+    ...(otherOptions.length > 0 ? [{ id: 'other-header', name: '-- Outros --', price: 0, isHeader: true } as SectionHeader] : []),
     ...otherOptions
   ];
   
@@ -115,7 +123,7 @@ export function ConnectivityOptions({
             </SelectTrigger>
             <SelectContent>
               {organizedOptions.map((option) => (
-                option.isHeader ? (
+                'isHeader' in option ? (
                   <SelectItem key={option.id} value={option.id} disabled className="text-xs font-medium text-muted-foreground">
                     {option.name}
                   </SelectItem>
@@ -136,7 +144,7 @@ export function ConnectivityOptions({
             variant="outline"
             size="icon" 
             onClick={handleAddItem}
-            disabled={!selectedOption || organizedOptions.find(opt => opt.id === selectedOption)?.isHeader}
+            disabled={!selectedOption || (selectedOption && organizedOptions.find(opt => opt.id === selectedOption)?.isHeader === true)}
           >
             <Plus className="h-4 w-4" />
           </Button>

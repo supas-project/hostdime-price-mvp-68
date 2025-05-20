@@ -21,7 +21,8 @@ export interface ComponentOption {
   type: string;
   subtype?: string;
   isHardware?: boolean;
-  details?: string[]; // Add this field to fix the error
+  details?: string[];
+  isHeader?: boolean; // Adicionando a propriedade isHeader como opcional
   metadata?: {
     discount?: number;
     features?: string[];
