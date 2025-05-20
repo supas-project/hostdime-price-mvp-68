@@ -97,7 +97,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges]);
 
   // Show loading state or no disks message
-  const showLoadingOrNoDiskMessage = isLoading || (!availableDisks.length && selectedDiskType);
+  const showLoadingOrNoDiskMessage = isLoading || (!availableDisks.length && selectedDiskType !== undefined);
 
   return (
     <div className="space-y-6 animate-fade-in">
