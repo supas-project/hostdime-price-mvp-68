@@ -43,6 +43,18 @@ export function PriceTableContent({
   contractDuration
 }: PriceTableContentProps) {
   
+  // Debug para verificar os dados recebidos
+  console.log("PriceTableContent received categories:", Object.keys(priceData).join(", "));
+  
+  // Verificar se storage e external_storage existem
+  if (priceData.storage) {
+    console.log("Storage category has", priceData.storage.items?.length || 0, "items");
+  }
+  
+  if (priceData.external_storage) {
+    console.log("External storage category has", priceData.external_storage.items?.length || 0, "items");
+  }
+  
   if (Object.keys(priceData).length === 0) {
     return (
       <div className="p-6 text-center animate-fade-in">
@@ -57,6 +69,17 @@ export function PriceTableContent({
     );
   }
 
+  // Verificar se alguma categoria está selecionada e existe
+  if (activeTab && !priceData[activeTab]) {
+    console.log(`Active tab ${activeTab} não existe nas categorias disponíveis`);
+    // Se a categoria ativa não existir, selecionar a primeira
+    if (Object.keys(priceData).length > 0) {
+      const firstCategory = Object.keys(priceData)[0];
+      console.log(`Alterando para a primeira categoria: ${firstCategory}`);
+      setTimeout(() => setActiveTab(firstCategory), 0);
+    }
+  }
+
   return (
     <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
       <CategoryTabs
@@ -67,6 +90,12 @@ export function PriceTableContent({
 
       <div className="mt-4 space-y-3 animate-fade-in">
         {Object.values(priceData).map((category) => {
+          // Garantir que category.items seja um array
+          if (!Array.isArray(category.items)) {
+            console.warn(`Category ${category.id} items is not an array:`, category.items);
+            category.items = [];
+          }
+          
           const filteredItems = filterItems(category.items);
           const isCollapsed = collapsedCategories[category.id] || false;
           

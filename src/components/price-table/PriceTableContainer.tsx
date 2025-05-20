@@ -69,6 +69,23 @@ export default function PriceTableContainer() {
           // Then load price data
           await loadPriceData();
           
+          // Log all categories para debug
+          if (priceData) {
+            console.log("Available categories:", Object.keys(priceData).join(", "));
+            // Verificar storage e external_storage
+            if (priceData.storage) {
+              console.log("Storage category items:", priceData.storage.items?.length || 0);
+            } else {
+              console.log("Storage category not found");
+            }
+            
+            if (priceData.external_storage) {
+              console.log("External storage category items:", priceData.external_storage.items?.length || 0);
+            } else {
+              console.log("External storage category not found");
+            }
+          }
+          
           setIsInitialized(true);
         } catch (error) {
           console.error("Error initializing price table:", error);
@@ -94,9 +111,9 @@ export default function PriceTableContainer() {
     }
     
     initialize();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, priceData]);
 
-  // Filter categories to remove contract category
+  // Filter categories to remove contract category (mas não storage ou external_storage)
   const filteredPriceData = priceData ? {...priceData} : {};
   if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;

@@ -6,7 +6,6 @@ export * from './data-reset';
 // Export specific functions from data-sync to avoid conflicts with data-retrieval
 export { 
   saveData,
-  // Explicitly re-export these to resolve ambiguity
   checkForDataConflicts,
   forceRefreshFromLatestSource 
 } from './data-sync';
