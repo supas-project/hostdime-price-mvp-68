@@ -1,5 +1,5 @@
 
-// Importar funções diretamente dos módulos específicos sem re-exportar
+// Import functions directly from the modules without re-exporting
 import { getAllData as getDataFromPersistence } from './data-persistence';
 import { forceRefreshFromLatestSource as refreshFromSource } from './data-retrieval';
 
