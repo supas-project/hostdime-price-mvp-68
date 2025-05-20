@@ -1,59 +1,69 @@
 
-import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PricedDiskOption } from "@/types/storage";
-import { Loader2 } from "lucide-react";
+import React from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PricedDiskOption } from '@/types/storage';
 
 interface DiskCapacitySelectorProps {
   selectedCapacity: string;
   onCapacitySelect: (capacity: string) => void;
   availableDisks: PricedDiskOption[];
-  disabled?: boolean;
-  isLoading?: boolean;
+  disabled: boolean;
+  isLoading: boolean;
 }
 
 export function DiskCapacitySelector({
   selectedCapacity,
   onCapacitySelect,
   availableDisks,
-  disabled = false,
-  isLoading = false
+  disabled,
+  isLoading
 }: DiskCapacitySelectorProps) {
-  // Sort capacities by size (numeric)
-  const sortedDisks = [...availableDisks].sort((a, b) => {
-    // Extract numeric value from capacity strings
-    const aSize = parseFloat(a.capacity.replace(/[^\d.]/g, ''));
-    const bSize = parseFloat(b.capacity.replace(/[^\d.]/g, ''));
-    return aSize - bSize;
+  // Get unique capacities from available disks
+  const uniqueCapacities = Array.from(
+    new Set(availableDisks.map(disk => disk.capacity))
+  ).sort((a, b) => {
+    // Parse capacity values for sorting
+    const valueA = parseFloat(a.replace(/[^0-9.]/g, ''));
+    const valueB = parseFloat(b.replace(/[^0-9.]/g, ''));
+    return valueA - valueB;
   });
 
-  // Get unique capacities
-  const uniqueCapacities = Array.from(new Set(sortedDisks.map(disk => disk.capacity)));
-  
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full" />;
+  }
+
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">Capacidade do Disco</label>
+    <div className="w-full">
+      <label className="block text-sm font-medium mb-2">
+        Capacidade do Disco
+      </label>
       <Select
-        value={selectedCapacity || ""}
+        value={selectedCapacity}
         onValueChange={onCapacitySelect}
         disabled={disabled || uniqueCapacities.length === 0}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={
-            isLoading ? (
-              <div className="flex items-center">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Carregando...</span>
-              </div>
-            ) : "Selecione a capacidade"
-          } />
+          <SelectValue placeholder="Selecione a capacidade" />
         </SelectTrigger>
         <SelectContent>
-          {uniqueCapacities.map((capacity) => (
-            <SelectItem key={capacity} value={capacity}>
-              {capacity}
+          {uniqueCapacities.length > 0 ? (
+            uniqueCapacities.map((capacity) => (
+              <SelectItem key={capacity} value={capacity}>
+                {capacity}
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="none" disabled>
+              Nenhuma capacidade disponível
             </SelectItem>
-          ))}
+          )}
         </SelectContent>
       </Select>
     </div>

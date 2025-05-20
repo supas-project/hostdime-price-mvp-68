@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
@@ -10,6 +11,8 @@ import { useDiskManagement } from "@/hooks/storage/useDiskManagement";
 import { useDiskDataLoader } from "@/hooks/storage/useDiskDataLoader";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
@@ -20,6 +23,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isDataRefreshed, setIsDataRefreshed] = useState(false);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
+  const [isSyncingData, setIsSyncingData] = useState(false);
   
   // Use our custom hooks
   const {
@@ -37,28 +41,64 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   // Load disk data using the data loader hook
   const { availableDisks, isLoading, refreshData } = useDiskDataLoader(selectedDiskType);
 
+  // Manual sync function to force refresh data
+  const handleSyncData = async () => {
+    setIsSyncingData(true);
+    try {
+      // First refresh data from the backend
+      await PriceService.forceRefreshFromLatestSource();
+      
+      // Then reload the disk data
+      await refreshData();
+      
+      toast.success("Dados de discos sincronizados", {
+        description: "As opções de discos foram atualizadas com sucesso."
+      });
+    } catch (error) {
+      console.error("Error syncing disk data:", error);
+      toast.error("Erro na sincronização", {
+        description: "Não foi possível sincronizar os dados de discos."
+      });
+    } finally {
+      setIsSyncingData(false);
+    }
+  };
+
   // Function to persist selections to the database
   const persistSelectionsToDatabase = async (disks: {disk: PricedDiskOption, quantity: number}[]) => {
     try {
       // Get current data from the database first
       const allData = await PriceService.getAllData();
       
-      if (!allData.disk) {
-        console.warn("No disk category found in database, cannot persist selections");
-        return;
+      if (!allData || !allData.disk) {
+        console.warn("No disk category found in database, creating one to persist selections");
+        await PriceService.addCategory({
+          id: 'disk',
+          name: 'Discos',
+          items: []
+        });
+        
+        // Refresh data after creating the category
+        const refreshedData = await PriceService.getAllData();
+        if (!refreshedData || !refreshedData.disk) {
+          console.error("Failed to create disk category");
+          return;
+        }
       }
       
       // Transform selected disks for storage
       const disksToStore = disks.map(item => ({
         id: item.disk.id,
-        name: item.disk.name || `${item.disk.type} ${item.disk.capacity}`,
-        description: item.disk.description || `${item.disk.type} disk with ${item.disk.capacity} capacity`,
+        name: item.disk.name || `${item.disk.type.toUpperCase()} ${item.disk.capacity}`,
+        description: item.disk.description || `${item.disk.type.toUpperCase()} disk with ${item.disk.capacity} capacity`,
         price: item.disk.price,
         type: item.disk.type,
+        subtype: item.disk.type, // Explicitly add subtype to ensure proper filtering
+        capacity: item.disk.capacity, // Explicitly add capacity to ensure proper display
         specs: [
-          `Type: ${item.disk.type}`,
-          `Capacity: ${item.disk.capacity}`,
-          `Quantity: ${item.quantity}`
+          `Tipo: ${item.disk.type.toUpperCase()}`,
+          `Capacidade: ${item.disk.capacity}`,
+          `Quantidade: ${item.quantity}`
         ],
         metadata: {
           quantity: item.quantity,
@@ -66,15 +106,18 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         }
       }));
       
+      // Get the existing data again to make sure we have the latest
+      const latestData = await PriceService.getAllData();
+      
       // Update the disk category
       const updatedCategory = {
-        ...allData.disk,
+        ...latestData.disk,
         items: disksToStore
       };
       
       // Update the data
       const updatedData = {
-        ...allData,
+        ...latestData,
         disk: updatedCategory
       };
       
@@ -141,23 +184,53 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         // Then check database for most up-to-date data
         const allData = await PriceService.getAllData();
         
-        if (allData && allData.disk && allData.disk.items) {
+        if (allData && allData.disk && allData.disk.items && allData.disk.items.length > 0) {
+          console.log("[InternalStoragePanel] Found disk items in database:", allData.disk.items.length);
+          
           const dbSelections = allData.disk.items.map(item => {
-            const capacitySpec = item.specs?.find(spec => spec.includes('Capacity:'));
-            const capacity = capacitySpec ? capacitySpec.split('Capacity:')[1]?.trim() : '500GB';
+            // Extract capacity from various possible sources
+            let capacity;
             
-            // Create a properly formatted disk object with all required properties
-            const diskType = item.type || 'ssd';
+            // First check explicit capacity property
+            if (item.capacity) {
+              capacity = item.capacity;
+            } else {
+              // Try to extract from specs
+              const capacitySpec = item.specs?.find(spec => spec.toLowerCase().includes('capacidade:'));
+              capacity = capacitySpec ? capacitySpec.split(':')[1]?.trim() : '';
+              
+              // If not in specs, try to extract from name
+              if (!capacity) {
+                const capacityMatch = item.name.match(/(\d+(?:\.\d+)?)\s*([TGM]B)/i);
+                if (capacityMatch) {
+                  capacity = `${capacityMatch[1]}${capacityMatch[2].toUpperCase()}`;
+                }
+              }
+            }
+            
+            // Default capacity if nothing was found
+            capacity = capacity || '500GB';
+            
+            // Determine disk type from various sources
+            let diskType = item.subtype || item.type;
+            if (!diskType || typeof diskType !== 'string') {
+              const typeSpec = item.specs?.find(spec => spec.toLowerCase().includes('tipo:'));
+              diskType = typeSpec 
+                ? typeSpec.split(':')[1]?.trim().toLowerCase()
+                : 'ssd';  // Default to SSD if no type found
+            }
+            
             // Validate disk type is one of the allowed values
             const validDiskType = (diskType === 'nvme' || diskType === 'ssd' || diskType === 'hdd') 
               ? diskType as "nvme" | "ssd" | "hdd" 
               : 'ssd' as "ssd";
-              
+            
+            // Build the disk object  
             const disk: PricedDiskOption = {
               id: item.id,
               name: item.name,
               type: validDiskType,
-              capacity: capacity || '500GB',
+              capacity: capacity,
               price: item.price || 0,
               description: item.description,
               specs: {
@@ -168,13 +241,15 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               }
             };
             
+            // Determine quantity from metadata or default to 1
+            const quantity = item.metadata?.quantity || 1;
+            
             return {
               disk,
-              quantity: item.metadata?.quantity || 1
+              quantity
             };
           });
           
-          // Only if we have database selections and we're on initial load, use them
           if (dbSelections.length > 0 && isInitialLoad) {
             console.log("[InternalStoragePanel] Setting selections from database:", dbSelections);
             setSelectedDisks(dbSelections);
@@ -182,6 +257,8 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
             // Update localStorage with latest database data
             localStorage.setItem('selectedDisks', JSON.stringify(dbSelections));
           }
+        } else {
+          console.log("[InternalStoragePanel] No disk selections found in database");
         }
         
         setIsInitialLoad(false);
@@ -245,7 +322,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
               .catch(error => {
                 if (!error.message.includes("Authentication")) {
                   console.error("[InternalStoragePanel] Error refreshing disk data:", error);
-                  toast.error("Error refreshing disk data");
+                  toast.error("Erro ao atualizar dados de disco");
                 }
               });
           } else {
@@ -274,9 +351,48 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     };
   }, [hasLocalChanges, selectedDisks, refreshData]);
 
-  
+  // Listen for storage data updates from parent
+  useEffect(() => {
+    const handleStorageDataUpdated = () => {
+      console.log("[InternalStoragePanel] Storage data updated event received");
+      refreshData();
+    };
+    
+    window.addEventListener('storage-data-updated', handleStorageDataUpdated);
+    
+    return () => {
+      window.removeEventListener('storage-data-updated', handleStorageDataUpdated);
+    };
+  }, [refreshData]);
+
+  // Show loading state or no disks message
+  const showLoadingOrNoDiskMessage = isLoading || (!availableDisks.length && selectedDiskType);
+
   return (
     <div className="space-y-6 animate-fade-in">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Discos Internos</h3>
+        <Button 
+          onClick={handleSyncData} 
+          variant="outline" 
+          size="sm"
+          disabled={isSyncingData}
+          className="flex items-center gap-2"
+        >
+          {isSyncingData ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Sincronizando...</span>
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              <span>Sincronizar Dados</span>
+            </>
+          )}
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-2 gap-4">
         <DiskTypeSelector
           selectedType={selectedDiskType}
@@ -293,24 +409,42 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
       <SelectedDiskTypeInfo selectedDiskType={selectedDiskType} />
 
-      {visibleDisks.length > 0 ? (
-        <div className="space-y-4">
-          {visibleDisks.map((item) => (
-            <div key={item.disk.id} className="animate-fade-in">
-              <SelectedDiskDisplay
-                disk={item.disk}
-                quantity={item.quantity}
-                onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
-                onRemove={() => handleRemoveDisk(item.disk.id)}
-              />
-            </div>
-          ))}
-        </div>
+      {showLoadingOrNoDiskMessage ? (
+        isLoading ? (
+          <div className="py-8 flex flex-col items-center justify-center text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p className="text-muted-foreground">Carregando opções de disco...</p>
+          </div>
+        ) : (
+          <div className="py-8 flex flex-col items-center justify-center text-center">
+            <p className="text-muted-foreground">
+              Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
+              Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
+            </p>
+          </div>
+        )
       ) : (
-        <EmptyDiskState 
-          selectedDiskType={selectedDiskType}
-          selectedDisks={selectedDisks}
-        />
+        <>
+          {visibleDisks.length > 0 ? (
+            <div className="space-y-4">
+              {visibleDisks.map((item) => (
+                <div key={item.disk.id} className="animate-fade-in">
+                  <SelectedDiskDisplay
+                    disk={item.disk}
+                    quantity={item.quantity}
+                    onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
+                    onRemove={() => handleRemoveDisk(item.disk.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyDiskState 
+              selectedDiskType={selectedDiskType}
+              selectedDisks={selectedDisks}
+            />
+          )}
+        </>
       )}
 
       <OtherDisksDisplay 

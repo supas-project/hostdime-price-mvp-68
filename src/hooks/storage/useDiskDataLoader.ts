@@ -1,19 +1,21 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { PriceService } from "@/services/price-service";
 import { diskData } from "@/data/disk-data";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
 import { PricedDiskOption } from "@/types/storage";
+import { toast } from "sonner";
 
 export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | undefined) {
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
   
   // Store reference to update function to avoid recreations
   const updateDisksRef = useRef<() => Promise<void>>();
 
   // Load disk data function - extracted to be reusable
-  const loadDisksFromPriceTable = async () => {
+  const loadDisksFromPriceTable = useCallback(async () => {
     if (!selectedDiskType) {
       setAvailableDisks([]);
       return;
@@ -31,22 +33,52 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
         const diskCategory = await PriceService.getCategory('disk');
         
         if (diskCategory && diskCategory.items && diskCategory.items.length > 0) {
-          // Convert price table items to disk format
+          console.log(`Found ${diskCategory.items.length} total disk items in price table`);
+          
+          // Convert price table items to disk format, filtering by selected type
           const priceTableDisks = diskCategory.items
-            .filter(item => item.subtype === selectedDiskType)
+            .filter(item => {
+              // First check explicit subtype property
+              if (item.subtype && item.subtype.toLowerCase() === selectedDiskType.toLowerCase()) {
+                return true;
+              }
+              
+              // Then check type property
+              if (item.type && item.type.toLowerCase() === selectedDiskType.toLowerCase()) {
+                return true;
+              }
+              
+              // Finally check specs array for type info
+              return item.specs?.some(spec => 
+                spec.toLowerCase().includes(`tipo: ${selectedDiskType.toLowerCase()}`)
+              );
+            })
             .map(item => {
-              // Extract capacity from name
-              const capacityMatches = item.name.match(/(\d+)TB|(\d+\.?\d*)TB|(\d+)GB/i);
+              // Extract capacity from name or specs
               let capacity = "";
               
-              if (capacityMatches) {
-                if (capacityMatches[1]) capacity = `${capacityMatches[1]}TB`;
-                else if (capacityMatches[2]) capacity = `${capacityMatches[2]}TB`;
-                else if (capacityMatches[3]) capacity = `${capacityMatches[3]}GB`;
+              // First try to get from explicit capacity property
+              if (item.capacity) {
+                capacity = item.capacity;
+              }
+              // Then try to extract from name
+              else {
+                const capacityMatches = item.name.match(/(\d+(?:\.\d+)?)\s*([TGM]B)/i);
+                if (capacityMatches) {
+                  capacity = `${capacityMatches[1]}${capacityMatches[2].toUpperCase()}`;
+                }
+              }
+              
+              // If still no capacity, try to extract from specs
+              if (!capacity) {
+                const capacitySpec = item.specs?.find(s => s.toLowerCase().includes('capacidade:'));
+                if (capacitySpec) {
+                  capacity = capacitySpec.split(':')[1]?.trim() || "";
+                }
               }
               
               // Normalize to ensure capacity has a unit
-              capacity = normalizeStorageCapacity(capacity);
+              capacity = normalizeStorageCapacity(capacity || "500GB");
               
               // Create properly formatted specs object
               const specsObj = {
@@ -58,7 +90,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
               
               return {
                 id: item.id,
-                type: item.subtype as "nvme" | "ssd" | "hdd",
+                type: selectedDiskType,
                 capacity,
                 price: item.price,
                 name: item.name,
@@ -71,7 +103,11 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
           if (priceTableDisks.length > 0) {
             console.log(`Found ${priceTableDisks.length} disks in price table for type ${selectedDiskType}`);
             disks.push(...priceTableDisks);
+          } else {
+            console.log(`No disks found in price table for type ${selectedDiskType}, checking static data`);
           }
+        } else {
+          console.warn(`No disk category or items found in price table`);
         }
       } catch (error) {
         console.error('Error loading disks from price table:', error);
@@ -110,7 +146,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedDiskType]);
 
   // Load disks when type changes
   useEffect(() => {
@@ -123,7 +159,26 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     return () => {
       updateDisksRef.current = undefined;
     };
-  }, [selectedDiskType]);
+  }, [selectedDiskType, loadDisksFromPriceTable]);
+  
+  // Check for updates when coming back to the page
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log("Page visibility changed to visible, checking for data changes");
+        // Force refresh data when coming back to the page
+        if (updateDisksRef.current) {
+          updateDisksRef.current();
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Register listener for data updates
   useEffect(() => {
@@ -132,6 +187,7 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
       if (updateDisksRef.current) {
         console.log("Data change detected, reloading disk data");
         updateDisksRef.current();
+        setLastUpdated(Date.now()); // Force re-render when data changes
       }
     };
     
@@ -144,16 +200,20 @@ export function useDiskDataLoader(selectedDiskType: "nvme" | "ssd" | "hdd" | und
     };
   }, []);
 
-  // Add refreshData function to the return object
-  const refreshData = async () => {
+  // Force refresh method that can be called externally
+  const refreshData = useCallback(async () => {
     if (updateDisksRef.current) {
       await updateDisksRef.current();
+      toast.success("Dados de disco atualizados", {
+        description: "As opções de disco foram sincronizadas com sucesso."
+      });
     }
-  };
+  }, []);
 
   return {
     availableDisks,
     isLoading,
-    refreshData
+    refreshData,
+    lastUpdated
   };
 }
