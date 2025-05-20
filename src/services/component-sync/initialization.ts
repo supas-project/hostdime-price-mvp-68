@@ -12,51 +12,42 @@ export async function initializeServerCategories(deletedCategories = {}): Promis
     const allData = await PriceService.getAllData();
     
     // Define which categories should exist by default
-    const defaultCategories: Array<Omit<PriceCategory, 'items'> & { items: PriceItem[] }> = [
+    const defaultCategories: Array<{id: string; name: string}> = [
       {
         id: 'processador',
-        name: 'Processadores',
-        items: []
+        name: 'Processadores'
       },
       {
         id: 'memória',
-        name: 'Memória RAM',
-        items: []
+        name: 'Memória RAM'
       },
       {
         id: 'storage',
-        name: 'Storage',
-        items: []
+        name: 'Storage'
       },
       {
         id: 'datacenter',
-        name: 'Data Center',
-        items: []
+        name: 'Data Center'
       },
       {
         id: 'sistemaoperacional',
-        name: 'Sistema Operacional',
-        items: []
+        name: 'Sistema Operacional'
       },
       {
         id: 'port_speed',
-        name: 'Velocidade de Porta',
-        items: []
+        name: 'Velocidade de Porta'
       },
       {
         id: 'conectividade',
-        name: 'Conectividade',
-        items: []
+        name: 'Conectividade'
       },
       {
         id: 'contrato',
-        name: 'Contratos',
-        items: []
+        name: 'Contratos'
       },
       {
         id: 'serviçospersonalizados',
-        name: 'Serviços Personalizados',
-        items: []
+        name: 'Serviços Personalizados'
       }
     ];
     
@@ -70,12 +61,14 @@ export async function initializeServerCategories(deletedCategories = {}): Promis
         continue;
       }
       
-      // Add the missing category with the proper type
-      await PriceService.addCategory({
+      // Add the missing category (create a new PriceCategory object)
+      const newCategory: PriceCategory = {
         id: category.id,
         name: category.name,
         items: []
-      });
+      };
+      
+      await PriceService.addCategory(newCategory);
       addedCount++;
       
       console.log(`[ComponentSync] Added missing category: ${category.id}`);
@@ -124,8 +117,8 @@ export async function initExternalStorageData(): Promise<boolean> {
       return false;
     }
 
-    // Create the external storage category if it doesn't exist
-    await PriceService.addCategory({
+    // Create a new PriceCategory object for external storage
+    const newCategory: PriceCategory = {
       id: 'external_storage',
       name: 'Storage Externo',
       items: [
@@ -178,7 +171,10 @@ export async function initExternalStorageData(): Promise<boolean> {
           ]
         }
       ]
-    });
+    };
+    
+    // Create the external storage category
+    await PriceService.addCategory(newCategory);
     
     console.log("[ComponentSync] External storage category created successfully");
     return true;
@@ -201,13 +197,14 @@ export async function syncDiskDataWithPriceService(deletedItems = {}): Promise<b
       return false;
     }
     
-    // Create or update disk category
+    // Create disk category if it doesn't exist
     if (!allData.disk) {
-      await PriceService.addCategory({
+      const diskCategory: PriceCategory = {
         id: 'disk',
         name: 'Discos',
         items: []
-      });
+      };
+      await PriceService.addCategory(diskCategory);
     }
     
     // Get default disk options
@@ -344,7 +341,7 @@ async function checkConnectivityCategories(allData: any, deletedCategories: any 
     
     // Check for IP blocks category
     if (!allData.ip_blocks) {
-      await PriceService.addCategory({
+      const ipBlocksCategory: PriceCategory = {
         id: 'ip_blocks',
         name: 'Blocos de IP',
         items: [
@@ -373,7 +370,9 @@ async function checkConnectivityCategories(allData: any, deletedCategories: any 
             specs: ['13 IPs utilizáveis']
           }
         ]
-      });
+      };
+      
+      await PriceService.addCategory(ipBlocksCategory);
     }
     
     return true;
