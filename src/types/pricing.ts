@@ -14,7 +14,16 @@ export interface PriceItem {
     features?: string[];
     quantity?: number;
     unitPrice?: number;
-    unitInfo?: string; // Added for storing additional storage metadata as JSON string
+    unitInfo?: string;
+    // Add disk-specific metadata fields
+    type?: string;
+    subtype?: string;
+    capacity?: string;
+    readSpeed?: string;
+    writeSpeed?: string;
+    iops?: string;
+    throughput?: string;
+    recommended?: string[];
   };
   // Adding capacity for disk items
   capacity?: string;

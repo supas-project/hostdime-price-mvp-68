@@ -102,10 +102,43 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
           <FormItem>
             <FormLabel>Subtipo (opcional)</FormLabel>
             <FormControl>
-              <Input placeholder="Subtipo do componente" {...field} />
+              <Input 
+                placeholder="Subtipo do componente" 
+                {...field} 
+                onBlur={(e) => {
+                  // Log the subtype value for debugging
+                  console.log("[ItemFormFields] Subtype value on blur:", e.target.value);
+                  field.onBlur();
+                }}
+              />
             </FormControl>
             <FormDescription>
               Importante para filtragem no configurador
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={control}
+        name="capacity"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Capacidade (opcional)</FormLabel>
+            <FormControl>
+              <Input 
+                placeholder="Ex: 1TB, 500GB" 
+                {...field} 
+                onBlur={(e) => {
+                  // Log the capacity value for debugging
+                  console.log("[ItemFormFields] Capacity value on blur:", e.target.value);
+                  field.onBlur();
+                }}
+              />
+            </FormControl>
+            <FormDescription>
+              Especifique a capacidade para discos e memórias
             </FormDescription>
             <FormMessage />
           </FormItem>

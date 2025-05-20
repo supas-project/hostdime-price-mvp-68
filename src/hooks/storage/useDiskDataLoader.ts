@@ -1,78 +1,56 @@
 
-import { useEffect, useState } from "react";
-import { PricedDiskOption } from "@/types/storage";
+import { useState, useEffect, useCallback } from "react";
 import { PriceService } from "@/services/price-service";
+import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
 
-export function useDiskDataLoader(selectedDiskType?: "nvme" | "ssd" | "hdd" | undefined) {
+export function useDiskDataLoader(selectedDiskType?: "nvme" | "ssd" | "hdd") {
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadAttempted, setLoadAttempted] = useState(false);
 
-  // Function to refresh disk data
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     try {
-      console.log('[useDiskDataLoader] Refreshing disk data...');
       setIsLoading(true);
+      console.log("[useDiskDataLoader] Loading disk options...");
       
-      // Get fresh disk data from service
-      const disks = await PriceService.getDiskOptions();
-      console.log('[useDiskDataLoader] Loaded disk options:', disks);
+      // Use the PriceService.getDiskOptions method
+      const diskOptions = await PriceService.getDiskOptions();
       
-      if (disks.length === 0) {
-        console.warn('[useDiskDataLoader] No disk options found');
+      setAvailableDisks(diskOptions);
+      console.log(`[useDiskDataLoader] Successfully loaded ${diskOptions.length} disk options`);
+      
+      if (diskOptions.length === 0) {
+        console.log("[useDiskDataLoader] No disk options found");
+      } else {
+        // Log a sample disk option for debugging
+        console.log("[useDiskDataLoader] Sample disk option:", diskOptions[0]);
       }
-      
-      // Filter disks by type if needed
-      const filteredDisks = selectedDiskType
-        ? disks.filter(disk => disk.type === selectedDiskType)
-        : disks;
-        
-      console.log(`[useDiskDataLoader] Filtered to ${filteredDisks.length} ${selectedDiskType || 'all'} disks`);
-      
-      // Check for required properties
-      const validDisks = filteredDisks.filter(disk => {
-        const isValid = disk.id && disk.type && disk.capacity && disk.price;
-        if (!isValid) {
-          console.warn('[useDiskDataLoader] Invalid disk found:', disk);
-        }
-        return isValid;
-      });
-      
-      setAvailableDisks(validDisks);
-      setLoadAttempted(true);
     } catch (error) {
-      console.error('[useDiskDataLoader] Error loading disk data:', error);
+      console.error("[useDiskDataLoader] Error loading disk options:", error);
       toast.error("Erro ao carregar opções de disco", {
-        description: "Não foi possível obter as opções de disco disponíveis."
+        description: "Verifique os dados no banco de dados."
       });
     } finally {
       setIsLoading(false);
+      setLoadAttempted(true);
     }
-  };
-
-  // Load disk data on mount or when selected type changes
-  useEffect(() => {
-    refreshData();
-  }, [selectedDiskType]);
-  
-  // Listen for storage data updates
-  useEffect(() => {
-    const handleStorageDataUpdated = () => {
-      console.log('[useDiskDataLoader] Storage data updated event received, refreshing...');
-      refreshData();
-    };
-    
-    window.addEventListener('storage-data-updated', handleStorageDataUpdated);
-    return () => {
-      window.removeEventListener('storage-data-updated', handleStorageDataUpdated);
-    };
   }, []);
 
-  return {
-    availableDisks,
-    isLoading,
-    refreshData,
-    loadAttempted
+  // Initial data load
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  // Filter disks based on selected type
+  const filteredDisks = selectedDiskType 
+    ? availableDisks.filter(disk => disk.type === selectedDiskType)
+    : availableDisks;
+
+  return { 
+    availableDisks: filteredDisks, 
+    isLoading, 
+    refreshData, 
+    loadAttempted 
   };
 }

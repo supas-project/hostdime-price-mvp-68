@@ -44,10 +44,12 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
       description: item?.description || "",
       price: item?.price || 0,
       type: item?.type || defaultType || "",
-      subtype: item?.subtype || "",
+      // Ensure we get the subtype from item or its metadata
+      subtype: item?.subtype || (item?.metadata?.subtype as string) || "",
       specs: item?.specs || [],
       tags: getInitialTags(),
-      capacity: item?.capacity || "",
+      // Ensure we get the capacity from item or its metadata
+      capacity: item?.capacity || (item?.metadata?.capacity as string) || "",
     },
     mode: "onBlur", // Validate on blur
   });
@@ -61,10 +63,12 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
         description: item.description,
         price: item.price,
         type: item.type,
-        subtype: item.subtype || "",
+        // Ensure we get the subtype from item or its metadata
+        subtype: item.subtype || (item.metadata?.subtype as string) || "",
         specs: item.specs || [],
         tags: getInitialTags(),
-        capacity: item.capacity || "",
+        // Ensure we get the capacity from item or its metadata
+        capacity: item.capacity || (item.metadata?.capacity as string) || "",
       });
     }
   }, [item, form]);

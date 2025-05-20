@@ -1,136 +1,105 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PricedDiskOption } from "@/types/storage";
-import { normalizeStorageCapacity } from "@/utils/storage-utils";
 import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 
-interface DiskPersistenceProps {
-  selectedDisks: Array<{disk: PricedDiskOption, quantity: number}>;
-  selectedDiskType: "nvme" | "ssd" | "hdd" | undefined;
-  isInitialLoad: boolean;
-  setIsInitialLoad: (isInitialLoad: boolean) => void;
-}
+export function useDiskPersistence() {
+  const [hasLocalChanges, setHasLocalChanges] = useState(false);
 
-export function useDiskPersistence({
-  selectedDisks,
-  selectedDiskType,
-  isInitialLoad,
-  setIsInitialLoad
-}: DiskPersistenceProps) {
-  const [isPersisted, setIsPersisted] = useState(true);
-
-  // Load disks from database
-  const loadSelectedDisksFromDatabase = async () => {
+  // Function to persist selections to the database
+  const persistSelectionsToDatabase = async (disks: {disk: PricedDiskOption, quantity: number}[]) => {
     try {
-      console.log("[useDiskPersistence] Checking for previously saved disk selections in database");
-      const data = await PriceService.getAllData();
+      console.log("[useDiskPersistence] Persisting selections to database:", disks);
       
-      if (data && data.discos_internos && data.discos_internos.items && data.discos_internos.items.length > 0) {
-        console.log("[useDiskPersistence] Found saved disk selections in database:", data.discos_internos.items);
-        
-        // Convert database items to disk selections
-        const databaseDisks = data.discos_internos.items.map(item => {
-          // Extract disk type from subtype or type or metadata
-          const diskType = item.subtype || item.type || "hdd";
-          
-          // Extract capacity from various possible locations
-          let capacity = item.capacity || "";
-          
-          if (!capacity && item.metadata && typeof item.metadata === 'object' && 'capacity' in item.metadata) {
-            capacity = item.metadata.capacity as string;
-          }
-          
-          if (!capacity && item.specs && item.specs.some(spec => spec.includes('Capacidade:'))) {
-            const capacitySpec = item.specs.find(spec => spec.includes('Capacidade:'));
-            if (capacitySpec) {
-              capacity = capacitySpec.split(':')[1]?.trim() || "";
-            }
-          } 
-          
-          if (!capacity) {
-            // Extract from name
-            const capacityMatch = item.name.match(/(\d+)TB|(\d+\.?\d*)TB|(\d+)GB/i);
-            if (capacityMatch) {
-              if (capacityMatch[1]) capacity = `${capacityMatch[1]}TB`;
-              else if (capacityMatch[2]) capacity = `${capacityMatch[2]}TB`;
-              else if (capacityMatch[3]) capacity = `${capacityMatch[3]}GB`;
-            }
-          }
-          
-          // Create disk object
-          const disk: PricedDiskOption = {
-            id: item.id,
-            type: diskType as "nvme" | "ssd" | "hdd",
-            capacity: normalizeStorageCapacity(capacity),
-            price: item.price / (item.metadata && typeof item.metadata === 'object' && 'quantity' in item.metadata ? 
-              (item.metadata.quantity as number) || 1 : 1), // Calculate unit price
-            specs: {
-              readSpeed: "N/A",
-              writeSpeed: "N/A",
-              iops: "N/A",
-              recommended: []
-            },
-            name: item.name,
-            description: item.description
-          };
-          
-          return {
-            disk,
-            quantity: item.metadata && typeof item.metadata === 'object' && 'quantity' in item.metadata ? 
-              (item.metadata.quantity as number) || 1 : 1
-          };
+      // Get current data from the database first
+      const allData = await PriceService.getAllData();
+      
+      if (!allData || !allData.disk) {
+        console.warn("No disk category found in database, creating one to persist selections");
+        // Create category without items first
+        const newCategory = await PriceService.addCategory({
+          id: 'disk',
+          name: 'Discos',
         });
         
-        console.log("[useDiskPersistence] Converted database disks:", databaseDisks);
-        return databaseDisks;
+        // Refresh data after creating the category
+        const refreshedData = await PriceService.getAllData();
+        if (!refreshedData || !refreshedData.disk) {
+          console.error("Failed to create disk category");
+          return;
+        }
       }
       
-      return null;
+      // Transform selected disks for storage
+      const disksToStore = disks.map(item => ({
+        id: item.disk.id,
+        name: item.disk.name || `${item.disk.type.toUpperCase()} ${item.disk.capacity}`,
+        description: item.disk.description || `${item.disk.type.toUpperCase()} disk with ${item.disk.capacity} capacity`,
+        price: item.disk.price,
+        type: item.disk.type,
+        // Explicitly save subtype
+        subtype: item.disk.type, 
+        // Explicitly save capacity
+        capacity: item.disk.capacity, 
+        specs: [
+          `Tipo: ${item.disk.type.toUpperCase()}`,
+          `Capacidade: ${item.disk.capacity}`,
+          `Quantidade: ${item.quantity}`
+        ],
+        metadata: {
+          // Include all important disk metadata directly
+          quantity: item.quantity,
+          unitPrice: item.disk.price,
+          type: item.disk.type,
+          subtype: item.disk.type,
+          capacity: item.disk.capacity,
+          // Add performance specs in metadata
+          readSpeed: item.disk.specs.readSpeed,
+          writeSpeed: item.disk.specs.writeSpeed,
+          iops: item.disk.specs.iops,
+          recommended: item.disk.specs.recommended
+        }
+      }));
+      
+      // Get the existing data again to make sure we have the latest
+      const latestData = await PriceService.getAllData();
+      
+      // Update the disk category
+      const updatedCategory = {
+        ...latestData.disk,
+        items: disksToStore
+      };
+      
+      // Update the data
+      const updatedData = {
+        ...latestData,
+        disk: updatedCategory
+      };
+      
+      // Save to database
+      await PriceService.saveData(updatedData);
+      console.log("[useDiskPersistence] Disk selections persisted to database", disksToStore);
+      
+      // Trigger a storage data update event to notify other components
+      window.dispatchEvent(new CustomEvent('storage-data-updated'));
+      
+      // Also save to localStorage for redundancy
+      localStorage.setItem('selectedDisks', JSON.stringify(disks));
+      console.log("[useDiskPersistence] Disk selections persisted to localStorage", disks);
+      
+      setHasLocalChanges(false);
     } catch (error) {
-      console.error("[useDiskPersistence] Error loading disk selections from database:", error);
-      return null;
+      console.error("Error persisting disk selections to database:", error);
+      toast.error("Erro ao salvar discos", {
+        description: "Não foi possível salvar os discos no banco de dados."
+      });
     }
   };
 
-  // Effects for loading from database
-  useEffect(() => {
-    if (!isInitialLoad) return;
-    
-    const loadFromDatabase = async () => {
-      try {
-        console.log("[useDiskPersistence] Initial load - loading disks from database");
-        const databaseDisks = await loadSelectedDisksFromDatabase();
-        setIsInitialLoad(false);
-      } catch (error) {
-        console.error("[useDiskPersistence] Error in initial database load:", error);
-        setIsInitialLoad(false);
-      }
-    };
-    
-    loadFromDatabase();
-  }, [isInitialLoad, setIsInitialLoad]);
-
-  // Save selected disks to local storage whenever they change
-  useEffect(() => {
-    if (isInitialLoad) return; // Skip during initial load
-    
-    try {
-      localStorage.setItem('selected_disks', JSON.stringify(selectedDisks));
-      if (selectedDiskType) {
-        localStorage.setItem('selected_disk_type', selectedDiskType);
-      }
-      
-      // Mark as needing synchronization with database
-      if (selectedDisks.length > 0 || isPersisted) {
-        setIsPersisted(false);
-      }
-      
-      console.log("[useDiskPersistence] Saved disk selections to local storage:", selectedDisks.length);
-    } catch (error) {
-      console.error("[useDiskPersistence] Error saving disk selections to local storage:", error);
-    }
-  }, [selectedDisks, selectedDiskType, isInitialLoad, isPersisted]);
-
-  return { isPersisted, setIsPersisted };
+  return {
+    hasLocalChanges,
+    setHasLocalChanges,
+    persistSelectionsToDatabase
+  };
 }

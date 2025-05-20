@@ -27,6 +27,9 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       console.log("Editing item:", item);
       console.log("Item specs:", item.specs);
       console.log("Item tags:", item.tags);
+      console.log("Item capacity:", item.capacity);
+      console.log("Item subtype:", item.subtype);
+      console.log("Item metadata:", item.metadata);
     }
   }, [item, isEditing]);
 
@@ -56,6 +59,26 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       
       if (shouldAddHardware) {
         values.tags.push("Hardware");
+      }
+    }
+    
+    // Special handling for disk items - ensure subtype and capacity are preserved
+    if (values.type === 'disk' || values.type === 'nvme' || values.type === 'ssd' || values.type === 'hdd') {
+      // Add metadata for disk items to ensure proper persistence
+      values.metadata = {
+        ...(values.metadata || {}),
+        type: values.type,
+        subtype: values.subtype,
+        capacity: values.capacity
+      };
+      
+      // Ensure disk-specific properties are set at the root level as well
+      if (!values.capacity && values.subtype) {
+        // Try to extract capacity from subtype if not specified
+        const capacityMatch = values.subtype.match(/(\d+(?:\.\d+)?)\s*(?:GB|TB|G|T)/i);
+        if (capacityMatch) {
+          values.capacity = capacityMatch[0];
+        }
       }
     }
     

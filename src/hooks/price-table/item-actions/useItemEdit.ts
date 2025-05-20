@@ -63,26 +63,33 @@ export function useItemEdit(
       console.log("Starting edit of item:", itemId, "with values:", values);
       setIsSubmittingItem(true);
       
+      // Prepare metadata preserving existing values
+      const existingMetadata = itemToEdit?.metadata || {};
+      
+      // Build complete metadata object
+      const metadata = {
+        ...existingMetadata,
+        // Capture disk-specific fields in metadata 
+        type: values.type,
+        subtype: values.subtype,
+        capacity: values.capacity,
+      };
+      
       const updatedItemData = {
         name: values.name,
         description: values.description,
         price: values.price,
         type: values.type,
-        subtype: values.subtype, // Ensure subtype is included here
+        // Ensure subtype is explicitly included
+        subtype: values.subtype, 
         specs: Array.isArray(values.specs) ? values.specs : [],
         tags: Array.isArray(values.tags) ? values.tags : [],
         // Update isHardware based on tags for backwards compatibility
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
         // For disk items, ensure capacity is preserved
         capacity: values.capacity || itemToEdit?.capacity,
-        // Preserve metadata if it exists
-        metadata: {
-          ...(itemToEdit?.metadata || {}),
-          // If this is a disk item, make sure we preserve disk-specific metadata
-          type: values.type,
-          subtype: values.subtype,
-          capacity: values.capacity || (itemToEdit?.capacity || undefined)
-        }
+        // Preserve and extend metadata
+        metadata: metadata
       };
       
       console.log("Updated item data to save:", updatedItemData);
@@ -96,6 +103,9 @@ export function useItemEdit(
       // Get fresh data
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
+
+      // Trigger storage data updated event for synchronized components
+      window.dispatchEvent(new CustomEvent('storage-data-updated'));
       
       // Get category for notification
       const category = await PriceService.getCategory(activeTab);

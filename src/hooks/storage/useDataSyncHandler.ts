@@ -32,33 +32,31 @@ export function useDataSyncHandler({
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
-        console.log("[InternalStoragePanel] Page visibility changed to visible, checking for data changes");
+        console.log("[useDataSyncHandler] Page visibility changed to visible, checking for data changes");
         
         try {
           // Check if there are any conflicts between our local state and the server
           const conflict = await PriceService.checkForDataConflicts();
           
           if (conflict) {
-            console.log("[InternalStoragePanel] Data conflicts detected, refreshing from server");
+            console.log("[useDataSyncHandler] Data conflicts detected, refreshing from server");
             
             // If there are conflicts, refresh data from the server
             await PriceService.forceRefreshFromLatestSource()
               .then(() => {
-                console.log("[InternalStoragePanel] Disk data refreshed from latest source");
+                console.log("[useDataSyncHandler] Disk data refreshed from latest source");
                 
                 // After refreshing server data, reload data in the UI
-                if (refreshData) {
-                  refreshData();
-                }
+                refreshData();
               })
               .catch(error => {
                 if (!error.message.includes("Authentication")) {
-                  console.error("[InternalStoragePanel] Error refreshing disk data:", error);
+                  console.error("[useDataSyncHandler] Error refreshing disk data:", error);
                   toast.error("Erro ao atualizar dados de disco");
                 }
               });
           } else {
-            console.log("[InternalStoragePanel] No data conflicts detected");
+            console.log("[useDataSyncHandler] No data conflicts detected");
             
             // If we have unsaved local changes, persist them now
             if (hasLocalChanges) {
@@ -66,7 +64,7 @@ export function useDataSyncHandler({
             }
           }
         } catch (error) {
-          console.error("[InternalStoragePanel] Error checking for data conflicts:", error);
+          console.error("[useDataSyncHandler] Error checking for data conflicts:", error);
         }
       }
     };
@@ -83,10 +81,10 @@ export function useDataSyncHandler({
     };
   }, [hasLocalChanges, selectedDisks, refreshData, persistSelectionsToDatabase]);
 
-  // Listen for storage data updates from parent
+  // Listen for storage data updates from other components
   useEffect(() => {
     const handleStorageDataUpdated = () => {
-      console.log("[InternalStoragePanel] Storage data updated event received");
+      console.log("[useDataSyncHandler] Storage data updated event received");
       refreshData();
     };
     

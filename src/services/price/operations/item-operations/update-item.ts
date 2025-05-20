@@ -1,3 +1,4 @@
+
 import { PriceItem } from '@/types/pricing';
 import { getAllData, saveData } from '../../operations';
 import { notifyListeners } from '../../listeners';
@@ -34,10 +35,18 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
     const updatedItem = {
       ...currentItem,
       ...updates,
+      // Make sure we preserve the capacity field
+      capacity: updates.capacity || currentItem.capacity,
+      // Make sure we preserve the subtype field
+      subtype: updates.subtype || currentItem.subtype,
       // Ensure metadata is properly merged, not overwritten
       metadata: {
         ...(currentItem.metadata || {}),
-        ...(updates.metadata || {})
+        ...(updates.metadata || {}),
+        // Ensure disk-specific metadata is preserved
+        type: updates.type || currentItem.type,
+        subtype: updates.subtype || (currentItem.metadata?.subtype || currentItem.subtype),
+        capacity: updates.capacity || (currentItem.metadata?.capacity || currentItem.capacity),
       }
     };
     

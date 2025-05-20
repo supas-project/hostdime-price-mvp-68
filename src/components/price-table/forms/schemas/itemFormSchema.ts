@@ -23,6 +23,8 @@ export const itemFormSchema = z.object({
   specs: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   capacity: z.string().optional(),
+  // Include metadata to avoid validation errors
+  metadata: z.any().optional(),
 });
 
 export type FormValues = z.infer<typeof itemFormSchema>;
