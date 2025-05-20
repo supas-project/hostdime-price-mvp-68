@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { PriceService } from "@/services/price-service";
-import { PricedDiskOption } from "@/types/storage";
-import { SyncButton } from "../disk-selection/SyncButton";
-import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
+
+import React, { useState, useEffect } from 'react';
+import { useStorageTypes } from './hooks/useStorageTypes';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Separator } from '../ui/separator';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PricedDiskOption } from '@/types/storage';
+import { useAuth } from '@/contexts/AuthContext';
+import { PriceService } from '@/services/price-service';
+import { SyncButton } from './disk-selection/SyncButton';
+import { useDataSyncHandler } from '@/hooks/storage/useDataSyncHandler';
 
 interface InternalStoragePanelProps {
   selectedDisks: { disk: PricedDiskOption; quantity: number }[];
