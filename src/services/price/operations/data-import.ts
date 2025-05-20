@@ -1,4 +1,3 @@
-
 import { PriceData, ImportOptions } from '@/types/pricing';
 import { saveData } from './data-persistence';
 import { getAllData } from './data-persistence';

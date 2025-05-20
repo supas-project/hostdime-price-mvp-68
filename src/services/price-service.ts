@@ -5,11 +5,14 @@ import {
   updateCategory as updateCategoryOperation,
   deleteCategory as deleteCategoryOperation,
   getCategory as getCategoryOperation,
+} from './price/operations/category-operations';
+import { 
   checkForDataConflicts as checkForDataConflictsOperation,
-  forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation,
-  getDiskOptions as getDiskOptionsOperation
-} from './price/operations';
-import { addItem, updateItem, deleteItem, getItem } from './price/operations/item-operations';
+  forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation 
+} from './price/operations/data-sync';
+import { getDiskOptions as getDiskOptionsOperation } from './price/operations/data-retrieval';
+import { addItem, updateItem, deleteItem } from './price/operations/item-operations';
+import { getItem } from './price/operations/item-operations/get-item';
 import { getAllData, saveData } from './price/operations/data-persistence';
 import { importData } from './price/operations/data-import';
 import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
@@ -71,7 +74,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to delete
    */
   deleteCategory: async (categoryId: string): Promise<void> => {
-    const success = await deleteCategoryOperation(categoryId);
+    await deleteCategoryOperation(categoryId);
     // Return void to match the expected return type
   },
 
@@ -100,7 +103,7 @@ export const PriceService = {
    * @param itemId The ID of the item to delete
    */
   deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
-    const success = await deleteItem(categoryId, itemId);
+    await deleteItem(categoryId, itemId);
     // Return void to match the expected return type
   },
 

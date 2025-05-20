@@ -1,7 +1,7 @@
 
 import { PriceCategory } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { saveData } from '../../operations/data-persistence';
+import { saveData } from '../data-persistence';
 import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 

@@ -4,10 +4,10 @@ export * from './data-persistence';
 export * from './data-import';
 // Export only what doesn't conflict
 export { getDiskOptions } from './data-retrieval';
-// Only export these from data-reset to avoid conflicts
-export { 
-  checkForDataConflicts,
-  forceRefreshFromLatestSource 
-} from './data-reset';
+// Don't re-export from data-sync since we're importing it directly
+// Don't re-export from category-operations since we're importing it directly
+
 // Export category operations
 export * from './category-operations';
+// Export item operations
+export * from './item-operations';

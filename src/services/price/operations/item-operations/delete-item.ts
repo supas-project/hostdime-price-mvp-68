@@ -1,5 +1,5 @@
 
-import { saveData } from '../../operations/data-persistence';
+import { saveData } from '../data-persistence';
 import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '../../listeners';
 
