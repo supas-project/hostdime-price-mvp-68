@@ -8,13 +8,12 @@ import { OtherDisksDisplay } from "./disk-selection/OtherDisksDisplay";
 import { useDiskManagement } from "@/hooks/storage/useDiskManagement";
 import { useDiskDataLoader } from "@/hooks/storage/useDiskDataLoader";
 import { toast } from "sonner";
-import { PriceService } from "@/services/price-service";
 import { useDiskPersistence } from "@/hooks/storage/useDiskPersistence";
 import { useInitialDiskLoader } from "@/hooks/storage/useInitialDiskLoader";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InternalStoragePanelProps {
@@ -75,8 +74,40 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     }
   }, [selectedDisks, isInitialLoad, isDataRefreshed, setHasLocalChanges]);
 
-  // Show loading state or no disks message
-  const showLoadingOrNoDiskMessage = isLoading || (!availableDisks.length && selectedDiskType !== undefined);
+  // Find the selected disk based on capacity for adding to configuration
+  const handleAddSelectedDisk = () => {
+    if (selectedCapacity && selectedDiskType) {
+      const diskToAdd = availableDisks.find(
+        disk => disk.capacity === selectedCapacity && disk.type === selectedDiskType
+      );
+      
+      if (diskToAdd) {
+        // Check if this disk is already selected
+        const existingDisk = selectedDisks.find(
+          item => item.disk.capacity === selectedCapacity && item.disk.type === selectedDiskType
+        );
+        
+        if (existingDisk) {
+          // Increase quantity if disk already exists
+          handleQuantityChange(existingDisk.disk.id, existingDisk.quantity + 1);
+          toast.success(`Quantidade do disco ${selectedDiskType.toUpperCase()} ${selectedCapacity} aumentada`);
+        } else {
+          // Add new disk with quantity 1
+          setSelectedDisks(prev => [...prev, { disk: diskToAdd, quantity: 1 }]);
+          setHasLocalChanges(true);
+          
+          if (onSelectDisk) {
+            onSelectDisk(diskToAdd, 1);
+          }
+          
+          toast.success(`Disco ${selectedDiskType.toUpperCase()} ${selectedCapacity} adicionado`);
+        }
+        
+        // Reset capacity selection
+        setSelectedCapacity("");
+      }
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -94,14 +125,28 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         />
       </div>
 
-      <SelectedDiskTypeInfo selectedDiskType={selectedDiskType} />
+      {selectedDiskType && (
+        <SelectedDiskTypeInfo selectedDiskType={selectedDiskType} />
+      )}
+
+      {selectedCapacity && selectedDiskType && (
+        <div className="mt-4 flex justify-center">
+          <Button 
+            onClick={handleAddSelectedDisk}
+            className="w-full sm:w-auto flex items-center gap-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Adicionar Disco {selectedDiskType.toUpperCase()} {selectedCapacity}</span>
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="py-8 flex flex-col items-center justify-center text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
           <p className="text-muted-foreground">Carregando opções de disco...</p>
         </div>
-      ) : showLoadingOrNoDiskMessage && !isLoading ? (
+      ) : !availableDisks.length && selectedDiskType ? (
         <div className="py-8 flex flex-col items-center justify-center text-center">
           <p className="text-muted-foreground">
             Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
@@ -110,7 +155,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
         </div>
       ) : (
         <>
-          {visibleDisks.length > 0 ? (
+          {visibleDisks.length > 0 && (
             <div className="space-y-4 bg-background/5 p-4 rounded-lg border border-[#2a2a2a]">
               <div className="flex justify-between items-center">
                 <h4 className="text-sm font-medium">Discos selecionados</h4>
@@ -139,13 +184,6 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
                 </div>
               )}
             </div>
-          ) : (
-            selectedDiskType && (
-              <div className="text-center py-4 text-muted-foreground">
-                <p>Nenhum disco {selectedDiskType.toUpperCase()} adicionado.</p>
-                <p className="text-sm mt-1">Selecione uma capacidade para adicionar.</p>
-              </div>
-            )
           )}
         </>
       )}

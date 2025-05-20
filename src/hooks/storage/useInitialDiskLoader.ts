@@ -35,7 +35,7 @@ export function useInitialDiskLoader(
       } catch (error) {
         console.error('[useInitialDiskLoader] Error loading saved disk selections:', error);
       } finally {
-        // Mark initial load as complete
+        // Mark initial load as complete with explicit boolean
         setIsInitialLoad(false);
       }
     };
