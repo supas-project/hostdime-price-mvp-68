@@ -1,4 +1,3 @@
-
 export interface PriceItem {
   id: string;
   name: string;
@@ -26,7 +25,6 @@ export interface PriceItem {
     iops?: string;
     throughput?: string;
     recommended?: string[];
-    raid?: boolean; // Add the missing raid property
   };
 }
 

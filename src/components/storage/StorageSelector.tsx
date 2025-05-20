@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useStorageTypes } from './hooks/useStorageTypes';
+import { useStorageTypes, StorageType } from './hooks/useStorageTypes';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { PricedDiskOption } from '@/types/storage';
@@ -18,7 +18,6 @@ export interface StorageSelectorProps {
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
   const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
-  const [selectedDisks, setSelectedDisks] = useState<{ disk: PricedDiskOption; quantity: number }[]>([]);
   
   // Create a mapping for the storage performance indicators
   const storagePerformanceMap: Record<string, {
@@ -47,16 +46,6 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       description: storage.description
     };
   });
-  
-  // Handle selected disks changes
-  useEffect(() => {
-    // Notify parent component when disks change
-    if (selectedDisks.length > 0) {
-      selectedDisks.forEach(item => {
-        onSelectInternalDisk(item.disk, item.quantity);
-      });
-    }
-  }, [selectedDisks, onSelectInternalDisk]);
 
   // Listen for storage data updates
   useEffect(() => {
@@ -93,10 +82,7 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">
-          <InternalStoragePanel 
-            selectedDisks={selectedDisks}
-            setSelectedDisks={setSelectedDisks}
-          />
+          <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
         </TabsContent>
         
         <TabsContent value="external" className="mt-4">

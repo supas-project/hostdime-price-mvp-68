@@ -77,18 +77,4 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
   }
 }
 
-/**
- * Get all price data
- * Re-export from PriceService for consistency
- */
-export async function getAllData() {
-  return await PriceService.getAllData();
-}
-
-/**
- * Force refresh from latest source
- * Re-export from PriceService for consistency
- */
-export async function forceRefreshFromLatestSource() {
-  return await PriceService.forceRefreshFromLatestSource();
-}
+// We don't export getAllData from here anymore

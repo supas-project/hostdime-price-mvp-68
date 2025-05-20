@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -9,31 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriceService } from "@/services/price-service";
-import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 import { PricedDiskOption } from "@/types/storage";
-
-interface SyncButtonProps {
-  onSync: () => Promise<void>;
-  isSyncing: boolean;
-}
-
-function SyncButton({ onSync, isSyncing }: SyncButtonProps) {
-  return (
-    <div className="mt-4">
-      <Button 
-        onClick={onSync} 
-        disabled={isSyncing}
-        variant="outline"
-        className="w-full"
-      >
-        {isSyncing ? "Sincronizando..." : "Sincronizar dados com servidor"}
-      </Button>
-      <p className="text-xs text-center mt-1 text-muted-foreground">
-        Isso substituirá quaisquer modificações locais
-      </p>
-    </div>
-  );
-}
+import { SyncButton } from "../disk-selection/SyncButton";
+import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 
 interface InternalStoragePanelProps {
   selectedDisks: { disk: PricedDiskOption; quantity: number }[];
@@ -60,7 +37,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         const category = await PriceService.getCategory('discos_internos');
         if (category && Array.isArray(category.items)) {
           const options = category.items.map(item => {
-            // Convert metadata.raid to boolean explicitly
+            // Corrija o erro de tipo convertendo explicitamente para booleano
             const hasRaid = Boolean(item.metadata?.raid);
             
             return {
@@ -68,18 +45,10 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
               name: item.name,
               description: item.description,
               price: item.price,
-              type: item.type as 'nvme' | 'ssd' | 'hdd',
+              type: item.type,
               subtype: item.subtype,
               capacity: item.metadata?.capacity || 'N/A',
               raid: hasRaid,
-              specs: {
-                readSpeed: item.metadata?.readSpeed || 'N/A',
-                writeSpeed: item.metadata?.writeSpeed || 'N/A',
-                iops: item.metadata?.iops || 'N/A',
-                recommended: Array.isArray(item.metadata?.recommended) 
-                  ? item.metadata.recommended 
-                  : []
-              }
             } as PricedDiskOption;
           });
           setDiskOptions(options);
@@ -125,16 +94,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         type: 'disk',
         subtype: item.disk.type,
         metadata: {
-          quantity: item.quantity,
-          // Add raid property if it exists in the original disk
-          ...(item.disk.raid !== undefined && { raid: item.disk.raid }),
-          // Add capacity for future reference
-          capacity: item.disk.capacity,
-          // Add specs data
-          readSpeed: item.disk.specs?.readSpeed,
-          writeSpeed: item.disk.specs?.writeSpeed,
-          iops: item.disk.specs?.iops,
-          recommended: item.disk.specs?.recommended
+          quantity: item.quantity
         },
         specs: [
           `Capacidade: ${item.disk.capacity}`,
@@ -170,7 +130,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       if (allData.discos_internos && Array.isArray(allData.discos_internos.items)) {
         // Convert price items to disk options
         const diskItems = allData.discos_internos.items.map(item => {
-          // Convert metadata.raid to boolean explicitly
+          // Corrija o erro de tipo convertendo explicitamente para booleano
           const hasRaid = Boolean(item.metadata?.raid);
           
           return {
@@ -178,25 +138,17 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
             name: item.name,
             description: item.description,
             price: item.price,
-            type: item.type as 'nvme' | 'ssd' | 'hdd',
+            type: item.type,
             subtype: item.subtype,
             capacity: item.metadata?.capacity || 'N/A',
             raid: hasRaid,
-            specs: {
-              readSpeed: item.metadata?.readSpeed || 'N/A',
-              writeSpeed: item.metadata?.writeSpeed || 'N/A',
-              iops: item.metadata?.iops || 'N/A',
-              recommended: Array.isArray(item.metadata?.recommended) 
-                ? item.metadata.recommended 
-                : []
-            }
           } as PricedDiskOption;
         });
         
         // Update selected disks
         setSelectedDisks(diskItems.map(disk => ({
           disk,
-          quantity: item.metadata?.quantity || 1
+          quantity: 1
         })));
       }
     } catch (error) {
@@ -259,7 +211,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       return;
     }
 
-    setSelectedDisks([...selectedDisks, { disk: selectedDisk, quantity }]);
+    setSelectedDisks(prev => [...prev, { disk: selectedDisk, quantity }]);
     setSelectedDisk(null);
     setQuantity(1);
     setIsPersisted(false);
@@ -269,7 +221,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
 
   // Handle quantity change
   const handleQuantityChange = (diskId: string, newQuantity: number) => {
-    setSelectedDisks(selectedDisks.map(item => {
+    setSelectedDisks(prev => prev.map(item => {
       if (item.disk.id === diskId) {
         return { ...item, quantity: newQuantity };
       }
@@ -281,7 +233,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
 
   // Handle remove disk
   const handleRemoveDisk = (diskId: string) => {
-    setSelectedDisks(selectedDisks.filter(item => item.disk.id !== diskId));
+    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
     setIsPersisted(false);
     setHasLocalChanges(true);
     toast.success("Disco removido com sucesso");
