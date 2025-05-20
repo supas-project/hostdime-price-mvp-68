@@ -1,28 +1,15 @@
 
-// Import functions directly from the modules
-import { 
-  getAllData as getAllDataFromPersistence,
-  saveData
-} from './data-persistence';
-
-import { 
-  forceRefreshFromLatestSource as refreshFromSource,
-  getDiskOptions
-} from './data-retrieval';
-
-// Export renamed imports to prevent naming conflicts
-export { 
-  getAllDataFromPersistence, 
-  refreshFromSource,
-  saveData,
-  getDiskOptions
-};
-
-// Re-export other functionality from individual modules
+// Re-export all functionality from individual modules without conflicts
+export * from './data-persistence';
 export * from './data-import';
+export * from './data-retrieval';
 export * from './data-sync';
 export * from './category-operations';
 export * from './item-operations';
+
+// Import functions directly from their respective modules
+import { forceRefreshFromLatestSource } from './data-sync';
+import { getAllData } from './data-persistence';
 
 // Function to check for data conflicts
 const checkForDataConflicts = async (): Promise<boolean> => {
@@ -46,11 +33,11 @@ export async function ensureDataConsistency() {
     if (hasConflicts) {
       console.log("[Operations] Data conflicts detected, refreshing from latest source");
       // If conflicts, refresh data to make sure we have the latest
-      return await refreshFromSource();
+      return await forceRefreshFromLatestSource();
     }
     
     // No conflicts, get current data
-    const currentData = await getAllDataFromPersistence();
+    const currentData = await getAllData();
     return currentData;
   } catch (error) {
     console.error("[Operations] Error ensuring data consistency:", error);

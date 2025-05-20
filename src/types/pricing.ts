@@ -1,4 +1,3 @@
-import { RaidMetadata } from "@/types/component";
 
 export interface PriceItem {
   id: string;
@@ -27,7 +26,7 @@ export interface PriceItem {
     iops?: string;
     throughput?: string;
     recommended?: string[];
-    raid?: boolean | RaidMetadata; // Alterado para aceitar tanto boolean quanto RaidMetadata
+    raid?: boolean; // Add the missing raid property
   };
 }
 

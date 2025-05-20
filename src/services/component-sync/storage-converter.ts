@@ -1,7 +1,7 @@
 
 import { DiskOption, PricedDiskOption } from "@/types/storage";
 import { PriceItem, PriceCategory } from "@/types/pricing";
-import { ComponentOption, RaidMetadata } from "@/types/component";
+import { ComponentOption } from "@/types/component";
 
 /**
  * Convert storage data item to price item
@@ -35,9 +35,7 @@ export function convertStorageDataItem(item: PricedDiskOption): PriceItem {
           pricePerGB: 0,
           baseCapacity: 0
         }
-      }),
-      // Adicione a propriedade raid se existir
-      ...(item.raid !== undefined && { raid: item.raid })
+      })
     }
   };
 }
@@ -88,9 +86,7 @@ export function convertPriceItemToDisk(item: PriceItem): PricedDiskOption {
       writeSpeed,
       iops,
       recommended: item.metadata?.features?.map(f => f.trim()) || []
-    },
-    // Adicionando a propriedade raid
-    raid: item.metadata?.raid ? Boolean(item.metadata.raid) : undefined
+    }
   };
 }
 

@@ -11,7 +11,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PriceService } from "@/services/price-service";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 import { PricedDiskOption } from "@/types/storage";
-import { getDiskOptions } from "@/services/price/operations/data-retrieval";
 
 interface SyncButtonProps {
   onSync: () => Promise<void>;
@@ -49,7 +48,6 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
   const [isPersisted, setIsPersisted] = useState(true);
   const [hasLocalChanges, setHasLocalChanges] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   
   // Explicit check if user email is admin@hostdime.com.br
@@ -59,21 +57,34 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
   useEffect(() => {
     const loadDisks = async () => {
       try {
-        setIsLoading(true);
-        
-        // Use dedicated function for getting disk options
-        const options = await getDiskOptions();
-        
-        if (options && options.length > 0) {
-          console.log(`Carregados ${options.length} discos internos`);
+        const category = await PriceService.getCategory('discos_internos');
+        if (category && Array.isArray(category.items)) {
+          const options = category.items.map(item => {
+            // Convert metadata.raid to boolean explicitly
+            const hasRaid = Boolean(item.metadata?.raid);
+            
+            return {
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              price: item.price,
+              type: item.type as 'nvme' | 'ssd' | 'hdd',
+              subtype: item.subtype,
+              capacity: item.metadata?.capacity || 'N/A',
+              raid: hasRaid,
+              specs: {
+                readSpeed: item.metadata?.readSpeed || 'N/A',
+                writeSpeed: item.metadata?.writeSpeed || 'N/A',
+                iops: item.metadata?.iops || 'N/A',
+                recommended: Array.isArray(item.metadata?.recommended) 
+                  ? item.metadata.recommended 
+                  : []
+              }
+            } as PricedDiskOption;
+          });
           setDiskOptions(options);
-          // Notificar usuário sobre discos carregados
-          toast.success(`${options.length} opções de disco carregadas`);
         } else {
           console.warn("No internal disks found in price table");
-          toast.warning("Nenhum disco interno encontrado", {
-            description: "Tente sincronizar com o servidor ou adicione discos na tabela de preços."
-          });
         }
       } catch (error) {
         console.error("Error loading internal disks:", error);
@@ -81,7 +92,6 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
           description: "Não foi possível carregar as opções de disco. Tente novamente mais tarde."
         });
       } finally {
-        setIsLoading(false);
         setIsInitialLoad(false);
       }
     };
@@ -112,11 +122,10 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         name: `${item.disk.type.toUpperCase()} ${item.disk.capacity}`,
         description: `${item.disk.type.toUpperCase()} disk with ${item.disk.capacity} capacity`,
         price: item.disk.price * item.quantity,
-        type: item.disk.type, // Usar o tipo do disco diretamente (nvme, ssd, hdd)
-        subtype: "disk",
+        type: 'disk',
+        subtype: item.disk.type,
         metadata: {
           quantity: item.quantity,
-          type: item.disk.type, // Garantir que o tipo está no metadata também
           // Add raid property if it exists in the original disk
           ...(item.disk.raid !== undefined && { raid: item.disk.raid }),
           // Add capacity for future reference
@@ -141,13 +150,6 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       console.log("Disk selections saved to database:", diskItems.length);
       setIsPersisted(true);
       setHasLocalChanges(false);
-      
-      // Disparar evento customizado para notificar outras partes da aplicação
-      const event = new CustomEvent('storage-selection-updated', {
-        detail: { disks: diskItems }
-      });
-      window.dispatchEvent(event);
-      
     } catch (error) {
       console.error("Error saving disk selections to database:", error);
       toast.error("Erro ao salvar discos", {
@@ -160,37 +162,48 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
   const refreshData = async () => {
     try {
       console.log("Refreshing disk data from database");
-      setIsLoading(true);
       
-      // Use dedicated function for getting disk options
-      const refreshedOptions = await getDiskOptions();
+      // Get existing price data
+      const allData = await PriceService.getAllData();
       
-      if (refreshedOptions && refreshedOptions.length > 0) {
-        setDiskOptions(refreshedOptions);
-        
-        // Update selected disks to match any that exist in the refreshed options
-        const updatedSelections = refreshedOptions
-          .filter(disk => disk.metadata?.quantity && disk.metadata.quantity > 0)
-          .map(disk => ({
-            disk,
-            quantity: disk.metadata?.quantity || 1
-          }));
+      // Make sure we have the discos_internos category
+      if (allData.discos_internos && Array.isArray(allData.discos_internos.items)) {
+        // Convert price items to disk options
+        const diskItems = allData.discos_internos.items.map(item => {
+          // Convert metadata.raid to boolean explicitly
+          const hasRaid = Boolean(item.metadata?.raid);
           
-        if (updatedSelections.length > 0) {
-          setSelectedDisks(updatedSelections);
-        }
+          return {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            type: item.type as 'nvme' | 'ssd' | 'hdd',
+            subtype: item.subtype,
+            capacity: item.metadata?.capacity || 'N/A',
+            raid: hasRaid,
+            specs: {
+              readSpeed: item.metadata?.readSpeed || 'N/A',
+              writeSpeed: item.metadata?.writeSpeed || 'N/A',
+              iops: item.metadata?.iops || 'N/A',
+              recommended: Array.isArray(item.metadata?.recommended) 
+                ? item.metadata.recommended 
+                : []
+            }
+          } as PricedDiskOption;
+        });
         
-        toast.success(`${refreshedOptions.length} opções de disco atualizadas`);
-      } else {
-        toast.warning("Nenhum disco interno encontrado após atualização");
+        // Update selected disks
+        setSelectedDisks(diskItems.map(disk => ({
+          disk,
+          quantity: item.metadata?.quantity || 1
+        })));
       }
     } catch (error) {
       console.error("Error refreshing disk data:", error);
       toast.error("Erro ao atualizar dados de disco", {
         description: "Não foi possível atualizar os dados de disco. Tente novamente mais tarde."
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -246,20 +259,7 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
       return;
     }
 
-    // Adiciona o disco selecionado
-    const updatedDisks = [...selectedDisks, { disk: selectedDisk, quantity }];
-    setSelectedDisks(updatedDisks);
-    
-    // Disparar evento customizado para visualização compartilhada 
-    const selectionEvent = new CustomEvent('storage-selection', { 
-      detail: {
-        disk: selectedDisk,
-        quantity: quantity,
-        type: 'internal'
-      }
-    });
-    window.dispatchEvent(selectionEvent);
-    
+    setSelectedDisks([...selectedDisks, { disk: selectedDisk, quantity }]);
     setSelectedDisk(null);
     setQuantity(1);
     setIsPersisted(false);
@@ -269,51 +269,18 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
 
   // Handle quantity change
   const handleQuantityChange = (diskId: string, newQuantity: number) => {
-    // Verificar se a nova quantidade é válida
-    if (newQuantity < 1) {
-      toast.error("A quantidade deve ser maior que zero");
-      return;
-    }
-    
-    const updatedDisks = selectedDisks.map(item => {
+    setSelectedDisks(selectedDisks.map(item => {
       if (item.disk.id === diskId) {
-        // Disparar evento customizado para visualização compartilhada
-        const selectionEvent = new CustomEvent('storage-selection', { 
-          detail: {
-            disk: item.disk,
-            quantity: newQuantity,
-            type: 'internal'
-          }
-        });
-        window.dispatchEvent(selectionEvent);
-        
         return { ...item, quantity: newQuantity };
       }
       return item;
-    });
-    
-    setSelectedDisks(updatedDisks);
+    }));
     setIsPersisted(false);
     setHasLocalChanges(true);
   };
 
   // Handle remove disk
   const handleRemoveDisk = (diskId: string) => {
-    // Encontrar o disco a ser removido para o evento
-    const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
-    
-    if (diskToRemove) {
-      // Disparar evento customizado para notificar remoção
-      const selectionEvent = new CustomEvent('storage-selection', { 
-        detail: {
-          disk: diskToRemove.disk,
-          quantity: 0, // Zero indica remoção
-          type: 'internal'
-        }
-      });
-      window.dispatchEvent(selectionEvent);
-    }
-    
     setSelectedDisks(selectedDisks.filter(item => item.disk.id !== diskId));
     setIsPersisted(false);
     setHasLocalChanges(true);
@@ -330,27 +297,16 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="disk">Disco</Label>
-            <Select 
-              value={selectedDisk?.id} 
-              onValueChange={(value) => {
-                const disk = diskOptions.find(disk => disk.id === value);
-                setSelectedDisk(disk || null);
-              }}
-              disabled={isLoading}
-            >
+            <Select onValueChange={(value) => {
+              const disk = diskOptions.find(disk => disk.id === value);
+              setSelectedDisk(disk || null);
+            }}>
               <SelectTrigger>
-                <SelectValue placeholder={isLoading ? "Carregando..." : "Selecione um disco"} />
+                <SelectValue placeholder="Selecione um disco" />
               </SelectTrigger>
               <SelectContent>
-                {diskOptions.length === 0 && !isLoading && (
-                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    Nenhum disco disponível
-                  </div>
-                )}
                 {diskOptions.map((disk) => (
-                  <SelectItem key={disk.id} value={disk.id}>
-                    {disk.name || `${disk.type.toUpperCase()} ${disk.capacity}`}
-                  </SelectItem>
+                  <SelectItem key={disk.id} value={disk.id}>{disk.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -363,49 +319,28 @@ export function InternalStoragePanel({ selectedDisks, setSelectedDisks }: Intern
               min="1"
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-              disabled={isLoading}
             />
           </div>
         </div>
-        <Button 
-          onClick={handleAddDisk} 
-          disabled={!selectedDisk || isLoading}
-          variant="default"
-          className="bg-[#f58220] hover:bg-[#e67615] text-white"
-        >
-          Adicionar Disco
-        </Button>
+        <Button onClick={handleAddDisk} disabled={!selectedDisk}>Adicionar Disco</Button>
         <Separator />
-        {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-4 border-t-primary rounded-full animate-spin"></div>
-              <div>Carregando discos...</div>
-            </div>
-          </div>
-        ) : selectedDisks.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            Nenhum disco selecionado. Adicione discos à configuração.
-          </div>
-        ) : (
-          <ul className="list-none pl-0">
-            {selectedDisks.map((item) => (
-              <li key={item.disk.id} className="grid grid-cols-4 items-center gap-4 py-2">
-                <div className="col-span-2">{item.disk.name || `${item.disk.type.toUpperCase()} ${item.disk.capacity}`}</div>
-                <div>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => handleQuantityChange(item.disk.id, Number(e.target.value))}
-                    className="w-20"
-                  />
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => handleRemoveDisk(item.disk.id)}>Remover</Button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="list-none pl-0">
+          {selectedDisks.map((item) => (
+            <li key={item.disk.id} className="grid grid-cols-4 items-center gap-4 py-2">
+              <div className="col-span-2">{item.disk.name}</div>
+              <div>
+                <Input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => handleQuantityChange(item.disk.id, Number(e.target.value))}
+                  className="w-20"
+                />
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => handleRemoveDisk(item.disk.id)}>Remover</Button>
+            </li>
+          ))}
+        </ul>
         {isAdmin && (
           <SyncButton onSync={handleSyncData} isSyncing={isSyncing} />
         )}

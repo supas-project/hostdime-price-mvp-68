@@ -1,7 +1,7 @@
 
 import { PriceService } from "../price-service";
 import { PriceCategory, PriceItem } from "@/types/pricing";
-import { ComponentOption, RaidMetadata } from "@/types/component";
+import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 import { CATEGORY_MAPPING } from "./utils";
 
@@ -59,13 +59,6 @@ export async function initializeServerCategories(): Promise<void> {
  * Convert ComponentOption to PriceItem format
  */
 export function componentToPriceItem(component: ComponentOption): PriceItem {
-  // Convertendo RaidMetadata para boolean quando necessário
-  const raidValue = component.metadata?.raid ? 
-    (typeof component.metadata.raid === 'boolean' ? 
-      component.metadata.raid : 
-      true) : 
-    undefined;
-
   return {
     id: component.id,
     name: component.name,
@@ -75,11 +68,7 @@ export function componentToPriceItem(component: ComponentOption): PriceItem {
     subtype: component.subtype || "",
     specs: component.specs || [],
     isHardware: component.isHardware || false,
-    metadata: {
-      ...component.metadata,
-      // Garantindo que o raid seja um boolean se presente
-      ...(raidValue !== undefined && { raid: raidValue })
-    }
+    metadata: component.metadata || {}
   };
 }
 
@@ -87,24 +76,6 @@ export function componentToPriceItem(component: ComponentOption): PriceItem {
  * Convert PriceItem to ComponentOption format
  */
 export function priceItemToComponent(item: PriceItem): ComponentOption {
-  // Convertendo boolean para RaidMetadata quando necessário
-  const raidMetadata = item.metadata?.raid ? 
-    (typeof item.metadata.raid === 'boolean' ? 
-      { 
-        type: "0", 
-        description: "RAID Configuration",
-        protection: "Data Protection", 
-        isHardware: true,
-        usableCapacity: 0,
-        totalCapacity: 0,
-        performance: {
-          read: "boa",
-          write: "boa"
-        }
-      } as RaidMetadata : 
-      item.metadata.raid as RaidMetadata) : 
-    undefined;
-
   return {
     id: item.id,
     name: item.name,
@@ -114,10 +85,6 @@ export function priceItemToComponent(item: PriceItem): ComponentOption {
     subtype: item.subtype || "",
     specs: item.specs || [],
     isHardware: item.isHardware || false,
-    metadata: {
-      ...item.metadata,
-      // Garantindo que o raid seja RaidMetadata se presente
-      ...(raidMetadata !== undefined && { raid: raidMetadata })
-    }
+    metadata: item.metadata || {}
   };
 }
