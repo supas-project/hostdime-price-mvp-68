@@ -34,7 +34,7 @@ export function useInitialDiskLoader(setSelectedDisks: SetSelectedDisksFunction)
     }
   }, [isInitialLoad, setSelectedDisks]);
 
-  // Return strictly typed boolean values to ensure type safety
+  // Garantir explicitamente que os valores retornados sejam do tipo boolean
   return {
     isInitialLoad: Boolean(isInitialLoad),
     setIsInitialLoad,
