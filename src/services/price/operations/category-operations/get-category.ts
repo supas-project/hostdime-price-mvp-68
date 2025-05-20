@@ -1,17 +1,24 @@
 
 import { PriceCategory } from '@/types/pricing';
-import { getAllData } from '../../operations';
+import { getAllData } from '../data-retrieval';
 
 /**
- * Gets a specific category by ID from the price data
+ * Gets a specific category by ID
  */
 export async function getCategory(categoryId: string): Promise<PriceCategory | null> {
   try {
-    // Get all data and find the category
+    console.log(`[PriceService] Getting category: ${categoryId}`);
     const allData = await getAllData();
-    return allData[categoryId] || null;
+    
+    if (!allData || !allData[categoryId]) {
+      console.warn(`[PriceService] Category ${categoryId} not found`);
+      return null;
+    }
+    
+    console.log(`[PriceService] Found category ${categoryId} with ${allData[categoryId].items?.length || 0} items`);
+    return allData[categoryId];
   } catch (err: any) {
-    console.error(`Error in getCategory for ${categoryId}:`, err);
+    console.error(`[PriceService] Error in getCategory for ${categoryId}:`, err);
     return null;
   }
 }

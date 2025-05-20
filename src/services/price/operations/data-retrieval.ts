@@ -53,34 +53,3 @@ export async function getAllData(): Promise<PriceData> {
     throw new Error(err.message || "Failed to retrieve price data.");
   }
 }
-
-/**
- * Checks if there are any data changes that would conflict with local edits
- */
-export async function checkForDataConflicts(): Promise<boolean> {
-  try {
-    // Implementation of conflict checking logic
-    // For now, just returns false indicating no conflicts
-    return false;
-  } catch (error) {
-    console.error("[PriceService] Error checking for data conflicts:", error);
-    return false;
-  }
-}
-
-/**
- * Forces a refresh from the latest data source
- */
-export async function forceRefreshFromLatestSource(): Promise<PriceData | null> {
-  try {
-    console.log("[PriceService] Force refreshing data from latest source");
-    
-    // Get the latest data
-    const latestData = await getAllData();
-    
-    return latestData;
-  } catch (error) {
-    console.error("[PriceService] Error forcing refresh from latest source:", error);
-    throw error;
-  }
-}
