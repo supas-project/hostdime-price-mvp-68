@@ -106,6 +106,12 @@ export function useItemEdit(
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
 
+      // Check if we're editing a memory item and trigger special event
+      if (activeTab.toLowerCase() === 'memória' || activeTab.toLowerCase() === 'memoria') {
+        console.log("[useItemEdit] Edited memory item, triggering memory component update");
+        window.dispatchEvent(new CustomEvent('memory-components-updated'));
+      }
+
       // Notify both components about the data change
       window.dispatchEvent(new CustomEvent('storage-data-updated'));
       window.dispatchEvent(new CustomEvent('server-data-updated'));

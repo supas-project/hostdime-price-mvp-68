@@ -1,3 +1,4 @@
+
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -28,18 +29,27 @@ export function WizardContent() {
     categoriesLoaded
   } = useWizard();
 
-  // Adicionar sincronização com a tabela de preços
+  // Improve synchronization with price table
   const refreshData = async () => {
     try {
       setIsLoadingData(true);
-      // First clean up duplicates
+      console.log("[WizardContent] Refreshing data...");
+      
+      // First ensure data consistency to get the latest data
+      await PriceService.ensureDataConsistency();
+      
+      // Then clean up duplicates
       await cleanupDuplicateCategories();
-      // Then refresh data
+      
+      // Finally refresh data and sync memory components
       await PriceService.forceRefreshFromLatestSource();
-      // Initialize server categories including connectivity ones
+      
+      // Initialize server categories including memory ones
       await initializeServerCategories();
+      
       // Dispatch a global event to notify other components about the data refresh
       window.dispatchEvent(new CustomEvent('server-data-updated'));
+      window.dispatchEvent(new CustomEvent('memory-components-updated'));
       
       toast.success("Dados sincronizados com sucesso!", {
         description: "Todas as categorias e itens atualizados."
@@ -54,7 +64,7 @@ export function WizardContent() {
     }
   };
 
-  // Carregar dados ao iniciar o componente
+  // Load data and set up synchronization on component mount
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -73,10 +83,18 @@ export function WizardContent() {
       refreshData();
     };
     
+    // Add listener for memory component updates specifically
+    const handleMemoryComponentsUpdated = () => {
+      console.log("[WizardContent] Received memory-components-updated event");
+      refreshData();
+    };
+    
     window.addEventListener('price-table-data-updated', handlePriceTableDataUpdated);
+    window.addEventListener('memory-components-updated', handleMemoryComponentsUpdated);
     
     return () => {
       window.removeEventListener('price-table-data-updated', handlePriceTableDataUpdated);
+      window.removeEventListener('memory-components-updated', handleMemoryComponentsUpdated);
     };
   }, []);
   

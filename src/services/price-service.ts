@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   addCategory,
@@ -13,7 +14,8 @@ import {
   getItem,
   getAllData,
   saveData,
-  importData
+  importData,
+  ensureDataConsistency
 } from './price/operations';
 import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
 import { PriceData } from '@/types/pricing';
@@ -195,5 +197,12 @@ export const PriceService = {
       console.error('Error resetting data to defaults:', err);
       return false;
     }
+  },
+
+  /**
+   * Ensures data consistency between all components
+   */
+  ensureDataConsistency: async (): Promise<PriceData | null> => {
+    return await ensureDataConsistency();
   }
 };

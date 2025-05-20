@@ -36,6 +36,15 @@ export async function getAllData(): Promise<PriceData> {
     // Save the current time as last fetch time to track conflicts
     localStorage.setItem('price_data_last_fetch', new Date().toISOString());
     
+    // Check if memory data exists and notify memory components
+    if (priceData.data.memória || priceData.data.memoria) {
+      console.log("[PriceService] Memory data exists in price data, will dispatch memory event");
+      // Use setTimeout to ensure this happens after the data is returned
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('memory-components-updated'));
+      }, 100);
+    }
+    
     return priceData.data as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
@@ -68,7 +77,7 @@ export async function saveData(data: PriceData): Promise<void> {
     const isAdmin = userEmail === "admin@hostdime.com.br";
     
     // Always allow these categories to be modified by any authenticated user
-    const allowedCategories = ['discos_internos', 'disk', 'external_storage'];
+    const allowedCategories = ['discos_internos', 'disk', 'external_storage', 'memória', 'memoria'];
     
     let hasChangesOnlyInAllowedCategories = true;
     let hasChanges = false;
@@ -96,7 +105,7 @@ export async function saveData(data: PriceData): Promise<void> {
         if (JSON.stringify(currentCategory) !== JSON.stringify(newCategory)) {
           hasChanges = true;
           
-          if (!allowedCategories.includes(categoryId)) {
+          if (!allowedCategories.includes(categoryId.toLowerCase())) {
             hasChangesOnlyInAllowedCategories = false;
           }
         }
@@ -106,7 +115,7 @@ export async function saveData(data: PriceData): Promise<void> {
       for (const categoryId of Object.keys(existingData)) {
         if (!data[categoryId]) {
           hasChanges = true;
-          if (!allowedCategories.includes(categoryId)) {
+          if (!allowedCategories.includes(categoryId.toLowerCase())) {
             hasChangesOnlyInAllowedCategories = false;
           }
         }
@@ -183,7 +192,7 @@ export async function saveData(data: PriceData): Promise<void> {
       description: "As alterações foram salvas e sincronizadas." 
     });
 
-    // Notificar listeners após salvamento bem-sucedido
+    // Notify listeners after successful save
     notifyListeners(data);
     
     // Update the local cache timestamp to prevent unnecessary refresh prompts
@@ -197,6 +206,11 @@ export async function saveData(data: PriceData): Promise<void> {
     window.dispatchEvent(new CustomEvent('server-data-updated'));
     window.dispatchEvent(new CustomEvent('price-table-data-updated'));
     
+    // If there's memory data, dispatch a specific memory update event
+    if (data.memória || data.memoria) {
+      console.log("[PriceService] Synchronizing memory data");
+      window.dispatchEvent(new CustomEvent('memory-components-updated'));
+    }
   } catch (err: any) {
     console.error("[PriceService] Erro em saveData:", err);
     if (!err.message.includes("Authentication")) {

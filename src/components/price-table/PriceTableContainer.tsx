@@ -56,11 +56,16 @@ export default function PriceTableContainer() {
   useEffect(() => {
     if (hasUpdates) {
       handleRefreshData().then(() => {
-        // Notify WizardContent component about the data change
+        // Notify components about the data change
         window.dispatchEvent(new CustomEvent('price-table-data-updated'));
+        // Also notify memory components specifically
+        if (priceData && priceData['memória']) {
+          console.log("[PriceTableContainer] Memory data updated, dispatching memory-specific event");
+          window.dispatchEvent(new CustomEvent('memory-components-updated'));
+        }
       });
     }
-  }, [hasUpdates, handleRefreshData]);
+  }, [hasUpdates, handleRefreshData, priceData]);
 
   // Check if we have any data to determine if initialization is needed
   useEffect(() => {
@@ -105,6 +110,11 @@ export default function PriceTableContainer() {
         });
       };
       
+      const handleMemoryComponentsUpdated = () => {
+        console.log("Memory-components-updated event received, reloading price data");
+        loadPriceData();
+      };
+      
       // Listen for storage events from other tabs
       const handleStorageEvent = (e: StorageEvent) => {
         if (e.key === 'deletedItems' || e.key === 'deletedCategories' || e.key === 'price_data_last_fetch') {
@@ -122,6 +132,7 @@ export default function PriceTableContainer() {
       window.addEventListener('server-data-updated', handleServerDataUpdated);
       window.addEventListener('item-deleted', handleItemDeleted as EventListener);
       window.addEventListener('category-deleted', handleCategoryDeleted as EventListener);
+      window.addEventListener('memory-components-updated', handleMemoryComponentsUpdated);
       window.addEventListener('storage', handleStorageEvent);
       
       // Mark listeners as attached
@@ -133,6 +144,7 @@ export default function PriceTableContainer() {
         window.removeEventListener('server-data-updated', handleServerDataUpdated);
         window.removeEventListener('item-deleted', handleItemDeleted as EventListener);
         window.removeEventListener('category-deleted', handleCategoryDeleted as EventListener);
+        window.removeEventListener('memory-components-updated', handleMemoryComponentsUpdated);
         window.removeEventListener('storage', handleStorageEvent);
       };
     }
@@ -209,8 +221,9 @@ export default function PriceTableContainer() {
     setUserHasRequestedInit(true);
     InitService.initializeData().then(() => {
       loadPriceData();
-      // Notify server component about the data change
+      // Notify components about the data change
       window.dispatchEvent(new CustomEvent('price-table-data-updated'));
+      window.dispatchEvent(new CustomEvent('memory-components-updated'));
     });
     toast.info("Inicializando categorias padrão");
   };
