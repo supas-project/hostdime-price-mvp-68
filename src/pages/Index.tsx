@@ -17,7 +17,10 @@ const WizardContainer = () => {
     showFinalSummary,
     setShowFinalSummary,
     isStepComplete,
-    handleRestart
+    handleRestart,
+    storageItems,
+    connectivityItems,
+    customServices
   } = useWizard();
 
   return (
@@ -51,8 +54,8 @@ const WizardContainer = () => {
               selectedComponents={selectedComponents}
               currentStep={currentStep}
               totalSteps={serverData.componentes.length}
-              onPrevious={() => setCurrentStep(prev => Math.max(0, prev - 1))}
-              onNext={() => setCurrentStep(prev => Math.min(serverData.componentes.length - 1, prev + 1))}
+              onPrevious={() => setCurrentStep(Math.max(0, currentStep - 1))}
+              onNext={() => setCurrentStep(Math.min(serverData.componentes.length - 1, currentStep + 1))}
               onComplete={() => setShowFinalSummary(true)}
             />
           </div>
@@ -62,6 +65,9 @@ const WizardContainer = () => {
           <FinalSummary 
             selectedComponents={selectedComponents}
             onRestart={handleRestart}
+            storageItems={storageItems}
+            customServices={customServices}
+            connectivityItems={connectivityItems}
           />
         )}
       </main>

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from '../constants';
-import { connectivityComponents as getConnectivityDefaults } from '@/data/connectivity-components';
+import { connectivityComponents } from '@/data/connectivity-components';
 
 /**
  * Gets all price data from the database
@@ -264,17 +264,17 @@ function handleConnectivityCategories(processedData: any) {
   if (connectivityIsEmpty || portSpeedIsEmpty || ipBlocksIsEmpty) {
     try {
       // Importar dados de componentes de conectividade
-      const connectivityComponents = getConnectivityDefaults();
+      const defaultConnectivityData = connectivityComponents;
       
-      if (!connectivityComponents || !connectivityComponents.options || connectivityComponents.options.length === 0) {
+      if (!defaultConnectivityData || !defaultConnectivityData.options || defaultConnectivityData.options.length === 0) {
         console.warn("[PriceService] No default connectivity data available");
         return;
       }
       
-      console.log("[PriceService] Found default connectivity components:", connectivityComponents.options.length);
+      console.log("[PriceService] Found default connectivity components:", defaultConnectivityData.options.length);
       
       // Separar itens por subtipo
-      const portItems = connectivityComponents.options
+      const portItems = defaultConnectivityData.options
         .filter(option => option.subtype === "porta")
         .map(option => ({
           id: option.id,
@@ -286,7 +286,7 @@ function handleConnectivityCategories(processedData: any) {
           isHardware: true
         }));
       
-      const ipItems = connectivityComponents.options
+      const ipItems = defaultConnectivityData.options
         .filter(option => option.subtype === "ip")
         .map(option => ({
           id: option.id,
@@ -397,100 +397,6 @@ function syncConnectivityCategories(data: any) {
   
   // Log para debugging
   console.log(`[PriceService] After sync: connectivity=${data.connectivity?.items?.length || 0}, port_speed=${data.port_speed?.items?.length || 0}, ip_blocks=${data.ip_blocks?.items?.length || 0}`);
-}
-
-/**
- * Recupera os dados padrão de conectividade do arquivo estático
- */
-function getConnectivityDefaults() {
-  try {
-    // Esta função simula a importação do arquivo estático
-    // Em uma implementação real, você importaria o arquivo diretamente
-    return {
-      id: "connectivity",
-      type: "Conectividade",
-      friendlyName: "Opções de Conectividade",
-      description: "Configure a porta de rede e bloco IP do seu servidor",
-      icon: "network",
-      options: [
-        {
-          id: "network-1gbps",
-          type: "Conectividade",
-          subtype: "porta",
-          name: "1 Gbps",
-          description: "Porta de rede com velocidade de 1 Gbps",
-          price: 50
-        },
-        {
-          id: "network-10gbps",
-          type: "Conectividade",
-          subtype: "porta",
-          name: "10 Gbps",
-          description: "Porta de rede de alta velocidade (10 Gbps)",
-          price: 200
-        },
-        {
-          id: "ip-30",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /30",
-          description: "4 endereços IP (1 utilizável)",
-          price: 140
-        },
-        {
-          id: "ip-29",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /29",
-          description: "8 endereços IP (5 utilizáveis)",
-          price: 280
-        },
-        {
-          id: "ip-28",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /28",
-          description: "16 endereços IP (13 utilizáveis)",
-          price: 640
-        },
-        {
-          id: "ip-27",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /27",
-          description: "32 endereços IP (29 utilizáveis)",
-          price: 1440
-        },
-        {
-          id: "ip-26",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /26",
-          description: "64 endereços IP (61 utilizáveis)",
-          price: 3200
-        },
-        {
-          id: "ip-25",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /25",
-          description: "128 endereços IP (125 utilizáveis)",
-          price: 7680
-        },
-        {
-          id: "ip-24",
-          type: "Conectividade",
-          subtype: "ip",
-          name: "Bloco /24",
-          description: "256 endereços IP (253 utilizáveis)",
-          price: 17920
-        }
-      ]
-    };
-  } catch (error) {
-    console.error("[PriceService] Error loading default connectivity data:", error);
-    return null;
-  }
 }
 
 /**

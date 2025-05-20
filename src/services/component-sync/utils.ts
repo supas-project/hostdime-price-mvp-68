@@ -1,20 +1,25 @@
 
-// Constants for category mapping
-export const CATEGORY_MAPPING = {
-  cpu: "Processador",
-  memory: "Memória RAM",
-  storage: "Armazenamento",
-  os: "Sistema Operacional",
-  datacenter: "Datacenter",
-  contract: "Duração do Contrato",
-  connectivity: "Opções de Conectividade",
-  services: "Serviços Adicionais",
-  disks: "Discos",
-  external_storage: "Storage Externo"
-};
+/**
+ * Utility for logging debug messages
+ */
+export function logDebug(context: string, data?: any) {
+  if (process.env.NODE_ENV === 'development') {
+    if (data) {
+      console.log(`[${context}]`, data);
+    } else {
+      console.log(`[${context}]`);
+    }
+  }
+}
 
-// Reverse mapping for lookups
-export const REVERSE_CATEGORY_MAPPING: Record<string, string> = {};
-Object.entries(CATEGORY_MAPPING).forEach(([key, value]) => {
-  REVERSE_CATEGORY_MAPPING[value.toLowerCase()] = key;
-});
+/**
+ * Parse a number value or string to number
+ */
+export function parseNumberValue(value: any, defaultValue: number = 0): number {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+  
+  const parsed = typeof value === 'string' ? parseFloat(value) : value;
+  return isNaN(parsed) ? defaultValue : parsed;
+}
