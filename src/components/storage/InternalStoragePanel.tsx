@@ -135,11 +135,12 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       updateDisks();
     };
     
+    // The issue is here - we need to pass the listener without arguments to addDataChangeListener
     PriceService.addDataChangeListener(listener);
     
     // Clean up listener when component unmounts
     return () => {
-      PriceService.removeDataChangeListener(listener);
+      PriceService.removeDataChangeListener();
     };
   }, []);
 
