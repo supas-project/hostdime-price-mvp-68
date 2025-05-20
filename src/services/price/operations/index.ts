@@ -3,7 +3,10 @@
 import { getAllData as getDataFromPersistence } from './data-persistence';
 import { forceRefreshFromLatestSource as refreshFromSource } from './data-retrieval';
 
-// Re-export all functionality from individual modules without conflicts
+// Export renamed imports to prevent naming conflicts
+export { getDataFromPersistence, refreshFromSource };
+
+// Re-export all functionality from individual modules
 export * from './data-persistence';
 export * from './data-import';
 export * from './data-retrieval';
