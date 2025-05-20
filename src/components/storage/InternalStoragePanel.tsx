@@ -1,29 +1,20 @@
 
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
-import { DiskTypeSelector } from "./disk-selection/DiskTypeSelector";
-import { DiskCapacitySelector } from "./disk-selection/DiskCapacitySelector";
-import { SelectedDiskTypeInfo } from "./disk-selection/SelectedDiskTypeInfo";
-import { OtherDisksDisplay } from "./disk-selection/OtherDisksDisplay";
 import { useDiskManagement } from "@/hooks/storage/useDiskManagement";
 import { useDiskDataLoader } from "@/hooks/storage/useDiskDataLoader";
 import { toast } from "sonner";
 import { useDiskPersistence } from "@/hooks/storage/useDiskPersistence";
 import { useInitialDiskLoader } from "@/hooks/storage/useInitialDiskLoader";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
-import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
-import { Button } from "@/components/ui/button";
-import { Loader2, HardDrive } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { DiskPanelRecommendation } from "./disk-panel/DiskPanelRecommendation";
+import { DiskPanelContent } from "./disk-panel/DiskPanelContent";
 
 interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
 }
 
 export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
-  // State for disk selection
-  const [showSelectedDisks, setShowSelectedDisks] = useState<boolean>(true);
-  
   // Use our custom hooks
   const {
     selectedDiskType,
@@ -124,97 +115,21 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Recommendation banner - restored from Print 2 */}
-      <div className="bg-[#191919] border border-[#f5822040] rounded-lg p-4 text-sm text-white/80">
-        <p className="flex items-center gap-2">
-          <HardDrive size={16} className="text-[#f58220]" />
-          Recomendamos 2 discos SSD (um para sistema e outro para dados) ou 1 disco NVMe para máximo desempenho.
-        </p>
-      </div>
+      <DiskPanelRecommendation />
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <DiskTypeSelector
-          selectedType={selectedDiskType}
-          onTypeSelect={handleTypeSelect}
-        />
-        <DiskCapacitySelector
-          selectedCapacity={selectedCapacity}
-          onCapacitySelect={handleCapacitySelect}
-          availableDisks={availableDisks}
-          disabled={!selectedDiskType || isLoading}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {selectedDiskType && (
-        <SelectedDiskTypeInfo selectedDiskType={selectedDiskType} />
-      )}
-
-      {selectedCapacity && selectedDiskType && (
-        <div className="mt-4">
-          {/* Configuração disco button styled to match Print 2 */}
-          <Button 
-            onClick={handleAddSelectedDisk}
-            className="w-full bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#f5822060] text-white"
-          >
-            <span>Configurar disco {selectedDiskType.toUpperCase()}</span>
-          </Button>
-        </div>
-      )}
-
-      {showLoadingOrNoDiskMessage ? (
-        <div className="py-8 flex flex-col items-center justify-center text-center">
-          {isLoading ? (
-            <>
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-              <p className="text-muted-foreground">Carregando opções de disco...</p>
-            </>
-          ) : (
-            <p className="text-muted-foreground">
-              Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
-              Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
-            </p>
-          )}
-        </div>
-      ) : (
-        <>
-          {visibleDisks.length > 0 && (
-            <div className="space-y-4 bg-[#191919] p-4 rounded-lg border border-[#2a2a2a]">
-              <div className="flex justify-between items-center">
-                <h4 className="text-sm font-medium text-white">Discos selecionados</h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowSelectedDisks(!showSelectedDisks)}
-                  className={cn("text-xs px-2 py-1 h-auto")}
-                >
-                  {showSelectedDisks ? "Ocultar" : "Mostrar"}
-                </Button>
-              </div>
-              
-              {showSelectedDisks && (
-                <div className="space-y-4">
-                  {visibleDisks.map((item) => (
-                    <div key={item.disk.id} className="animate-fade-in">
-                      <SelectedDiskDisplay
-                        disk={item.disk}
-                        quantity={item.quantity}
-                        onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
-                        onRemove={() => handleRemoveDisk(item.disk.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
-      
-      <OtherDisksDisplay 
-        selectedDisks={selectedDisks}
+      <DiskPanelContent
         selectedDiskType={selectedDiskType}
-        onSelectDiskType={handleTypeSelect}
+        selectedCapacity={selectedCapacity}
+        handleTypeSelect={handleTypeSelect}
+        handleCapacitySelect={handleCapacitySelect}
+        handleAddSelectedDisk={handleAddSelectedDisk}
+        availableDisks={availableDisks}
+        isLoading={isLoading}
+        showLoadingOrNoDiskMessage={showLoadingOrNoDiskMessage}
+        visibleDisks={visibleDisks}
+        selectedDisks={selectedDisks}
+        handleQuantityChange={handleQuantityChange}
+        handleRemoveDisk={handleRemoveDisk}
       />
     </div>
   );
