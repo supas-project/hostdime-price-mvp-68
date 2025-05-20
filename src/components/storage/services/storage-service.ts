@@ -15,16 +15,18 @@ export async function loadStorageTypes(): Promise<StorageType[]> {
     const { data: session } = await PriceService.supabase.auth.getSession();
     const isAuthenticated = !!session.session;
     
-    // If not authenticated, fall back to static data immediately
+    // Se não estiver autenticado, usa dados estáticos
     if (!isAuthenticated) {
       console.log('[loadStorageTypes] User not authenticated, using static data');
       return storageData.map(mapStaticDataToStorageType);
     }
     
+    console.log('[loadStorageTypes] User authenticated, checking Supabase data');
+    
     // Try to force refresh data if authenticated
     try {
       await PriceService.forceRefreshFromLatestSource().catch(error => {
-        if (!error.message.includes("Authentication")) {
+        if (!error.message?.includes("Authentication")) {
           console.error('[loadStorageTypes] Error refreshing data:', error);
         }
       });
@@ -73,6 +75,7 @@ export async function loadStorageTypes(): Promise<StorageType[]> {
     // Use the combined items if we found any
     if (storageItems.length > 0) {
       console.log(`[loadStorageTypes] Using ${storageItems.length} combined storage items from price service`);
+      console.log('[loadStorageTypes] Item IDs:', storageItems.map(item => item.id).join(', '));
       return storageItems.map(mapPriceItemToStorageType);
     }
     

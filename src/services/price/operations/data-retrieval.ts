@@ -8,7 +8,22 @@ import { PRICE_DATA_TABLE } from '../constants';
  */
 export async function getAllData(): Promise<PriceData> {
   try {
-    console.log("[PriceService] Getting all price data");
+    console.log("[PriceService] Getting all price data from Supabase");
+    
+    // Verificar se o usuário está autenticado
+    const { data: session, error: authError } = await supabase.auth.getSession();
+    
+    if (authError) {
+      console.error("[PriceService] Authentication error:", authError);
+      throw new Error(`Authentication error: ${authError.message}`);
+    }
+    
+    if (!session.session) {
+      console.warn("[PriceService] No active session found");
+      return {};
+    }
+    
+    console.log("[PriceService] User authenticated:", session.session.user.email);
     
     // Fetch the data from price_data table
     const { data: priceData, error } = await supabase
@@ -23,7 +38,7 @@ export async function getAllData(): Promise<PriceData> {
     }
 
     if (!priceData || priceData.length === 0) {
-      console.warn("[PriceService] No data found in price data table, returning default data");
+      console.warn("[PriceService] No data found in price data table");
       return {};
     }
 
@@ -46,8 +61,30 @@ export async function getAllData(): Promise<PriceData> {
       return {};
     }
     
+    // Garantir que todas as categorias tenham um array de itens
+    const processedData = {...jsonData};
+    
+    for (const categoryId of Object.keys(processedData)) {
+      if (!processedData[categoryId].items) {
+        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
+        processedData[categoryId].items = [];
+      } else if (!Array.isArray(processedData[categoryId].items)) {
+        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
+        processedData[categoryId].items = Array.isArray(processedData[categoryId].items) ? 
+          processedData[categoryId].items : [];
+      }
+      
+      console.log(`[PriceService] Category ${categoryId} has ${processedData[categoryId].items.length} items`);
+      
+      // Log detalhes para categorias de storage
+      if (categoryId === 'storage' || categoryId === 'external_storage') {
+        console.log(`[PriceService] ${categoryId} items:`, 
+          processedData[categoryId].items.map(item => `${item.id}: ${item.name}`).join(', '));
+      }
+    }
+    
     // Type assertion with proper cast - first to unknown, then to PriceData
-    return jsonData as unknown as PriceData;
+    return processedData as unknown as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
     throw new Error(err.message || "Failed to retrieve price data.");

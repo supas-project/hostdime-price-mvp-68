@@ -17,10 +17,10 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
       console.warn(`[PriceService] Category ${categoryId} not found when fetching item ${itemId}`);
       
       // Tentativa alternativa para storage/external_storage
-      if (categoryId === 'storage') {
+      if (categoryId.toLowerCase() === 'storage') {
         console.log('[PriceService] Trying to find item in external_storage instead');
         return getItem('external_storage', itemId);
-      } else if (categoryId === 'external_storage') {
+      } else if (categoryId.toLowerCase() === 'external_storage') {
         console.log('[PriceService] Trying to find item in storage instead');
         return getItem('storage', itemId);
       }
@@ -30,7 +30,7 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
     
     // Garantir que temos um array de itens
     if (!Array.isArray(category.items)) {
-      console.warn(`[PriceService] Items is not an array for category ${categoryId}, it is: ${typeof category.items}`);
+      console.error(`[PriceService] Items is not an array for category ${categoryId}, it is: ${typeof category.items}`);
       return null;
     }
     
@@ -42,7 +42,12 @@ export async function getItem(categoryId: string, itemId: string): Promise<Price
       item.id.toLowerCase() === itemId.toLowerCase()
     );
     
-    console.log(`[PriceService] Item search result: ${item ? 'Found' : 'Not found'}`);
+    if (item) {
+      console.log(`[PriceService] Item found: ${item.name}`);
+    } else {
+      console.log(`[PriceService] Item ${itemId} not found in category ${categoryId}`);
+    }
+    
     return item || null;
   } catch (err: any) {
     console.error(`[PriceService] Error in getItem for ${itemId} in ${categoryId}:`, err);
@@ -64,10 +69,10 @@ export async function getCategoryItems(categoryId: string): Promise<PriceItem[]>
       console.warn(`[PriceService] Category ${categoryId} not found when listing items`);
       
       // Tentativa alternativa para storage/external_storage
-      if (categoryId === 'storage') {
+      if (categoryId.toLowerCase() === 'storage') {
         console.log('[PriceService] Trying to find items in external_storage instead');
         return getCategoryItems('external_storage');
-      } else if (categoryId === 'external_storage') {
+      } else if (categoryId.toLowerCase() === 'external_storage') {
         console.log('[PriceService] Trying to find items in storage instead');
         return getCategoryItems('storage');
       }

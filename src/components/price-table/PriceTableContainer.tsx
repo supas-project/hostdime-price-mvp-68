@@ -42,8 +42,9 @@ export default function PriceTableContainer() {
   const {
     isRefreshing,
     hasConflicts,
+    checkForConflicts,
     handleRefreshData,
-    checkForConflicts
+    handleResetData
   } = useDataActions(setPriceData);
 
   // Combined loading indicator
@@ -55,7 +56,7 @@ export default function PriceTableContainer() {
       console.log("PriceTableContainer: Updates detected, refreshing data");
       handleRefreshData();
     }
-  }, [hasUpdates, handleRefreshData]);
+  }, [hasUpdates]);
 
   // Ensure data is loaded when component mounts
   useEffect(() => {
@@ -70,7 +71,9 @@ export default function PriceTableContainer() {
           // Then load price data
           await loadPriceData();
           
-          // Log all categories para debug
+          console.log("PriceTableContainer: Data loaded successfully");
+          
+          // Log all categories for debug
           if (priceData) {
             console.log("PriceTableContainer: Available categories:", Object.keys(priceData).join(", "));
             
@@ -95,6 +98,7 @@ export default function PriceTableContainer() {
             if (priceData.storage) {
               if (Array.isArray(priceData.storage.items)) {
                 console.log("PriceTableContainer: Storage category items:", priceData.storage.items.length);
+                console.log("Storage items:", priceData.storage.items.map(item => item.id).join(', '));
               } else {
                 console.error("PriceTableContainer: Storage category items is not an array:", priceData.storage.items);
                 priceData.storage.items = [];
@@ -106,6 +110,7 @@ export default function PriceTableContainer() {
             if (priceData.external_storage) {
               if (Array.isArray(priceData.external_storage.items)) {
                 console.log("PriceTableContainer: External storage category items:", priceData.external_storage.items.length);
+                console.log("External Storage items:", priceData.external_storage.items.map(item => item.id).join(', '));
               } else {
                 console.error("PriceTableContainer: External storage category items is not an array:", priceData.external_storage.items);
                 priceData.external_storage.items = [];
