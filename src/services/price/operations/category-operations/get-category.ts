@@ -1,6 +1,6 @@
 
 import { PriceCategory } from '@/types/pricing';
-import { PriceService } from '@/services/price-service';
+import { getAllData } from '../../operations';
 
 /**
  * Gets a specific category by ID from the price data
@@ -8,7 +8,7 @@ import { PriceService } from '@/services/price-service';
 export async function getCategory(categoryId: string): Promise<PriceCategory | null> {
   try {
     // Get all data and find the category
-    const allData = await PriceService.getAllData();
+    const allData = await getAllData();
     return allData[categoryId] || null;
   } catch (err: any) {
     console.error(`Error in getCategory for ${categoryId}:`, err);

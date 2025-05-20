@@ -1,6 +1,6 @@
 
-import { saveData } from '../data-persistence';
-import { PriceService } from '@/services/price-service';
+import { saveData } from '../../operations';
+import { getAllData } from '../../operations';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -11,7 +11,7 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
     console.log(`[PriceService] Attempting to delete category ${categoryId}`);
     
     // Get all existing data
-    const allData = await PriceService.getAllData();
+    const allData = await getAllData();
     
     // Check if the category exists
     if (!allData[categoryId]) {
@@ -39,11 +39,6 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
       };
       localStorage.setItem('deletedCategories', JSON.stringify(deletedCategories));
       console.log(`[PriceService] Category ${categoryId} marked as deleted in localStorage`);
-      
-      // Dispatch event to notify components of category deletion
-      window.dispatchEvent(new CustomEvent('category-deleted', {
-        detail: { categoryId, categoryName }
-      }));
     } catch (storageErr) {
       console.error("Could not update localStorage with deleted category", storageErr);
     }

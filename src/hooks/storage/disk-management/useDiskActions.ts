@@ -1,14 +1,14 @@
 
 import { PricedDiskOption } from "@/types/storage";
-import { Dispatch, SetStateAction } from "react";
+import { toast } from "sonner";
 
-export interface DiskActionsProps {
-  setSelectedDiskType: Dispatch<SetStateAction<"nvme" | "ssd" | "hdd" | undefined>>;
-  setSelectedCapacity: Dispatch<SetStateAction<string>>;
+interface DiskActionsProps {
+  setSelectedDiskType: (type: "nvme" | "ssd" | "hdd") => void;
+  setSelectedCapacity: (capacity: string) => void;
   selectedDisks: Array<{disk: PricedDiskOption, quantity: number}>;
-  setSelectedDisks: Dispatch<SetStateAction<Array<{disk: PricedDiskOption, quantity: number}>>>;
+  setSelectedDisks: React.Dispatch<React.SetStateAction<Array<{disk: PricedDiskOption, quantity: number}>>>;
   availableDisks: PricedDiskOption[];
-  setIsPersisted: Dispatch<SetStateAction<boolean>>;
+  setIsPersisted: (isPersisted: boolean) => void;
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
 }
 
@@ -21,65 +21,100 @@ export function useDiskActions({
   setIsPersisted,
   onSelectDisk
 }: DiskActionsProps) {
-  
-  // Handle disk type selection
   const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
-    console.log(`[useDiskActions] Selecting disk type: ${type}`);
+    // Update selected type
     setSelectedDiskType(type);
-    setSelectedCapacity(""); // Reset capacity when type changes
-  };
-  
-  // Handle capacity selection
-  const handleCapacitySelect = (capacity: string) => {
-    console.log(`[useDiskActions] Selecting capacity: ${capacity}`);
-    setSelectedCapacity(capacity);
-  };
-  
-  // Change quantity of an existing disk
-  const handleQuantityChange = (diskId: string, newQuantity: number) => {
-    console.log(`[useDiskActions] Changing quantity for disk ${diskId} to ${newQuantity}`);
+    setSelectedCapacity("");
     
-    if (newQuantity < 1) {
-      handleRemoveDisk(diskId);
-      return;
+    // Notify user about context change
+    if (selectedDisks.length > 0 && selectedDisks.some(item => item.disk.type !== type)) {
+      toast.info(`Agora você está configurando discos ${type.toUpperCase()}`, {
+        description: "Os discos já adicionados foram mantidos no seu carrinho"
+      });
     }
+  };
+
+  const handleCapacitySelect = (capacity: string) => {
+    setSelectedCapacity(capacity);
+    const disk = availableDisks.find(d => d.capacity === capacity);
     
-    const updatedDisks = selectedDisks.map(item => {
+    if (disk) {
+      // Check if this type and capacity already exist
+      const existingDisk = selectedDisks.find(
+        item => item.disk.type === disk.type && item.disk.capacity === capacity
+      );
+
+      if (existingDisk) {
+        toast.error("Este tipo e capacidade de disco já está selecionado");
+        return;
+      }
+
+      const newDisk = { disk, quantity: 1 };
+      setSelectedDisks(prev => [...prev, newDisk]);
+      setIsPersisted(false);
+      
+      if (onSelectDisk) {
+        onSelectDisk(disk, 1);
+      }
+
+      // Reset capacity but keep disk type for additional selections
+      setSelectedCapacity("");
+      toast.success("Disco adicionado com sucesso");
+    }
+  };
+
+  const handleQuantityChange = (diskId: string, newQuantity: number) => {
+    setSelectedDisks(prev => prev.map(item => {
       if (item.disk.id === diskId) {
-        const updatedItem = {
-          disk: { ...item.disk },
-          quantity: newQuantity
-        };
-        
-        // Notify parent component if callback exists
         if (onSelectDisk) {
           onSelectDisk(item.disk, newQuantity);
         }
-        
-        return updatedItem;
+        return { ...item, quantity: newQuantity };
       }
       return item;
-    });
-    
-    setSelectedDisks(updatedDisks);
-    setIsPersisted(false); // Mark data as needing persistence
+    }));
+    setIsPersisted(false);
   };
-  
-  // Remove a disk from selection
+
   const handleRemoveDisk = (diskId: string) => {
-    console.log(`[useDiskActions] Removing disk: ${diskId}`);
+    console.log("Removing disk:", diskId);
+    
     const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
+    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+    setIsPersisted(false);
     
-    const updatedDisks = selectedDisks.filter(item => item.disk.id !== diskId);
-    setSelectedDisks(updatedDisks);
-    setIsPersisted(false); // Mark data as needing persistence
-    
-    // Notify parent component of removal with quantity 0
-    if (diskToRemove && onSelectDisk) {
-      onSelectDisk(diskToRemove.disk, 0);
+    if (onSelectDisk && diskToRemove) {
+      onSelectDisk({
+        ...diskToRemove.disk,
+        price: 0
+      }, 0);
     }
+    
+    // Track deleted disk in localStorage to prevent recreation
+    try {
+      // Get the current list of deleted disks
+      const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
+      
+      // If we don't have an entry for disk category, create one
+      if (!deletedItems.disk) {
+        deletedItems.disk = [];
+      }
+      
+      // Add this disk ID to the list if not already there
+      if (!deletedItems.disk.includes(diskId)) {
+        deletedItems.disk.push(diskId);
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('deletedItems', JSON.stringify(deletedItems));
+      console.log(`[useDiskActions] Added disk ${diskId} to deletedItems to prevent recreation`);
+    } catch (error) {
+      console.error("Error tracking deleted disk:", error);
+    }
+    
+    toast.success("Disco removido com sucesso");
   };
-  
+
   return {
     handleTypeSelect,
     handleCapacitySelect,

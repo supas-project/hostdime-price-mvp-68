@@ -1,7 +1,6 @@
 
-import { DiskLoadingState } from "./loading-state/DiskLoadingState";
-import { NoDiskFoundState } from "./loading-state/NoDiskFoundState";
-import { DiskList } from "./disk-list/DiskList";
+import { Loader2 } from "lucide-react";
+import { SelectedDiskDisplay } from "./SelectedDiskDisplay";
 import { EmptyDiskState } from "./EmptyDiskState";
 import { PricedDiskOption } from "@/types/storage";
 
@@ -26,19 +25,38 @@ export function DiskSelectionArea({
 }: DiskSelectionAreaProps) {
   if (showLoadingOrNoDiskMessage) {
     if (isLoading) {
-      return <DiskLoadingState />;
+      return (
+        <div className="py-8 flex flex-col items-center justify-center text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <p className="text-muted-foreground">Carregando opções de disco...</p>
+        </div>
+      );
     }
     
-    return <NoDiskFoundState selectedDiskType={selectedDiskType} />;
+    return (
+      <div className="py-8 flex flex-col items-center justify-center text-center">
+        <p className="text-muted-foreground">
+          Nenhum disco {selectedDiskType?.toUpperCase()} encontrado. 
+          Por favor, adicione discos na Tabela de Preços ou selecione outro tipo.
+        </p>
+      </div>
+    );
   }
   
   if (visibleDisks.length > 0) {
     return (
-      <DiskList 
-        visibleDisks={visibleDisks}
-        onQuantityChange={onQuantityChange}
-        onRemoveDisk={onRemoveDisk}
-      />
+      <div className="space-y-4">
+        {visibleDisks.map((item) => (
+          <div key={item.disk.id} className="animate-fade-in">
+            <SelectedDiskDisplay
+              disk={item.disk}
+              quantity={item.quantity}
+              onQuantityChange={(qty) => onQuantityChange(item.disk.id, qty)}
+              onRemove={() => onRemoveDisk(item.disk.id)}
+            />
+          </div>
+        ))}
+      </div>
     );
   }
   

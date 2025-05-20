@@ -1,40 +1,24 @@
+
 import { ComponentOption } from "@/types/component";
 import { StorageSelector } from "@/components/storage/StorageSelector";
 import { PricedDiskOption } from "@/types/storage";
 import { toast } from "sonner";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
-import { useEffect } from "react";
 
 interface StorageStepProps {
   onSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
 }
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
-  // Set up a global listener for storage selections
-  useEffect(() => {
-    const handleStorageSelectionSync = (event: CustomEvent) => {
-      if (event.detail && event.detail.type === 'internal' && event.detail.disk) {
-        handleSelectInternalDisk(event.detail.disk, event.detail.quantity || 0);
-      }
-    };
-
-    // Cast the event as any since CustomEvent is not recognized directly
-    window.addEventListener('storage-selection', handleStorageSelectionSync as any);
-    
-    return () => {
-      window.removeEventListener('storage-selection', handleStorageSelectionSync as any);
-    };
-  }, [onSelectStorageItem]);
-
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Validação rigorosa: apenas aceitar discos com seleção explícita e válida
-    if (!disk || !disk.id || !disk.type || !disk.capacity || quantity <= 0) {
-      console.log("Ignoring invalid disk selection:", disk, "quantity:", quantity);
-      return;
-    }
-    
     // Normalize capacity to ensure it has a unit
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    
+    // Only proceed if disk is valid
+    if (!disk || !disk.id) {
+      console.error("Invalid disk selected:", disk);
+      return;
+    }
     
     // Create consistent ID without quantity to prevent duplicates
     const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
@@ -71,11 +55,10 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
         console.error("Could not update localStorage with removed disk", e);
       }
       
-      console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} removed from summary`);
+      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} removido`);
       return;
     }
     
-    // Validação adicional - certificar que é uma seleção explícita do usuário
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
@@ -108,7 +91,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       console.error("Could not update localStorage for re-added disk", e);
     }
     
-    console.log(`Disk ${disk.type.toUpperCase()} ${normalizedCapacity} added/updated in summary with quantity ${quantity}`);
+    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
@@ -139,4 +122,3 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     />
   );
 }
-

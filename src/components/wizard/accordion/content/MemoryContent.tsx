@@ -9,7 +9,6 @@ import { formatCurrency } from "@/lib/utils";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { PriceService } from "@/services/price-service";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -20,7 +19,7 @@ export function MemoryContent({
   selectedOption, 
   onSelectOption 
 }: MemoryContentProps) {
-  const { options, isLoading, error, refetch } = useComponentOptions('memory');
+  const { options, isLoading, error } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
 
   // Sync selectedOption with local state
@@ -29,25 +28,6 @@ export function MemoryContent({
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
-  
-  // Add listener for memory component updates
-  useEffect(() => {
-    const handleMemoryUpdate = () => {
-      console.log("[MemoryContent] Detected memory component update, refetching options");
-      refetch();
-    };
-    
-    // Listen for both general data updates and specific memory updates
-    window.addEventListener('memory-components-updated', handleMemoryUpdate);
-    window.addEventListener('data-refreshed', handleMemoryUpdate);
-    window.addEventListener('server-data-updated', handleMemoryUpdate);
-    
-    return () => {
-      window.removeEventListener('memory-components-updated', handleMemoryUpdate);
-      window.removeEventListener('data-refreshed', handleMemoryUpdate);
-      window.removeEventListener('server-data-updated', handleMemoryUpdate);
-    };
-  }, [refetch]);
 
   // Notify about errors
   useEffect(() => {

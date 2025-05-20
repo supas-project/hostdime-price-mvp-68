@@ -1,35 +1,34 @@
 
-/**
- * Basic operations for resetting data to defaults
- */
-
+import { PriceData } from '@/types/pricing';
 import { saveData } from './data-persistence';
+import { notifyListeners } from '../listeners';
+import { syncDiskDataWithPriceService, initExternalStorageData } from '@/services/component-sync/initialization';
 
 /**
- * Force refreshes data from the latest source
+ * Resets the price data to its initial state
  */
-export async function forceRefreshFromLatestSource(): Promise<void> {
+export async function resetData(): Promise<PriceData | null> {
   try {
-    console.log("[forceRefreshFromLatestSource] Forcing refresh from latest source");
-    // Implementation to be determined based on your data source
-    // This is a placeholder
-  } catch (error) {
-    console.error("Error in forceRefreshFromLatestSource:", error);
-    throw new Error("Failed to refresh from latest source");
-  }
-}
-
-/**
- * Checks for data conflicts
- */
-export async function checkForDataConflicts(): Promise<boolean> {
-  try {
-    console.log("[checkForDataConflicts] Checking for data conflicts");
-    // Implementation to be determined based on your conflict detection logic
-    // This is a placeholder
-    return false;
-  } catch (error) {
-    console.error("Error in checkForDataConflicts:", error);
-    throw new Error("Failed to check for data conflicts");
+    console.log("[PriceService] Resetting price data to initial state");
+    
+    // Create empty default data
+    const defaultData: PriceData = {};
+    
+    // Save the default data first
+    await saveData(defaultData);
+    
+    // Initialize storage data
+    await initExternalStorageData();
+    await syncDiskDataWithPriceService();
+    
+    // Fetch and return the new data
+    const { getAllData } = await import('./data-retrieval');
+    const newData = await getAllData();
+    notifyListeners();
+    console.log("[PriceService] Price data reset successfully");
+    return newData;
+  } catch (error: any) {
+    console.error("[PriceService] Error resetting data:", error);
+    throw new Error(error.message || "Failed to reset data.");
   }
 }

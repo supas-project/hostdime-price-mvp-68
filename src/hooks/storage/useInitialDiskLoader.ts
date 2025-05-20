@@ -2,26 +2,41 @@
 import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 
-export function useInitialDiskLoader(
-  setSelectedDisks: React.Dispatch<React.SetStateAction<{ disk: PricedDiskOption; quantity: number }[]>>
-) {
-  // Tracking state for initial loading
+type SetSelectedDisksFunction = React.Dispatch<React.SetStateAction<{ disk: PricedDiskOption; quantity: number }[]>>;
+
+export function useInitialDiskLoader(setSelectedDisks: SetSelectedDisksFunction) {
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [isDataRefreshed, setIsDataRefreshed] = useState<boolean>(false);
 
+  // Load saved disk selections from localStorage on initial load
   useEffect(() => {
     if (isInitialLoad) {
-      // Apenas definir as flags de inicialização sem carregar discos
-      // Isto impede que os discos sejam carregados no resumo automaticamente
-      setIsInitialLoad(false);
-      setIsDataRefreshed(true);
-      
-      // Removemos a lógica de recuperação automática do localStorage
-      // Isso garantirá que nenhum disco apareça no resumo até que o usuário explicitamente faça uma seleção
-      
-      console.log("Initial disk loader completed without auto-loading disks");
+      try {
+        const savedDisksString = localStorage.getItem('selectedDisks');
+        if (savedDisksString) {
+          const savedDisks = JSON.parse(savedDisksString);
+          if (Array.isArray(savedDisks) && savedDisks.length > 0) {
+            setSelectedDisks(savedDisks);
+            console.log("[useInitialDiskLoader] Loaded saved disks from localStorage:", savedDisks);
+          }
+        }
+      } catch (error) {
+        console.error("[useInitialDiskLoader] Error loading saved disks:", error);
+      } finally {
+        // Mark initial load as complete
+        setIsInitialLoad(false);
+        // After a short delay, mark data as refreshed
+        setTimeout(() => {
+          setIsDataRefreshed(true);
+        }, 500);
+      }
     }
   }, [isInitialLoad, setSelectedDisks]);
 
-  return { isInitialLoad, setIsInitialLoad, isDataRefreshed, setIsDataRefreshed };
+  return { 
+    isInitialLoad, 
+    setIsInitialLoad, 
+    isDataRefreshed, 
+    setIsDataRefreshed 
+  };
 }

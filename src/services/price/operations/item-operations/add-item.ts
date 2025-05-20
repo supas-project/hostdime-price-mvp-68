@@ -1,8 +1,7 @@
 
 import { PriceItem, PriceData } from '@/types/pricing';
 import { v4 as uuidv4 } from 'uuid';
-import { saveData } from '../data-persistence';
-import { PriceService } from '@/services/price-service';
+import { getAllData, saveData } from '../../operations';
 import { notifyListeners } from '../../listeners';
 
 /**
@@ -14,7 +13,7 @@ export async function addItem(categoryId: string, item: Omit<PriceItem, 'id'>): 
     const itemToAdd = { ...item, id: newItemId };
 
     // Get all data
-    const allData = await PriceService.getAllData();
+    const allData = await getAllData();
     
     // Find the category
     if (!allData[categoryId]) {

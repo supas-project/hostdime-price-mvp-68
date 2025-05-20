@@ -40,7 +40,6 @@ export function SelectedDiskDisplay({
 
   const handleRaidTypeChange = (type: RaidType, isHardware: boolean) => {
     setRaidType(type);
-    setIsHardwareRaid(isHardware);
   };
 
   const handleQuantityChange = (newQuantity: number) => {

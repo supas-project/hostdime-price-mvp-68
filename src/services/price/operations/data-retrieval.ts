@@ -1,80 +1,58 @@
 
-import { PriceService } from '@/services/price-service';
-import { PriceItem } from '@/types/pricing';
-import { PricedDiskOption } from '@/types/storage';
+import { supabase } from '@/lib/supabase';
+import { PriceData } from '@/types/pricing';
+import { PRICE_DATA_TABLE } from '../constants';
 
 /**
- * Gets disk options from the price data
- * @returns {Promise<PricedDiskOption[]>} Array of disk options
+ * Gets all price data from the database
  */
-export async function getDiskOptions(): Promise<PricedDiskOption[]> {
+export async function getAllData(): Promise<PriceData> {
   try {
-    console.log("[getDiskOptions] Retrieving disk options from price data...");
+    console.log("[PriceService] Getting all price data");
     
-    // Get all price data
-    const allData = await PriceService.getAllData();
+    // Fetch the data from price_data table
+    const { data: priceData, error } = await supabase
+      .from(PRICE_DATA_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("[PriceService] Error fetching price data:", error);
+      throw new Error(error.message);
+    }
+
+    if (!priceData || priceData.length === 0) {
+      console.warn("[PriceService] No data found in price data table, returning default data");
+      return {};
+    }
+
+    // Return the data from the JSON column
+    const jsonData = priceData[0].data;
+
+    if (!jsonData) {
+      console.warn("[PriceService] No JSON data found in price data record");
+      return {};
+    }
+
+    console.log("[PriceService] Successfully retrieved price data:", 
+      Object.keys(jsonData).length > 0 ? 
+      `Found ${Object.keys(jsonData).length} categories` : 
+      "Empty data object");
     
-    // Check if disk category exists
-    if (!allData.disk || !Array.isArray(allData.disk.items)) {
-      console.log("[getDiskOptions] No disk category or items found");
-      return [];
+    // First ensure we're dealing with an object, not an array
+    if (Array.isArray(jsonData)) {
+      console.error("[PriceService] Expected object data but received array");
+      return {};
     }
     
-    console.log(`[getDiskOptions] Found ${allData.disk.items.length} disk items`);
+    // Update local cache timestamp to track when data was last fetched
+    localStorage.setItem('price_data_last_fetch', new Date().toISOString());
     
-    // Convert price items to disk options
-    const diskOptions: PricedDiskOption[] = allData.disk.items
-      .filter(item => {
-        // Ensure the item has a type property that's a disk type
-        const validDiskType = item.type === 'nvme' || item.type === 'ssd' || item.type === 'hdd';
-        if (!validDiskType) {
-          console.log(`[getDiskOptions] Ignoring non-disk item: ${item.name} (type: ${item.type})`);
-        }
-        return validDiskType;
-      })
-      .map(item => {
-        // Create a consistent capacity property, prioritizing the item's own capacity
-        const capacity: string = item.capacity || 
-                               (item.metadata?.capacity as string) || 
-                               (item.subtype || '');
-
-        // Log mapping details for debugging
-        console.log(`[getDiskOptions] Mapping disk: ${item.name}, type: ${item.type}, capacity: ${capacity}`);
-        
-        // Ensure we have valid metadata fields or reasonable defaults
-        const metadata = item.metadata || {};
-
-        // Extract values with fallbacks
-        const readSpeed = metadata.readSpeed || 'N/A';
-        const writeSpeed = metadata.writeSpeed || 'N/A';
-        const iops = metadata.iops || 'N/A';
-        const recommended = Array.isArray(metadata.recommended) ? metadata.recommended : [];
-        
-        // Build the disk option with consistent data
-        return {
-          id: item.id,
-          name: item.name,
-          type: item.type as 'nvme' | 'ssd' | 'hdd',
-          capacity: capacity,
-          price: item.price,
-          specs: {
-            readSpeed,
-            writeSpeed,
-            iops,
-            recommended
-          },
-          description: item.description || `${item.type.toUpperCase()} ${capacity}`,
-          iops: iops,
-          throughput: metadata.throughput || 'N/A'
-        };
-      });
-    
-    console.log(`[getDiskOptions] Returning ${diskOptions.length} disk options`);
-    return diskOptions;
-  } catch (error) {
-    console.error("[getDiskOptions] Error retrieving disk options:", error);
-    return [];
+    // Type assertion with proper cast - first to unknown, then to PriceData
+    return jsonData as unknown as PriceData;
+  } catch (err: any) {
+    console.error("[PriceService] Error in getAllData:", err);
+    throw new Error(err.message || "Failed to retrieve price data.");
   }
 }
-
-// We don't export getAllData from here anymore

@@ -1,208 +1,104 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { PriceCategory, PriceData, PriceItem, ImportOptions } from '@/types/pricing';
+import { supabase } from '@/lib/supabase';
+
+// Import all the functionality from the modular files
+import { 
+  getCategory, 
+  addCategory, 
+  updateCategory, 
+  deleteCategory 
+} from './price/operations/category-operations';
+
 import {
-  addCategory,
-  updateCategory,
-  deleteCategory,
-  getCategory,
-  checkForDataConflicts,
-  forceRefreshFromLatestSource,
-  getDiskOptions,
   addItem,
   updateItem,
-  deleteItem,
-  getItem,
+  deleteItem
+} from './price/operations/item-operations';
+
+import {
   getAllData,
   saveData,
-  importData,
-  ensureDataConsistency
+  resetData,
+  checkForDataConflicts,
+  forceRefreshFromLatestSource,
+  importFromJSON,
+  importFromCSV
 } from './price/operations';
-import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
-import { PriceData } from '@/types/pricing';
-import { PricedDiskOption } from '@/types/storage';
+
+import {
+  addDataChangeListener,
+  removeDataChangeListener,
+  notifyListeners
+} from './price/listeners';
 
 /**
  * Service for managing price data
  */
-export const PriceService = {
-  /**
-   * Supabase client instance for authentication operations
-   */
-  supabase,
+export class PriceService {
+  static readonly PRICE_DATA_TABLE = 'price_data';
+  static readonly supabase = supabase; // Expose supabase client for auth checks
 
-  /**
-   * Gets all price data
-   */
-  getAllData: async (): Promise<PriceData> => {
-    return await getAllData();
-  },
-
-  /**
-   * Saves price data
-   * @param data The price data to save
-   */
-  saveData: async (data: PriceData): Promise<void> => {
-    return await saveData(data);
-  },
-
-  /**
-   * Imports price data
-   * @param data The price data to import
-   * @param options The import options
-   */
-  importData: async (data: PriceData, options: { merge: boolean; overwrite: boolean }): Promise<void> => {
-    return await importData(data, options);
-  },
-
-  /**
-   * Adds a new category
-   * @param category The category to add
-   */
-  addCategory: async (category: { id: string; name: string }): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await addCategory(category);
-  },
-
-  /**
-   * Updates an existing category
-   * @param categoryId The ID of the category to update
-   * @param updates The updates to apply
-   */
-  updateCategory: async (categoryId: string, updates: Partial<{ id: string; name: string }>): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await updateCategory(categoryId, updates);
-  },
-
-  /**
-   * Deletes a category
-   * @param categoryId The ID of the category to delete
-   */
-  deleteCategory: async (categoryId: string): Promise<void> => {
-    await deleteCategory(categoryId);
-    // Return void to match the expected return type
-  },
-
-  /**
-   * Adds a new item to a category
-   * @param categoryId The ID of the category to add the item to
-   * @param item The item to add
-   */
-  addItem: async (categoryId: string, item: any): Promise<any | null> => {
-    return await addItem(categoryId, item);
-  },
-
-  /**
-   * Updates an existing item in a category
-   * @param categoryId The ID of the category the item belongs to
-   * @param itemId The ID of the item to update
-   * @param updates The updates to apply
-   */
-  updateItem: async (categoryId: string, itemId: string, updates: any): Promise<any | null> => {
-    return await updateItem(categoryId, itemId, updates);
-  },
-
-  /**
-   * Deletes an item from a category
-   * @param categoryId The ID of the category the item belongs to
-   * @param itemId The ID of the item to delete
-   */
-  deleteItem: async (categoryId: string, itemId: string): Promise<void> => {
-    await deleteItem(categoryId, itemId);
-    // Return void to match the expected return type
-  },
-
-  /**
-   * Gets a category by ID
-   * @param categoryId The ID of the category to get
-   */
-  getCategory: async (categoryId: string): Promise<{ id: string; name: string; items: any[] } | null> => {
-    return await getCategory(categoryId);
-  },
-
-  /**
-   * Gets an item by ID from a category
-   * @param categoryId The ID of the category the item belongs to
-   * @param itemId The ID of the item to get
-   */
-  getItem: async (categoryId: string, itemId: string): Promise<any | null> => {
-    return await getItem(categoryId, itemId);
-  },
-
-  /**
-   * Registers a listener for price data changes
-   * @param listener The listener to register
-   */
-  addDataChangeListener: (listener: () => void): void => {
-    addDataChangeListener(listener);
-  },
-
-  /**
-   * Unregisters a listener for price data changes
-   */
-  removeDataChangeListener: (): void => {
-    removeDataChangeListener();
-  },
-
-  /**
-   * Checks for data conflicts
-   */
-  checkForDataConflicts: async (): Promise<boolean> => {
-    return await checkForDataConflicts();
-  },
-
-  /**
-   * Forces a refresh from the latest source
-   */
-  forceRefreshFromLatestSource: async (): Promise<PriceData | null> => {
-    return await forceRefreshFromLatestSource();
-  },
+  // Data retrieval
+  static getAllData = getAllData;
+  static getCategory = getCategory;
   
-  /**
-   * Gets disk options from the price data
-   */
-  getDiskOptions: async (): Promise<PricedDiskOption[]> => {
-    return await getDiskOptions();
-  },
+  // Category operations
+  static addCategory = addCategory;
+  static updateCategory = updateCategory;
+  static deleteCategory = deleteCategory;
+  
+  // Item operations
+  static addItem = addItem;
+  static updateItem = updateItem;
+  static deleteItem = deleteItem;
+  
+  // Data change listeners
+  static addDataChangeListener = addDataChangeListener;
+  static removeDataChangeListener = removeDataChangeListener;
+  
+  // Data operations
+  static resetData = resetData;
+  static checkForDataConflicts = checkForDataConflicts;
+  static forceRefreshFromLatestSource = forceRefreshFromLatestSource;
+  
+  // Import/export operations
+  static importFromJSON = importFromJSON;
+  static importFromCSV = importFromCSV;
+  
+  // Private method - exposed here for backwards compatibility
+  static saveData = saveData;
 
-  /**
-   * Gets the timestamp of the last modification of the price data
-   */
-  getLastModifiedTime: async (): Promise<string | null> => {
+  // Get last modified time of price data
+  static async getLastModifiedTime(): Promise<string | null> {
     try {
       const { data, error } = await supabase
         .from('price_data_updates')
         .select('updated_at')
         .order('updated_at', { ascending: false })
-        .limit(1);
-      
-      if (error || !data || !data[0]) {
+        .limit(1)
+        .single();
+        
+      if (error || !data) {
+        console.error('[PriceService] Error getting last modified time:', error);
         return null;
       }
       
-      return data[0].updated_at;
-    } catch (err) {
-      console.error('Error getting last modified time:', err);
+      return data.updated_at;
+    } catch (error) {
+      console.error('[PriceService] Error in getLastModifiedTime:', error);
       return null;
     }
-  },
+  }
 
-  /**
-   * Reset data to defaults
-   */
-  resetToDefaults: async (): Promise<boolean> => {
+  // Reset data to defaults
+  static async resetToDefaults(): Promise<boolean> {
     try {
-      // Implement a basic reset functionality that clears all data
-      const emptyData = {};
-      await saveData(emptyData as PriceData);
-      return true;
-    } catch (err) {
-      console.error('Error resetting data to defaults:', err);
+      const newData = await resetData();
+      return !!newData;
+    } catch (error) {
+      console.error('[PriceService] Error in resetToDefaults:', error);
       return false;
     }
-  },
-
-  /**
-   * Ensures data consistency between all components
-   */
-  ensureDataConsistency: async (): Promise<PriceData | null> => {
-    return await ensureDataConsistency();
   }
-};
+}

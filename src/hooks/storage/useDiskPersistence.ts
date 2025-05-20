@@ -10,8 +10,6 @@ export function useDiskPersistence() {
   // Function to persist selections to the database
   const persistSelectionsToDatabase = async (disks: {disk: PricedDiskOption, quantity: number}[]) => {
     try {
-      console.log("[useDiskPersistence] Persisting selections to database:", disks);
-      
       // Get current data from the database first
       const allData = await PriceService.getAllData();
       
@@ -38,8 +36,8 @@ export function useDiskPersistence() {
         description: item.disk.description || `${item.disk.type.toUpperCase()} disk with ${item.disk.capacity} capacity`,
         price: item.disk.price,
         type: item.disk.type,
-        subtype: item.disk.type, // Ensure subtype is set explicitly
-        capacity: item.disk.capacity, // Ensure capacity is set explicitly
+        subtype: item.disk.type, // Explicitly add subtype to ensure proper filtering
+        capacity: item.disk.capacity, // Explicitly add capacity to ensure proper display
         specs: [
           `Tipo: ${item.disk.type.toUpperCase()}`,
           `Capacidade: ${item.disk.capacity}`,
@@ -47,10 +45,7 @@ export function useDiskPersistence() {
         ],
         metadata: {
           quantity: item.quantity,
-          unitPrice: item.disk.price,
-          type: item.disk.type, // Store type in metadata
-          subtype: item.disk.type, // Store subtype in metadata
-          capacity: item.disk.capacity // Store capacity in metadata
+          unitPrice: item.disk.price
         }
       }));
       
@@ -71,21 +66,15 @@ export function useDiskPersistence() {
       
       // Save to database
       await PriceService.saveData(updatedData);
-      console.log("[useDiskPersistence] Disk selections persisted to database", disksToStore);
-      
-      // Trigger a storage data update event to notify other components
-      window.dispatchEvent(new CustomEvent('storage-data-updated'));
+      console.log("[InternalStoragePanel] Disk selections persisted to database", disksToStore);
       
       // Also save to localStorage for redundancy
       localStorage.setItem('selectedDisks', JSON.stringify(disks));
-      console.log("[useDiskPersistence] Disk selections persisted to localStorage", disks);
+      console.log("[InternalStoragePanel] Disk selections persisted to localStorage", disks);
       
       setHasLocalChanges(false);
     } catch (error) {
       console.error("Error persisting disk selections to database:", error);
-      toast.error("Erro ao salvar discos", {
-        description: "Não foi possível salvar os discos no banco de dados."
-      });
     }
   };
 

@@ -31,7 +31,6 @@ export function useItemEdit(
       return;
     }
     
-    console.log("[useItemEdit] Initiating edit for item:", item);
     setItemToEdit(item);
     setOpenEditItem(true);
   };
@@ -61,60 +60,29 @@ export function useItemEdit(
     }
     
     try {
-      console.log("[useItemEdit] Starting edit of item:", itemId, "with values:", values);
       setIsSubmittingItem(true);
       
-      // Prepare metadata preserving existing values
-      const existingMetadata = itemToEdit?.metadata || {};
-      
-      // Build complete metadata object
-      const metadata = {
-        ...existingMetadata,
-        // CRITICAL: Capture disk-specific fields in metadata 
-        type: values.type,
-        subtype: values.subtype,
-        capacity: values.capacity,
-      };
-      
-      // IMPORTANT: Always explicitly include capacity and subtype at root level
       const updatedItemData = {
         name: values.name,
         description: values.description,
         price: values.price,
         type: values.type,
-        // Ensure subtype is explicitly included at root level
-        subtype: values.subtype, 
+        subtype: values.subtype,
         specs: Array.isArray(values.specs) ? values.specs : [],
         tags: Array.isArray(values.tags) ? values.tags : [],
         // Update isHardware based on tags for backwards compatibility
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
-        // CRITICAL: Ensure capacity is preserved at root level
-        capacity: values.capacity,
-        // Preserve and extend metadata
-        metadata: metadata
       };
-      
-      console.log("[useItemEdit] Updated item data to save:", updatedItemData);
       
       // Update item using existing method
       await PriceService.updateItem(activeTab, itemId, updatedItemData);
       
-      // Force a trigger to save data to database
+      // Ensure data is saved to the database
       await PriceService.saveData(await PriceService.getAllData());
       
       // Get fresh data
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
-
-      // Check if we're editing a memory item and trigger special event
-      if (activeTab.toLowerCase() === 'memória' || activeTab.toLowerCase() === 'memoria') {
-        console.log("[useItemEdit] Edited memory item, triggering memory component update");
-        window.dispatchEvent(new CustomEvent('memory-components-updated'));
-      }
-
-      // Notify both components about the data change
-      window.dispatchEvent(new CustomEvent('storage-data-updated'));
-      window.dispatchEvent(new CustomEvent('server-data-updated'));
       
       // Get category for notification
       const category = await PriceService.getCategory(activeTab);

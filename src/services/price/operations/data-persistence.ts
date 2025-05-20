@@ -6,53 +6,6 @@ import { toast } from 'sonner';
 import { notifyListeners } from '../listeners';
 
 /**
- * Gets all price data from the database
- */
-export async function getAllData(): Promise<PriceData> {
-  try {
-    console.log("[PriceService] Getting all price data");
-
-    // Get the most recent price data
-    const { data: priceData, error } = await supabase
-      .from(PRICE_DATA_TABLE)
-      .select('data')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error("[PriceService] Error getting price data:", error);
-      return {};
-    }
-
-    if (!priceData || !priceData.data) {
-      console.warn("[PriceService] No price data found, returning empty object");
-      return {};
-    }
-
-    console.log("[PriceService] Price data retrieved successfully with categories:", 
-      Object.keys(priceData.data).join(', '));
-    
-    // Save the current time as last fetch time to track conflicts
-    localStorage.setItem('price_data_last_fetch', new Date().toISOString());
-    
-    // Check if memory data exists and notify memory components
-    if (priceData.data.memória || priceData.data.memoria) {
-      console.log("[PriceService] Memory data exists in price data, will dispatch memory event");
-      // Use setTimeout to ensure this happens after the data is returned
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('memory-components-updated'));
-      }, 100);
-    }
-    
-    return priceData.data as PriceData;
-  } catch (err: any) {
-    console.error("[PriceService] Error in getAllData:", err);
-    return {};
-  }
-}
-
-/**
  * Saves price data to the database
  */
 export async function saveData(data: PriceData): Promise<void> {
@@ -77,7 +30,7 @@ export async function saveData(data: PriceData): Promise<void> {
     const isAdmin = userEmail === "admin@hostdime.com.br";
     
     // Always allow these categories to be modified by any authenticated user
-    const allowedCategories = ['discos_internos', 'disk', 'external_storage', 'memória', 'memoria'];
+    const allowedCategories = ['discos_internos', 'disk', 'external_storage'];
     
     let hasChangesOnlyInAllowedCategories = true;
     let hasChanges = false;
@@ -105,17 +58,7 @@ export async function saveData(data: PriceData): Promise<void> {
         if (JSON.stringify(currentCategory) !== JSON.stringify(newCategory)) {
           hasChanges = true;
           
-          if (!allowedCategories.includes(categoryId.toLowerCase())) {
-            hasChangesOnlyInAllowedCategories = false;
-          }
-        }
-      }
-      
-      // Check for deleted categories
-      for (const categoryId of Object.keys(existingData)) {
-        if (!data[categoryId]) {
-          hasChanges = true;
-          if (!allowedCategories.includes(categoryId.toLowerCase())) {
+          if (!allowedCategories.includes(categoryId)) {
             hasChangesOnlyInAllowedCategories = false;
           }
         }
@@ -192,25 +135,11 @@ export async function saveData(data: PriceData): Promise<void> {
       description: "As alterações foram salvas e sincronizadas." 
     });
 
-    // Notify listeners after successful save
+    // Notificar listeners após salvamento bem-sucedido
     notifyListeners(data);
     
     // Update the local cache timestamp to prevent unnecessary refresh prompts
     localStorage.setItem('price_data_last_fetch', new Date().toISOString());
-    
-    // Track deleted categories and items for consistent deletion handling
-    syncDeletedItemsWithLocalStorage(data);
-    
-    // Fire global events to notify other components
-    window.dispatchEvent(new CustomEvent('data-refreshed'));
-    window.dispatchEvent(new CustomEvent('server-data-updated'));
-    window.dispatchEvent(new CustomEvent('price-table-data-updated'));
-    
-    // If there's memory data, dispatch a specific memory update event
-    if (data.memória || data.memoria) {
-      console.log("[PriceService] Synchronizing memory data");
-      window.dispatchEvent(new CustomEvent('memory-components-updated'));
-    }
   } catch (err: any) {
     console.error("[PriceService] Erro em saveData:", err);
     if (!err.message.includes("Authentication")) {
@@ -219,53 +148,5 @@ export async function saveData(data: PriceData): Promise<void> {
       });
     }
     throw new Error(err.message || "Falha ao salvar dados de preço.");
-  }
-}
-
-/**
- * Synchronizes the deleted categories and items with localStorage
- * to prevent recreation of deleted items after data refresh.
- */
-function syncDeletedItemsWithLocalStorage(currentData: PriceData): void {
-  try {
-    // Get deleted categories from localStorage
-    const deletedCategories = JSON.parse(localStorage.getItem('deletedCategories') || '{}');
-    
-    // Get deleted items from localStorage
-    const deletedItems = JSON.parse(localStorage.getItem('deletedItems') || '{}');
-    
-    // Check if any previously deleted categories have reappeared
-    Object.keys(deletedCategories).forEach(categoryId => {
-      if (currentData[categoryId]) {
-        // This category has reappeared - something went wrong with deletion
-        console.warn(`[PriceService] Previously deleted category ${categoryId} has reappeared. Removing it.`);
-        delete currentData[categoryId];
-      }
-    });
-    
-    // Check if any previously deleted items have reappeared
-    Object.keys(deletedItems).forEach(categoryId => {
-      if (currentData[categoryId] && Array.isArray(currentData[categoryId].items)) {
-        const itemsToDelete = deletedItems[categoryId] || [];
-        if (itemsToDelete.length > 0) {
-          // Filter out any deleted items that have reappeared
-          const filteredItems = currentData[categoryId].items.filter(item => 
-            !itemsToDelete.includes(item.id)
-          );
-          
-          // If any items were filtered out, update the category
-          if (filteredItems.length !== currentData[categoryId].items.length) {
-            console.warn(`[PriceService] Previously deleted items in ${categoryId} have reappeared. Removing them.`);
-            currentData[categoryId].items = filteredItems;
-          }
-        }
-      }
-    });
-    
-    // Save the cleaned data back to the database if changes were made
-    // We don't need to wait for this to complete
-    // It will be handled in the next data refresh
-  } catch (err) {
-    console.error("[PriceService] Error syncing deleted items with localStorage:", err);
   }
 }

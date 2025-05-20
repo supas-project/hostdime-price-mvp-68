@@ -5,18 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "../TagSelector";
 import { Control } from "react-hook-form";
 import { FormValues } from "../schemas/itemFormSchema";
-import { useEffect } from "react";
 
 interface ItemFormFieldsProps {
   control: Control<FormValues>;
 }
 
 export function ItemFormFields({ control }: ItemFormFieldsProps) {
-  // Debug log to check what values the form is being initialized with
-  useEffect(() => {
-    console.log("[ItemFormFields] Rendering with control values:", control._formValues);
-  }, [control]);
-
   return (
     <>
       <FormField
@@ -102,44 +96,8 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
           <FormItem>
             <FormLabel>Subtipo (opcional)</FormLabel>
             <FormControl>
-              <Input 
-                placeholder="Subtipo do componente" 
-                {...field} 
-                onBlur={(e) => {
-                  // Log the subtype value for debugging
-                  console.log("[ItemFormFields] Subtype value on blur:", e.target.value);
-                  field.onBlur();
-                }}
-              />
+              <Input placeholder="Subtipo do componente" {...field} />
             </FormControl>
-            <FormDescription>
-              Importante para filtragem no configurador
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
-      <FormField
-        control={control}
-        name="capacity"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Capacidade (opcional)</FormLabel>
-            <FormControl>
-              <Input 
-                placeholder="Ex: 1TB, 500GB" 
-                {...field} 
-                onBlur={(e) => {
-                  // Log the capacity value for debugging
-                  console.log("[ItemFormFields] Capacity value on blur:", e.target.value);
-                  field.onBlur();
-                }}
-              />
-            </FormControl>
-            <FormDescription>
-              Especifique a capacidade para discos e memórias
-            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -159,7 +117,7 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
                 onChange={e => {
                   const specLines = e.target.value.split('\n').filter(Boolean).map(line => line.trim());
                   field.onChange(specLines);
-                  console.log("[ItemFormFields] Updated specs:", specLines);
+                  console.log("Updated specs:", specLines);
                 }}
               />
             </FormControl>
@@ -182,7 +140,7 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
                 value={field.value || []} 
                 onChange={(newTags) => {
                   field.onChange(newTags);
-                  console.log("[ItemFormFields] Updated tags:", newTags);
+                  console.log("Updated tags:", newTags);
                 }}
                 defaultTags={["Hardware"]}  
               />

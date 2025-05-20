@@ -24,12 +24,9 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
   // Log the item being edited for debugging
   useEffect(() => {
     if (isEditing && item) {
-      console.log("[ItemForm] Editing item:", item);
-      console.log("[ItemForm] Item specs:", item.specs);
-      console.log("[ItemForm] Item tags:", item.tags);
-      console.log("[ItemForm] Item capacity:", item.capacity);
-      console.log("[ItemForm] Item subtype:", item.subtype);
-      console.log("[ItemForm] Item metadata:", item.metadata);
+      console.log("Editing item:", item);
+      console.log("Item specs:", item.specs);
+      console.log("Item tags:", item.tags);
     }
   }, [item, isEditing]);
 
@@ -48,7 +45,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     }
     
     // Log values before submission for debugging
-    console.log("[ItemForm] Form values to submit:", values);
+    console.log("Form values to submit:", values);
     
     // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
     if (isHardwareCategory() && !values.tags.includes("Hardware")) {
@@ -59,29 +56,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       
       if (shouldAddHardware) {
         values.tags.push("Hardware");
-      }
-    }
-    
-    // CRITICAL CHANGE: Special handling for disk items - ensure subtype and capacity are preserved
-    if (values.type === 'disk' || values.type === 'nvme' || values.type === 'ssd' || values.type === 'hdd') {
-      // Add metadata for disk items to ensure proper persistence
-      values.metadata = {
-        ...(values.metadata || {}),
-        type: values.type,
-        subtype: values.subtype,
-        capacity: values.capacity
-      };
-      
-      console.log("[ItemForm] Enhanced disk values with metadata:", values);
-      
-      // Ensure disk-specific properties are set at the root level as well
-      if (!values.capacity && values.subtype) {
-        // Try to extract capacity from subtype if not specified
-        const capacityMatch = values.subtype.match(/(\d+(?:\.\d+)?)\s*(?:GB|TB|G|T)/i);
-        if (capacityMatch) {
-          values.capacity = capacityMatch[0];
-          console.log("[ItemForm] Extracted capacity from subtype:", values.capacity);
-        }
       }
     }
     

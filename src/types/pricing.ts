@@ -1,3 +1,4 @@
+
 export interface PriceItem {
   id: string;
   name: string;
@@ -8,24 +9,15 @@ export interface PriceItem {
   subtype?: string;
   isHardware?: boolean; // Keep for backwards compatibility
   tags?: string[]; // New property for tag management
-  // Adding capacity for disk items
-  capacity?: string;
   metadata?: {
     discount?: number;
     features?: string[];
     quantity?: number;
     unitPrice?: number;
-    unitInfo?: string;
-    // Add disk-specific metadata fields
-    type?: string;
-    subtype?: string;
-    capacity?: string;
-    readSpeed?: string;
-    writeSpeed?: string;
-    iops?: string;
-    throughput?: string;
-    recommended?: string[];
+    unitInfo?: string; // Added for storing additional storage metadata as JSON string
   };
+  // Adding capacity for disk items
+  capacity?: string;
 }
 
 export interface PriceCategory {

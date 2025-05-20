@@ -15,7 +15,6 @@ export default function PriceTableContainer() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [skipAutoInit, setSkipAutoInit] = useState(false);
   const [userHasRequestedInit, setUserHasRequestedInit] = useState(false);
-  const [listenersAttached, setListenersAttached] = useState(false);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -55,17 +54,9 @@ export default function PriceTableContainer() {
   // Effect to force update when hasUpdates is true
   useEffect(() => {
     if (hasUpdates) {
-      handleRefreshData().then(() => {
-        // Notify components about the data change
-        window.dispatchEvent(new CustomEvent('price-table-data-updated'));
-        // Also notify memory components specifically
-        if (priceData && priceData['memória']) {
-          console.log("[PriceTableContainer] Memory data updated, dispatching memory-specific event");
-          window.dispatchEvent(new CustomEvent('memory-components-updated'));
-        }
-      });
+      handleRefreshData();
     }
-  }, [hasUpdates, handleRefreshData, priceData]);
+  }, [hasUpdates, handleRefreshData]);
 
   // Check if we have any data to determine if initialization is needed
   useEffect(() => {
@@ -75,86 +66,6 @@ export default function PriceTableContainer() {
       setSkipAutoInit(true);
     }
   }, [priceData]);
-  
-  // Setup global event listeners for data synchronization
-  useEffect(() => {
-    if (!listenersAttached && isAuthenticated) {
-      // Set up event listeners for synchronization
-      const handleDataRefreshed = () => {
-        console.log("Data-refreshed event received, reloading price data");
-        loadPriceData();
-      };
-      
-      const handleServerDataUpdated = () => {
-        console.log("Server-data-updated event received, reloading price data");
-        loadPriceData();
-      };
-      
-      const handleItemDeleted = (e: CustomEvent) => {
-        console.log("Item-deleted event received", e.detail);
-        // Refresh data after deletion to ensure consistency
-        checkForConflicts().then(hasConflicts => {
-          if (hasConflicts) {
-            handleRefreshData();
-          }
-        });
-      };
-      
-      const handleCategoryDeleted = (e: CustomEvent) => {
-        console.log("Category-deleted event received", e.detail);
-        // Refresh data after deletion to ensure consistency
-        checkForConflicts().then(hasConflicts => {
-          if (hasConflicts) {
-            handleRefreshData();
-          }
-        });
-      };
-      
-      const handleMemoryComponentsUpdated = () => {
-        console.log("Memory-components-updated event received, reloading price data");
-        loadPriceData();
-      };
-      
-      // Listen for storage events from other tabs
-      const handleStorageEvent = (e: StorageEvent) => {
-        if (e.key === 'deletedItems' || e.key === 'deletedCategories' || e.key === 'price_data_last_fetch') {
-          console.log("Storage event detected, checking for conflicts");
-          checkForConflicts().then(hasConflicts => {
-            if (hasConflicts) {
-              handleRefreshData();
-            }
-          });
-        }
-      };
-      
-      // Add event listeners
-      window.addEventListener('data-refreshed', handleDataRefreshed);
-      window.addEventListener('server-data-updated', handleServerDataUpdated);
-      window.addEventListener('item-deleted', handleItemDeleted as EventListener);
-      window.addEventListener('category-deleted', handleCategoryDeleted as EventListener);
-      window.addEventListener('memory-components-updated', handleMemoryComponentsUpdated);
-      window.addEventListener('storage', handleStorageEvent);
-      
-      // Mark listeners as attached
-      setListenersAttached(true);
-      
-      // Return cleanup function
-      return () => {
-        window.removeEventListener('data-refreshed', handleDataRefreshed);
-        window.removeEventListener('server-data-updated', handleServerDataUpdated);
-        window.removeEventListener('item-deleted', handleItemDeleted as EventListener);
-        window.removeEventListener('category-deleted', handleCategoryDeleted as EventListener);
-        window.removeEventListener('memory-components-updated', handleMemoryComponentsUpdated);
-        window.removeEventListener('storage', handleStorageEvent);
-      };
-    }
-  }, [
-    isAuthenticated, 
-    listenersAttached, 
-    loadPriceData, 
-    checkForConflicts, 
-    handleRefreshData
-  ]);
 
   // Ensure data is loaded when component mounts and when returning to this page
   useEffect(() => {
@@ -219,12 +130,7 @@ export default function PriceTableContainer() {
   // Called when user explicitly requests data initialization
   const handleRequestInitialization = () => {
     setUserHasRequestedInit(true);
-    InitService.initializeData().then(() => {
-      loadPriceData();
-      // Notify components about the data change
-      window.dispatchEvent(new CustomEvent('price-table-data-updated'));
-      window.dispatchEvent(new CustomEvent('memory-components-updated'));
-    });
+    InitService.initializeData().then(() => loadPriceData());
     toast.info("Inicializando categorias padrão");
   };
 
