@@ -19,6 +19,14 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   const storageTypes = useStorageTypes();
   const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
   
+  // Log dos tipos de armazenamento que foram carregados
+  useEffect(() => {
+    console.log('[StorageSelector] Loaded storage types:', storageTypes.length);
+    if (storageTypes.length > 0) {
+      console.log('[StorageSelector] First storage type:', storageTypes[0]);
+    }
+  }, [storageTypes]);
+  
   // Create a mapping for the storage performance indicators
   const storagePerformanceMap: Record<string, {
     name: string;

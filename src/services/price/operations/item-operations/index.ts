@@ -1,6 +1,6 @@
 
-// Re-export all functionality from the item operations modules
-export * from './add-item';
-export * from './update-item';
-export * from './delete-item';
-export * from './get-item';
+// Re-export all item operations for easier imports
+export { addItem } from './add-item';
+export { updateItem } from './update-item';
+export { deleteItem } from './delete-item';
+export { getItem, getCategoryItems, getAllItems } from './get-item';

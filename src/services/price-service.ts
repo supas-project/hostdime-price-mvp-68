@@ -15,13 +15,13 @@ import {
   updateItem,
   deleteItem,
   getItem,
-  getCategoryItems,  // Importar o método getCategoryItems
+  getCategoryItems,
   getAllItems
 } from './price/operations/item-operations';
 
 import {
   getAllData,
-  persistData as saveData, // Use the renamed export
+  persistData as saveData,
   resetData,
   checkForDataConflicts,
   forceRefreshFromLatestSource,
@@ -55,9 +55,9 @@ export class PriceService {
   static addItem = addItem;
   static updateItem = updateItem;
   static deleteItem = deleteItem;
-  static getItem = getItem;  // Expor o método getItem
-  static getCategoryItems = getCategoryItems; // Expor o método getCategoryItems
-  static getAllItems = getAllItems; // Expor o método getAllItems
+  static getItem = getItem;
+  static getCategoryItems = getCategoryItems;
+  static getAllItems = getAllItems;
   
   // Data change listeners
   static addDataChangeListener = addDataChangeListener;
