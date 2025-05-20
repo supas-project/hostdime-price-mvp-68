@@ -74,31 +74,40 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
       return [];
     }
     
+    console.log("[PriceService] Found disk items:", priceData.disk.items.length);
+    
     // Convert price data items to PricedDiskOption format
     const diskOptions: PricedDiskOption[] = priceData.disk.items.map(item => {
-      // Extract disk information from item metadata or use defaults
+      // Extract disk information from item properties
       const metadata = item.metadata || {};
       
-      // Create a customMetadata object by casting metadata to any to access custom properties
-      const customMetadata = metadata as any;
-      const type = customMetadata.type || "hdd";
-      const capacity = customMetadata.capacity || item.name || "Unknown";
+      // Get the type from either subtype, type or default to "hdd"
+      const type = item.subtype || item.type || "hdd";
       
+      // Get capacity from either capacity property, metadata or extract from name
+      const capacity = item.capacity || 
+                      (typeof metadata === 'object' && 'capacity' in metadata ? metadata.capacity : null) || 
+                      extractCapacityFromName(item.name);
+      
+      // Create disk spec object with safe defaults
+      const specs = {
+        readSpeed: metadata?.readSpeed || "N/A",
+        writeSpeed: metadata?.writeSpeed || "N/A",
+        iops: metadata?.iops || "N/A",
+        recommended: Array.isArray(metadata?.recommended) ? metadata.recommended : []
+      };
+      
+      // Construct the disk option
       return {
         id: item.id || `disk-${type}-${capacity}`,
         name: item.name || `${type.toUpperCase()} ${capacity}`,
         type: type as "nvme" | "ssd" | "hdd",
         capacity: capacity,
-        price: item.price || 0, // Use price instead of pricePerMonth to match the interface
-        specs: {
-          readSpeed: customMetadata.readSpeed || "N/A",
-          writeSpeed: customMetadata.writeSpeed || "N/A",
-          iops: customMetadata.iops || "N/A",
-          recommended: customMetadata.recommended || []
-        },
+        price: item.price || 0,
+        specs: specs,
         description: item.description || "",
-        iops: customMetadata.iops || "N/A",
-        throughput: customMetadata.throughput || "N/A",
+        iops: metadata?.iops || "N/A",
+        throughput: metadata?.throughput || "N/A",
       };
     });
     
@@ -108,4 +117,18 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
     console.error("[PriceService] Error getting disk options:", error);
     return [];
   }
+}
+
+// Helper function to extract capacity from disk name
+function extractCapacityFromName(name: string): string {
+  if (!name) return "Unknown";
+  
+  // Look for patterns like "500GB", "1TB", "2 TB", etc.
+  const capacityMatch = name.match(/(\d+(?:\.\d+)?)\s*(?:GB|TB|G|T)/i);
+  if (capacityMatch) {
+    const value = capacityMatch[0];
+    return value.replace(/\s+/g, ''); // Remove any spaces
+  }
+  
+  return "Unknown";
 }

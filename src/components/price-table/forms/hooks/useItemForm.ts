@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PriceItem } from "@/types/pricing";
@@ -12,6 +13,16 @@ type UseItemFormProps = {
 
 export function useItemForm({ defaultType, item, isEditing = false }: UseItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Logging the item for debugging
+  useEffect(() => {
+    if (isEditing && item) {
+      console.log("[useItemForm] Editing item:", item);
+      console.log("[useItemForm] Item subtype:", item.subtype);
+      console.log("[useItemForm] Item capacity:", item.capacity);
+      console.log("[useItemForm] Item metadata:", item.metadata);
+    }
+  }, [item, isEditing]);
   
   // Derive initial tags from isHardware for backwards compatibility
   const getInitialTags = () => {
@@ -36,6 +47,7 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
       subtype: item?.subtype || "",
       specs: item?.specs || [],
       tags: getInitialTags(),
+      capacity: item?.capacity || "",
     },
     mode: "onBlur", // Validate on blur
   });
@@ -43,6 +55,7 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
   // Update form when item changes (editing mode)
   useEffect(() => {
     if (item) {
+      console.log("[useItemForm] Resetting form with item:", item);
       form.reset({
         name: item.name,
         description: item.description,
@@ -51,6 +64,7 @@ export function useItemForm({ defaultType, item, isEditing = false }: UseItemFor
         subtype: item.subtype || "",
         specs: item.specs || [],
         tags: getInitialTags(),
+        capacity: item.capacity || "",
       });
     }
   }, [item, form]);

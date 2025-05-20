@@ -1,6 +1,6 @@
 
 import { useDiskActions } from './useDiskActions';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PricedDiskOption } from '@/types/storage';
 
 interface DiskManagementProps {
@@ -11,14 +11,14 @@ interface DiskManagementProps {
 export function useDiskManagement(props: DiskManagementProps = {}) {
   const { onSelectDisk } = props;
   
-  // Estado local desacoplado do localStorage para evitar carregamento automático de discos
-  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
+  // Local state for disk management
+  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(props.initialDiskType);
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisks, setSelectedDisks] = useState<Array<{disk: PricedDiskOption, quantity: number}>>([]);
   const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
   const [isPersisted, setIsPersisted] = useState(true);
   
-  // Usar as ações de gerenciamento de disco com todos os parâmetros necessários
+  // Use the disk actions with all required parameters
   const { 
     handleTypeSelect,
     handleCapacitySelect,
@@ -34,7 +34,7 @@ export function useDiskManagement(props: DiskManagementProps = {}) {
     onSelectDisk
   });
   
-  // Filtrar discos visíveis com base no tipo selecionado
+  // Filter visible disks based on selected type
   const visibleDisks = selectedDisks.filter(
     item => selectedDiskType ? item.disk.type === selectedDiskType : true
   );

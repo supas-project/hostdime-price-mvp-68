@@ -5,12 +5,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { TagSelector } from "../TagSelector";
 import { Control } from "react-hook-form";
 import { FormValues } from "../schemas/itemFormSchema";
+import { useEffect } from "react";
 
 interface ItemFormFieldsProps {
   control: Control<FormValues>;
 }
 
 export function ItemFormFields({ control }: ItemFormFieldsProps) {
+  // Debug log to check what values the form is being initialized with
+  useEffect(() => {
+    console.log("[ItemFormFields] Rendering with control values:", control._formValues);
+  }, [control]);
+
   return (
     <>
       <FormField
@@ -98,6 +104,9 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
             <FormControl>
               <Input placeholder="Subtipo do componente" {...field} />
             </FormControl>
+            <FormDescription>
+              Importante para filtragem no configurador
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -117,7 +126,7 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
                 onChange={e => {
                   const specLines = e.target.value.split('\n').filter(Boolean).map(line => line.trim());
                   field.onChange(specLines);
-                  console.log("Updated specs:", specLines);
+                  console.log("[ItemFormFields] Updated specs:", specLines);
                 }}
               />
             </FormControl>
@@ -140,7 +149,7 @@ export function ItemFormFields({ control }: ItemFormFieldsProps) {
                 value={field.value || []} 
                 onChange={(newTags) => {
                   field.onChange(newTags);
-                  console.log("Updated tags:", newTags);
+                  console.log("[ItemFormFields] Updated tags:", newTags);
                 }}
                 defaultTags={["Hardware"]}  
               />

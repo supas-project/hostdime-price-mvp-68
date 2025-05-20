@@ -60,6 +60,7 @@ export function useItemEdit(
     }
     
     try {
+      console.log("Starting edit of item:", itemId, "with values:", values);
       setIsSubmittingItem(true);
       
       const updatedItemData = {
@@ -67,12 +68,24 @@ export function useItemEdit(
         description: values.description,
         price: values.price,
         type: values.type,
-        subtype: values.subtype,
+        subtype: values.subtype, // Ensure subtype is included here
         specs: Array.isArray(values.specs) ? values.specs : [],
         tags: Array.isArray(values.tags) ? values.tags : [],
         // Update isHardware based on tags for backwards compatibility
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
+        // For disk items, ensure capacity is preserved
+        capacity: values.capacity || itemToEdit?.capacity,
+        // Preserve metadata if it exists
+        metadata: {
+          ...(itemToEdit?.metadata || {}),
+          // If this is a disk item, make sure we preserve disk-specific metadata
+          type: values.type,
+          subtype: values.subtype,
+          capacity: values.capacity || (itemToEdit?.capacity || undefined)
+        }
       };
+      
+      console.log("Updated item data to save:", updatedItemData);
       
       // Update item using existing method
       await PriceService.updateItem(activeTab, itemId, updatedItemData);

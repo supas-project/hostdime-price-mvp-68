@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { PricedDiskOption } from "@/types/storage";
 import { normalizeStorageCapacity } from "@/utils/storage-utils";
 import { PriceService } from "@/services/price-service";
+import { toast } from "sonner";
 
 interface DiskPersistenceProps {
   selectedDisks: Array<{disk: PricedDiskOption, quantity: number}>;
@@ -22,25 +23,32 @@ export function useDiskPersistence({
   // Load disks from database
   const loadSelectedDisksFromDatabase = async () => {
     try {
-      console.log("Checking for previously saved disk selections in database");
+      console.log("[useDiskPersistence] Checking for previously saved disk selections in database");
       const data = await PriceService.getAllData();
       
       if (data && data.discos_internos && data.discos_internos.items && data.discos_internos.items.length > 0) {
-        console.log("Found saved disk selections in database:", data.discos_internos.items);
+        console.log("[useDiskPersistence] Found saved disk selections in database:", data.discos_internos.items);
         
         // Convert database items to disk selections
         const databaseDisks = data.discos_internos.items.map(item => {
-          // Extract disk type from subtype
-          const diskType = item.subtype as "nvme" | "ssd" | "hdd";
+          // Extract disk type from subtype or type or metadata
+          const diskType = item.subtype || item.type || (item.metadata?.type as string) || "hdd";
           
-          // Extract capacity from name or specs
-          let capacity = "";
-          if (item.specs && item.specs.some(spec => spec.includes('Capacidade:'))) {
+          // Extract capacity from various possible locations
+          let capacity = item.capacity || "";
+          
+          if (!capacity && item.metadata?.capacity) {
+            capacity = item.metadata.capacity;
+          }
+          
+          if (!capacity && item.specs && item.specs.some(spec => spec.includes('Capacidade:'))) {
             const capacitySpec = item.specs.find(spec => spec.includes('Capacidade:'));
             if (capacitySpec) {
               capacity = capacitySpec.split(':')[1]?.trim() || "";
             }
-          } else {
+          } 
+          
+          if (!capacity) {
             // Extract from name
             const capacityMatch = item.name.match(/(\d+)TB|(\d+\.?\d*)TB|(\d+)GB/i);
             if (capacityMatch) {
@@ -53,7 +61,7 @@ export function useDiskPersistence({
           // Create disk object
           const disk: PricedDiskOption = {
             id: item.id,
-            type: diskType,
+            type: diskType as "nvme" | "ssd" | "hdd",
             capacity: normalizeStorageCapacity(capacity),
             price: item.price / (item.metadata?.quantity || 1), // Calculate unit price
             specs: {
@@ -61,7 +69,9 @@ export function useDiskPersistence({
               writeSpeed: "N/A",
               iops: "N/A",
               recommended: []
-            }
+            },
+            name: item.name,
+            description: item.description
           };
           
           return {
@@ -70,12 +80,13 @@ export function useDiskPersistence({
           };
         });
         
+        console.log("[useDiskPersistence] Converted database disks:", databaseDisks);
         return databaseDisks;
       }
       
       return null;
     } catch (error) {
-      console.error("Error loading disk selections from database:", error);
+      console.error("[useDiskPersistence] Error loading disk selections from database:", error);
       return null;
     }
   };
@@ -85,8 +96,14 @@ export function useDiskPersistence({
     if (!isInitialLoad) return;
     
     const loadFromDatabase = async () => {
-      const databaseDisks = await loadSelectedDisksFromDatabase();
-      setIsInitialLoad(false);
+      try {
+        console.log("[useDiskPersistence] Initial load - loading disks from database");
+        const databaseDisks = await loadSelectedDisksFromDatabase();
+        setIsInitialLoad(false);
+      } catch (error) {
+        console.error("[useDiskPersistence] Error in initial database load:", error);
+        setIsInitialLoad(false);
+      }
     };
     
     loadFromDatabase();
@@ -107,9 +124,9 @@ export function useDiskPersistence({
         setIsPersisted(false);
       }
       
-      console.log("Saved disk selections to local storage:", selectedDisks.length);
+      console.log("[useDiskPersistence] Saved disk selections to local storage:", selectedDisks.length);
     } catch (error) {
-      console.error("Error saving disk selections to local storage:", error);
+      console.error("[useDiskPersistence] Error saving disk selections to local storage:", error);
     }
   }, [selectedDisks, selectedDiskType, isInitialLoad, isPersisted]);
 
