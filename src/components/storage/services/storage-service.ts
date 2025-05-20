@@ -36,13 +36,44 @@ export async function loadStorageTypes(): Promise<StorageType[]> {
     // Try to get storage category from price service
     try {
       console.log('[loadStorageTypes] Attempting to load storage category');
-      const category = await PriceService.getCategory('storage');
-      if (category && Array.isArray(category.items) && category.items.length > 0) {
-        // Convert price items to storage types
-        console.log(`[loadStorageTypes] Found ${category.items.length} storage items in price table`);
-        return category.items.map(mapPriceItemToStorageType);
+      const storageCategory = await PriceService.getCategory('storage');
+      
+      if (storageCategory) {
+        // Verificar se os itens estão na estrutura correta
+        if (!Array.isArray(storageCategory.items)) {
+          console.error('[loadStorageTypes] Storage category items is not an array:', storageCategory.items);
+          storageCategory.items = [];
+        }
+        
+        if (storageCategory.items.length > 0) {
+          // Converter itens de preço para tipos de armazenamento
+          console.log(`[loadStorageTypes] Found ${storageCategory.items.length} storage items in price table`);
+          return storageCategory.items.map(mapPriceItemToStorageType);
+        } else {
+          console.warn('[loadStorageTypes] Storage category found, but no items');
+        }
       } else {
-        console.warn('[loadStorageTypes] Storage category found, but no items');
+        console.warn('[loadStorageTypes] Storage category not found, trying external_storage');
+        
+        // Tentar obter a categoria external_storage como alternativa
+        const externalStorageCategory = await PriceService.getCategory('external_storage');
+        
+        if (externalStorageCategory) {
+          // Verificar se os itens estão na estrutura correta
+          if (!Array.isArray(externalStorageCategory.items)) {
+            console.error('[loadStorageTypes] External storage category items is not an array:', externalStorageCategory.items);
+            externalStorageCategory.items = [];
+          }
+          
+          if (externalStorageCategory.items.length > 0) {
+            console.log(`[loadStorageTypes] Found ${externalStorageCategory.items.length} external storage items`);
+            return externalStorageCategory.items.map(mapPriceItemToStorageType);
+          } else {
+            console.warn('[loadStorageTypes] External storage category found, but no items');
+          }
+        } else {
+          console.warn('[loadStorageTypes] Neither storage nor external_storage categories found');
+        }
       }
     } catch (error) {
       console.error('[loadStorageTypes] Error loading storage types from price service:', error);

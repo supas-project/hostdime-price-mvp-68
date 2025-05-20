@@ -15,24 +15,48 @@ export async function getCategory(categoryId: string): Promise<PriceCategory | n
       return null;
     }
     
-    // Verificar se a categoria existe diretamente pelo ID
+    // Verificação direta pelo ID (case insensitive)
+    const normalizedCategoryId = categoryId.toLowerCase();
+    
+    // Primeiro, tentamos encontrar diretamente pela chave do objeto
     if (allData[categoryId]) {
-      console.log(`[PriceService] Found category ${categoryId} with ${allData[categoryId].items?.length || 0} items`);
-      return allData[categoryId];
+      console.log(`[PriceService] Found category ${categoryId} by exact ID match with ${allData[categoryId].items?.length || 0} items`);
+      
+      // Garantir que items seja sempre um array
+      if (!Array.isArray(allData[categoryId].items)) {
+        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
+        allData[categoryId].items = allData[categoryId].items || [];
+      }
+      
+      return {
+        ...allData[categoryId],
+        items: allData[categoryId].items || []
+      };
     }
     
-    // Busca alternativa: verificar se existe uma categoria com esse nome
-    const categoryByName = Object.values(allData).find(cat => 
-      cat.name.toLowerCase() === categoryId.toLowerCase() ||
-      cat.id.toLowerCase() === categoryId.toLowerCase()
-    );
-    
-    if (categoryByName) {
-      console.log(`[PriceService] Found category by name: ${categoryId} with ${categoryByName.items?.length || 0} items`);
-      return categoryByName;
+    // Busca alternativa: percorrer todas as categorias procurando por correspondências
+    for (const [key, category] of Object.entries(allData)) {
+      if (
+        key.toLowerCase() === normalizedCategoryId || 
+        category.id.toLowerCase() === normalizedCategoryId || 
+        category.name.toLowerCase() === normalizedCategoryId
+      ) {
+        console.log(`[PriceService] Found category by alternative match: ${key} with ${category.items?.length || 0} items`);
+        
+        // Garantir que items seja sempre um array
+        if (!Array.isArray(category.items)) {
+          console.warn(`[PriceService] Items for category ${key} is not an array, fixing`);
+          category.items = category.items || [];
+        }
+        
+        return {
+          ...category,
+          items: category.items || []
+        };
+      }
     }
     
-    console.warn(`[PriceService] Category ${categoryId} not found`);
+    console.warn(`[PriceService] Category ${categoryId} not found after all search attempts`);
     return null;
   } catch (err: any) {
     console.error(`[PriceService] Error in getCategory for ${categoryId}:`, err);

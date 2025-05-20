@@ -23,7 +23,7 @@ interface PriceTableContentProps {
   onDeleteCategory: (categoryId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (item: PriceItem) => void;
-  contractDuration?: string; // Added contractDuration as an optional prop
+  contractDuration?: string;
 }
 
 export function PriceTableContent({
@@ -46,13 +46,28 @@ export function PriceTableContent({
   // Debug para verificar os dados recebidos
   console.log("PriceTableContent received categories:", Object.keys(priceData).join(", "));
   
-  // Verificar se storage e external_storage existem
+  // Garantir que todas as categorias tenham a propriedade 'items' como array
+  Object.keys(priceData).forEach(key => {
+    if (!priceData[key]) {
+      console.warn(`PriceTableContent: Category ${key} is undefined`);
+      return;
+    }
+    
+    if (!Array.isArray(priceData[key].items)) {
+      console.warn(`PriceTableContent: Items is not an array for category ${key}, fixing...`);
+      priceData[key].items = priceData[key].items || [];
+    }
+    
+    console.log(`Category ${key} has ${priceData[key].items.length} items`);
+  });
+  
+  // Verificar categorias específicas
   if (priceData.storage) {
-    console.log("Storage category has", priceData.storage.items?.length || 0, "items");
+    console.log("Storage category has", priceData.storage.items.length, "items");
   }
   
   if (priceData.external_storage) {
-    console.log("External storage category has", priceData.external_storage.items?.length || 0, "items");
+    console.log("External storage category has", priceData.external_storage.items.length, "items");
   }
   
   if (Object.keys(priceData).length === 0) {

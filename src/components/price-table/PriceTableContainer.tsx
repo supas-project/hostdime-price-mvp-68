@@ -72,15 +72,39 @@ export default function PriceTableContainer() {
           // Log all categories para debug
           if (priceData) {
             console.log("Available categories:", Object.keys(priceData).join(", "));
-            // Verificar storage e external_storage
+            
+            // Verificar todas as categorias para garantir que estão estruturadas corretamente
+            Object.keys(priceData).forEach(cat => {
+              const category = priceData[cat];
+              if (!category) {
+                console.error(`Category ${cat} is undefined`);
+                return;
+              }
+              
+              if (!Array.isArray(category.items)) {
+                console.error(`Category ${cat} has invalid items property:`, category.items);
+              } else {
+                console.log(`Category ${cat} has ${category.items.length} items`);
+              }
+            });
+            
+            // Verificar storage e external_storage especificamente
             if (priceData.storage) {
-              console.log("Storage category items:", priceData.storage.items?.length || 0);
+              if (Array.isArray(priceData.storage.items)) {
+                console.log("Storage category items:", priceData.storage.items.length);
+              } else {
+                console.error("Storage category items is not an array:", priceData.storage.items);
+              }
             } else {
               console.log("Storage category not found");
             }
             
             if (priceData.external_storage) {
-              console.log("External storage category items:", priceData.external_storage.items?.length || 0);
+              if (Array.isArray(priceData.external_storage.items)) {
+                console.log("External storage category items:", priceData.external_storage.items.length);
+              } else {
+                console.error("External storage category items is not an array:", priceData.external_storage.items);
+              }
             } else {
               console.log("External storage category not found");
             }
@@ -111,7 +135,24 @@ export default function PriceTableContainer() {
     }
     
     initialize();
-  }, [isAuthenticated, priceData]);
+  }, [isAuthenticated]);
+
+  // Effect para garantir que o priceData seja processado após ser carregado
+  useEffect(() => {
+    if (priceData) {
+      // Verificar todas as categorias para garantir que os items são arrays
+      Object.keys(priceData).forEach(key => {
+        if (!priceData[key]) return;
+        
+        if (!Array.isArray(priceData[key].items)) {
+          console.warn(`PriceTableContainer: Items is not an array for category ${key}, fixing...`);
+          priceData[key].items = priceData[key].items || [];
+          // Forçar atualização do estado
+          setPriceData({...priceData});
+        }
+      });
+    }
+  }, [priceData, setPriceData]);
 
   // Filter categories to remove contract category (mas não storage ou external_storage)
   const filteredPriceData = priceData ? {...priceData} : {};
