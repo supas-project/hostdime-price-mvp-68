@@ -13,7 +13,10 @@ import {
 import {
   addItem,
   updateItem,
-  deleteItem
+  deleteItem,
+  getItem,
+  getCategoryItems,  // Importar o método getCategoryItems
+  getAllItems
 } from './price/operations/item-operations';
 
 import {
@@ -52,6 +55,9 @@ export class PriceService {
   static addItem = addItem;
   static updateItem = updateItem;
   static deleteItem = deleteItem;
+  static getItem = getItem;  // Expor o método getItem
+  static getCategoryItems = getCategoryItems; // Expor o método getCategoryItems
+  static getAllItems = getAllItems; // Expor o método getAllItems
   
   // Data change listeners
   static addDataChangeListener = addDataChangeListener;

@@ -1,4 +1,3 @@
-
 import { PriceService } from "@/services/price-service";
 import { StorageType } from '../types/storage-types';
 import { mapPriceItemToStorageType, mapStaticDataToStorageType } from '../utils/storage-mapper';
@@ -14,7 +13,9 @@ async function tryGetStorageItemsFromDisk(): Promise<StorageType[]> {
     console.log('[tryGetStorageItemsFromDisk] Tentando obter dados de armazenamento do disco');
     
     // Obter itens da categoria 'disk'
-    const diskItems = await PriceService.getCategoryItems('disk');
+    // Corrigido: usar getCategory em vez de getCategoryItems, e depois acessar os items
+    const diskCategory = await PriceService.getCategory('disk');
+    const diskItems = diskCategory?.items || [];
     
     if (!diskItems || diskItems.length === 0) {
       console.log('[tryGetStorageItemsFromDisk] Sem itens de disco disponíveis');
@@ -53,6 +54,7 @@ async function tryGetStorageItemsFromDisk(): Promise<StorageType[]> {
  * @returns A promise that resolves to an array of storage types
  */
 export async function loadStorageTypes(): Promise<StorageType[]> {
+  
   try {
     // First check if user is authenticated
     const { data: session } = await PriceService.supabase.auth.getSession();
