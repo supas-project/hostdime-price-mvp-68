@@ -1,81 +1,78 @@
 
-// Main export file for the disk management hooks
-import { useDiskSelectionState } from './useDiskSelectionState';
-import { useDiskPersistence } from './useDiskPersistence';
-import { useDiskSync } from './useDiskSync';
-import { useDiskActions } from './useDiskActions';
-import { useState } from 'react';
-import { PricedDiskOption } from '@/types/storage';
+import { useState, useCallback, useMemo } from "react";
+import { PricedDiskOption } from "@/types/storage";
 
 interface UseDiskManagementProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
 }
 
-export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps = {}) {
-  // Setup initial state flag
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Use specialized hooks
-  const {
-    selectedDiskType,
-    setSelectedDiskType,
-    selectedCapacity,
-    setSelectedCapacity,
-    selectedDisks,
-    setSelectedDisks,
-    availableDisks,
-    setAvailableDisks,
-    visibleDisks
-  } = useDiskSelectionState(isInitialLoad);
+export function useDiskManagement({ onSelectDisk }: UseDiskManagementProps) {
+  // State for disk selection
+  const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd">();
+  const [selectedCapacity, setSelectedCapacity] = useState("");
+  const [selectedDisks, setSelectedDisks] = useState<{ disk: PricedDiskOption; quantity: number }[]>([]);
 
-  // Handle persistence
-  const { isPersisted, setIsPersisted } = useDiskPersistence({
-    selectedDisks,
-    selectedDiskType,
-    isInitialLoad,
-    setIsInitialLoad
-  });
+  // Handler for type selection
+  const handleTypeSelect = useCallback((type: "nvme" | "ssd" | "hdd") => {
+    setSelectedDiskType(type);
+    setSelectedCapacity("");
+  }, []);
 
-  // Handle sync with database
-  useDiskSync({
-    selectedDisks,
-    isPersisted,
-    setIsPersisted,
-    isInitialLoad
-  });
+  // Handler for capacity selection
+  const handleCapacitySelect = useCallback((capacity: string) => {
+    setSelectedCapacity(capacity);
+  }, []);
 
-  // User actions
-  const {
-    handleTypeSelect,
-    handleCapacitySelect,
-    handleQuantityChange,
-    handleRemoveDisk
-  } = useDiskActions({
-    setSelectedDiskType,
-    setSelectedCapacity,
-    selectedDisks,
-    setSelectedDisks,
-    availableDisks,
-    setIsPersisted,
-    onSelectDisk
-  });
+  // Handler for quantity changes
+  const handleQuantityChange = useCallback(
+    (diskId: string, newQuantity: number) => {
+      setSelectedDisks((currentDisks) => {
+        return currentDisks.map((item) => {
+          if (item.disk.id === diskId) {
+            const updatedItem = { ...item, quantity: newQuantity };
+            
+            // Notify parent component if callback provided
+            if (onSelectDisk) {
+              onSelectDisk(item.disk, newQuantity);
+            }
+            
+            return updatedItem;
+          }
+          return item;
+        });
+      });
+    },
+    [onSelectDisk]
+  );
+
+  // Handler for removing a disk
+  const handleRemoveDisk = useCallback(
+    (diskId: string) => {
+      setSelectedDisks((currentDisks) => {
+        return currentDisks.filter((item) => item.disk.id !== diskId);
+      });
+    },
+    []
+  );
+
+  // Compute visible disks based on selected type
+  const visibleDisks = useMemo(() => {
+    if (!selectedDiskType) return [];
+    return selectedDisks.filter((item) => item.disk.type === selectedDiskType);
+  }, [selectedDiskType, selectedDisks]);
 
   return {
     selectedDiskType,
-    setSelectedDiskType,
     selectedCapacity,
-    setSelectedCapacity,
     selectedDisks,
-    setSelectedDisks,
-    availableDisks,
-    setAvailableDisks,
     visibleDisks,
     handleTypeSelect,
     handleCapacitySelect,
     handleQuantityChange,
-    handleRemoveDisk
+    handleRemoveDisk,
+    setSelectedDisks
   };
 }
 
-// Re-export the legacy function with a different name to avoid conflicts
-export { useDiskManagement as useDiskManagementOriginal } from './useDiskManagementLegacy';
+// Export the original implementation for backward compatibility if needed
+export { useDiskManagement as useDiskManagementOriginal };
