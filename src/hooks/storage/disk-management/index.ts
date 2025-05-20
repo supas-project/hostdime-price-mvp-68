@@ -1,5 +1,4 @@
 
-import { useDiskManagementLegacy } from './useDiskManagementLegacy';
 import { useDiskActions } from './useDiskActions';
 import { useState } from 'react';
 import { PricedDiskOption } from '@/types/storage';
@@ -16,29 +15,24 @@ export function useDiskManagement(props: DiskManagementProps = {}) {
   const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
   const [selectedCapacity, setSelectedCapacity] = useState("");
   const [selectedDisks, setSelectedDisks] = useState<Array<{disk: PricedDiskOption, quantity: number}>>([]);
+  const [availableDisks, setAvailableDisks] = useState<PricedDiskOption[]>([]);
+  const [isPersisted, setIsPersisted] = useState(true);
   
-  // Usar as ações de gerenciamento de disco
+  // Usar as ações de gerenciamento de disco com todos os parâmetros necessários
   const { 
+    handleTypeSelect,
+    handleCapacitySelect,
     handleQuantityChange,
-    handleRemoveDisk,
-    handleAddDisk,
+    handleRemoveDisk
   } = useDiskActions({
+    setSelectedDiskType,
+    setSelectedCapacity,
     selectedDisks,
     setSelectedDisks,
+    availableDisks,
+    setIsPersisted,
     onSelectDisk
   });
-  
-  // Função para selecionar tipo de disco
-  const handleTypeSelect = (type: "nvme" | "ssd" | "hdd") => {
-    setSelectedDiskType(type);
-    // Limpar capacidade selecionada quando o tipo muda
-    setSelectedCapacity("");
-  };
-  
-  // Função para selecionar capacidade
-  const handleCapacitySelect = (capacity: string) => {
-    setSelectedCapacity(capacity);
-  };
   
   // Filtrar discos visíveis com base no tipo selecionado
   const visibleDisks = selectedDisks.filter(
@@ -52,11 +46,12 @@ export function useDiskManagement(props: DiskManagementProps = {}) {
     setSelectedCapacity,
     selectedDisks,
     setSelectedDisks,
+    availableDisks,
+    setAvailableDisks,
     visibleDisks,
     handleTypeSelect,
     handleCapacitySelect,
     handleQuantityChange,
-    handleRemoveDisk,
-    handleAddDisk
+    handleRemoveDisk
   };
 }
