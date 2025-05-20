@@ -1,5 +1,4 @@
 
-
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
@@ -78,8 +77,8 @@ const WizardContainer = () => {
             selectedComponents={selectedComponents}
             onRestart={handleRestart}
             storageItems={storageItemsMap}
-            customServices={convertCustomServicesToArray(connectivityItems as ConnectivityItemsMap)}
             connectivityItems={connectivityItems}
+            customServices={convertCustomServicesToArray(customServices)}
           />
         )}
       </main>

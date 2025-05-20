@@ -1,7 +1,6 @@
 
-
 import { ComponentOption } from "@/types/component";
-import { StorageItems, StorageItemsMap } from "@/types/wizard";
+import { StorageItems, StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 
 /**
  * Extrai a capacidade de armazenamento do nome/especificações do disco
@@ -128,12 +127,19 @@ export function convertConnectivityToArray(connectivityMap: {[key: string]: {opt
 }
 
 /**
- * Converte mapa de serviços personalizados para array
+ * Converte array de serviços personalizados ou mapa para array de ComponentOption
+ * Função atualizada para lidar com diferentes formatos de entrada
  */
-export function convertCustomServicesToArray(servicesMap: {[key: string]: {option: ComponentOption, quantity: number}}): ComponentOption[] {
-  if (!servicesMap) {
+export function convertCustomServicesToArray(services: ComponentOption[] | {[key: string]: {option: ComponentOption, quantity: number}}): ComponentOption[] {
+  if (!services) {
     return [];
   }
   
-  return Object.values(servicesMap).map(item => item.option);
+  // Se já for um array, retornar diretamente
+  if (Array.isArray(services)) {
+    return services;
+  }
+  
+  // Se for um objeto com a estrutura esperada, converter para array
+  return Object.values(services).map(item => item.option);
 }

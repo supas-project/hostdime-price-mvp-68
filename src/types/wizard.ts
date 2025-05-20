@@ -1,5 +1,4 @@
 
-
 import { ComponentOption } from "./component";
 
 export interface StorageItems {
