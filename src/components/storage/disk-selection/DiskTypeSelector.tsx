@@ -10,7 +10,7 @@ interface DiskTypeSelectorProps {
 export function DiskTypeSelector({ selectedType, onTypeSelect }: DiskTypeSelectorProps) {
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium mb-2">Tipo de Disco</label>
+      <label className="block text-sm font-medium mb-2 text-white">Tipo de Disco</label>
       <Select 
         value={selectedType} 
         onValueChange={onTypeSelect}

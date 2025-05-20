@@ -13,7 +13,7 @@ import { useInitialDiskLoader } from "@/hooks/storage/useInitialDiskLoader";
 import { useDataSyncHandler } from "@/hooks/storage/useDataSyncHandler";
 import { SelectedDiskDisplay } from "./disk-selection/SelectedDiskDisplay";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InternalStoragePanelProps {
@@ -111,6 +111,14 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Recommendation banner - restored from Print 2 */}
+      <div className="bg-[#191919] border border-[#f5822040] rounded-lg p-4 text-sm text-white/80">
+        <p className="flex items-center gap-2">
+          <HardDrive size={16} className="text-[#f58220]" />
+          Recomendamos 2 discos SSD (um para sistema e outro para dados) ou 1 disco NVMe para máximo desempenho.
+        </p>
+      </div>
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <DiskTypeSelector
           selectedType={selectedDiskType}
@@ -130,13 +138,13 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       )}
 
       {selectedCapacity && selectedDiskType && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4">
+          {/* Configuração disco button styled to match Print 2 */}
           <Button 
             onClick={handleAddSelectedDisk}
-            className="w-full sm:w-auto flex items-center gap-2"
+            className="w-full bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#f5822060] text-white"
           >
-            <PlusCircle className="h-4 w-4" />
-            <span>Adicionar Disco {selectedDiskType.toUpperCase()} {selectedCapacity}</span>
+            <span>Configurar disco {selectedDiskType.toUpperCase()}</span>
           </Button>
         </div>
       )}
@@ -156,9 +164,9 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       ) : (
         <>
           {visibleDisks.length > 0 && (
-            <div className="space-y-4 bg-background/5 p-4 rounded-lg border border-[#2a2a2a]">
+            <div className="space-y-4 bg-[#191919] p-4 rounded-lg border border-[#2a2a2a]">
               <div className="flex justify-between items-center">
-                <h4 className="text-sm font-medium">Discos selecionados</h4>
+                <h4 className="text-sm font-medium text-white">Discos selecionados</h4>
                 <Button
                   variant="outline"
                   size="sm"
@@ -196,4 +204,3 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     </div>
   );
 }
-

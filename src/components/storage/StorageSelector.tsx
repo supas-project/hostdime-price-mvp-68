@@ -72,9 +72,13 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       </div>
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
-        <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="internal">Discos Internos</TabsTrigger>
-          <TabsTrigger value="external">Storage Externo</TabsTrigger>
+        <TabsList className="grid grid-cols-2 w-full bg-background/10 border border-[#2a2a2a]">
+          <TabsTrigger value="internal" className="data-[state=active]:bg-[#f58220] data-[state=active]:text-white">
+            Discos Internos
+          </TabsTrigger>
+          <TabsTrigger value="external" className="data-[state=active]:bg-[#f58220] data-[state=active]:text-white">
+            Storage Externo
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">

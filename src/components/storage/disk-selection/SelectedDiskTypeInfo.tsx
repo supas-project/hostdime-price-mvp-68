@@ -36,8 +36,8 @@ export function SelectedDiskTypeInfo({ selectedDiskType }: SelectedDiskTypeInfoP
         className="flex w-full items-center justify-between text-left"
       >
         <div className="flex items-center gap-2">
-          <HardDrive className="h-5 w-5 text-primary" />
-          <span className="font-medium">{info.title}</span>
+          <HardDrive className="h-5 w-5 text-[#f58220]" />
+          <span className="font-medium text-white">{info.title}</span>
         </div>
         {isExpanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
