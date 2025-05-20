@@ -86,15 +86,17 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
       
       // Get capacity from either capacity property, metadata or extract from name
       const capacity = item.capacity || 
-                      (typeof metadata === 'object' && 'capacity' in metadata ? metadata.capacity : null) || 
+                      (metadata && typeof metadata === 'object' && 'capacity' in metadata ? metadata.capacity as string : null) || 
                       extractCapacityFromName(item.name);
       
       // Create disk spec object with safe defaults
       const specs = {
-        readSpeed: metadata?.readSpeed || "N/A",
-        writeSpeed: metadata?.writeSpeed || "N/A",
-        iops: metadata?.iops || "N/A",
-        recommended: Array.isArray(metadata?.recommended) ? metadata.recommended : []
+        readSpeed: metadata && typeof metadata === 'object' && 'readSpeed' in metadata ? metadata.readSpeed as string : "N/A",
+        writeSpeed: metadata && typeof metadata === 'object' && 'writeSpeed' in metadata ? metadata.writeSpeed as string : "N/A",
+        iops: metadata && typeof metadata === 'object' && 'iops' in metadata ? metadata.iops as string : "N/A",
+        recommended: metadata && typeof metadata === 'object' && 'recommended' in metadata && Array.isArray(metadata.recommended) 
+          ? metadata.recommended as string[] 
+          : []
       };
       
       // Construct the disk option
@@ -102,12 +104,10 @@ export async function getDiskOptions(): Promise<PricedDiskOption[]> {
         id: item.id || `disk-${type}-${capacity}`,
         name: item.name || `${type.toUpperCase()} ${capacity}`,
         type: type as "nvme" | "ssd" | "hdd",
-        capacity: capacity,
+        capacity: capacity as string,
         price: item.price || 0,
         specs: specs,
         description: item.description || "",
-        iops: metadata?.iops || "N/A",
-        throughput: metadata?.throughput || "N/A",
       };
     });
     

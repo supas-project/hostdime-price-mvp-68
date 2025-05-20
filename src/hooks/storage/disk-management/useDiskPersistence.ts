@@ -32,13 +32,13 @@ export function useDiskPersistence({
         // Convert database items to disk selections
         const databaseDisks = data.discos_internos.items.map(item => {
           // Extract disk type from subtype or type or metadata
-          const diskType = item.subtype || item.type || (item.metadata?.type as string) || "hdd";
+          const diskType = item.subtype || item.type || "hdd";
           
           // Extract capacity from various possible locations
           let capacity = item.capacity || "";
           
-          if (!capacity && item.metadata?.capacity) {
-            capacity = item.metadata.capacity;
+          if (!capacity && item.metadata && typeof item.metadata === 'object' && 'capacity' in item.metadata) {
+            capacity = item.metadata.capacity as string;
           }
           
           if (!capacity && item.specs && item.specs.some(spec => spec.includes('Capacidade:'))) {
@@ -63,7 +63,8 @@ export function useDiskPersistence({
             id: item.id,
             type: diskType as "nvme" | "ssd" | "hdd",
             capacity: normalizeStorageCapacity(capacity),
-            price: item.price / (item.metadata?.quantity || 1), // Calculate unit price
+            price: item.price / (item.metadata && typeof item.metadata === 'object' && 'quantity' in item.metadata ? 
+              (item.metadata.quantity as number) || 1 : 1), // Calculate unit price
             specs: {
               readSpeed: "N/A",
               writeSpeed: "N/A",
@@ -76,7 +77,8 @@ export function useDiskPersistence({
           
           return {
             disk,
-            quantity: item.metadata?.quantity || 1
+            quantity: item.metadata && typeof item.metadata === 'object' && 'quantity' in item.metadata ? 
+              (item.metadata.quantity as number) || 1 : 1
           };
         });
         

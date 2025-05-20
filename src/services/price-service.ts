@@ -23,7 +23,8 @@ import {
   checkForDataConflicts,
   forceRefreshFromLatestSource,
   importFromJSON,
-  importFromCSV
+  importFromCSV,
+  getDiskOptions
 } from './price/operations';
 
 import {
@@ -42,6 +43,7 @@ export class PriceService {
   // Data retrieval
   static getAllData = getAllData;
   static getCategory = getCategory;
+  static getDiskOptions = getDiskOptions;
   
   // Category operations
   static addCategory = addCategory;
