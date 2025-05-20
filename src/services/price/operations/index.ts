@@ -7,6 +7,10 @@ export * from './data-sync';
 export * from './category-operations';
 export * from './item-operations';
 
+// Import needed functions directly to avoid conflicts
+import { checkForDataConflicts, forceRefreshFromLatestSource } from './data-sync';
+import { getAllData } from './data-persistence';
+
 // Export a combined function to ensure consistent initialization
 export async function ensureDataConsistency() {
   try {

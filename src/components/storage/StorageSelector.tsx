@@ -18,6 +18,7 @@ export interface StorageSelectorProps {
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
   const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
+  const [selectedDisks, setSelectedDisks] = useState<{ disk: PricedDiskOption; quantity: number }[]>([]);
   
   // Create a mapping for the storage performance indicators
   const storagePerformanceMap: Record<string, {
@@ -46,6 +47,17 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       description: storage.description
     };
   });
+
+  // Handle disk selection
+  const handleDiskSelection = (disks: { disk: PricedDiskOption; quantity: number }[]) => {
+    setSelectedDisks(disks);
+    // Pass selected disk to parent component
+    if (disks.length > 0 && onSelectInternalDisk) {
+      disks.forEach(item => {
+        onSelectInternalDisk(item.disk, item.quantity);
+      });
+    }
+  };
 
   // Listen for storage data updates
   useEffect(() => {
@@ -82,7 +94,10 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">
-          <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
+          <InternalStoragePanel 
+            selectedDisks={selectedDisks}
+            setSelectedDisks={handleDiskSelection}
+          />
         </TabsContent>
         
         <TabsContent value="external" className="mt-4">
