@@ -41,7 +41,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   // Use the persistence hook
   const { hasLocalChanges, setHasLocalChanges, persistSelectionsToDatabase } = useDiskPersistence();
 
-  // Use the initial loader hook with explicit boolean typing
+  // Use the initial loader hook with proper typing to ensure booleans
   const { 
     isInitialLoad, 
     setIsInitialLoad, 
@@ -82,8 +82,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   // Save selections whenever they change
   useEffect(() => {
-    // Work directly with boolean state variables, no conversion needed
-    if (isInitialLoad === false && isDataRefreshed === true && selectedDisks.length > 0) {
+    // Use explicit boolean comparisons to ensure type safety
+    const initialLoadComplete = isInitialLoad === false;
+    const dataIsRefreshed = isDataRefreshed === true;
+    
+    if (initialLoadComplete && dataIsRefreshed && selectedDisks.length > 0) {
       // Store selections in localStorage immediately
       localStorage.setItem('selectedDisks', JSON.stringify(selectedDisks));
       

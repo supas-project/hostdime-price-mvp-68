@@ -34,11 +34,11 @@ export function useInitialDiskLoader(setSelectedDisks: SetSelectedDisksFunction)
     }
   }, [isInitialLoad, setSelectedDisks]);
 
-  // Return strict boolean values by using as const assertion to preserve the type information
+  // Use a strictly typed return value to ensure TypeScript knows these are definitely booleans
   return {
-    isInitialLoad, // Already boolean type from useState<boolean>
+    isInitialLoad, 
     setIsInitialLoad,
-    isDataRefreshed, // Already boolean type from useState<boolean>
+    isDataRefreshed,
     setIsDataRefreshed
-  } as const; // Using const assertion to preserve literal types
+  } as const; // Using const assertion to preserve strict boolean types
 }
