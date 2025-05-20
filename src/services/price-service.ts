@@ -1,3 +1,5 @@
+
+import { supabase } from "@/integrations/supabase/client";
 import {
   addCategory as addCategoryOperation,
   addItem as addItemOperation,
@@ -12,16 +14,21 @@ import {
   updateItem as updateItemOperation,
   checkForDataConflicts as checkForDataConflictsOperation,
   forceRefreshFromLatestSource as forceRefreshFromLatestSourceOperation,
-} from './services/price/operations';
-import { notifyListeners } from './services/price/listeners';
+} from './price/operations';
+import { addDataChangeListener, removeDataChangeListener, notifyListeners } from './price/listeners';
 import { PriceData } from '@/types/pricing';
-import { getDiskOptions } from './services/price/operations/data-retrieval';
+import { getDiskOptions } from './price/operations/data-retrieval';
 import { PricedDiskOption } from '@/types/storage';
 
 /**
  * Service for managing price data
  */
 export const PriceService = {
+  /**
+   * Supabase client instance for authentication operations
+   */
+  supabase,
+
   /**
    * Gets all price data
    */
@@ -76,7 +83,7 @@ export const PriceService = {
    * @param categoryId The ID of the category to add the item to
    * @param item The item to add
    */
-  addItem: async (categoryId: string, item: { id: string; name: string; description: string; price: number }): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+  addItem: async (categoryId: string, item: any): Promise<any | null> => {
     return await addItemOperation(categoryId, item);
   },
 
@@ -86,7 +93,7 @@ export const PriceService = {
    * @param itemId The ID of the item to update
    * @param updates The updates to apply
    */
-  updateItem: async (categoryId: string, itemId: string, updates: Partial<{ id: string; name: string; description: string; price: number }>): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+  updateItem: async (categoryId: string, itemId: string, updates: any): Promise<any | null> => {
     return await updateItemOperation(categoryId, itemId, updates);
   },
 
@@ -112,7 +119,7 @@ export const PriceService = {
    * @param categoryId The ID of the category the item belongs to
    * @param itemId The ID of the item to get
    */
-  getItem: async (categoryId: string, itemId: string): Promise<{ id: string; name: string; description: string; price: number } | null> => {
+  getItem: async (categoryId: string, itemId: string): Promise<any | null> => {
     return await getItemOperation(categoryId, itemId);
   },
 
@@ -120,16 +127,15 @@ export const PriceService = {
    * Registers a listener for price data changes
    * @param listener The listener to register
    */
-  registerListener: (listener: (data: PriceData) => void): void => {
-    notifyListeners.addListener(listener);
+  addDataChangeListener: (listener: () => void): void => {
+    addDataChangeListener(listener);
   },
 
   /**
    * Unregisters a listener for price data changes
-   * @param listener The listener to unregister
    */
-  unregisterListener: (listener: (data: PriceData) => void): void => {
-    notifyListeners.removeListener(listener);
+  removeDataChangeListener: (): void => {
+    removeDataChangeListener();
   },
 
   /**
@@ -152,4 +158,41 @@ export const PriceService = {
   getDiskOptions: async (): Promise<PricedDiskOption[]> => {
     return await getDiskOptions();
   },
+
+  /**
+   * Gets the timestamp of the last modification of the price data
+   */
+  getLastModifiedTime: async (): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('price_data_updates')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      
+      if (error || !data || !data[0]) {
+        return null;
+      }
+      
+      return data[0].updated_at;
+    } catch (err) {
+      console.error('Error getting last modified time:', err);
+      return null;
+    }
+  },
+
+  /**
+   * Reset data to defaults
+   */
+  resetToDefaults: async (): Promise<boolean> => {
+    try {
+      // Implement a basic reset functionality that clears all data
+      const emptyData = {};
+      await saveDataOperation(emptyData);
+      return true;
+    } catch (err) {
+      console.error('Error resetting data to defaults:', err);
+      return false;
+    }
+  }
 };

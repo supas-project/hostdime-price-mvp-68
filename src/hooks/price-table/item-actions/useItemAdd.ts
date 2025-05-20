@@ -4,6 +4,7 @@ import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/utils/toast-utils";
+import { v4 as uuidv4 } from "uuid";
 
 export function useItemAdd(
   activeTab: string,
@@ -44,7 +45,11 @@ export function useItemAdd(
     try {
       setIsSubmittingItem(true);
       
+      // Generate a UUID for the new item
+      const itemId = uuidv4();
+      
       const itemData = {
+        id: itemId, // Add the ID to the item data
         name: values.name,
         description: values.description,
         price: values.price,
@@ -54,7 +59,14 @@ export function useItemAdd(
         tags: Array.isArray(values.tags) ? values.tags : [],
         // Set isHardware based on tags for backwards compatibility
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
-        metadata: {}
+        // Add capacity if it exists (especially for disk items)
+        capacity: values.capacity,
+        metadata: {
+          // Ensure critical disk fields are stored in metadata too
+          type: values.type || activeTab,
+          subtype: values.subtype,
+          capacity: values.capacity
+        }
       };
       
       // Add item to service
@@ -74,6 +86,9 @@ export function useItemAdd(
       const category = await PriceService.getCategory(activeTab);
       // Register change for notification
       await registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${category?.name || activeTab}`);
+      
+      // Dispatch event for disk updates
+      window.dispatchEvent(new CustomEvent('storage-data-updated'));
       
       toast.success("Item adicionado", {
         description: `O item ${values.name} foi adicionado com sucesso.`

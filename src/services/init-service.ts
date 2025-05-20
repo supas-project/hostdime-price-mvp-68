@@ -6,6 +6,7 @@ import {
   cleanupDuplicateCategories,
   syncDiskDataWithPriceService
 } from './component-sync-service';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Service for initializing application data
@@ -21,7 +22,7 @@ export class InitService {
       console.log("[InitService] Starting data initialization");
       
       // Check if user is authenticated
-      const { data: session } = await PriceService.supabase.auth.getSession();
+      const { data: session } = await supabase.auth.getSession();
       
       if (!session.session) {
         console.log("[InitService] No authenticated session, skipping initialization");

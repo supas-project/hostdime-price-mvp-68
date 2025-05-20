@@ -1,142 +1,81 @@
 
-import { supabase } from '@/lib/supabase';
-import { PriceData, PriceItem } from '@/types/pricing';
+import { PriceService } from '@/services/price-service';
+import { PriceItem } from '@/types/pricing';
 import { PricedDiskOption } from '@/types/storage';
-import { PRICE_DATA_TABLE } from '../constants';
 
 /**
- * Gets all price data from the database
- */
-export async function getAllData(): Promise<PriceData> {
-  try {
-    console.log("[PriceService] Getting all price data");
-    
-    // Fetch the data from price_data table
-    const { data: priceData, error } = await supabase
-      .from(PRICE_DATA_TABLE)
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error("[PriceService] Error fetching price data:", error);
-      throw new Error(error.message);
-    }
-
-    if (!priceData || priceData.length === 0) {
-      console.warn("[PriceService] No data found in price data table, returning default data");
-      return {};
-    }
-
-    // Return the data from the JSON column
-    const jsonData = priceData[0].data;
-
-    if (!jsonData) {
-      console.warn("[PriceService] No JSON data found in price data record");
-      return {};
-    }
-
-    console.log("[PriceService] Successfully retrieved price data:", 
-      Object.keys(jsonData).length > 0 ? 
-      `Found ${Object.keys(jsonData).length} categories` : 
-      "Empty data object");
-    
-    // First ensure we're dealing with an object, not an array
-    if (Array.isArray(jsonData)) {
-      console.error("[PriceService] Expected object data but received array");
-      return {};
-    }
-    
-    // Update local cache timestamp to track when data was last fetched
-    localStorage.setItem('price_data_last_fetch', new Date().toISOString());
-    
-    // Type assertion with proper cast - first to unknown, then to PriceData
-    return jsonData as unknown as PriceData;
-  } catch (err: any) {
-    console.error("[PriceService] Error in getAllData:", err);
-    throw new Error(err.message || "Failed to retrieve price data.");
-  }
-}
-
-/**
- * Gets all disk options from the price data
+ * Gets disk options from the price data
+ * @returns {Promise<PricedDiskOption[]>} Array of disk options
  */
 export async function getDiskOptions(): Promise<PricedDiskOption[]> {
   try {
-    console.log("[PriceService] Getting disk options from price data");
+    console.log("[getDiskOptions] Retrieving disk options from price data...");
     
     // Get all price data
-    const priceData = await getAllData();
+    const allData = await PriceService.getAllData();
     
-    // Check if the disk category exists in the price data
-    if (!priceData || !priceData.disk || !Array.isArray(priceData.disk.items)) {
-      console.warn("[PriceService] No disk items found in price data");
+    // Check if disk category exists
+    if (!allData.disk || !Array.isArray(allData.disk.items)) {
+      console.log("[getDiskOptions] No disk category or items found");
       return [];
     }
     
-    console.log("[PriceService] Found disk items:", priceData.disk.items.length);
-    // Log complete disk data for debugging
-    console.log("[PriceService] Raw disk items:", JSON.stringify(priceData.disk.items, null, 2));
+    console.log(`[getDiskOptions] Found ${allData.disk.items.length} disk items`);
     
-    // Convert price data items to PricedDiskOption format
-    const diskOptions: PricedDiskOption[] = priceData.disk.items.map(item => {
-      // Extract disk information from item properties
-      const metadata = item.metadata || {};
-      
-      // CRITICAL: Get the type from multiple possible locations
-      // Get the type from either subtype, type or default to "hdd"
-      const type = item.subtype || 
-                 item.type || 
-                 (metadata.subtype as string) || 
-                 (metadata.type as string) || 
-                 "hdd";
-      
-      // CRITICAL: Get capacity from multiple possible locations
-      // Get capacity from either capacity property, metadata or extract from name
-      const capacity = item.capacity || 
-                      (metadata.capacity as string) || 
-                      extractCapacityFromName(item.name);
-      
-      console.log(`[PriceService] Processing disk: id=${item.id}, name=${item.name}, type=${type}, capacity=${capacity}`);
-      
-      // Create disk spec object with safe defaults
-      const specs = {
-        readSpeed: metadata.readSpeed as string || "N/A",
-        writeSpeed: metadata.writeSpeed as string || "N/A",
-        iops: metadata.iops as string || "N/A",
-        recommended: Array.isArray(metadata.recommended) ? metadata.recommended as string[] : []
-      };
-      
-      // Construct the disk option with type assertion to match expected type
-      return {
-        id: item.id || `disk-${type}-${capacity}`,
-        name: item.name || `${type.toUpperCase()} ${capacity}`,
-        type: type as "nvme" | "ssd" | "hdd",
-        capacity: capacity as string,
-        price: item.price || 0,
-        specs: specs,
-        description: item.description || "",
-      };
-    });
+    // Convert price items to disk options
+    const diskOptions: PricedDiskOption[] = allData.disk.items
+      .filter(item => {
+        // Ensure the item has a type property that's a disk type
+        const validDiskType = item.type === 'nvme' || item.type === 'ssd' || item.type === 'hdd';
+        if (!validDiskType) {
+          console.log(`[getDiskOptions] Ignoring non-disk item: ${item.name} (type: ${item.type})`);
+        }
+        return validDiskType;
+      })
+      .map(item => {
+        // Create a consistent capacity property, prioritizing the item's own capacity
+        const capacity: string = item.capacity || 
+                               (item.metadata?.capacity as string) || 
+                               (item.subtype || '');
+
+        // Log mapping details for debugging
+        console.log(`[getDiskOptions] Mapping disk: ${item.name}, type: ${item.type}, capacity: ${capacity}`);
+        
+        // Ensure we have valid metadata fields or reasonable defaults
+        const metadata = item.metadata || {};
+
+        // Extract values with fallbacks
+        const readSpeed = metadata.readSpeed || 'N/A';
+        const writeSpeed = metadata.writeSpeed || 'N/A';
+        const iops = metadata.iops || 'N/A';
+        const recommended = Array.isArray(metadata.recommended) ? metadata.recommended : [];
+        
+        // Build the disk option with consistent data
+        return {
+          id: item.id,
+          name: item.name,
+          type: item.type as 'nvme' | 'ssd' | 'hdd',
+          capacity: capacity,
+          price: item.price,
+          specs: {
+            readSpeed,
+            writeSpeed,
+            iops,
+            recommended
+          },
+          description: item.description || `${item.type.toUpperCase()} ${capacity}`,
+          iops: iops,
+          throughput: metadata.throughput || 'N/A'
+        };
+      });
     
-    console.log(`[PriceService] Retrieved ${diskOptions.length} disk options`);
+    console.log(`[getDiskOptions] Returning ${diskOptions.length} disk options`);
     return diskOptions;
   } catch (error) {
-    console.error("[PriceService] Error getting disk options:", error);
+    console.error("[getDiskOptions] Error retrieving disk options:", error);
     return [];
   }
 }
 
-// Helper function to extract capacity from disk name
-function extractCapacityFromName(name: string): string {
-  if (!name) return "Unknown";
-  
-  // Look for patterns like "500GB", "1TB", "2 TB", etc.
-  const capacityMatch = name.match(/(\d+(?:\.\d+)?)\s*(?:GB|TB|G|T)/i);
-  if (capacityMatch) {
-    const value = capacityMatch[0];
-    return value.replace(/\s+/g, ''); // Remove any spaces
-  }
-  
-  return "Unknown";
-}
+// Additional exports for other data retrieval functions
+export { getAllData } from './data-persistence';
