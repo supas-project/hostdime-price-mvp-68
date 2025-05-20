@@ -1,6 +1,7 @@
 
 import { PriceService } from '../price-service';
 import { toast } from 'sonner';
+import { PriceCategory, PriceItem } from '@/types/pricing';
 
 // Initialize server categories without recreating deleted ones
 export async function initializeServerCategories(deletedCategories = {}): Promise<boolean> {
@@ -11,7 +12,7 @@ export async function initializeServerCategories(deletedCategories = {}): Promis
     const allData = await PriceService.getAllData();
     
     // Define which categories should exist by default
-    const defaultCategories = [
+    const defaultCategories: Array<Omit<PriceCategory, 'items'> & { items: PriceItem[] }> = [
       {
         id: 'processador',
         name: 'Processadores',
@@ -69,8 +70,12 @@ export async function initializeServerCategories(deletedCategories = {}): Promis
         continue;
       }
       
-      // Add the missing category
-      await PriceService.addCategory(category);
+      // Add the missing category with the proper type
+      await PriceService.addCategory({
+        id: category.id,
+        name: category.name,
+        items: []
+      });
       addedCount++;
       
       console.log(`[ComponentSync] Added missing category: ${category.id}`);
@@ -297,16 +302,19 @@ export async function syncDiskDataWithPriceService(deletedItems = {}): Promise<b
     
     // Process each default disk
     let modifiedData = { ...allData };
-    let updatedDiskItems = [];
+    let updatedDiskItems: PriceItem[] = [];
     
     for (const disk of defaultDisks) {
       // Skip if this disk was explicitly deleted
-      if (deletedItems[disk.id] || (deletedItems.disk && deletedItems.disk.includes(disk.id))) {
-        console.log(`[ComponentSync] Skipping deleted disk: ${disk.id}`);
+      const diskId = disk.id;
+      const typedDeletedItems = deletedItems as Record<string, string[]>;
+      
+      if (typedDeletedItems[diskId] || (typedDeletedItems.disk && typedDeletedItems.disk.includes(diskId))) {
+        console.log(`[ComponentSync] Skipping deleted disk: ${diskId}`);
         continue;
       }
       
-      updatedDiskItems.push(disk);
+      updatedDiskItems.push(disk as PriceItem);
     }
     
     // Update the disk category

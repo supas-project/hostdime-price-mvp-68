@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -21,6 +20,7 @@ interface PriceTablePageProps {
   hasConflicts: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
+  onRequestInitialization: () => void; // Added the missing prop
 }
 
 export function PriceTablePage({
@@ -31,7 +31,8 @@ export function PriceTablePage({
   handleRefreshData,
   hasConflicts,
   isLoading,
-  isRefreshing
+  isRefreshing,
+  onRequestInitialization
 }: PriceTablePageProps) {
   const { isAdminAccess } = useDataSync();
   const {

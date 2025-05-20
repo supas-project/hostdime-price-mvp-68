@@ -16,6 +16,8 @@ export interface PriceItem {
     unitPrice?: number;
     unitInfo?: string; // Added for storing additional storage metadata as JSON string
   };
+  // Adding capacity for disk items
+  capacity?: string;
 }
 
 export interface PriceCategory {
@@ -41,4 +43,19 @@ export interface PriceItemFormData {
   subtype?: string;
   specs?: string[];
   tags?: string[]; // Added tags to form data
+}
+
+// Adding typescript type for deleted items and categories tracking
+export interface DeletedCategory {
+  id: string;
+  name: string;
+  timestamp: string;
+}
+
+export interface DeletedItems {
+  [categoryId: string]: string[];
+}
+
+export interface DeletedCategories {
+  [categoryId: string]: DeletedCategory;
 }
