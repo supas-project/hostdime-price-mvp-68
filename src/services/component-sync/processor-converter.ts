@@ -86,7 +86,8 @@ export async function saveProcessorComponentsToPriceData(
         await PriceService.updateCategory('processor', category);
         
         // Notificar ouvintes sobre a atualização
-        notifyListeners();
+        const allData = await PriceService.getAllData();
+        notifyListeners(allData);
         
         logDebug("Processor data saved successfully");
         return true;
@@ -118,8 +119,11 @@ export async function syncProcessorUpdatesFromPriceTable(): Promise<boolean> {
     // Converter para formato de componentes
     const processorComponents = await convertProcessorPriceDataToComponents();
     
+    // Obter todos os dados para notificação completa
+    const allData = await PriceService.getAllData();
+    
     // Notificar listeners sobre as mudanças
-    notifyListeners();
+    notifyListeners(allData);
     
     logDebug("Processor updates synced successfully", {
       count: processorComponents.length

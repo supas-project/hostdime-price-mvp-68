@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
 import { PriceService } from '@/services/price-service';
 import { useDataSync } from '@/hooks/useDataSync';
+import { syncProcessorUpdatesFromPriceTable } from '@/services/component-sync/processor-converter';
 
 /**
  * Hook para gerenciar e sincronizar as opções de processador
@@ -14,6 +15,47 @@ export function useProcessor() {
   
   // Usar o hook de sincronização de dados
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
+
+  // Função para sincronizar dados de processador
+  const syncProcessorData = async () => {
+    try {
+      setIsLoading(true);
+      console.log("[useProcessor] Syncing processor data...");
+      
+      // Sincronizar atualizações da tabela de preços
+      await syncProcessorUpdatesFromPriceTable();
+      
+      // Obter dados atualizados
+      const processorData = await PriceService.getCategory('processor');
+      
+      if (processorData && processorData.items && processorData.items.length > 0) {
+        // Converter itens de preço para opções de componente
+        const options = processorData.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || `${item.name}`,
+          price: item.price,
+          type: 'Processador',
+          specs: item.specs || [],
+          metadata: {
+            cores: item.metadata?.cores || 0,
+            perCore: item.metadata?.perCore || false,
+            features: item.metadata?.features || []
+          }
+        }));
+        
+        setProcessorOptions(options);
+        console.log(`[useProcessor] Synced ${options.length} processor options`);
+      }
+      
+      setError(null);
+    } catch (err) {
+      console.error("[useProcessor] Error syncing processor data:", err);
+      setError(err instanceof Error ? err.message : "Erro ao sincronizar dados");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Carregar e sincronizar dados de processador
   useEffect(() => {
@@ -63,7 +105,7 @@ export function useProcessor() {
     // Configurar um listener para atualizar os dados quando houver mudanças
     const handleDataChange = async () => {
       console.log("[useProcessor] Data change detected, reloading processor data");
-      loadProcessorData();
+      await syncProcessorData();
     };
     
     // Adicionar o listener de mudanças
@@ -75,40 +117,20 @@ export function useProcessor() {
     };
   }, []);
   
-  // Função para sincronizar com os dados mais recentes
-  const syncProcessorData = async () => {
+  // Verificar atualizações e sincronizar quando necessário
+  useEffect(() => {
     if (hasUpdates) {
-      try {
-        console.log("[useProcessor] Syncing with latest data");
-        await syncWithLatestData();
-        
-        // Recarregar os dados do processador
-        const processorData = await PriceService.getCategory('processor');
-        
-        if (processorData && processorData.items) {
-          const options = processorData.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            description: item.description || `${item.name}`,
-            price: item.price,
-            type: 'Processador',
-            specs: item.specs || [],
-            metadata: {
-              cores: item.metadata?.cores || 0,
-              perCore: item.metadata?.perCore || false,
-              features: item.metadata?.features || []
-            }
-          }));
-          
-          setProcessorOptions(options);
-          console.log("[useProcessor] Processor data synced successfully");
+      (async () => {
+        console.log("[useProcessor] Updates detected, syncing processor data");
+        try {
+          await syncWithLatestData();
+          await syncProcessorData();
+        } catch (err) {
+          console.error("[useProcessor] Error during sync:", err);
         }
-      } catch (err) {
-        console.error("[useProcessor] Error syncing processor data:", err);
-        setError(err instanceof Error ? err.message : "Erro na sincronização");
-      }
+      })();
     }
-  };
+  }, [hasUpdates, syncWithLatestData]);
 
   return {
     isLoading,

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown } from "lucide-react";
 import { Cpu } from "lucide-react";
 import { PriceService } from "@/services/price-service";
+import { toast } from "@/utils/toast-utils";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -16,10 +17,11 @@ interface ProcessorContentProps {
 }
 
 export function ProcessorContent({ selectedOption, onSelectOption }: ProcessorContentProps) {
-  const { processorOptions, isLoading, error } = useProcessor();
+  const { processorOptions, isLoading, error, syncProcessorData } = useProcessor();
   const [localOptions, setLocalOptions] = useState<ComponentOption[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Atualizar opções locais quando o hook retornar novas opções
   useEffect(() => {
     if (processorOptions && processorOptions.length > 0) {
       console.log("[ProcessorContent] Processor options loaded:", processorOptions.length);
@@ -29,39 +31,53 @@ export function ProcessorContent({ selectedOption, onSelectOption }: ProcessorCo
 
   // Adicionar listener para mudanças de dados
   useEffect(() => {
-    // Adicionar listener para atualizações de dados
+    console.log("[ProcessorContent] Setting up data change listener");
+    
+    // Função para atualizar dados quando houver mudanças
     const handleDataChange = async () => {
       console.log("[ProcessorContent] Data change detected, refreshing processor options");
-      // Recarregar opções de processador quando os dados mudarem
-      const refreshedOptions = await PriceService.getCategory('processor');
-      if (refreshedOptions && refreshedOptions.items) {
-        const convertedOptions = refreshedOptions.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || `${item.name}`,
-          price: item.price,
-          type: 'Processador',
-          specs: item.specs || [],
-          metadata: {
-            cores: item.metadata?.cores || 0,
-            perCore: item.metadata?.perCore || false,
-            features: item.metadata?.features || []
-          }
-        }));
+      
+      try {
+        // Sincronizar dados de processador
+        await syncProcessorData();
         
-        setLocalOptions(convertedOptions);
-        console.log("[ProcessorContent] Refreshed processor options:", convertedOptions.length);
+        // Recarregar opções de processador quando os dados mudarem
+        const refreshedOptions = await PriceService.getCategory('processor');
+        if (refreshedOptions && refreshedOptions.items) {
+          const convertedOptions = refreshedOptions.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || `${item.name}`,
+            price: item.price,
+            type: 'Processador',
+            specs: item.specs || [],
+            metadata: {
+              cores: item.metadata?.cores || 0,
+              perCore: item.metadata?.perCore || false,
+              features: item.metadata?.features || []
+            }
+          }));
+          
+          setLocalOptions(convertedOptions);
+          console.log("[ProcessorContent] Refreshed processor options:", convertedOptions.length);
+        }
+      } catch (error) {
+        console.error("[ProcessorContent] Error refreshing processor data:", error);
+        toast.error("Erro ao atualizar dados de processador");
       }
     };
 
     // Adicionar o listener
     PriceService.addDataChangeListener(handleDataChange);
 
+    // Executar uma vez na montagem para garantir dados atualizados
+    handleDataChange();
+
     // Limpar o listener quando o componente for desmontado
     return () => {
       PriceService.removeDataChangeListener(handleDataChange);
     };
-  }, []);
+  }, [syncProcessorData]);
 
   if (isLoading) {
     return (

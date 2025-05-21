@@ -5,7 +5,7 @@ import { toast } from "@/utils/toast-utils";
 import { createItem, updateItem } from "@/utils/price-table-utils";
 import { PriceItem } from "@/types/pricing";
 import { notifyListeners } from "@/services/price/listeners";
-import { syncProcessorData } from "@/services/component-sync/initialization";
+import { syncProcessorUpdatesFromPriceTable } from "@/services/component-sync/processor-converter";
 
 export function useItemActions(
   activeTab: string, 
@@ -37,7 +37,8 @@ export function useItemActions(
       
       // Sincronizar processadores se a categoria for processor
       if (categoryId === 'processor') {
-        await syncProcessorData();
+        await syncProcessorUpdatesFromPriceTable();
+        console.log("Sincronização de processador concluída após adicionar item");
       }
       
       toast.success("Item adicionado com sucesso!");
@@ -70,7 +71,8 @@ export function useItemActions(
       
       // Sincronizar processadores se a categoria for processor
       if (categoryId === 'processor') {
-        await syncProcessorData();
+        await syncProcessorUpdatesFromPriceTable();
+        console.log("Sincronização de processador concluída após editar item");
       }
       
       toast.success("Item atualizado com sucesso!");
@@ -100,7 +102,8 @@ export function useItemActions(
       
       // Sincronizar processadores se a categoria for processor
       if (activeTab === 'processor') {
-        await syncProcessorData();
+        await syncProcessorUpdatesFromPriceTable();
+        console.log("Sincronização de processador concluída após excluir item");
       }
       
       toast.success("Item excluído com sucesso!");

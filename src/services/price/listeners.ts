@@ -1,46 +1,42 @@
 
-import { PriceData } from '@/types/pricing';
+// Criar um arquivo específico para gerenciar ouvintes de mudanças de dados
+// src/services/price/listeners.ts
 
-// Array to store listener callbacks
-type DataChangeListener = (data: PriceData | null) => void;
-let listeners: DataChangeListener[] = [];
+import { PriceData } from "@/types/pricing";
+
+type DataChangeListener = (data?: PriceData) => void;
+
+const listeners: Set<DataChangeListener> = new Set();
 
 /**
- * Adds a listener for data changes
+ * Adicionar um ouvinte para mudanças nos dados
+ * @param listener Função chamada quando os dados são alterados
  */
-export function addDataChangeListener(callback: DataChangeListener): void {
-  if (typeof callback === 'function') {
-    listeners.push(callback);
-    console.log("[PriceService] Data change listener added, total listeners:", listeners.length);
-  } else {
-    console.error("[PriceService] Invalid listener callback provided");
-  }
+export function addDataChangeListener(listener: DataChangeListener): void {
+  listeners.add(listener);
+  console.log(`[PriceService] Listener added. Total listeners: ${listeners.size}`);
 }
 
 /**
- * Removes a listener from the array
+ * Remover um ouvinte de mudanças nos dados
+ * @param listener Função a ser removida
  */
-export function removeDataChangeListener(callback?: DataChangeListener): void {
-  if (callback) {
-    listeners = listeners.filter(listener => listener !== callback);
-    console.log("[PriceService] Specific listener removed, remaining:", listeners.length);
-  } else {
-    // If no callback provided, remove all listeners
-    listeners = [];
-    console.log("[PriceService] All listeners removed");
-  }
+export function removeDataChangeListener(listener: DataChangeListener): void {
+  listeners.delete(listener);
+  console.log(`[PriceService] Listener removed. Total listeners: ${listeners.size}`);
 }
 
 /**
- * Notifies all listeners about data changes
+ * Notificar todos os ouvintes sobre uma mudança nos dados
+ * @param data Dados atualizados (opcional)
  */
 export function notifyListeners(data?: PriceData): void {
-  console.log("[PriceService] Notifying", listeners.length, "listeners about data changes");
+  console.log(`[PriceService] Notifying ${listeners.size} listeners about data change`);
   listeners.forEach(listener => {
     try {
-      listener(data || null);
+      listener(data);
     } catch (error) {
-      console.error("[PriceService] Error in listener callback:", error);
+      console.error("[PriceService] Error in listener:", error);
     }
   });
 }
