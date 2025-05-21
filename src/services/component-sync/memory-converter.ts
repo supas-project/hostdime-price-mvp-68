@@ -125,7 +125,8 @@ export async function updateMemoryPriceItems(components: ComponentOption[]): Pro
         name: component.name,
         description: component.description,
         price: component.price,
-        specs: component.specs || []
+        specs: component.specs || [],
+        type: "memory" // Adicionando o campo 'type' obrigatório
       };
       
       // Verificar se o item já existe

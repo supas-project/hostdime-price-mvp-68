@@ -80,9 +80,9 @@ export function useComponentOptions(componentType: string) {
               specs: item.specs || [],
               metadata: {
                 features: item.metadata?.features || [],
-                // Usar operador de acesso seguro para propriedades que podem não existir
-                ...(item.metadata?.location ? { location: item.metadata.location } : {}),
-                ...(item.metadata?.badge ? { badge: item.metadata.badge } : {})
+                // Usando spread condicional apenas se as propriedades existirem
+                ...(item.metadata && 'location' in (item.metadata || {}) ? { location: item.metadata.location } : {}),
+                ...(item.metadata && 'badge' in (item.metadata || {}) ? { badge: item.metadata.badge } : {})
               }
             }));
           } else {
