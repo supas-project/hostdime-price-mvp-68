@@ -34,11 +34,6 @@ export const openQuoteInNewTab = (
     
     // Log de quantidade para debug
     console.log(`[Quote] Discos originais: ${storageItems.internal?.length || 0}, deduplificados: ${uniqueStorageItems.internal.length}`);
-    console.log(`[Quote] Checando informações de RAID:`, 
-      uniqueStorageItems.internal.map(disk => disk.metadata?.raid ? 
-        `RAID ${disk.metadata.raid.type} (${disk.metadata.raid.isHardware ? 'Hardware' : 'Software'})` : 
-        'Sem RAID')
-    );
     
     // Calculate total price with deduplicated storage items
     const total = calculateQuoteTotal(
@@ -99,20 +94,6 @@ export const generateQuotePDF = async (
     // Notify user that process has started
     toast("Aguarde enquanto preparamos seu documento");
     
-    // CORREÇÃO: Deduplica os discos e storages explicitamente
-    const uniqueStorageItems = {
-      internal: deduplicateStorageItems(storageItems.internal || []),
-      external: deduplicateStorageItems(storageItems.external || [])
-    };
-    
-    // Log informações de RAID e quantidade para verificação
-    console.log(`[PDF] Total de discos deduplificados: ${uniqueStorageItems.internal.length}`);
-    console.log(`[PDF] Informações de RAID:`, 
-      uniqueStorageItems.internal.map(disk => disk.metadata?.raid ? 
-        `RAID ${disk.metadata.raid.type} (${disk.metadata.raid.isHardware ? 'Hardware' : 'Software'})` : 
-        'Sem RAID')
-    );
-    
     // Sanitizar variáveis dinâmicas simplificadas
     const sanitizedVariables = quoteVariables ? {
       responsavelComercial: sanitizeText(quoteVariables.responsavelComercial || ''),
@@ -127,7 +108,7 @@ export const generateQuotePDF = async (
     // Generate simplified PDF
     const pdfBytes = await buildQuotePDF(
       selectedComponents,
-      uniqueStorageItems, // Usa os itens deduplificados
+      storageItems,
       customServices,
       margin,
       connectivityItems,
