@@ -28,14 +28,14 @@ export function SummaryCart({
 }: SummaryCartProps) {
   const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
 
-  // CORREÇÃO: Usar sempre itens deduplicados
+  // CORREÇÃO: Dedupliação mais agressiva com nova lógica melhorada
   const uniqueStorageItems = {
     internal: deduplicateStorageItems(storageItems.internal),
     external: deduplicateStorageItems(storageItems.external)
   };
   
   // Log para debug
-  console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`); 
+  console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`);
   console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
 

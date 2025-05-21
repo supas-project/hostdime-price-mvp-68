@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createDiskUniqueKey, deduplicateStorageItems } from "@/utils/html/price-calculator";
+import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface StorageListProps {
   storageItems: ComponentOption[];
@@ -14,7 +14,8 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // CORREÇÃO: Sempre deduplica itens antes de qualquer processamento
+  // CORREÇÃO: Sempre deduplica itens mesmo quando já enviados como "uniqueItems"
+  // Isso garante consistência mesmo se o chamador esquecer de deduplicar
   const uniqueItems = deduplicateStorageItems(storageItems);
   console.log(`[StorageList] Itens originais: ${storageItems.length}, itens únicos: ${uniqueItems.length}`);
   

@@ -87,20 +87,23 @@ export function deduplicateStorageItems(items: ComponentOption[]): ComponentOpti
     return [];
   }
   
-  // Inicializa um mapa vazio para armazenar itens únicos
+  // CORREÇÃO: Usar um mapa para agrupar por nome normalizado
   const uniqueMap: { [key: string]: ComponentOption } = {};
   
   // Para cada item, gera uma chave única e armazena no mapa
   validItems.forEach(item => {
-    // Cria uma chave única baseada no tipo e capacidade
-    const key = createDiskUniqueKey(item);
+    // CORREÇÃO: Usar estratégias múltiplas para gerar chaves únicas
+    const keys = generatePossibleKeys(item);
     
-    // Se a chave for válida, armazena o item mais recente com esta chave
-    if (key) {
+    // Usar a primeira chave válida que encontrarmos
+    if (keys.length > 0) {
+      const key = keys[0];
       uniqueMap[key] = item;
       console.log(`[Dedupe] Item com chave ${key} adicionado/atualizado: ${item.id}`);
     } else {
-      console.warn(`[Dedupe] Não foi possível gerar chave para: ${item.id || 'desconhecido'}`);
+      // Último recurso: usar o ID como chave
+      uniqueMap[item.id] = item;
+      console.warn(`[Dedupe] Usando ID como chave de fallback: ${item.id}`);
     }
   });
   
@@ -111,43 +114,85 @@ export function deduplicateStorageItems(items: ComponentOption[]): ComponentOpti
   return uniqueItems;
 }
 
-// Função melhorada para criar uma chave única para um disco com base em tipo e capacidade
-export function createDiskUniqueKey(item: ComponentOption): string {
-  if (!item) return '';
+// CORREÇÃO: Função expandida para gerar múltiplas possíveis chaves para um item de armazenamento
+function generatePossibleKeys(item: ComponentOption): string[] {
+  if (!item) return [];
   
-  // Extrai tipo e capacidade do ID do disco interno
+  const keys: string[] = [];
+  
+  // 1. Tenta extrair do ID para discos internos
   if (item.id && item.id.startsWith('internal-disk-')) {
     const parts = item.id.replace('internal-disk-', '').split('-');
     if (parts.length >= 2) {
-      const key = `${parts[0]}-${parts[1]}`;
-      console.log(`[Key Gen] Chave gerada para disco interno: ${key}`);
-      return key;
+      keys.push(`internal-${parts[0]}-${parts[1]}`);
     }
   }
   
-  // Extrai tipo e capacidade do ID do storage externo
+  // 2. Tenta extrair do ID para storage externo
   if (item.id && item.id.startsWith('external-storage-')) {
     const parts = item.id.replace('external-storage-', '').split('-');
     if (parts.length >= 2) {
-      const key = `external-${parts[0]}-${parts[1]}`;
-      console.log(`[Key Gen] Chave gerada para storage externo: ${key}`);
-      return key;
+      keys.push(`external-${parts[0]}-${parts[1]}`);
     }
   }
   
-  // Tenta extrair do nome como fallback
+  // 3. Tenta extrair do nome e tipo - Método mais consistente para SSD 5000GB
   if (item.name) {
-    const nameParts = item.name.split(' ');
-    if (nameParts.length >= 2) {
-      const type = nameParts[0].toLowerCase();
-      const capacity = nameParts[1].toLowerCase();
-      const key = `${type}-${capacity}`;
-      console.log(`[Key Gen] Chave gerada a partir do nome: ${key}`);
-      return key;
+    const nameNormalized = item.name.toLowerCase().trim();
+    const subtype = item.subtype?.toLowerCase() || '';
+    
+    // Encontra números seguidos de GB ou TB
+    const capacityMatches = nameNormalized.match(/(\d+)\s*(gb|tb)/i);
+    if (capacityMatches) {
+      const capacity = capacityMatches[1];
+      const unit = capacityMatches[2]?.toUpperCase() || '';
+      
+      // Primeira chave: tipo + capacidade
+      if (subtype && capacity) {
+        keys.push(`${subtype}-${capacity}${unit}`);
+      }
+      
+      // Segunda chave: nome em camelCase
+      const typeMatch = nameNormalized.match(/^(ssd|hdd|nvme)/i);
+      if (typeMatch) {
+        const type = typeMatch[1].toLowerCase();
+        keys.push(`${type}-${capacity}${unit}`);
+      }
     }
   }
   
-  // Se não conseguiu extrair informações suficientes, usa o ID como chave final
-  console.log(`[Key Gen] Usando ID como chave: ${item.id || 'indefinido'}`);
-  return item.id || '';
+  // 4. Tenta extrair de specs
+  if (item.specs && item.specs.length > 0) {
+    // Procura por capacidade nas specs
+    const capacitySpec = item.specs.find(spec => spec.toLowerCase().includes('capacidade:'));
+    const typeSpec = item.specs.find(spec => spec.toLowerCase().includes('tipo:'));
+    
+    if (capacitySpec && typeSpec) {
+      const capacity = capacitySpec.split(':')[1]?.trim().replace(/\s+/g, '');
+      const type = typeSpec.split(':')[1]?.trim().toLowerCase();
+      
+      if (capacity && type) {
+        keys.push(`${type}-${capacity}`);
+      }
+    }
+  }
+  
+  // 5. Constrói uma chave a partir do nome normalizado - chave mais genérica
+  if (item.name) {
+    const normalized = item.name
+      .toLowerCase()
+      .replace(/\s+/g, '-') // Substitui espaços por hífens
+      .replace(/[^a-z0-9\-]/g, ''); // Remove caracteres não alfanuméricos
+    
+    keys.push(normalized);
+  }
+  
+  // Garante que não temos chaves vazias
+  return keys.filter(key => key && key.length > 0);
+}
+
+// Função de compatibilidade mantida para código existente
+export function createDiskUniqueKey(item: ComponentOption): string {
+  const keys = generatePossibleKeys(item);
+  return keys.length > 0 ? keys[0] : (item.id || '');
 }

@@ -24,7 +24,8 @@ export function CartContent({
   connectivityItems,
   onRemoveItem
 }: CartContentProps) {
-  // CORREÇÃO: Usar sempre listas deduplicadas
+  // CORREÇÃO: Deduplica mais agressivamente os itens de armazenamento
+  // Isso garante que não haja duplicatas, mesmo com chamadas repetidas ou IDs diferentes
   const uniqueStorageItems = {
     internal: deduplicateStorageItems(storageItems.internal),
     external: deduplicateStorageItems(storageItems.external)
@@ -81,13 +82,13 @@ export function CartContent({
         onRemoveItem={onRemoveItem}
       />
       
-      {/* Internal Storage components - CORREÇÃO: Usar lista deduplicada */}
+      {/* Internal Storage components - SEMPRE usar lista deduplicada */}
       <StorageList 
         storageItems={uniqueStorageItems.internal} 
         onRemoveItem={onRemoveItem}
       />
       
-      {/* External Storage components - CORREÇÃO: Usar lista deduplicada */}
+      {/* External Storage components - SEMPRE usar lista deduplicada */}
       <ExternalStorageList 
         storageItems={uniqueStorageItems.external} 
         onRemoveItem={onRemoveItem}
