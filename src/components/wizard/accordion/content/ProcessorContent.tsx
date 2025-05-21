@@ -23,23 +23,23 @@ export function ProcessorContent({
     options,
     isLoading,
     error,
-    refetch
+    refreshOptions
   } = useComponentOptions('cpu');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
 
   // Listen for price data changes
   useEffect(() => {
-    // Add listener for price data changes to trigger a refetch
+    // Add listener for price data changes to trigger a refresh
     PriceService.addDataChangeListener(() => {
-      console.log("[ProcessorContent] Price data changed, refetching processor options");
-      refetch();
+      console.log("[ProcessorContent] Price data changed, refreshing processor options");
+      refreshOptions();
     });
 
     // Cleanup listener on unmount
     return () => {
       PriceService.removeDataChangeListener();
     };
-  }, [refetch]);
+  }, [refreshOptions]);
 
   // Sync selectedOption with local state
   useEffect(() => {

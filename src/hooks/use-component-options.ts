@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
@@ -78,9 +79,10 @@ export function useComponentOptions(componentType: string) {
               isHardware: false,
               specs: item.specs || [],
               metadata: {
-                location: item.metadata?.location || '',
                 features: item.metadata?.features || [],
-                badge: item.metadata?.badge || ''
+                // Usar operador de acesso seguro para propriedades que podem não existir
+                ...(item.metadata?.location ? { location: item.metadata.location } : {}),
+                ...(item.metadata?.badge ? { badge: item.metadata.badge } : {})
               }
             }));
           } else {

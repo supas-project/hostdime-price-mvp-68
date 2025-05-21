@@ -120,14 +120,20 @@ export async function updateMemoryPriceItems(components: ComponentOption[]): Pro
     
     // Converter componentes para itens de preço
     for (const component of components) {
-      const priceItem = componentToPriceItem(component);
+      const priceItem = {
+        id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        specs: component.specs || []
+      };
       
       // Verificar se o item já existe
       const existingItem = memoryCategory.items.find(item => item.id === priceItem.id);
       
       if (existingItem) {
         // Atualizar item existente
-        await PriceService.updateItem("memory", priceItem);
+        await PriceService.updateItem("memory", priceItem.id, priceItem);
         console.log(`[MemoryConverter] Item atualizado: ${priceItem.name}`);
       } else {
         // Adicionar novo item
