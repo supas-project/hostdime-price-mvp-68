@@ -23,12 +23,8 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
     const { [categoryId]: removed, ...updatedData } = allData;
     console.log(`[PriceService] Category ${categoryId} removed, saving updated data`);
     
-    // Save the updated data
-    const saveResult = await saveData(updatedData);
-    if (!saveResult) {
-      console.error(`[PriceService] Failed to save data after deleting category ${categoryId}`);
-      return false;
-    }
+    // Save the updated data and store the result
+    await saveData(updatedData);
     
     // Notify listeners of the change
     console.log(`[PriceService] Notifying listeners about category ${categoryId} deletion`);
