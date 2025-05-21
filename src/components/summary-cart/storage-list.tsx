@@ -22,7 +22,6 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
   
   filteredDisks.forEach(disk => {
     // Criar uma chave única baseada no tipo e capacidade do disco (sem quantidade no ID)
-    // Ex: "ssd-1tb" para todos os SSDs de 1TB independente da quantidade
     const baseKey = disk.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2').toLowerCase();
     
     if (!groupedDisks[baseKey]) {
@@ -45,7 +44,9 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
       
       // Atualizar o nome para refletir a quantidade total
       if (existingQuantity + newQuantity > 1) {
-        existingDisk.name = `${existingQuantity + newQuantity}x ${disk.subtype?.toUpperCase()} ${disk.name.split(' ').pop()}`;
+        // Garantir que o nome só tenha um prefixo de quantidade
+        const nameWithoutQuantity = disk.name.replace(/^\d+x\s+/, '');
+        existingDisk.name = `${existingQuantity + newQuantity}x ${nameWithoutQuantity}`;
       }
     }
   });
@@ -87,13 +88,21 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
             // Obter o preço unitário do metadado, ou usar o preço total como padrão
             const unitPrice = disk.metadata?.unitPrice || (quantity > 0 ? disk.price / quantity : disk.price);
             
+            // Remover qualquer prefixo de quantidade existente para evitar duplicação
+            let displayName = disk.name.replace(/^\d+x\s+/, '');
+            
+            // Adicionar o prefixo de quantidade apenas se for maior que 1
+            if (quantity > 1) {
+              displayName = `${quantity}x ${displayName}`;
+            }
+            
             return (
               <div 
                 key={disk.id} 
                 className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
               >
                 <p className="text-sm">
-                  {quantity > 1 ? `${quantity}x ${disk.subtype?.toUpperCase()} ${disk.name.split(' ').pop()}` : disk.name}
+                  {displayName}
                 </p>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">{formatCurrency(unitPrice * quantity)}</p>
