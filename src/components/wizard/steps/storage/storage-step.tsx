@@ -26,7 +26,8 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
         subtype: "Disco Interno",
         name: `${disk.type.toUpperCase()} ${capacity}`,
         description: `Disco interno ${disk.type.toUpperCase()} ${capacity} (removido)`,
-        price: 0 // Preço zero para remoção
+        price: 0, // Preço zero para remoção
+        isHardware: true // Marca como hardware consistente com adições
       };
       onSelectStorageItem(removalOption, 'internal');
       toast.success(`Disco ${disk.type.toUpperCase()} ${capacity} removido`);

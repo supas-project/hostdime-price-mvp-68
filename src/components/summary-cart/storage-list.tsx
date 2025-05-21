@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createDiskUniqueKey, deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface StorageListProps {
   storageItems: ComponentOption[];
@@ -13,41 +14,8 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Filtra itens válidos e elimina duplicações por tipo+capacidade
-  const uniqueItems = storageItems
-    .filter(disk => disk && disk.price > 0)
-    .reduce((acc: ComponentOption[], disk) => {
-      // Extrair tipo e capacidade
-      let diskType = '';
-      let capacity = '';
-      
-      if (disk.id.includes('internal-disk-')) {
-        const parts = disk.id.replace('internal-disk-', '').split('-');
-        diskType = parts[0];
-        capacity = parts[1];
-      } else {
-        const nameParts = disk.name.split(' ');
-        if (nameParts.length >= 2) {
-          diskType = nameParts[0].toLowerCase();
-          capacity = nameParts[1];
-        }
-      }
-      
-      // Verificar se já existe um disco com mesmo tipo e capacidade
-      const existingIndex = acc.findIndex(item => {
-        if (item.id.includes('internal-disk-')) {
-          const existing = item.id.replace('internal-disk-', '').split('-');
-          return existing[0] === diskType && existing[1] === capacity;
-        }
-        return false;
-      });
-      
-      if (existingIndex === -1) {
-        acc.push(disk);
-      }
-      
-      return acc;
-    }, []);
+  // Deduplica itens usando a função centralizada
+  const uniqueItems = deduplicateStorageItems(storageItems);
   
   // Agrupar discos por tipo e capacidade para exibição
   const groupedStorage = uniqueItems.reduce((groups, disk) => {

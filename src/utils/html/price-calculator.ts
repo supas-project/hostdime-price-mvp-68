@@ -29,7 +29,8 @@ export function calculateQuoteTotal(
   });
 
   // Adicionar armazenamento externo
-  storageItems.external.forEach(disk => {
+  const uniqueExternalStorage = deduplicateStorageItems(storageItems.external);
+  uniqueExternalStorage.forEach(disk => {
     if (disk && disk.price) {
       total += disk.price;
     }
@@ -58,36 +59,58 @@ export function calculateQuoteTotal(
 }
 
 // Função melhorada para deduplicar itens de armazenamento baseado em tipo e capacidade
-function deduplicateStorageItems(items: ComponentOption[]): ComponentOption[] {
+export function deduplicateStorageItems(items: ComponentOption[]): ComponentOption[] {
+  if (!items || !Array.isArray(items)) {
+    return [];
+  }
+  
   // Inicializa um mapa vazio para armazenar itens únicos
   const uniqueMap: { [key: string]: ComponentOption } = {};
   
   // Usa apenas os discos com preço maior que zero
   items.filter(item => item && item.price > 0).forEach(item => {
-    // Extrai tipo e capacidade para criar uma chave única
-    let diskType = '';
-    let capacity = '';
+    // Cria uma chave única baseada no tipo e capacidade
+    const key = createDiskUniqueKey(item);
     
-    if (item.id.includes('internal-disk-')) {
-      // Extrair do ID interno-disk-tipo-capacidade
-      const parts = item.id.replace('internal-disk-', '').split('-');
-      diskType = parts[0];
-      capacity = parts[1];
-    } else if (item.name) {
-      // Tentar extrair do nome (fallback)
-      const nameParts = item.name.split(' ');
-      if (nameParts.length >= 2) {
-        diskType = nameParts[0].toLowerCase();
-        capacity = nameParts[1];
-      }
+    // Se a chave for válida, armazena o item mais recente com esta chave
+    if (key) {
+      uniqueMap[key] = item;
     }
-    
-    // Se não conseguimos extrair informações suficientes, use o ID como fallback final
-    const key = diskType && capacity ? `${diskType}-${capacity}` : item.id;
-    
-    // Manter apenas a versão mais recente do mesmo tipo de disco
-    uniqueMap[key] = item;
   });
   
   return Object.values(uniqueMap);
+}
+
+// Função auxiliar para criar uma chave única para um disco com base em tipo e capacidade
+export function createDiskUniqueKey(item: ComponentOption): string {
+  if (!item) return '';
+  
+  // Extrai tipo e capacidade do ID do disco interno
+  if (item.id && item.id.startsWith('internal-disk-')) {
+    const parts = item.id.replace('internal-disk-', '').split('-');
+    if (parts.length >= 2) {
+      return `${parts[0]}-${parts[1]}`;
+    }
+  }
+  
+  // Extrai tipo e capacidade do ID do storage externo
+  if (item.id && item.id.startsWith('external-storage-')) {
+    const parts = item.id.replace('external-storage-', '').split('-');
+    if (parts.length >= 2) {
+      return `external-${parts[0]}-${parts[1]}`;
+    }
+  }
+  
+  // Tenta extrair do nome como fallback
+  if (item.name) {
+    const nameParts = item.name.split(' ');
+    if (nameParts.length >= 2) {
+      const type = nameParts[0].toLowerCase();
+      const capacity = nameParts[1].toLowerCase();
+      return `${type}-${capacity}`;
+    }
+  }
+  
+  // Se não conseguiu extrair informações suficientes, usa o ID como chave final
+  return item.id || '';
 }
