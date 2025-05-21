@@ -28,7 +28,7 @@ export function useStorageComponents() {
           const existingDiskIndex = prev.internal.findIndex(disk => disk.id === option.id);
           
           if (existingDiskIndex >= 0) {
-            // Se o disco já existe, substituir com o novo (atualizado)
+            // Se o disco já existe, atualizamos (substituímos) com o novo
             updatedItems.internal = [
               ...prev.internal.slice(0, existingDiskIndex),
               option,

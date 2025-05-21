@@ -37,28 +37,34 @@ export function SummaryCart({
     }
   );
   
-  // Criar mapas para garantir que não há duplicatas de discos
-  const uniqueInternalDisks = new Map<string, ComponentOption>();
-  const uniqueExternalStorage = new Map<string, ComponentOption>();
+  // Processar discos internos - criar um mapa para garantir exclusividade por ID
+  const internalDisksMap = new Map<string, ComponentOption>();
   
-  // Adicionar discos únicos ao mapa
   storageItems.internal.forEach(disk => {
     if (disk && disk.price > 0) {
-      uniqueInternalDisks.set(disk.id, disk);
+      // Se o disco já existir no mapa, apenas ignoramos para evitar duplicatas
+      if (!internalDisksMap.has(disk.id)) {
+        internalDisksMap.set(disk.id, disk);
+      }
     }
   });
   
+  // Processar storage externo - mesmo tratamento para evitar duplicatas
+  const externalStorageMap = new Map<string, ComponentOption>();
+  
   storageItems.external.forEach(storage => {
     if (storage && storage.price > 0) {
-      uniqueExternalStorage.set(storage.id, storage);
+      if (!externalStorageMap.has(storage.id)) {
+        externalStorageMap.set(storage.id, storage);
+      }
     }
   });
   
   // Calcular preços com base nos mapas únicos
-  const internalStoragePrice = Array.from(uniqueInternalDisks.values())
+  const internalStoragePrice = Array.from(internalDisksMap.values())
     .reduce((sum, disk) => sum + disk.price, 0);
   
-  const externalStoragePrice = Array.from(uniqueExternalStorage.values())
+  const externalStoragePrice = Array.from(externalStorageMap.values())
     .reduce((sum, storage) => sum + storage.price, 0);
   
   // Calcular preço dos componentes padrão
@@ -81,8 +87,8 @@ export function SummaryCart({
   // Verifica se há qualquer componente ou item selecionado
   const hasItems = Boolean(
     Object.keys(selectedComponents).length || 
-    uniqueInternalDisks.size || 
-    uniqueExternalStorage.size ||
+    internalDisksMap.size || 
+    externalStorageMap.size ||
     Object.keys(connectivityItems).length
   );
   
@@ -116,8 +122,8 @@ export function SummaryCart({
       <CartContent 
         selectedComponents={selectedComponents}
         storageItems={{
-          internal: Array.from(uniqueInternalDisks.values()),
-          external: Array.from(uniqueExternalStorage.values())
+          internal: Array.from(internalDisksMap.values()),
+          external: Array.from(externalStorageMap.values())
         }}
         connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}
