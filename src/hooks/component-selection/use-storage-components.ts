@@ -16,45 +16,48 @@ export function useStorageComponents() {
     }
 
     setStorageItems(prev => {
-      let updatedStorageItems;
+      // Clone do estado atual para evitar mutações diretas
+      const updatedItems = { ...prev };
       
       if (storageType === 'internal') {
         // Se o preço for 0, significa que estamos removendo o disco
         if (option.price === 0) {
-          updatedStorageItems = {
-            ...prev,
-            internal: prev.internal.filter(disk => disk.id !== option.id)
-          };
+          updatedItems.internal = prev.internal.filter(disk => disk.id !== option.id);
         } else {
           // Verificar se já existe um disco com o mesmo ID
           const existingDiskIndex = prev.internal.findIndex(disk => disk.id === option.id);
           
           if (existingDiskIndex >= 0) {
-            // Atualizar o disco existente em vez de adicionar um novo
-            const updatedItems = [...prev.internal];
-            updatedItems[existingDiskIndex] = option;
-            
-            updatedStorageItems = {
-              ...prev,
-              internal: updatedItems
-            };
+            // Substituir o disco existente em vez de adicionar um novo
+            const newInternalArray = [...prev.internal];
+            newInternalArray[existingDiskIndex] = option;
+            updatedItems.internal = newInternalArray;
           } else {
-            // Adicionar novo disco
-            updatedStorageItems = {
-              ...prev,
-              internal: [...prev.internal, option]
-            };
+            // Adicionar novo disco apenas se não existir
+            updatedItems.internal = [...prev.internal, option];
           }
         }
       } else {
-        // Para storage externo, mantemos apenas um item
-        updatedStorageItems = {
-          ...prev,
-          external: option.price === 0 ? [] : [option]
-        };
+        // Para storage externo, substituímos o item existente se houver um
+        if (option.price === 0) {
+          updatedItems.external = [];
+        } else {
+          // Verificar se já temos um storage externo com o mesmo ID
+          const existingIndex = prev.external.findIndex(storage => storage.id === option.id);
+          
+          if (existingIndex >= 0) {
+            // Substituir o storage existente
+            const newExternalArray = [...prev.external];
+            newExternalArray[existingIndex] = option;
+            updatedItems.external = newExternalArray;
+          } else {
+            // Limpar storage anterior e adicionar o novo
+            updatedItems.external = [option];
+          }
+        }
       }
-
-      return updatedStorageItems;
+      
+      return updatedItems;
     });
   };
 

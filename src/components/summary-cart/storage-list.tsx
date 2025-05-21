@@ -13,11 +13,16 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
+  // Filter out any invalid or zero-priced items
+  const validStorageItems = storageItems.filter(disk => disk && disk.price > 0);
+  
   // Remove duplicates based on ID to ensure no repeats in the storage list
-  const uniqueStorageItems = [...new Map(storageItems
-    .filter(disk => disk && disk.price > 0)
-    .map(item => [item.id, item])
-  ).values()];
+  const uniqueIds = new Set();
+  const uniqueStorageItems = validStorageItems.filter(item => {
+    if (uniqueIds.has(item.id)) return false;
+    uniqueIds.add(item.id);
+    return true;
+  });
   
   // Agrupar discos internos por tipo para melhor organização
   const groupedStorage = uniqueStorageItems.reduce((groups, disk) => {

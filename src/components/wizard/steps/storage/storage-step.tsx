@@ -20,7 +20,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
-      subtype: "Disco Interno",
+      subtype: disk.type,
       name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
       price: disk.price * quantity,
