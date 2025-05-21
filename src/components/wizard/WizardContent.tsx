@@ -1,4 +1,3 @@
-
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -13,7 +12,10 @@ import { cn } from "@/lib/utils";
 import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
+import { 
+  initializeServerCategories, 
+  cleanupDuplicateCategories 
+} from "@/services/component-sync-service";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -30,15 +32,21 @@ export function WizardContent() {
     categoriesLoaded
   } = useWizard();
 
-  // Adicionar sincronização com a tabela de preços
+  // Adicionar sincronização melhorada
   const refreshData = async () => {
     try {
       setIsLoadingData(true);
+      toast.info("Sincronizando dados...", {
+        description: "Atualizando categorias do sistema"
+      });
+      
       // First clean up duplicates
       await cleanupDuplicateCategories();
+      
       // Then refresh data
       await PriceService.forceRefreshFromLatestSource();
-      // Initialize server categories including connectivity ones
+      
+      // Initialize server categories including connectivity ones and processors
       await initializeServerCategories();
       
       toast.success("Dados sincronizados com sucesso!", {
@@ -67,6 +75,17 @@ export function WizardContent() {
     };
     
     initializeData();
+    
+    // Adicionar listener para atualizações de dados
+    PriceService.addDataChangeListener(() => {
+      // Atualizar automaticamente quando houver mudanças nos dados
+      initializeServerCategories();
+    });
+    
+    return () => {
+      // Remover listener quando o componente for desmontado
+      PriceService.removeDataChangeListener();
+    };
   }, []);
 
   const getSelectedOption = (component: ServerComponent): ComponentOption | null => {

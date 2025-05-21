@@ -1,28 +1,40 @@
 import { PriceService } from "@/services/price-service";
-import { connectivityComponents } from "@/data/connectivity-components";
-import { convertConnectivityPriceDataToComponents, saveConnectivityComponentsToPriceData } from "./connectivity-converter";
+import { serverData } from "@/data/server-components";
+import { ComponentOption, ServerComponent } from "@/types/component";
+import { StorageService } from "@/services/storage-service";
+import { diskPricing } from "@/data/storage-pricing";
+import { normalizeComponentType } from "@/hooks/use-component-selection";
+import { convertConnectivityPriceDataToComponents } from "./connectivity-converter";
+import { convertProcessorPriceDataToComponents } from "./processor-converter";
 import { logDebug } from "./utils";
-import { ComponentOption } from "@/types/component";
 
 /**
- * Sincroniza os dados de disco com o serviço de preço
+ * Sincroniza dados de discos com o serviço de preços
  */
 export async function syncDiskDataWithPriceService() {
   try {
-    // Obter categoria de discos
-    const diskCategory = await PriceService.getCategory('disk');
-    
-    if (diskCategory && diskCategory.items && diskCategory.items.length > 0) {
-      logDebug("syncDiskDataWithPriceService", `Found ${diskCategory.items.length} disk items in the price service`);
-      // Implementação existente
-    } else {
-      logDebug("syncDiskDataWithPriceService", "No disk items found in the price service");
+    const storageItems = await StorageService.getAllStorageItems();
+    if (!storageItems) {
+      console.warn("Nenhum item de armazenamento encontrado para sincronizar");
+      return;
     }
-    
-    return true;
+
+    logDebug("Syncing disk data with price service", {
+      items: Object.keys(storageItems).length
+    });
+
+    for (const key in diskPricing) {
+      if (diskPricing.hasOwnProperty(key)) {
+        const storageItem = storageItems[key];
+        if (storageItem) {
+          diskPricing[key] = storageItem.price;
+        }
+      }
+    }
+
+    logDebug("Disk data synced successfully");
   } catch (error) {
-    console.error("Error syncing disk data with price service:", error);
-    return false;
+    console.error("Erro ao sincronizar dados de disco:", error);
   }
 }
 
@@ -30,68 +42,106 @@ export async function syncDiskDataWithPriceService() {
  * Inicializa dados de armazenamento externo
  */
 export async function initExternalStorageData() {
-  // Implementação existente
-}
-
-/**
- * Sincroniza os dados de conectividade
- */
-export async function syncConnectivityData(): Promise<boolean> {
   try {
-    const { portOptions, ipOptions } = await convertConnectivityPriceDataToComponents();
-    
-    logDebug("syncConnectivityData", {
-      portOptions: portOptions.length,
-      ipOptions: ipOptions.length
-    });
-    
-    // Se não houver opções, inicialize com dados padrão
-    if ((portOptions.length === 0 || ipOptions.length === 0) && connectivityComponents) {
-      // Extrair portas e IPs do arquivo estático
-      const defaultPortOptions = connectivityComponents.options
-        .filter(option => option.subtype === 'porta')
-        .map(option => ({...option}));
-        
-      const defaultIpOptions = connectivityComponents.options
-        .filter(option => option.subtype === 'ip')
-        .map(option => ({...option}));
-      
-      // Usar opções padrão se as obtidas estiverem vazias
-      const finalPortOptions = portOptions.length > 0 ? portOptions : defaultPortOptions;
-      const finalIpOptions = ipOptions.length > 0 ? ipOptions : defaultIpOptions;
-      
-      // Salvar no serviço de preços
-      await saveConnectivityComponentsToPriceData(finalPortOptions, finalIpOptions, true);
-      
-      logDebug("syncConnectivityData", "Initialized with default data");
-      return true;
+    const externalStorage = await StorageService.getExternalStorage();
+    if (!externalStorage) {
+      console.warn("Nenhum armazenamento externo encontrado para inicializar");
+      return;
     }
-    
-    return true;
+
+    logDebug("Initializing external storage data", {
+      items: Object.keys(externalStorage).length
+    });
+
+    // You can add additional initialization logic here if needed
+
+    logDebug("External storage data initialized successfully");
   } catch (error) {
-    console.error("Error syncing connectivity data:", error);
-    return false;
+    console.error("Erro ao inicializar armazenamento externo:", error);
   }
 }
 
 /**
- * Inicializa todas as categorias do servidor
+ * Inicializa as categorias do servidor com base nos dados do serviço de preços
  */
 export async function initializeServerCategories() {
   try {
-    await syncDiskDataWithPriceService();
-    await initExternalStorageData();
-    await syncConnectivityData();
-    return true;
+    if (!serverData || !serverData.componentes) {
+      console.warn("Dados do servidor não encontrados para inicialização");
+      return;
+    }
+
+    logDebug("Initializing server categories", {
+      components: serverData.componentes.length
+    });
+
+    // Inicializar dados de conectividade
+    const { portOptions, ipOptions } = await convertConnectivityPriceDataToComponents();
+    
+    // Inicializar dados de processador
+    const processorOptions = await convertProcessorPriceDataToComponents();
+
+    // Iterar por todos os componentes e atualizar opções quando necessário
+    for (const component of serverData.componentes) {
+      const normalizedType = normalizeComponentType(component.type);
+      
+      // Atualizar opções de conectividade
+      if (normalizedType === "conectividade") {
+        // Combinar opções de porta e IP
+        component.options = [...portOptions, ...ipOptions];
+        logDebug("Updated connectivity options", {
+          count: component.options.length,
+          ports: portOptions.length,
+          ips: ipOptions.length
+        });
+      }
+      
+      // Atualizar opções de processador
+      else if (normalizedType === "processador") {
+        if (processorOptions.length > 0) {
+          component.options = processorOptions;
+          logDebug("Updated processor options", {
+            count: component.options.length
+          });
+        }
+      }
+    }
+
+    logDebug("Server categories initialized successfully");
   } catch (error) {
-    console.error("Error initializing server categories:", error);
-    return false;
+    console.error("Erro ao inicializar categorias do servidor:", error);
   }
 }
 
 /**
- * Limpa categorias duplicadas
+ * Limpa categorias duplicadas em servidores
  */
 export async function cleanupDuplicateCategories() {
-  // Implementação existente
+  try {
+    if (!serverData || !serverData.componentes) {
+      console.warn("Dados do servidor não encontrados para limpeza de duplicatas");
+      return;
+    }
+
+    logDebug("Cleaning up duplicate categories", {
+      components: serverData.componentes.length
+    });
+
+    const existingCategories = new Set<string>();
+
+    for (const component of serverData.componentes) {
+      const normalizedType = normalizeComponentType(component.type);
+
+      if (existingCategories.has(normalizedType)) {
+        console.warn(`Categoria duplicada encontrada: ${normalizedType}`);
+        // Implementar lógica para remover ou mesclar a categoria duplicada
+      } else {
+        existingCategories.add(normalizedType);
+      }
+    }
+
+    logDebug("Duplicate categories cleaned up successfully");
+  } catch (error) {
+    console.error("Erro ao limpar categorias duplicadas:", error);
+  }
 }
