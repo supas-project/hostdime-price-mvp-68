@@ -1,3 +1,4 @@
+
 import { PriceService } from "@/services/price-service";
 import { serverData } from "@/data/server-components";
 import { ComponentOption, ServerComponent } from "@/types/component";
@@ -58,6 +59,41 @@ export async function initExternalStorageData() {
     logDebug("External storage data initialized successfully");
   } catch (error) {
     console.error("Erro ao inicializar armazenamento externo:", error);
+  }
+}
+
+/**
+ * Sincroniza dados de conectividade
+ */
+export async function syncConnectivityData(): Promise<boolean> {
+  try {
+    logDebug("Syncing connectivity data", {});
+    
+    // Obter dados de conectividade
+    const { portOptions, ipOptions } = await convertConnectivityPriceDataToComponents();
+    
+    // Atualizar componente de conectividade no servidor se existir
+    if (serverData && serverData.componentes) {
+      const connectivityComponent = serverData.componentes.find(
+        c => normalizeComponentType(c.type) === "conectividade"
+      );
+      
+      if (connectivityComponent) {
+        // Combinar opções de porta e IP
+        connectivityComponent.options = [...portOptions, ...ipOptions];
+        logDebug("Updated connectivity options", {
+          count: connectivityComponent.options.length,
+          ports: portOptions.length,
+          ips: ipOptions.length
+        });
+      }
+    }
+    
+    logDebug("Connectivity data synced successfully");
+    return true;
+  } catch (error) {
+    console.error("Erro ao sincronizar dados de conectividade:", error);
+    return false;
   }
 }
 

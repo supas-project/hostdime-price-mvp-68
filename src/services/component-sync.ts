@@ -13,5 +13,6 @@ export {
   syncDiskDataWithPriceService, 
   initExternalStorageData,
   initializeServerCategories,
-  cleanupDuplicateCategories
+  cleanupDuplicateCategories,
+  syncConnectivityData
 } from './component-sync/initialization';
