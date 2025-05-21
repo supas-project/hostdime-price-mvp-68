@@ -70,21 +70,36 @@ export function useComponentOptions(componentType: string) {
           const datacenterItems = await PriceService.getCategoryItems('datacenter');
           if (datacenterItems && datacenterItems.length > 0) {
             console.log(`[useComponentOptions] DataCenter: Encontrados ${datacenterItems.length} itens na tabela de preços`);
-            fetchedOptions = datacenterItems.map(item => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              price: item.price,
-              type: 'datacenter',
-              isHardware: false,
-              specs: item.specs || [],
-              metadata: {
-                features: item.metadata?.features || [],
-                // Usando spread condicional apenas se as propriedades existirem
-                ...(item.metadata && 'location' in (item.metadata || {}) ? { location: item.metadata.location } : {}),
-                ...(item.metadata && 'badge' in (item.metadata || {}) ? { badge: item.metadata.badge } : {})
+            fetchedOptions = datacenterItems.map(item => {
+              // Criando o objeto base primeiro
+              const option: ComponentOption = {
+                id: item.id,
+                name: item.name,
+                description: item.description || '',
+                price: item.price,
+                type: 'datacenter',
+                isHardware: false,
+                specs: item.specs || []
+              };
+              
+              // Adicionando metadata apenas se existir
+              if (item.metadata) {
+                option.metadata = {
+                  features: item.metadata.features || []
+                };
+                
+                // Adicionar propriedades opcionais somente se existirem
+                if ('location' in item.metadata) {
+                  option.metadata.location = item.metadata.location;
+                }
+                
+                if ('badge' in item.metadata) {
+                  option.metadata.badge = item.metadata.badge;
+                }
               }
-            }));
+              
+              return option;
+            });
           } else {
             console.log('[useComponentOptions] DataCenter: Nenhum item encontrado na tabela de preços');
             fetchedOptions = [];
