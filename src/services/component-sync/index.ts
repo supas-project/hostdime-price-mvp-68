@@ -11,6 +11,6 @@ export {
   syncDiskDataWithPriceService,
   initExternalStorageData,
   cleanupDuplicateCategories,
-  syncConnectivityData, // Nova função para sincronizar dados de conectividade
-  syncProcessorData // Nova função para sincronizar dados de processador
+  syncConnectivityData,
+  syncProcessorData // Agora está exportado corretamente
 } from './initialization';

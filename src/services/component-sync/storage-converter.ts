@@ -4,6 +4,34 @@ import { PriceItem, PriceCategory } from "@/types/pricing";
 import { ComponentOption } from "@/types/component";
 
 /**
+ * Sync external storage data
+ */
+export async function syncExternalStorageData(): Promise<boolean> {
+  try {
+    console.log("Syncing external storage data");
+    // Implementation will be added later
+    return true;
+  } catch (error) {
+    console.error("Error syncing external storage data:", error);
+    return false;
+  }
+}
+
+/**
+ * Sync storage data
+ */
+export async function syncStorageData(): Promise<boolean> {
+  try {
+    console.log("Syncing storage data");
+    // Implementation will be added later
+    return true;
+  } catch (error) {
+    console.error("Error syncing storage data:", error);
+    return false;
+  }
+}
+
+/**
  * Convert storage data item to price item
  */
 export function convertStorageDataItem(item: PricedDiskOption): PriceItem {

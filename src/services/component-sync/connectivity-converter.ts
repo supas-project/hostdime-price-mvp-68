@@ -4,6 +4,20 @@ import { PriceService } from "@/services/price-service";
 import { logDebug } from "./utils";
 
 /**
+ * Sync connectivity items
+ */
+export async function syncConnectivityItems(): Promise<boolean> {
+  try {
+    console.log("Syncing connectivity items");
+    // Implementation will be added later
+    return true;
+  } catch (error) {
+    console.error("Error syncing connectivity items:", error);
+    return false;
+  }
+}
+
+/**
  * Converte dados de conectividade entre as tabelas de preço e os componentes do servidor
  */
 export async function convertConnectivityPriceDataToComponents(): Promise<{

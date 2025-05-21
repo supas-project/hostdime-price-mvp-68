@@ -1,9 +1,22 @@
-
 import { PriceService } from "../price-service";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 import { CATEGORY_MAPPING } from "./utils";
+
+/**
+ * Clean up categories
+ */
+export async function cleanupCategories(): Promise<boolean> {
+  try {
+    console.log("Cleaning up categories");
+    // Implementation will be added later
+    return true;
+  } catch (error) {
+    console.error("Error cleaning up categories:", error);
+    return false;
+  }
+}
 
 /**
  * Initialize required server categories if they don't exist

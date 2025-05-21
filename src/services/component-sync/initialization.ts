@@ -1,9 +1,9 @@
 
+import { notifyListeners } from '@/services/price/listeners';
 import { syncExternalStorageData, syncStorageData } from './storage-converter';
 import { cleanupCategories } from './category-manager';
 import { syncConnectivityItems } from './connectivity-converter';
-import { syncProcessorData } from './processor-converter';
-import { notifyListeners } from '@/services/price/listeners';
+import { syncProcessorData as syncProcessors } from './processor-converter';
 
 /**
  * Syncs disk data with the price service
@@ -53,6 +53,19 @@ export async function syncConnectivityData(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error syncing connectivity data:", error);
+    return false;
+  }
+}
+
+/**
+ * Syncs processor data - exporting the function from processor-converter
+ */
+export async function syncProcessorData(): Promise<boolean> {
+  try {
+    await syncProcessors();
+    return true;
+  } catch (error) {
+    console.error("Error syncing processor data:", error);
     return false;
   }
 }
