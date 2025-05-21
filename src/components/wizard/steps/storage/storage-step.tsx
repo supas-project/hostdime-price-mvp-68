@@ -23,7 +23,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       subtype: disk.type,
       name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      price: disk.price * quantity,
+      price: disk.price,
       metadata: {
         quantity: quantity,
         features: [`Tipo: ${disk.type}`],
@@ -62,6 +62,10 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       name: `Storage ${type} ${formattedCapacity}`,
       description: `Storage externo: ${type} ${formattedCapacity}`,
       price: price,
+      metadata: {
+        quantity: 1,
+        unitPrice: price
+      },
       specs: [
         `Tipo: Storage ${type}`,
         `Capacidade: ${formattedCapacity}`

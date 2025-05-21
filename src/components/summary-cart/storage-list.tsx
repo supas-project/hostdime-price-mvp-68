@@ -60,6 +60,8 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
           {disks.map((disk) => {
             // Obter a quantidade do metadado, ou usar 1 como padrão
             const quantity = disk.metadata?.quantity || 1;
+            // Obter o preço unitário do metadado, ou usar o preço total como padrão
+            const unitPrice = disk.metadata?.unitPrice || disk.price;
             
             return (
               <div 
@@ -70,7 +72,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
                   {quantity > 1 ? `${quantity}x ${disk.name}` : disk.name}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                  <p className="text-sm font-medium">{formatCurrency(unitPrice * quantity)}</p>
                   
                   {onRemoveItem && (
                     <Button

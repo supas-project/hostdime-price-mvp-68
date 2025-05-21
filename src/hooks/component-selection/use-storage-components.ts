@@ -29,11 +29,9 @@ export function useStorageComponents() {
           
           if (existingDiskIndex >= 0) {
             // Se o disco já existe, atualizamos (substituímos) com o novo
-            updatedItems.internal = [
-              ...prev.internal.slice(0, existingDiskIndex),
-              option,
-              ...prev.internal.slice(existingDiskIndex + 1)
-            ];
+            const newInternalArray = [...prev.internal];
+            newInternalArray[existingDiskIndex] = option;
+            updatedItems.internal = newInternalArray;
           } else {
             // Adicionar novo disco apenas se não existir
             updatedItems.internal = [...prev.internal, option];
@@ -49,11 +47,9 @@ export function useStorageComponents() {
           
           if (existingIndex >= 0) {
             // Substituir o storage existente
-            updatedItems.external = [
-              ...prev.external.slice(0, existingIndex),
-              option,
-              ...prev.external.slice(existingIndex + 1)
-            ];
+            const newExternalArray = [...prev.external];
+            newExternalArray[existingIndex] = option;
+            updatedItems.external = newExternalArray;
           } else {
             // Adicionar novo storage
             updatedItems.external = [...prev.external, option];

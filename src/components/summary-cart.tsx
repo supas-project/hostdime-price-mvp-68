@@ -42,10 +42,7 @@ export function SummaryCart({
   
   storageItems.internal.forEach(disk => {
     if (disk && disk.price > 0) {
-      // Se o disco já existir no mapa, apenas ignoramos para evitar duplicatas
-      if (!internalDisksMap.has(disk.id)) {
-        internalDisksMap.set(disk.id, disk);
-      }
+      internalDisksMap.set(disk.id, disk);
     }
   });
   
@@ -54,18 +51,24 @@ export function SummaryCart({
   
   storageItems.external.forEach(storage => {
     if (storage && storage.price > 0) {
-      if (!externalStorageMap.has(storage.id)) {
-        externalStorageMap.set(storage.id, storage);
-      }
+      externalStorageMap.set(storage.id, storage);
     }
   });
   
   // Calcular preços com base nos mapas únicos
   const internalStoragePrice = Array.from(internalDisksMap.values())
-    .reduce((sum, disk) => sum + disk.price, 0);
+    .reduce((sum, disk) => {
+      const quantity = disk.metadata?.quantity || 1;
+      const unitPrice = disk.metadata?.unitPrice || disk.price;
+      return sum + (unitPrice * quantity);
+    }, 0);
   
   const externalStoragePrice = Array.from(externalStorageMap.values())
-    .reduce((sum, storage) => sum + storage.price, 0);
+    .reduce((sum, storage) => {
+      const quantity = storage.metadata?.quantity || 1;
+      const unitPrice = storage.metadata?.unitPrice || storage.price;
+      return sum + (unitPrice * quantity);
+    }, 0);
   
   // Calcular preço dos componentes padrão
   const standardComponentsPrice = standardComponents.reduce(
