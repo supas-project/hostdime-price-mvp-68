@@ -59,68 +59,33 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     0
   );
   
-  // Agrupar discos internos por tipo e capacidade antes de calcular preços
-  const groupedInternalDisks: Record<string, ComponentOption> = {};
-  
-  storageItems.internal
+  // Apply PayBack to internal storage
+  const internalStoragePrice = storageItems.internal
     .filter(disk => disk && disk.price > 0)
-    .forEach(disk => {
-      // Criar uma chave única baseada no tipo e capacidade (sem a quantidade)
-      const baseKey = disk.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2').toLowerCase();
-      
-      if (!groupedInternalDisks[baseKey]) {
-        // Se não existe, adicionar o primeiro disco deste tipo
-        groupedInternalDisks[baseKey] = { ...disk };
-      } else {
-        // Se já existe, apenas atualizar o preço e quantidade
-        const existingDisk = groupedInternalDisks[baseKey];
-        const existingQuantity = existingDisk.metadata?.quantity || 1;
-        const newQuantity = disk.metadata?.quantity || 1;
-        const unitPrice = disk.metadata?.unitPrice || disk.price;
-        
-        existingDisk.metadata = {
-          ...existingDisk.metadata,
-          quantity: existingQuantity + newQuantity
-        };
-        
-        // Atualizar o preço total baseado na quantidade total e preço unitário
-        existingDisk.price = unitPrice * (existingQuantity + newQuantity);
-        
-        // Atualizar o nome para refletir a quantidade total
-        if (existingQuantity + newQuantity > 1) {
-          existingDisk.name = `${existingQuantity + newQuantity}x ${disk.subtype?.toUpperCase()} ${disk.name.split(' ').pop()}`;
-        }
-      }
-    });
-  
-  // Converter o objeto agrupado de volta para um array para cálculos
-  const uniqueInternalDisks = Object.values(groupedInternalDisks);
-  
-  // Apply PayBack to internal storage usando os discos agrupados
-  const internalStoragePrice = uniqueInternalDisks.reduce(
-    (sum, disk) => {
-      const price = disk.isHardware 
-        ? calculatePriceWithPayBack(disk, contractDuration)
-        : disk.price;
-        
-      return sum + price;
-    },
-    0
-  );
+    .reduce(
+      (sum, disk) => {
+        const price = disk.isHardware 
+          ? calculatePriceWithPayBack(disk, contractDuration)
+          : disk.price;
+          
+        return sum + price;
+      },
+      0
+    );
   
   // Apply PayBack to external storage
   const externalStoragePrice = storageItems.external
     .filter(storage => storage && storage.price > 0)
     .reduce(
-    (sum, storage) => {
-      const price = storage.isHardware 
-        ? calculatePriceWithPayBack(storage, contractDuration)
-        : storage.price;
-        
-      return sum + price;
-    },
-    0
-  );
+      (sum, storage) => {
+        const price = storage.isHardware 
+          ? calculatePriceWithPayBack(storage, contractDuration)
+          : storage.price;
+          
+        return sum + price;
+      },
+      0
+    );
   
   // Calculate other prices normally (non-hardware components)
   const customServicesPrice = Array.isArray(customServices) ?
@@ -286,7 +251,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                 {storageItems.internal.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
-                    {uniqueInternalDisks.map((disk) => (
+                    {storageItems.internal.map((disk) => (
                       <div key={disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>

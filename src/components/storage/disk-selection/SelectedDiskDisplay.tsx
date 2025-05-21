@@ -57,9 +57,6 @@ export function SelectedDiskDisplay({
   
   // Normalizar a capacidade do disco para garantir consistência na exibição
   const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
-  
-  // Calcular o preço total com base na quantidade
-  const totalPrice = disk.price * quantity;
 
   return (
     <div className="space-y-4 animate-fade-in overflow-x-hidden">
@@ -90,7 +87,7 @@ export function SelectedDiskDisplay({
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
-              {formatCurrency(totalPrice)}/mês
+              {formatCurrency(disk.price * quantity)}/mês
             </span>
             <Button
               variant="ghost"

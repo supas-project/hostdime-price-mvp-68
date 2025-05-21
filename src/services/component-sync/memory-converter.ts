@@ -120,7 +120,7 @@ export async function updateMemoryPriceItems(components: ComponentOption[]): Pro
     
     // Converter componentes para itens de preço
     for (const component of components) {
-      const priceItem: PriceItem = {
+      const priceItem = {
         id: component.id,
         name: component.name,
         description: component.description,

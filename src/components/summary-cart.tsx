@@ -37,36 +37,24 @@ export function SummaryCart({
     }
   );
   
-  // Filtrar apenas discos válidos (com preço > 0)
-  const validInternalDisks = storageItems.internal.filter(disk => disk && disk.price > 0);
-  const validExternalStorage = storageItems.external.filter(storage => storage && storage.price > 0);
-  
-  // Calcular preço dos discos internos considerando as quantidades
-  const internalStoragePrice = validInternalDisks.reduce((sum, disk) => {
-    const quantity = disk.metadata?.quantity || 1;
-    const unitPrice = disk.metadata?.unitPrice || disk.price;
-    return sum + (unitPrice * quantity);
-  }, 0);
-  
-  // Calcular preço do storage externo
-  const externalStoragePrice = validExternalStorage.reduce((sum, storage) => {
-    const quantity = storage.metadata?.quantity || 1;
-    const unitPrice = storage.metadata?.unitPrice || storage.price;
-    return sum + (unitPrice * quantity);
-  }, 0);
-  
-  // Calcular preço dos componentes padrão
+  // Calcula preços excluindo DataCenter e Contract
   const standardComponentsPrice = standardComponents.reduce(
     (sum, component) => sum + (component.price || 0),
     0
   );
+  
+  const internalStoragePrice = storageItems.internal
+    .filter(disk => disk && disk.price > 0)
+    .reduce((sum, disk) => sum + disk.price, 0);
+  
+  const externalStoragePrice = storageItems.external
+    .filter(storage => storage && storage.price > 0)
+    .reduce((sum, storage) => sum + storage.price, 0);
 
-  // Calcular preço de conectividade
   const connectivityPrice = Object.values(connectivityItems)
     .filter(item => item && item.option)
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
 
-  // Calcular preço total
   const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice + connectivityPrice;
 
   const isFirstStep = currentStep === 0;
@@ -75,8 +63,8 @@ export function SummaryCart({
   // Verifica se há qualquer componente ou item selecionado
   const hasItems = Boolean(
     Object.keys(selectedComponents).length || 
-    validInternalDisks.length || 
-    validExternalStorage.length ||
+    storageItems.internal.length || 
+    storageItems.external.length ||
     Object.keys(connectivityItems).length
   );
   
@@ -109,10 +97,7 @@ export function SummaryCart({
       
       <CartContent 
         selectedComponents={selectedComponents}
-        storageItems={{
-          internal: validInternalDisks,
-          external: validExternalStorage
-        }}
+        storageItems={storageItems}
         connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}
       />

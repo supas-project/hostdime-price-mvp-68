@@ -32,31 +32,21 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       const category = await PriceService.getCategory(categoryId);
       const categoryName = category?.name || categoryId;
       
-      // Execute the delete operation
-      const success = await PriceService.deleteCategory(categoryId);
-      
-      if (!success) {
-        throw new Error(`Falha ao excluir a categoria "${categoryName}"`);
-      }
-      
-      console.log(`[useCategoryDelete] Categoria ${categoryId} excluída com sucesso`);
+      await PriceService.deleteCategory(categoryId);
       
       // Get updated data after deletion
       const updatedData = await PriceService.getAllData();
-      
-      // Importante: Atualizar o estado com os dados mais recentes
       setPriceData(updatedData);
       
       // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
       toast.success("Categoria excluída", {
-        description: `A categoria "${categoryName}" foi excluída com sucesso.`
+        description: "A categoria foi excluída com sucesso."
       });
       
       return true;
     } catch (error) {
-      console.error("[useCategoryDelete] Erro ao excluir categoria:", error);
       toast.error("Erro ao excluir categoria", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });

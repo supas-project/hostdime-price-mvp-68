@@ -16,118 +16,96 @@ export function useStorageComponents() {
     }
 
     setStorageItems(prev => {
-      // Clone do estado atual para evitar mutações diretas
-      const updatedItems = { ...prev };
+      let updatedStorageItems;
       
       if (storageType === 'internal') {
-        // Se o preço for 0 ou quantidade 0, removemos o disco
-        if (option.price === 0 || (option.metadata?.quantity || 0) <= 0) {
-          // Para remoção, filtramos por ID base (removendo a parte de quantidade)
-          const baseIdToRemove = option.id.replace(/-qty-\d+$/, '');
-          updatedItems.internal = prev.internal.filter(disk => {
-            const diskBaseId = disk.id.replace(/-qty-\d+$/, '');
-            return diskBaseId !== baseIdToRemove;
+        // Se o preço for 0, significa que estamos removendo o disco
+        if (option.price === 0) {
+          updatedStorageItems = {
+            ...prev,
+            internal: prev.internal.filter(disk => disk.id !== option.id)
+          };
+        } else {
+          // Criar uma chave única baseada nas propriedades reais do disco para evitar duplicações
+          const diskType = option.subtype || option.name.split(' ')[0];
+          const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+          const capacity = capacityMatch ? capacityMatch[0] : '';
+          const uniqueKey = `${diskType}-${capacity}`;
+          
+          // Verificar se já existe um disco com essas características
+          const existingIndex = prev.internal.findIndex(disk => {
+            const diskTypeMatch = disk.subtype || disk.name.split(' ')[0];
+            const diskCapacityMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+            const diskCapacity = diskCapacityMatch ? diskCapacityMatch[0] : '';
+            return `${diskTypeMatch}-${diskCapacity}` === uniqueKey && disk.id === option.id;
           });
-          
-          console.log(`Removing disk with base ID ${baseIdToRemove}, new internal disks:`, updatedItems.internal);
-          return updatedItems;
+
+          const updatedItems = [...prev.internal];
+
+          if (existingIndex >= 0) {
+            // Atualizar disco existente
+            updatedItems[existingIndex] = option;
+          } else {
+            // Adicionar novo disco
+            // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
+            const filteredItems = updatedItems.filter(disk => disk.id !== option.id);
+            filteredItems.push(option);
+            
+            updatedStorageItems = {
+              ...prev,
+              internal: filteredItems
+            };
+            
+            return updatedStorageItems;
+          }
+
+          updatedStorageItems = {
+            ...prev,
+            internal: updatedItems
+          };
         }
-        
-        // Extrair a chave base sem a quantidade
-        const baseId = option.id.replace(/-qty-\d+$/, '');
-        
-        // Verificar se já existe um disco com o mesmo ID base (mesmo tipo e capacidade)
-        const existingDiskIndex = prev.internal.findIndex(disk => 
-          disk.id.replace(/-qty-\d+$/, '') === baseId
-        );
-        
-        if (existingDiskIndex >= 0) {
-          // Se o disco já existe, vamos removê-lo e adicionar o novo com a quantidade atualizada
-          const newInternalArray = prev.internal.filter((_, index) => index !== existingDiskIndex);
-          
-          console.log(
-            `Updating disk ${option.id}, quantity: ${option.metadata?.quantity}, ` +
-            `unit price: ${option.metadata?.unitPrice}, total price: ${option.price}`
-          );
-          
-          // Adiciona o novo disco atualizado
-          updatedItems.internal = [...newInternalArray, option];
-        } else {
-          // Adicionar novo disco
-          console.log(
-            `Adding new disk ${option.id}, quantity: ${option.metadata?.quantity}, ` +
-            `unit price: ${option.metadata?.unitPrice}, total price: ${option.price}`
-          );
-          
-          updatedItems.internal = [...prev.internal, option];
-        }
-      } else if (storageType === 'external') {
-        // Para storage externo
-        if (option.price === 0 || (option.metadata?.quantity || 0) <= 0) {
-          updatedItems.external = prev.external.filter(storage => storage.id !== option.id);
-          return updatedItems;
-        }
-        
-        // Verificar se já existe um storage com o mesmo ID
-        const existingIndex = prev.external.findIndex(storage => storage.id === option.id);
-        
-        if (existingIndex >= 0) {
-          // Se já existe, atualiza
-          const newExternalArray = [...prev.external];
-          newExternalArray[existingIndex] = option;
-          updatedItems.external = newExternalArray;
-        } else {
-          // Adiciona novo
-          updatedItems.external = [...prev.external, option];
-        }
+      } else {
+        // Para storage externo, mantemos apenas um item
+        updatedStorageItems = {
+          ...prev,
+          external: option.price === 0 ? [] : [option]
+        };
       }
-      
-      return updatedItems;
+
+      return updatedStorageItems;
     });
   };
 
-  const handleRemoveStorageItem = (itemId: string) => {
+  const handleRemoveStorageItem = (type: string) => {
     // Check for internal disk IDs (they start with "internal-disk-")
-    if (itemId.startsWith("internal-disk-")) {
-      setStorageItems(prev => {
-        // Encontrar todos os discos com o mesmo ID base (sem a parte de quantidade)
-        const baseId = itemId.replace(/-qty-\d+$/, '');
-        const filteredDisks = prev.internal.filter(disk => 
-          !disk.id.replace(/-qty-\d+$/, '').includes(baseId)
-        );
-        
-        return {
-          ...prev,
-          internal: filteredDisks
-        };
-      });
-      toast.success("Disco removido com sucesso");
+    if (type.startsWith("internal-disk-")) {
+      setStorageItems(prev => ({
+        ...prev,
+        internal: prev.internal.filter(disk => disk.id !== type)
+      }));
       return;
     }
     
     // Check for external storage IDs (they start with "external-storage-")
-    if (itemId.startsWith("external-storage-")) {
+    if (type.startsWith("external-storage-")) {
       setStorageItems(prev => ({
         ...prev,
-        external: prev.external.filter(storage => storage.id !== itemId)
+        external: prev.external.filter(storage => storage.id !== type)
       }));
-      toast.success("Storage externo removido com sucesso");
       return;
     }
     
     // Handle the original storage removal cases
-    if (itemId === "storage_internal") {
+    if (type === "storage_internal") {
       setStorageItems(prev => ({
         ...prev,
         internal: []
       }));
-      toast.success("Todos os discos internos foram removidos");
-    } else if (itemId === "storage_external") {
+    } else if (type === "storage_external") {
       setStorageItems(prev => ({
         ...prev,
         external: []
       }));
-      toast.success("Todos os storages externos foram removidos");
     }
   };
 

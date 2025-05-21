@@ -106,7 +106,10 @@ export function TableActions({
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          
+          <Button variant="outline" size="sm" title="Restaurar dados para os valores padrão">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Restaurar Padrões
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

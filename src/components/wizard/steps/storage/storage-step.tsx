@@ -11,29 +11,23 @@ interface StorageStepProps {
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Criar um ID consistente baseado no tipo e capacidade do disco
+    // Create consistent ID without quantity to prevent duplicates
+    const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
+    
+    // Normalize capacity to ensure it has a unit
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
-    const baseId = `internal-disk-${disk.type}-${normalizedCapacity}`;
-    // Adicionar um componente de quantidade ao ID para garantir unicidade quando a quantidade muda
-    const diskId = quantity > 0 ? `${baseId}-qty-${quantity}` : baseId;
-    
-    console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity, "Unit Price:", disk.price);
-    
-    // Nome básico do disco sem indicação de quantidade
-    const diskName = `${disk.type.toUpperCase()} ${normalizedCapacity}`;
     
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
-      subtype: disk.type,
-      name: diskName, // Nome sem prefixo de quantidade
+      subtype: "Disco Interno",
+      name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      // Garante que o preço total seja calculado corretamente (preço unitário * quantidade)
       price: disk.price * quantity,
       metadata: {
         quantity: quantity,
-        unitPrice: disk.price, // Armazena o preço unitário para cálculos futuros
-        features: [`Tipo: ${disk.type}`]
+        features: [`Tipo: ${disk.type}`],
+        unitPrice: disk.price // Store original unit price
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
@@ -42,36 +36,21 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       ]
     };
     
-    // Se a quantidade for zero, marcar como remoção
-    if (quantity <= 0) {
-      storageOption.price = 0;
-    }
-    
     onSelectStorageItem(storageOption, 'internal');
-    
-    if (quantity > 0) {
-      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
-    } else {
-      toast.success(`Disco removido com sucesso`);
-    }
+    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
     // Ensure capacity has a unit (GB)
     const formattedCapacity = `${capacity}GB`;
-    const storageId = `external-storage-${type}-${capacity}`;
     
     const storageOption: ComponentOption = {
-      id: storageId,
+      id: `external-storage-${type}-${capacity}`,
       type: "Armazenamento",
       subtype: "Storage Externo",
       name: `Storage ${type} ${formattedCapacity}`,
       description: `Storage externo: ${type} ${formattedCapacity}`,
       price: price,
-      metadata: {
-        quantity: 1,
-        unitPrice: price
-      },
       specs: [
         `Tipo: Storage ${type}`,
         `Capacidade: ${formattedCapacity}`
