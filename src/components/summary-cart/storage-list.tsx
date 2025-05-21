@@ -17,8 +17,44 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
   
   if (filteredDisks.length === 0) return null;
   
+  // Agrupar discos por tipo, capacidade e ID de base
+  const groupedDisks: Record<string, ComponentOption> = {};
+  
+  filteredDisks.forEach(disk => {
+    // Criar uma chave única baseada no tipo e capacidade do disco (sem quantidade no ID)
+    // Ex: "ssd-1tb" para todos os SSDs de 1TB independente da quantidade
+    const baseKey = disk.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2').toLowerCase();
+    
+    if (!groupedDisks[baseKey]) {
+      // Se não existe, adicionar o primeiro disco deste tipo
+      groupedDisks[baseKey] = { ...disk };
+    } else {
+      // Se já existe, apenas atualizar o preço e quantidade
+      const existingDisk = groupedDisks[baseKey];
+      const existingQuantity = existingDisk.metadata?.quantity || 1;
+      const newQuantity = disk.metadata?.quantity || 1;
+      const unitPrice = disk.metadata?.unitPrice || disk.price;
+      
+      existingDisk.metadata = {
+        ...existingDisk.metadata,
+        quantity: existingQuantity + newQuantity
+      };
+      
+      // Atualizar o preço total baseado na quantidade total e preço unitário
+      existingDisk.price = unitPrice * (existingQuantity + newQuantity);
+      
+      // Atualizar o nome para refletir a quantidade total
+      if (existingQuantity + newQuantity > 1) {
+        existingDisk.name = `${existingQuantity + newQuantity}x ${disk.subtype?.toUpperCase()} ${disk.name.split(' ').pop()}`;
+      }
+    }
+  });
+  
+  // Converter o objeto agrupado de volta para um array
+  const uniqueDisks = Object.values(groupedDisks);
+  
   // Agrupar discos por tipo para melhor organização
-  const groupedStorage = filteredDisks.reduce((groups, disk) => {
+  const groupedStorage = uniqueDisks.reduce((groups, disk) => {
     const type = disk.subtype || disk.name.split(' ')[0].toLowerCase();
     if (!groups[type]) {
       groups[type] = [];

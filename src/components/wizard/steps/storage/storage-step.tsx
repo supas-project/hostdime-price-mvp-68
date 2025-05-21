@@ -13,7 +13,9 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
     // Criar um ID consistente baseado no tipo e capacidade do disco
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
-    const diskId = `internal-disk-${disk.type}-${normalizedCapacity}`;
+    const baseId = `internal-disk-${disk.type}-${normalizedCapacity}`;
+    // Adicionar um componente de quantidade ao ID para garantir unicidade quando a quantidade muda
+    const diskId = `${baseId}-qty-${quantity}`;
     
     console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity);
     
