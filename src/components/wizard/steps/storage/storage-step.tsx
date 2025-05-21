@@ -15,9 +15,9 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
     const baseId = `internal-disk-${disk.type}-${normalizedCapacity}`;
     // Adicionar um componente de quantidade ao ID para garantir unicidade quando a quantidade muda
-    const diskId = `${baseId}-qty-${quantity}`;
+    const diskId = quantity > 0 ? `${baseId}-qty-${quantity}` : baseId;
     
-    console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity);
+    console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity, "Unit Price:", disk.price);
     
     // Nome básico do disco sem indicação de quantidade
     const diskName = `${disk.type.toUpperCase()} ${normalizedCapacity}`;
@@ -26,12 +26,13 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       id: diskId,
       type: "Armazenamento",
       subtype: disk.type,
-      name: diskName, // Nome sem prefixo de quantidade - será adicionado na exibição
+      name: diskName, // Nome sem prefixo de quantidade
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
+      // Garante que o preço total seja calculado corretamente (preço unitário * quantidade)
       price: disk.price * quantity,
       metadata: {
         quantity: quantity,
-        unitPrice: disk.price,
+        unitPrice: disk.price, // Armazena o preço unitário para cálculos futuros
         features: [`Tipo: ${disk.type}`]
       },
       specs: [

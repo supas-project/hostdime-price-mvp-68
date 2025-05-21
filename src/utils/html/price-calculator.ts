@@ -18,17 +18,21 @@ export function calculateQuoteTotal(
       total += component.price || 0;
     });
 
-  // Adicionar armazenamento interno
+  // Adicionar armazenamento interno - garantir uso do preço unitário * quantidade
   storageItems.internal.forEach(disk => {
     if (disk && disk.price) {
-      total += disk.price;
+      const unitPrice = disk.metadata?.unitPrice || disk.price;
+      const quantity = disk.metadata?.quantity || 1;
+      total += unitPrice * quantity;
     }
   });
 
   // Adicionar armazenamento externo
   storageItems.external.forEach(disk => {
     if (disk && disk.price) {
-      total += disk.price;
+      const unitPrice = disk.metadata?.unitPrice || disk.price;
+      const quantity = disk.metadata?.quantity || 1;
+      total += unitPrice * quantity;
     }
   });
 

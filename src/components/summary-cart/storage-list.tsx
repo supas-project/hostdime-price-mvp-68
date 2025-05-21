@@ -24,7 +24,33 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
     
     if (!groups[baseKey]) {
       // Criar uma cópia do disco com todos os atributos
-      groups[baseKey] = { ...disk };
+      groups[baseKey] = { 
+        ...disk,
+        // Garantir que o preço seja o unitário
+        price: disk.metadata?.unitPrice || disk.price,
+        // Inicializar a quantidade
+        metadata: {
+          ...disk.metadata,
+          quantity: disk.metadata?.quantity || 1
+        }
+      };
+    } else {
+      // Se já existe um disco do mesmo tipo e capacidade, apenas atualizar a quantidade
+      const existingDisk = groups[baseKey];
+      const currentQuantity = existingDisk.metadata?.quantity || 1;
+      const newQuantity = disk.metadata?.quantity || 1;
+      
+      // Usar sempre o preço unitário para cálculos
+      const unitPrice = disk.metadata?.unitPrice || disk.price;
+      
+      // Atualizar metadados preservando outros campos
+      existingDisk.metadata = {
+        ...existingDisk.metadata,
+        quantity: currentQuantity + newQuantity
+      };
+      
+      // Atualizar o preço total baseado na quantidade total e preço unitário
+      existingDisk.price = unitPrice * existingDisk.metadata.quantity;
     }
     
     return groups;
@@ -67,8 +93,14 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
             // Obter o preço unitário do metadado, ou usar o preço total como padrão
             const unitPrice = disk.metadata?.unitPrice || (quantity > 0 ? disk.price / quantity : disk.price);
             
-            // Nome do disco sem qualquer prefixo de quantidade
-            const displayName = disk.name;
+            // Nome do disco sem o prefixo de quantidade (será adicionado dinamicamente)
+            const diskType = disk.subtype?.toUpperCase() || '';
+            const capacityText = disk.name.includes(diskType) 
+              ? disk.name.replace(diskType, '').trim() 
+              : disk.name;
+            
+            // Exibir o nome sem incluir a quantidade no nome (a quantidade será mostrada separadamente)
+            const displayName = `${diskType} ${capacityText}`.trim();
             
             return (
               <div 

@@ -22,13 +22,14 @@ export function useStorageComponents() {
       if (storageType === 'internal') {
         // Se o preço for 0 ou quantidade 0, removemos o disco
         if (option.price === 0 || (option.metadata?.quantity || 0) <= 0) {
+          // Para remoção, filtramos por ID base (removendo a parte de quantidade)
+          const baseIdToRemove = option.id.replace(/-qty-\d+$/, '');
           updatedItems.internal = prev.internal.filter(disk => {
-            // Extrair o ID base sem a quantidade para comparar corretamente
             const diskBaseId = disk.id.replace(/-qty-\d+$/, '');
-            const optionBaseId = option.id.replace(/-qty-\d+$/, '');
-            return diskBaseId !== optionBaseId;
+            return diskBaseId !== baseIdToRemove;
           });
-          console.log(`Removing disk with base ID ${option.id.replace(/-qty-\d+$/, '')}, new internal disks:`, updatedItems.internal);
+          
+          console.log(`Removing disk with base ID ${baseIdToRemove}, new internal disks:`, updatedItems.internal);
           return updatedItems;
         }
         
@@ -41,15 +42,24 @@ export function useStorageComponents() {
         );
         
         if (existingDiskIndex >= 0) {
-          // Se o disco já existe com o mesmo ID base, removemos o antigo
+          // Se o disco já existe, vamos removê-lo e adicionar o novo com a quantidade atualizada
           const newInternalArray = prev.internal.filter((_, index) => index !== existingDiskIndex);
-          // E adicionamos o novo disco atualizado
+          
+          console.log(
+            `Updating disk ${option.id}, quantity: ${option.metadata?.quantity}, ` +
+            `unit price: ${option.metadata?.unitPrice}, total price: ${option.price}`
+          );
+          
+          // Adiciona o novo disco atualizado
           updatedItems.internal = [...newInternalArray, option];
-          console.log(`Updating disk with base ID ${baseId}, new option:`, option);
         } else {
           // Adicionar novo disco
+          console.log(
+            `Adding new disk ${option.id}, quantity: ${option.metadata?.quantity}, ` +
+            `unit price: ${option.metadata?.unitPrice}, total price: ${option.price}`
+          );
+          
           updatedItems.internal = [...prev.internal, option];
-          console.log(`Adding new disk ${option.id}, quantity: ${option.metadata?.quantity}`, option);
         }
       } else if (storageType === 'external') {
         // Para storage externo
