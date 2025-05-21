@@ -26,43 +26,25 @@ export function useStorageComponents() {
             internal: prev.internal.filter(disk => disk.id !== option.id)
           };
         } else {
-          // Criar uma chave única baseada nas propriedades reais do disco para evitar duplicações
-          const diskType = option.subtype || option.name.split(' ')[0];
-          const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-          const capacity = capacityMatch ? capacityMatch[0] : '';
-          const uniqueKey = `${diskType}-${capacity}`;
+          // Verificar se já existe um disco com o mesmo ID
+          const existingDiskIndex = prev.internal.findIndex(disk => disk.id === option.id);
           
-          // Verificar se já existe um disco com essas características
-          const existingIndex = prev.internal.findIndex(disk => {
-            const diskTypeMatch = disk.subtype || disk.name.split(' ')[0];
-            const diskCapacityMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-            const diskCapacity = diskCapacityMatch ? diskCapacityMatch[0] : '';
-            return `${diskTypeMatch}-${diskCapacity}` === uniqueKey && disk.id === option.id;
-          });
-
-          const updatedItems = [...prev.internal];
-
-          if (existingIndex >= 0) {
-            // Atualizar disco existente
-            updatedItems[existingIndex] = option;
-          } else {
-            // Adicionar novo disco
-            // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
-            const filteredItems = updatedItems.filter(disk => disk.id !== option.id);
-            filteredItems.push(option);
+          if (existingDiskIndex >= 0) {
+            // Atualizar o disco existente em vez de adicionar um novo
+            const updatedItems = [...prev.internal];
+            updatedItems[existingDiskIndex] = option;
             
             updatedStorageItems = {
               ...prev,
-              internal: filteredItems
+              internal: updatedItems
             };
-            
-            return updatedStorageItems;
+          } else {
+            // Adicionar novo disco
+            updatedStorageItems = {
+              ...prev,
+              internal: [...prev.internal, option]
+            };
           }
-
-          updatedStorageItems = {
-            ...prev,
-            internal: updatedItems
-          };
         }
       } else {
         // Para storage externo, mantemos apenas um item
