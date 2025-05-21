@@ -3,7 +3,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { FloatingCart } from "@/components/floating-cart";
 import { FinalSummary } from "@/components/final-summary";
 import { ProgressIndicator } from "@/components/progress-indicator";
-import { WizardProvider, useWizard } from "@/contexts/WizardContext";
+import { WizardProvider, useWizard } from "@/contexts/wizard"; // Atualizado para o novo caminho
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { serverData } from "@/data/server-components";
 import { cn } from "@/lib/utils";
