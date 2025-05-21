@@ -13,11 +13,11 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Agrupar discos internos por tipo para melhor organização
+  // Agrupar discos por tipo e capacidade para exibição
   const groupedStorage = storageItems
     .filter(disk => disk && disk.price > 0)
     .reduce((groups, disk) => {
-      const type = disk.subtype || disk.name.split(' ')[0].toLowerCase();
+      const type = (disk.subtype || disk.name.split(' ')[0]).toLowerCase();
       if (!groups[type]) {
         groups[type] = [];
       }
@@ -25,7 +25,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
       return groups;
     }, {} as Record<string, ComponentOption[]>);
 
-  // Mapeamento explícito para tipos de variante do Badge
+  // Mapeamento para variantes do Badge
   const diskTypeVariants: {[key: string]: "success" | "secondary" | "default"} = {
     nvme: "success",
     ssd: "secondary",
@@ -34,14 +34,14 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
 
   if (Object.keys(groupedStorage).length === 0) return null;
 
-  // Extrair capacidade do disco com tratamento adequado para unidades
+  // Extrai capacidade do disco com tratamento para unidades
   const getDisplayCapacity = (disk: ComponentOption): string => {
     // Primeiro tenta extrair de specs
     if (disk.specs && disk.specs.length > 0) {
       const capacitySpec = disk.specs.find(spec => spec.toLowerCase().includes('capacidade:'));
       if (capacitySpec) {
         const capacity = capacitySpec.split(':')[1]?.trim();
-        if (capacity) return normalizeStorageCapacity(capacity);
+        if (capacity) return capacity;
       }
     }
     
@@ -51,7 +51,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
       return `${nameMatch[1]}${nameMatch[2].toUpperCase()}`;
     }
     
-    // Último recurso: pegar a segunda parte do nome do disco (após o tipo)
+    // Último recurso: pegar a segunda parte do nome
     const nameParts = disk.name.split(' ');
     if (nameParts.length > 1) {
       return normalizeStorageCapacity(nameParts.slice(1).join(' '));

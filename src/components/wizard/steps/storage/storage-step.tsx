@@ -11,33 +11,37 @@ interface StorageStepProps {
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Create consistent ID without quantity to prevent duplicates
-    const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
+    // Extrai tipo e capacidade para gerar um ID consistente
+    const diskType = disk.type.toLowerCase();
+    const capacity = normalizeStorageCapacity(disk.capacity);
     
-    // Normalize capacity to ensure it has a unit
-    const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    // Cria um ID baseado no tipo e capacidade (sem incluir quantidade)
+    const diskId = `internal-disk-${diskType}-${capacity}`;
+    
+    // Preço unitário x quantidade
+    const totalPrice = disk.price * quantity;
     
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
       subtype: "Disco Interno",
-      name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      price: disk.price * quantity,
+      name: `${disk.type.toUpperCase()} ${capacity}`,
+      description: `Disco interno: ${disk.type.toUpperCase()} ${capacity}`,
+      price: totalPrice,
       metadata: {
         quantity: quantity,
         features: [`Tipo: ${disk.type}`],
-        unitPrice: disk.price // Store original unit price
+        unitPrice: disk.price // Guarda o preço unitário para cálculos futuros
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
-        `Capacidade: ${normalizedCapacity}`,
+        `Capacidade: ${capacity}`,
         `Quantidade: ${quantity}`
       ]
     };
     
     onSelectStorageItem(storageOption, 'internal');
-    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    toast.success(`Disco ${disk.type.toUpperCase()} ${capacity} atualizado`);
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {

@@ -16,62 +16,60 @@ export function useStorageComponents() {
     }
 
     setStorageItems(prev => {
-      let updatedStorageItems;
+      const updatedStorageItems = { ...prev };
       
       if (storageType === 'internal') {
         // Se o preço for 0, significa que estamos removendo o disco
         if (option.price === 0) {
-          updatedStorageItems = {
-            ...prev,
-            internal: prev.internal.filter(disk => disk.id !== option.id)
-          };
-        } else {
-          // Criar uma chave única baseada nas propriedades reais do disco para evitar duplicações
-          const diskType = option.subtype || option.name.split(' ')[0];
-          const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-          const capacity = capacityMatch ? capacityMatch[0] : '';
-          const uniqueKey = `${diskType}-${capacity}`;
+          updatedStorageItems.internal = prev.internal.filter(disk => disk.id !== option.id);
+          return updatedStorageItems;
+        }
+        
+        // Extrair tipo e capacidade do disco para comparação
+        const diskType = option.name.split(' ')[0].toLowerCase();
+        const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+        const capacity = capacityMatch ? capacityMatch[0].toLowerCase() : '';
+        
+        // Verificar se já existe um disco com o mesmo tipo e capacidade
+        const existingIndex = prev.internal.findIndex(disk => {
+          const existingType = disk.name.split(' ')[0].toLowerCase();
+          const existingCapMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
+          const existingCap = existingCapMatch ? existingCapMatch[0].toLowerCase() : '';
           
-          // Verificar se já existe um disco com essas características
-          const existingIndex = prev.internal.findIndex(disk => {
-            const diskTypeMatch = disk.subtype || disk.name.split(' ')[0];
-            const diskCapacityMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-            const diskCapacity = diskCapacityMatch ? diskCapacityMatch[0] : '';
-            return `${diskTypeMatch}-${diskCapacity}` === uniqueKey && disk.id === option.id;
-          });
-
-          const updatedItems = [...prev.internal];
-
-          if (existingIndex >= 0) {
-            // Atualizar disco existente
-            updatedItems[existingIndex] = option;
-          } else {
-            // Adicionar novo disco
-            // Primeiro, remover qualquer disco com o mesmo ID para evitar duplicação
-            const filteredItems = updatedItems.filter(disk => disk.id !== option.id);
-            filteredItems.push(option);
-            
-            updatedStorageItems = {
-              ...prev,
-              internal: filteredItems
-            };
-            
-            return updatedStorageItems;
-          }
-
-          updatedStorageItems = {
-            ...prev,
-            internal: updatedItems
-          };
+          return existingType === diskType && existingCap === capacity;
+        });
+        
+        if (existingIndex >= 0) {
+          // Substituir o disco existente com as novas informações
+          const updatedInternal = [...prev.internal];
+          updatedInternal[existingIndex] = option;
+          updatedStorageItems.internal = updatedInternal;
+        } else {
+          // Adicionar novo disco
+          updatedStorageItems.internal = [...prev.internal, option];
         }
       } else {
-        // Para storage externo, mantemos apenas um item
-        updatedStorageItems = {
-          ...prev,
-          external: option.price === 0 ? [] : [option]
-        };
+        // Para storage externo, substituímos o existente se for do mesmo tipo
+        if (option.price === 0) {
+          updatedStorageItems.external = [];
+        } else {
+          const storageType = option.name.split(' ')[1]?.toLowerCase();
+          
+          // Substituir se já existir um storage do mesmo tipo
+          const existingIndex = prev.external.findIndex(storage => 
+            storage.name.split(' ')[1]?.toLowerCase() === storageType
+          );
+          
+          if (existingIndex >= 0) {
+            const updatedExternal = [...prev.external];
+            updatedExternal[existingIndex] = option;
+            updatedStorageItems.external = updatedExternal;
+          } else {
+            updatedStorageItems.external = [...prev.external, option];
+          }
+        }
       }
-
+      
       return updatedStorageItems;
     });
   };

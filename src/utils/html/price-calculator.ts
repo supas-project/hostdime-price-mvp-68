@@ -18,9 +18,10 @@ export function calculateQuoteTotal(
       total += component.price || 0;
     });
 
-  // Adicionar armazenamento interno
+  // Adicionar armazenamento interno - usando o preço já calculado com quantidade
   storageItems.internal.forEach(disk => {
     if (disk && disk.price) {
+      // Não multiplicamos pela quantidade aqui, pois o preço já deve incluir a quantidade
       total += disk.price;
     }
   });
