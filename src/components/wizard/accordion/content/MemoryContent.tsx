@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { PriceService } from "@/services/price-service";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -19,7 +20,7 @@ export function MemoryContent({
   selectedOption, 
   onSelectOption 
 }: MemoryContentProps) {
-  const { options, isLoading, error } = useComponentOptions('memory');
+  const { options, isLoading, error, refreshOptions } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
 
   // Sync selectedOption with local state
@@ -28,6 +29,27 @@ export function MemoryContent({
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
+  
+  // Adicionar listener para atualizações na tabela de preços
+  useEffect(() => {
+    const handlePriceDataChange = () => {
+      console.log("[MemoryContent] Dados de preço atualizados, atualizando opções de memória");
+      refreshOptions();
+    };
+    
+    // Registrar listener
+    PriceService.addDataChangeListener(handlePriceDataChange);
+    
+    // Garantir que temos opções iniciais
+    if (options.length === 0 && !isLoading) {
+      refreshOptions();
+    }
+    
+    return () => {
+      // Remover listener quando o componente for desmontado
+      PriceService.removeDataChangeListener(handlePriceDataChange);
+    };
+  }, [refreshOptions]);
 
   // Notify about errors
   useEffect(() => {

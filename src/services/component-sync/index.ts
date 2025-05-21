@@ -3,8 +3,9 @@
 export * from './storage-converter';
 export * from './utils';
 export * from './category-manager';
-export * from './connectivity-converter'; // Nova exportação para o conversor de conectividade
-export * from './processor-converter'; // Nova exportação para o conversor de processador
+export * from './connectivity-converter'; 
+export * from './processor-converter'; 
+export * from './memory-converter'; // Nova exportação para o conversor de memória
 
 // Re-export initialization functions to avoid name conflicts
 export {
@@ -12,5 +13,6 @@ export {
   initExternalStorageData,
   cleanupDuplicateCategories,
   syncConnectivityData,
-  syncProcessorData // Agora está exportado corretamente
+  syncProcessorData, 
+  syncMemoryData // Nova função para sincronizar dados de memória
 } from './initialization';

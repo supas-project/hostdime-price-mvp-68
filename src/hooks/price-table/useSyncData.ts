@@ -1,9 +1,8 @@
 
 import { useDataSync } from '@/hooks/useDataSync';
 import { toast } from '@/utils/toast-utils';
-import { PriceData } from '@/types/pricing';
-import { notifyListeners } from '@/services/price/listeners';
 import { PriceService } from '@/services/price-service';
+import { notifyListeners } from '@/services/price/listeners';
 
 export function useSyncData(loadPriceData: () => Promise<void>) {
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();

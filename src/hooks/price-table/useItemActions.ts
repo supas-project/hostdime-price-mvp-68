@@ -3,7 +3,7 @@ import { useItemAdd } from "./item-actions/useItemAdd";
 import { useItemEdit } from "./item-actions/useItemEdit";
 import { useItemDelete } from "./item-actions/useItemDelete";
 import { PriceItem } from "@/types/pricing";
-import { syncProcessorData } from "@/services/component-sync";
+import { syncProcessorData, syncMemoryData } from "@/services/component-sync";
 
 /**
  * Hook that composes all item-related actions
@@ -36,29 +36,33 @@ export function useItemActions(
   const isSubmittingItem = isSubmittingAdd || isSubmittingEdit;
 
   // Check if the updated category needs special synchronization
-  const handleProcessorCategorySync = async (categoryId: string) => {
-    if (categoryId === 'processor') {
+  const handleCategorySync = async (categoryId: string) => {
+    if (categoryId === 'processor' || categoryId === 'processador') {
       console.log("[useItemActions] Processor category updated, triggering sync");
       await syncProcessorData();
+    } 
+    else if (categoryId === 'memory' || categoryId === 'memória') {
+      console.log("[useItemActions] Memory category updated, triggering sync");
+      await syncMemoryData();
     }
   };
 
-  // Wrap the original handlers to add processor synchronization
+  // Wrap the original handlers to add category synchronization
   const handleAddItemWithSync = async (item: Omit<PriceItem, 'id'>) => {
     const result = await handleAddItem(item);
-    await handleProcessorCategorySync(activeTab);
+    await handleCategorySync(activeTab);
     return result;
   };
 
   const handleEditItemWithSync = async (item: PriceItem) => {
     const result = await handleEditItem(item);
-    await handleProcessorCategorySync(activeTab);
+    await handleCategorySync(activeTab);
     return result;
   };
 
   const handleDeleteItemWithSync = async (itemId: string) => {
     const result = await handleDeleteItem(itemId);
-    await handleProcessorCategorySync(activeTab);
+    await handleCategorySync(activeTab);
     return result;
   };
 

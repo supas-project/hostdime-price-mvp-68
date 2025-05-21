@@ -1,80 +1,191 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ComponentOption } from "@/types/component";
-import { cpuComponents } from "@/data/cpu-components";
-import { memoryComponents } from "@/data/memory-components";
-import { osComponents } from "@/data/os-components";
-import { dataCenterComponents } from "@/data/datacenter-components";
-import { convertProcessorItems } from "@/services/component-sync/processor-converter";
 import { PriceService } from "@/services/price-service";
+import { memoryComponents } from "@/data/memory-components";
 
-/**
- * Hook to get component options based on component type
- */
 export function useComponentOptions(componentType: string) {
   const [options, setOptions] = useState<ComponentOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Function to fetch component options
-  const fetchOptions = useCallback(async () => {
+  const loadOptions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      let componentOptions: ComponentOption[] = [];
+      let fetchedOptions: ComponentOption[] = [];
       
-      switch (componentType.toLowerCase()) {
-        case 'cpu':
-        case 'processor':
-          // Get processor options from price service
-          componentOptions = await convertProcessorItems();
-          break;
-          
+      // Normalizar tipo de componente para comparação
+      const normalizedType = componentType.toLowerCase();
+      
+      // Mapear tipos para categorias e funções de conversão específicas
+      switch (normalizedType) {
         case 'memory':
-          // Use memory components
-          componentOptions = memoryComponents.options;
+        case 'memória':
+          // Tentar obter dados da tabela de preços primeiro
+          const memoryItems = await PriceService.getCategoryItems('memory');
+          
+          if (memoryItems && memoryItems.length > 0) {
+            console.log(`[useComponentOptions] Memória: Encontrados ${memoryItems.length} itens na tabela de preços`);
+            
+            // Converter itens para formato ComponentOption
+            fetchedOptions = memoryItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'memoria',
+              isHardware: true,
+              specs: item.specs || ["Memória RAM de alta performance"]
+            }));
+          } else {
+            console.log('[useComponentOptions] Memória: Nenhum item encontrado na tabela de preços, usando dados estáticos');
+            // Usar dados estáticos como fallback
+            fetchedOptions = memoryComponents.options;
+          }
           break;
           
-        case 'os':
-        case 'sistemaoperacional':
-          // Use OS components
-          componentOptions = osComponents.options;
+        case 'cpu':
+        case 'processador':
+          const processorItems = await PriceService.getCategoryItems('processor');
+          if (processorItems && processorItems.length > 0) {
+            console.log(`[useComponentOptions] Processador: Encontrados ${processorItems.length} itens na tabela de preços`);
+            fetchedOptions = processorItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'processador',
+              isHardware: true,
+              specs: item.specs || []
+            }));
+          } else {
+            console.log('[useComponentOptions] Processador: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
           break;
           
         case 'datacenter':
-          // Use data center components
-          componentOptions = dataCenterComponents.options;
+          const datacenterItems = await PriceService.getCategoryItems('datacenter');
+          if (datacenterItems && datacenterItems.length > 0) {
+            console.log(`[useComponentOptions] DataCenter: Encontrados ${datacenterItems.length} itens na tabela de preços`);
+            fetchedOptions = datacenterItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'datacenter',
+              isHardware: false,
+              specs: item.specs || [],
+              metadata: {
+                location: item.metadata?.location || '',
+                features: item.metadata?.features || [],
+                badge: item.metadata?.badge || ''
+              }
+            }));
+          } else {
+            console.log('[useComponentOptions] DataCenter: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
+          break;
+          
+        case 'contract':
+          const contractItems = await PriceService.getCategoryItems('contract');
+          if (contractItems && contractItems.length > 0) {
+            console.log(`[useComponentOptions] Contrato: Encontrados ${contractItems.length} itens na tabela de preços`);
+            fetchedOptions = contractItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'contract',
+              isHardware: false,
+              specs: item.specs || []
+            }));
+          } else {
+            console.log('[useComponentOptions] Contrato: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
+          break;
+          
+        case 'connectivity':
+          const connectivityItems = await PriceService.getCategoryItems('connectivity');
+          if (connectivityItems && connectivityItems.length > 0) {
+            console.log(`[useComponentOptions] Conectividade: Encontrados ${connectivityItems.length} itens na tabela de preços`);
+            fetchedOptions = connectivityItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'connectivity',
+              isHardware: false,
+              specs: item.specs || []
+            }));
+          } else {
+            console.log('[useComponentOptions] Conectividade: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
+          break;
+          
+        case 'armazenamento':
+        case 'storage':
+          const storageItems = await PriceService.getCategoryItems('storage');
+          if (storageItems && storageItems.length > 0) {
+            console.log(`[useComponentOptions] Armazenamento: Encontrados ${storageItems.length} itens na tabela de preços`);
+            fetchedOptions = storageItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'storage',
+              isHardware: true,
+              specs: item.specs || []
+            }));
+          } else {
+            console.log('[useComponentOptions] Armazenamento: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
+          break;
+          
+        case 'sistemaoperacional':
+        case 'os':
+          const osItems = await PriceService.getCategoryItems('sistemaoperacional');
+          if (osItems && osItems.length > 0) {
+            console.log(`[useComponentOptions] Sistema Operacional: Encontrados ${osItems.length} itens na tabela de preços`);
+            fetchedOptions = osItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              price: item.price,
+              type: 'os',
+              isHardware: false,
+              specs: item.specs || []
+            }));
+          } else {
+            console.log('[useComponentOptions] Sistema Operacional: Nenhum item encontrado na tabela de preços');
+            fetchedOptions = [];
+          }
           break;
           
         default:
-          console.warn(`Unknown component type: ${componentType}`);
-          componentOptions = [];
+          console.log(`[useComponentOptions] Tipo não reconhecido: ${normalizedType}`);
+          fetchedOptions = [];
       }
       
-      setOptions(componentOptions);
+      setOptions(fetchedOptions);
     } catch (err) {
-      console.error(`Error fetching ${componentType} options:`, err);
-      setError(err instanceof Error ? err : new Error(String(err)));
+      console.error(`[useComponentOptions] Erro ao carregar opções para ${componentType}:`, err);
+      setError(err instanceof Error ? err : new Error('Erro desconhecido ao carregar opções'));
     } finally {
       setIsLoading(false);
     }
   }, [componentType]);
 
-  // Initial fetch
+  // Carregar opções na montagem do componente
   useEffect(() => {
-    fetchOptions();
-  }, [fetchOptions]);
+    loadOptions();
+  }, [loadOptions]);
 
-  // Refetch function for manual updates
-  const refetch = useCallback(() => {
-    return fetchOptions();
-  }, [fetchOptions]);
-
-  return {
-    options,
-    isLoading,
-    error,
-    refetch
-  };
+  // Retornar também a função de atualização para uso externo
+  return { options, isLoading, error, refreshOptions: loadOptions };
 }

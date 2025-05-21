@@ -1,9 +1,9 @@
-
 import { notifyListeners } from '@/services/price/listeners';
 import { syncExternalStorageData, syncStorageData } from './storage-converter';
 import { cleanupCategories } from './category-manager';
 import { syncConnectivityItems } from './connectivity-converter';
 import { syncProcessorData as syncProcessors } from './processor-converter';
+import { syncMemoryData as syncMemories } from './memory-converter';
 
 /**
  * Syncs disk data with the price service
@@ -71,6 +71,19 @@ export async function syncProcessorData(): Promise<boolean> {
 }
 
 /**
+ * Syncs memory data - exporting the function from memory-converter
+ */
+export async function syncMemoryData(): Promise<boolean> {
+  try {
+    await syncMemories();
+    return true;
+  } catch (error) {
+    console.error("Error syncing memory data:", error);
+    return false;
+  }
+}
+
+/**
  * Initializes server categories
  */
 export async function initializeServerCategories(): Promise<boolean> {
@@ -84,6 +97,9 @@ export async function initializeServerCategories(): Promise<boolean> {
     
     // Sync processor data
     await syncProcessorData();
+    
+    // Sync memory data
+    await syncMemoryData();
     
     // Notify listeners about the data changes
     notifyListeners();
