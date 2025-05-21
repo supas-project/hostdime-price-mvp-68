@@ -57,7 +57,7 @@ export function useDataLoader(
       console.log("User authenticated, loading initial price data");
       loadPriceData();
   
-      // Add listener for data changes - corrigindo para passar null quando não tiver dados
+      // Add listener for data changes
       PriceService.addDataChangeListener((newData) => {
         console.log('Price data updated:', newData ? Object.keys(newData).length : 0, 'categories');
         if (newData) {
@@ -71,7 +71,7 @@ export function useDataLoader(
     
     // Cleanup
     return () => {
-      // Remove listener when unmounted - garantindo que passamos null 
+      // Remove listener when unmounted
       PriceService.removeDataChangeListener();
     };
   }, [isAuthenticated, setPriceData]);

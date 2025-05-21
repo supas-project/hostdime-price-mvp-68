@@ -1,117 +1,38 @@
 
-import { useState } from "react";
-import { PriceService } from "@/services/price-service";
-import { toast } from "@/utils/toast-utils";
-import { createItem, updateItem } from "@/utils/price-table-utils";
+import { useItemAdd } from "./item-actions/useItemAdd";
+import { useItemEdit } from "./item-actions/useItemEdit";
+import { useItemDelete } from "./item-actions/useItemDelete";
 import { PriceItem } from "@/types/pricing";
-import { notifyListeners } from "@/services/price/listeners";
-import { syncProcessorUpdatesFromPriceTable } from "@/services/component-sync/processor-converter";
 
+/**
+ * Hook that composes all item-related actions
+ */
 export function useItemActions(
-  activeTab: string, 
+  activeTab: string,
   setPriceData: (data: any) => void
 ) {
-  const [openAddItem, setOpenAddItem] = useState(false);
-  const [openEditItem, setOpenEditItem] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<PriceItem | null>(null);
-  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
+  // Use the specialized hooks
+  const { 
+    openAddItem, 
+    setOpenAddItem, 
+    handleAddItem,
+    isSubmittingItem: isSubmittingAdd 
+  } = useItemAdd(activeTab, setPriceData);
+  
+  const { 
+    openEditItem, 
+    setOpenEditItem, 
+    itemToEdit, 
+    setItemToEdit, 
+    handleInitiateEdit, 
+    handleEditItem,
+    isSubmittingItem: isSubmittingEdit 
+  } = useItemEdit(activeTab, setPriceData);
+  
+  const { handleDeleteItem } = useItemDelete(activeTab, setPriceData);
 
-  const handleInitiateEdit = (item: PriceItem) => {
-    setItemToEdit(item);
-    setOpenEditItem(true);
-  };
-
-  const handleAddItem = async (categoryId: string, item: Partial<PriceItem>) => {
-    setIsSubmittingItem(true);
-    try {
-      const newItem = createItem(item);
-      
-      await PriceService.addItem(categoryId, newItem);
-      
-      // Atualizar o estado local após o item ser adicionado
-      const updatedData = await PriceService.getAllData();
-      setPriceData(updatedData);
-      
-      // Notificar os ouvintes sobre a mudança de dados
-      notifyListeners(updatedData);
-      
-      // Sincronizar processadores se a categoria for processor
-      if (categoryId === 'processor') {
-        await syncProcessorUpdatesFromPriceTable();
-        console.log("Sincronização de processador concluída após adicionar item");
-      }
-      
-      toast.success("Item adicionado com sucesso!");
-      
-      setOpenAddItem(false);
-    } catch (error) {
-      console.error("Erro ao adicionar item:", error);
-      toast.error("Erro ao adicionar item");
-    } finally {
-      setIsSubmittingItem(false);
-    }
-  };
-
-  const handleEditItem = async (categoryId: string, updatedItem: Partial<PriceItem>) => {
-    if (!itemToEdit) return;
-    
-    setIsSubmittingItem(true);
-    try {
-      // Criar um item atualizado combinando o item original com as alterações
-      const item = updateItem(itemToEdit, updatedItem);
-      
-      await PriceService.updateItem(categoryId, item.id, item);
-      
-      // Atualizar o estado local após o item ser atualizado
-      const updatedData = await PriceService.getAllData();
-      setPriceData(updatedData);
-      
-      // Notificar os ouvintes sobre a mudança de dados
-      notifyListeners(updatedData);
-      
-      // Sincronizar processadores se a categoria for processor
-      if (categoryId === 'processor') {
-        await syncProcessorUpdatesFromPriceTable();
-        console.log("Sincronização de processador concluída após editar item");
-      }
-      
-      toast.success("Item atualizado com sucesso!");
-      
-      setItemToEdit(null);
-      setOpenEditItem(false);
-    } catch (error) {
-      console.error("Erro ao atualizar item:", error);
-      toast.error("Erro ao atualizar item");
-    } finally {
-      setIsSubmittingItem(false);
-    }
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    if (!activeTab) return;
-    
-    try {
-      await PriceService.deleteItem(activeTab, itemId);
-      
-      // Atualizar o estado local após o item ser excluído
-      const updatedData = await PriceService.getAllData();
-      setPriceData(updatedData);
-      
-      // Notificar os ouvintes sobre a mudança de dados
-      notifyListeners(updatedData);
-      
-      // Sincronizar processadores se a categoria for processor
-      if (activeTab === 'processor') {
-        await syncProcessorUpdatesFromPriceTable();
-        console.log("Sincronização de processador concluída após excluir item");
-      }
-      
-      toast.success("Item excluído com sucesso!");
-    } catch (error) {
-      console.error("Erro ao excluir item:", error);
-      toast.error("Erro ao excluir item");
-    }
-  };
+  // Combine isSubmitting states
+  const isSubmittingItem = isSubmittingAdd || isSubmittingEdit;
 
   return {
     openAddItem,

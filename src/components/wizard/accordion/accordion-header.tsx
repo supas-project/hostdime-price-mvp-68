@@ -11,9 +11,7 @@ interface AccordionHeaderProps {
   isExpanded: boolean;
   isActive: boolean;
   isComplete: boolean;
-  selectedOption: {
-    name: string;
-  } | null;
+  selectedOption: { name: string } | null;
 }
 
 export function AccordionHeader({
@@ -26,37 +24,47 @@ export function AccordionHeader({
   selectedOption
 }: AccordionHeaderProps) {
   const IconComponent = (Icons as any)[icon] || Icons.HelpCircle;
-  
+
   return (
-    <div className="flex items-center w-full gap-3">
+    <div className="flex flex-1 items-center space-x-3">
       <div className={cn(
-        "flex items-center justify-center rounded-full p-1.5",
-        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+        "p-2.5 rounded-full transition-colors duration-200",
+        isExpanded || isActive ? "bg-primary/10" : "bg-muted"
       )}>
-        {isComplete ? (
-          <Check className="h-5 w-5" />
-        ) : (
-          <IconComponent className="h-5 w-5" />
-        )}
+        <IconComponent className={cn(
+          "h-5 w-5 transition-colors duration-200",
+          isExpanded || isActive ? "text-primary" : "text-muted-foreground"
+        )} />
       </div>
-      
-      <div className="flex-1 flex flex-col">
+      <div className="text-left">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium">{title}</h3>
-          {isComplete && !isActive && (
-            <Badge variant="success" className="text-xs">
-              Concluído
+          <h3 className={cn(
+            "font-medium text-lg transition-colors duration-200",
+            !isExpanded && !isActive && "text-muted-foreground"
+          )}>
+            {title}
+          </h3>
+          
+          {isComplete && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1 animate-fade-in">
+              <Check className="h-3 w-3" />
+              <span>Concluído</span>
             </Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        
+        {selectedOption && !isExpanded && (
+          <p className="text-sm text-muted-foreground line-clamp-1">
+            Selecionado: <span className="font-medium text-foreground">{selectedOption.name}</span>
+          </p>
+        )}
+        
+        {!selectedOption && !isExpanded && (
+          <p className="text-sm text-muted-foreground">
+            Clique para configurar
+          </p>
+        )}
       </div>
-      
-      {selectedOption && !isExpanded && (
-        <div className="hidden sm:block">
-          <p className="text-xs font-medium">{selectedOption.name}</p>
-        </div>
-      )}
     </div>
   );
 }

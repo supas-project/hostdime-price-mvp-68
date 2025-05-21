@@ -3,7 +3,6 @@ import { useDataSync } from '@/hooks/useDataSync';
 import { toast } from '@/utils/toast-utils';
 import { PriceData } from '@/types/pricing';
 import { notifyListeners } from '@/services/price/listeners';
-import { PriceService } from '@/services/price-service';
 
 export function useSyncData(loadPriceData: () => Promise<void>) {
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
@@ -15,10 +14,9 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
         await syncWithLatestData();
         await loadPriceData();
         
-        // Notificar com dados atualizados (ou null se não houver)
-        // Certifique-se de obter os dados mais recentes para notificar
-        const updatedData = await PriceService.getAllData();
-        notifyListeners(updatedData);
+        // Notify any listeners about the data changes
+        // This ensures all components are updated when data changes
+        notifyListeners();
         
         toast.success("Data updated successfully!");
       }

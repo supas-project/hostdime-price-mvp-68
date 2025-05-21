@@ -7,19 +7,17 @@ interface StepHeaderProps {
   hasSelectedOption: boolean;
 }
 
-export function StepHeader({
-  description,
-  isSpecialComponent,
-  hasSelectedOption
-}: StepHeaderProps) {
+export function StepHeader({ description, isSpecialComponent, hasSelectedOption }: StepHeaderProps) {
   if (!hasSelectedOption && !isSpecialComponent) {
-    return null;
+    return (
+      <p className="text-muted-foreground flex items-center mb-4">
+        {description}
+        <HelpTooltip 
+          title="Mais detalhes" 
+          description={description} 
+        />
+      </p>
+    );
   }
-  
-  return (
-    <div className="mb-4 flex items-start">
-      <p className="text-sm text-muted-foreground pr-2">{description}</p>
-      <HelpTooltip description="Selecione uma opção para configurar este componente" />
-    </div>
-  );
+  return null;
 }
