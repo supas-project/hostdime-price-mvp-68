@@ -90,11 +90,13 @@ export function useComponentOptions(componentType: string) {
                 
                 // Adicionar propriedades opcionais somente se existirem
                 if ('location' in item.metadata) {
-                  option.metadata.location = item.metadata.location;
+                  // Usar type assertion para garantir que location seja tratado como string
+                  option.metadata.location = item.metadata.location as string;
                 }
                 
                 if ('badge' in item.metadata) {
-                  option.metadata.badge = item.metadata.badge;
+                  // Usar type assertion para garantir que badge seja tratado como string
+                  option.metadata.badge = item.metadata.badge as string;
                 }
               }
               
