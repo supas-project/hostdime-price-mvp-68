@@ -13,17 +13,23 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Agrupar discos por tipo e capacidade para exibição
-  const groupedStorage = storageItems
+  // Filtra itens válidos e evita duplicação
+  const uniqueItems = storageItems
     .filter(disk => disk && disk.price > 0)
-    .reduce((groups, disk) => {
-      const type = (disk.subtype || disk.name.split(' ')[0]).toLowerCase();
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-      groups[type].push(disk);
-      return groups;
-    }, {} as Record<string, ComponentOption[]>);
+    // Usamos a propriedade id para garantir unicidade
+    .filter((disk, index, self) => 
+      index === self.findIndex(d => d.id === disk.id)
+    );
+  
+  // Agrupar discos por tipo e capacidade para exibição
+  const groupedStorage = uniqueItems.reduce((groups, disk) => {
+    const type = (disk.subtype || disk.name.split(' ')[0]).toLowerCase();
+    if (!groups[type]) {
+      groups[type] = [];
+    }
+    groups[type].push(disk);
+    return groups;
+  }, {} as Record<string, ComponentOption[]>);
 
   // Mapeamento para variantes do Badge
   const diskTypeVariants: {[key: string]: "success" | "secondary" | "default"} = {

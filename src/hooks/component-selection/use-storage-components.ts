@@ -25,19 +25,8 @@ export function useStorageComponents() {
           return updatedStorageItems;
         }
         
-        // Extrair tipo e capacidade do disco para comparação
-        const diskType = option.name.split(' ')[0].toLowerCase();
-        const capacityMatch = option.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-        const capacity = capacityMatch ? capacityMatch[0].toLowerCase() : '';
-        
-        // Verificar se já existe um disco com o mesmo tipo e capacidade
-        const existingIndex = prev.internal.findIndex(disk => {
-          const existingType = disk.name.split(' ')[0].toLowerCase();
-          const existingCapMatch = disk.name.match(/(\d+(?:\.\d+)?[GT]B)/i);
-          const existingCap = existingCapMatch ? existingCapMatch[0].toLowerCase() : '';
-          
-          return existingType === diskType && existingCap === capacity;
-        });
+        // Encontrar o índice do disco (baseado no ID exato)
+        const existingIndex = prev.internal.findIndex(disk => disk.id === option.id);
         
         if (existingIndex >= 0) {
           // Substituir o disco existente com as novas informações
@@ -45,8 +34,18 @@ export function useStorageComponents() {
           updatedInternal[existingIndex] = option;
           updatedStorageItems.internal = updatedInternal;
         } else {
+          // Remover qualquer disco do mesmo tipo e capacidade antes de adicionar
+          const diskTypeAndCapacity = option.id.replace('internal-disk-', '');
+          const [diskType, capacity] = diskTypeAndCapacity.split('-');
+          
+          updatedStorageItems.internal = prev.internal.filter(disk => {
+            // Manter todos os discos que não correspondem ao mesmo tipo e capacidade
+            const diskIdParts = disk.id.replace('internal-disk-', '').split('-');
+            return !(diskIdParts[0] === diskType && diskIdParts[1] === capacity);
+          });
+          
           // Adicionar novo disco
-          updatedStorageItems.internal = [...prev.internal, option];
+          updatedStorageItems.internal = [...updatedStorageItems.internal, option];
         }
       } else {
         // Para storage externo, substituímos o existente se for do mesmo tipo

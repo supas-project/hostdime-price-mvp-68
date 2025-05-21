@@ -13,15 +13,14 @@ export function calculateQuoteTotal(
 
   // Adicionar componentes padrão
   Object.values(selectedComponents)
-    .filter(component => component && component.price !== undefined && !['DataCenter', 'Contrato'].includes(component.type))
+    .filter(component => component && component.price !== undefined && !['DataCenter', 'Contrato', 'Armazenamento'].includes(component.type))
     .forEach(component => {
       total += component.price || 0;
     });
 
-  // Adicionar armazenamento interno - usando o preço já calculado com quantidade
+  // Adicionar armazenamento interno - cada item já inclui o preço calculado com a quantidade
   storageItems.internal.forEach(disk => {
     if (disk && disk.price) {
-      // Não multiplicamos pela quantidade aqui, pois o preço já deve incluir a quantidade
       total += disk.price;
     }
   });
