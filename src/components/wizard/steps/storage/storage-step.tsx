@@ -21,13 +21,13 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       id: diskId,
       type: "Armazenamento",
       subtype: disk.type,
-      name: `${disk.type.toUpperCase()} ${normalizedCapacity}`,
+      name: quantity > 1 ? `${quantity}x ${disk.type.toUpperCase()} ${normalizedCapacity}` : `${disk.type.toUpperCase()} ${normalizedCapacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
-      price: disk.price,
+      price: disk.price * quantity,
       metadata: {
         quantity: quantity,
-        features: [`Tipo: ${disk.type}`],
-        unitPrice: disk.price
+        unitPrice: disk.price,
+        features: [`Tipo: ${disk.type}`]
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,

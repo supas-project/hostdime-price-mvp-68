@@ -37,38 +37,23 @@ export function SummaryCart({
     }
   );
   
-  // Processar discos internos - criar um mapa para garantir exclusividade por ID
-  const internalDisksMap = new Map<string, ComponentOption>();
+  // Filtrar apenas discos válidos (com preço > 0)
+  const validInternalDisks = storageItems.internal.filter(disk => disk && disk.price > 0);
+  const validExternalStorage = storageItems.external.filter(storage => storage && storage.price > 0);
   
-  storageItems.internal.forEach(disk => {
-    if (disk && disk.price > 0) {
-      internalDisksMap.set(disk.id, disk);
-    }
-  });
+  // Calcular preço dos discos internos considerando as quantidades
+  const internalStoragePrice = validInternalDisks.reduce((sum, disk) => {
+    const quantity = disk.metadata?.quantity || 1;
+    const unitPrice = disk.metadata?.unitPrice || disk.price;
+    return sum + (unitPrice * quantity);
+  }, 0);
   
-  // Processar storage externo - mesmo tratamento para evitar duplicatas
-  const externalStorageMap = new Map<string, ComponentOption>();
-  
-  storageItems.external.forEach(storage => {
-    if (storage && storage.price > 0) {
-      externalStorageMap.set(storage.id, storage);
-    }
-  });
-  
-  // Calcular preços com base nos mapas únicos
-  const internalStoragePrice = Array.from(internalDisksMap.values())
-    .reduce((sum, disk) => {
-      const quantity = disk.metadata?.quantity || 1;
-      const unitPrice = disk.metadata?.unitPrice || disk.price;
-      return sum + (unitPrice * quantity);
-    }, 0);
-  
-  const externalStoragePrice = Array.from(externalStorageMap.values())
-    .reduce((sum, storage) => {
-      const quantity = storage.metadata?.quantity || 1;
-      const unitPrice = storage.metadata?.unitPrice || storage.price;
-      return sum + (unitPrice * quantity);
-    }, 0);
+  // Calcular preço do storage externo
+  const externalStoragePrice = validExternalStorage.reduce((sum, storage) => {
+    const quantity = storage.metadata?.quantity || 1;
+    const unitPrice = storage.metadata?.unitPrice || storage.price;
+    return sum + (unitPrice * quantity);
+  }, 0);
   
   // Calcular preço dos componentes padrão
   const standardComponentsPrice = standardComponents.reduce(
@@ -90,8 +75,8 @@ export function SummaryCart({
   // Verifica se há qualquer componente ou item selecionado
   const hasItems = Boolean(
     Object.keys(selectedComponents).length || 
-    internalDisksMap.size || 
-    externalStorageMap.size ||
+    validInternalDisks.length || 
+    validExternalStorage.length ||
     Object.keys(connectivityItems).length
   );
   
@@ -125,8 +110,8 @@ export function SummaryCart({
       <CartContent 
         selectedComponents={selectedComponents}
         storageItems={{
-          internal: Array.from(internalDisksMap.values()),
-          external: Array.from(externalStorageMap.values())
+          internal: validInternalDisks,
+          external: validExternalStorage
         }}
         connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}

@@ -3,7 +3,6 @@ import React from 'react';
 import { ComponentOption } from "@/types/component";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,24 +12,13 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Usar um mapa para garantir que cada ID de disco único seja mostrado apenas uma vez
-  const uniqueDisksMap = new Map<string, ComponentOption>();
+  // Filtrar discos válidos (com preço > 0)
+  const filteredDisks = storageItems.filter(disk => disk && disk.price > 0);
   
-  // Adicionar apenas discos válidos ao mapa
-  storageItems.forEach(disk => {
-    if (!disk || disk.price <= 0) return;
-    
-    // Não adicionar duplicatas - manter apenas uma instância de cada disco por ID
-    if (!uniqueDisksMap.has(disk.id)) {
-      uniqueDisksMap.set(disk.id, disk);
-    }
-  });
-  
-  // Converter o mapa para array
-  const uniqueDisks = Array.from(uniqueDisksMap.values());
+  if (filteredDisks.length === 0) return null;
   
   // Agrupar discos por tipo para melhor organização
-  const groupedStorage = uniqueDisks.reduce((groups, disk) => {
+  const groupedStorage = filteredDisks.reduce((groups, disk) => {
     const type = disk.subtype || disk.name.split(' ')[0].toLowerCase();
     if (!groups[type]) {
       groups[type] = [];
@@ -61,7 +49,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
             // Obter a quantidade do metadado, ou usar 1 como padrão
             const quantity = disk.metadata?.quantity || 1;
             // Obter o preço unitário do metadado, ou usar o preço total como padrão
-            const unitPrice = disk.metadata?.unitPrice || disk.price;
+            const unitPrice = disk.metadata?.unitPrice || (quantity > 0 ? disk.price / quantity : disk.price);
             
             return (
               <div 
@@ -69,7 +57,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
                 className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
               >
                 <p className="text-sm">
-                  {quantity > 1 ? `${quantity}x ${disk.name}` : disk.name}
+                  {quantity > 1 ? `${quantity}x ${disk.subtype?.toUpperCase()} ${disk.name.split(' ').pop()}` : disk.name}
                 </p>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">{formatCurrency(unitPrice * quantity)}</p>
