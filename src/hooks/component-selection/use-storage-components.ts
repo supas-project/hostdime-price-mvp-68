@@ -28,10 +28,12 @@ export function useStorageComponents() {
           const existingDiskIndex = prev.internal.findIndex(disk => disk.id === option.id);
           
           if (existingDiskIndex >= 0) {
-            // Atualizar o disco existente (normalmente para mudar a quantidade)
-            updatedItems.internal = prev.internal.map((disk, index) => 
-              index === existingDiskIndex ? option : disk
-            );
+            // Se o disco já existe, substituir com o novo (atualizado)
+            updatedItems.internal = [
+              ...prev.internal.slice(0, existingDiskIndex),
+              option,
+              ...prev.internal.slice(existingDiskIndex + 1)
+            ];
           } else {
             // Adicionar novo disco apenas se não existir
             updatedItems.internal = [...prev.internal, option];
@@ -46,10 +48,12 @@ export function useStorageComponents() {
           const existingIndex = prev.external.findIndex(storage => storage.id === option.id);
           
           if (existingIndex >= 0) {
-            // Atualizar o storage existente
-            updatedItems.external = prev.external.map((storage, index) => 
-              index === existingIndex ? option : storage
-            );
+            // Substituir o storage existente
+            updatedItems.external = [
+              ...prev.external.slice(0, existingIndex),
+              option,
+              ...prev.external.slice(existingIndex + 1)
+            ];
           } else {
             // Adicionar novo storage
             updatedItems.external = [...prev.external, option];

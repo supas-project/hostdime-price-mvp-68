@@ -13,23 +13,42 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Filter out any invalid or zero-priced items
-  const validStorageItems = storageItems.filter(disk => disk && disk.price > 0);
+  // Usar o ID como chave para garantir que temos apenas uma entrada por disco
+  const uniqueDiskMap = new Map<string, { disk: ComponentOption, count: number }>();
   
-  // Use Map to ensure we only have one entry per disk ID
-  const uniqueStorageItems = Array.from(
-    new Map(validStorageItems.map(item => [item.id, item])).values()
-  );
+  // Agrupar discos por ID e contar quantos de cada tipo temos
+  storageItems.forEach(disk => {
+    if (!disk || disk.price <= 0) return;
+    
+    const existingDisk = uniqueDiskMap.get(disk.id);
+    
+    if (existingDisk) {
+      // Incrementar contagem para discos existentes
+      existingDisk.count += disk.metadata?.quantity || 1;
+    } else {
+      // Adicionar novo disco
+      uniqueDiskMap.set(disk.id, {
+        disk,
+        count: disk.metadata?.quantity || 1
+      });
+    }
+  });
   
-  // Agrupar discos internos por tipo para melhor organização
-  const groupedStorage = uniqueStorageItems.reduce((groups, disk) => {
+  // Converter o mapa para array
+  const uniqueDisks = Array.from(uniqueDiskMap.values());
+  
+  // Agrupar discos por tipo para melhor organização
+  const groupedStorage = uniqueDisks.reduce((groups, { disk }) => {
     const type = disk.subtype || disk.name.split(' ')[0].toLowerCase();
     if (!groups[type]) {
       groups[type] = [];
     }
-    groups[type].push(disk);
+    groups[type].push({
+      disk,
+      count: uniqueDiskMap.get(disk.id)?.count || 1
+    });
     return groups;
-  }, {} as Record<string, ComponentOption[]>);
+  }, {} as Record<string, Array<{ disk: ComponentOption, count: number }>>);
 
   // Mapeamento explícito para tipos de variante do Badge
   const diskTypeVariants: {[key: string]: "success" | "secondary" | "default"} = {
@@ -40,32 +59,6 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
 
   if (Object.keys(groupedStorage).length === 0) return null;
 
-  // Extrair capacidade do disco com tratamento adequado para unidades
-  const getDisplayCapacity = (disk: ComponentOption): string => {
-    // Primeiro tenta extrair de specs
-    if (disk.specs && disk.specs.length > 0) {
-      const capacitySpec = disk.specs.find(spec => spec.toLowerCase().includes('capacidade:'));
-      if (capacitySpec) {
-        const capacity = capacitySpec.split(':')[1]?.trim();
-        if (capacity) return normalizeStorageCapacity(capacity);
-      }
-    }
-    
-    // Se não encontrar nos specs, tenta extrair do nome
-    const nameMatch = disk.name.match(/(\d+)\s*([GT]B)/i);
-    if (nameMatch) {
-      return `${nameMatch[1]}${nameMatch[2].toUpperCase()}`;
-    }
-    
-    // Último recurso: pegar a segunda parte do nome do disco (após o tipo)
-    const nameParts = disk.name.split(' ');
-    if (nameParts.length > 1) {
-      return normalizeStorageCapacity(nameParts.slice(1).join(' '));
-    }
-    
-    return "N/A";
-  };
-
   return (
     <>
       {Object.entries(groupedStorage).map(([type, disks]) => (
@@ -75,37 +68,31 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
               {type.toUpperCase()}
             </Badge>
           </div>
-          {disks.map((disk) => {
-            // Get disk quantity from metadata or default to 1
-            const quantity = disk.metadata?.quantity || 1;
-            const displayName = quantity > 1 ? `${quantity}x ${disk.name}` : disk.name;
-            
-            return (
-              <div 
-                key={disk.id} 
-                className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
-              >
-                <p className="text-sm">
-                  {displayName}
-                </p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
-                  
-                  {onRemoveItem && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => onRemoveItem(disk.id)}
-                    >
-                      <X className="h-3 w-3" />
-                      <span className="sr-only">Remover disco</span>
-                    </Button>
-                  )}
-                </div>
+          {disks.map(({ disk, count }) => (
+            <div 
+              key={disk.id} 
+              className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
+            >
+              <p className="text-sm">
+                {count > 1 ? `${count}x ${disk.name}` : disk.name}
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                
+                {onRemoveItem && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => onRemoveItem(disk.id)}
+                  >
+                    <X className="h-3 w-3" />
+                    <span className="sr-only">Remover disco</span>
+                  </Button>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ))}
     </>

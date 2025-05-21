@@ -223,7 +223,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     </div>
   );
   
-  // Define the missing handler functions
+  // Define the handler functions
   function handleCapacitySelect(capacity: string) {
     setSelectedCapacity(capacity);
     const disk = availableDisks.find(d => d.capacity === capacity);
@@ -243,7 +243,16 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       setSelectedDisks(prev => [...prev, newDisk]);
       
       if (onSelectDisk) {
-        onSelectDisk(disk, 1);
+        const diskId = `internal-disk-${disk.type}-${capacity}`;
+        console.log("Selecionando disco com ID:", diskId);
+        
+        // Clone do disco com ID único baseado no tipo e capacidade
+        const diskWithUniqueId = {
+          ...disk,
+          id: diskId // Garantir que o ID seja único e consistente
+        };
+        
+        onSelectDisk(diskWithUniqueId, 1);
       }
 
       // Reset capacity but keep disk type for additional selections
@@ -268,10 +277,19 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
   function handleQuantityChange(diskId: string, newQuantity: number) {
     setSelectedDisks(prev => prev.map(item => {
       if (item.disk.id === diskId) {
+        const updatedItem = { ...item, quantity: newQuantity };
+        
         if (onSelectDisk) {
-          onSelectDisk(item.disk, newQuantity);
+          // Garantir que o ID seja consistente
+          const uniqueId = `internal-disk-${item.disk.type}-${item.disk.capacity}`;
+          const diskWithUniqueId = {
+            ...item.disk,
+            id: uniqueId
+          };
+          onSelectDisk(diskWithUniqueId, newQuantity);
         }
-        return { ...item, quantity: newQuantity };
+        
+        return updatedItem;
       }
       return item;
     }));
@@ -279,15 +297,19 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
 
   function handleRemoveDisk(diskId: string) {
     setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+    
     if (onSelectDisk) {
       const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
       if (diskToRemove) {
+        const uniqueId = `internal-disk-${diskToRemove.disk.type}-${diskToRemove.disk.capacity}`;
         onSelectDisk({
           ...diskToRemove.disk,
+          id: uniqueId,
           price: 0
         }, 0);
       }
     }
+    
     toast.success("Disco removido com sucesso");
   }
 }

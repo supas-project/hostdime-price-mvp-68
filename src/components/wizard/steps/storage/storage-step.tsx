@@ -11,11 +11,11 @@ interface StorageStepProps {
 
 export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
   const handleSelectInternalDisk = (disk: PricedDiskOption, quantity: number) => {
-    // Create consistent ID without quantity to prevent duplicates
-    const diskId = `internal-disk-${disk.type}-${disk.capacity}`;
-    
-    // Normalize capacity to ensure it has a unit
+    // Criar um ID consistente baseado no tipo e capacidade do disco
     const normalizedCapacity = normalizeStorageCapacity(disk.capacity);
+    const diskId = `internal-disk-${disk.type}-${normalizedCapacity}`;
+    
+    console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity);
     
     const storageOption: ComponentOption = {
       id: diskId,
@@ -27,7 +27,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       metadata: {
         quantity: quantity,
         features: [`Tipo: ${disk.type}`],
-        unitPrice: disk.price // Store original unit price
+        unitPrice: disk.price
       },
       specs: [
         `Tipo: ${disk.type.toUpperCase()}`,
@@ -36,16 +36,27 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       ]
     };
     
+    // Se a quantidade for zero, marcar como remoção
+    if (quantity <= 0) {
+      storageOption.price = 0;
+    }
+    
     onSelectStorageItem(storageOption, 'internal');
-    toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    
+    if (quantity > 0) {
+      toast.success(`Disco ${disk.type.toUpperCase()} ${normalizedCapacity} adicionado`);
+    } else {
+      toast.success(`Disco removido com sucesso`);
+    }
   };
 
   const handleSelectExternalStorage = (type: string, capacity: number, price: number) => {
     // Ensure capacity has a unit (GB)
     const formattedCapacity = `${capacity}GB`;
+    const storageId = `external-storage-${type}-${capacity}`;
     
     const storageOption: ComponentOption = {
-      id: `external-storage-${type}-${capacity}`,
+      id: storageId,
       type: "Armazenamento",
       subtype: "Storage Externo",
       name: `Storage ${type} ${formattedCapacity}`,
