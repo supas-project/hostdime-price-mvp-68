@@ -108,11 +108,19 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
       // Show toast for document generation start
       toast("Aguarde enquanto geramos seu documento...");
       
+      // CORREÇÃO: Garante que os itens estão deduplificados antes de gerar a visualização
+      const dedupedStorageItems = {
+        internal: deduplicateStorageItems(effectiveStorageItems.internal || []),
+        external: deduplicateStorageItems(effectiveStorageItems.external || [])
+      };
+      
+      console.log(`[ExportPDF] Quantidade de discos original: ${effectiveStorageItems.internal?.length}, deduplificados: ${dedupedStorageItems.internal.length}`);
+      
       if (documentFormat === "web") {
         // Generate HTML web view in new tab
         generateQuoteWebView(
           selectedComponents,
-          effectiveStorageItems,
+          dedupedStorageItems, // CORREÇÃO: Usa itens deduplificados
           effectiveCustomServices,
           profitMargin,
           effectiveConnectivityItems,
@@ -122,7 +130,7 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
         // Generate PDF (old behavior)
         await generateQuotePDF(
           selectedComponents,
-          effectiveStorageItems,
+          dedupedStorageItems, // CORREÇÃO: Usa itens deduplificados
           effectiveCustomServices,
           profitMargin,
           effectiveConnectivityItems,

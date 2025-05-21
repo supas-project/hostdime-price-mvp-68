@@ -12,6 +12,7 @@ import {
   generateConnectivityRows, 
   generateCustomServicesRows 
 } from "./html/component-renderers";
+import { deduplicateStorageItems } from "./html/price-calculator";
 
 // Function to open the quote in a new tab with the HTML template
 export const openQuoteInNewTab = (
@@ -23,10 +24,21 @@ export const openQuoteInNewTab = (
   quoteVariables?: Partial<QuoteVariables>
 ) => {
   try {
-    // Calculate total price
+    console.log("[Quote] Abrindo cotação na web: verificando dados");
+    
+    // CORREÇÃO: Deduplica os discos e storages explicitamente
+    const uniqueStorageItems = {
+      internal: deduplicateStorageItems(storageItems.internal || []),
+      external: deduplicateStorageItems(storageItems.external || [])
+    };
+    
+    // Log de quantidade para debug
+    console.log(`[Quote] Discos originais: ${storageItems.internal?.length || 0}, deduplificados: ${uniqueStorageItems.internal.length}`);
+    
+    // Calculate total price with deduplicated storage items
     const total = calculateQuoteTotal(
       selectedComponents, 
-      storageItems, 
+      uniqueStorageItems, 
       customServices, 
       margin, 
       connectivityItems
@@ -34,7 +46,7 @@ export const openQuoteInNewTab = (
     
     // Generate HTML rows for each component type
     const componentsRows = generateComponentsRows(selectedComponents);
-    const storageRows = generateStorageRows(storageItems.internal, storageItems.external);
+    const storageRows = generateStorageRows(uniqueStorageItems.internal, uniqueStorageItems.external);
     const connectivityRows = generateConnectivityRows(connectivityItems);
     const customServicesRows = generateCustomServicesRows(customServices);
     
