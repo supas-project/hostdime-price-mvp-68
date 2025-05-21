@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -11,6 +12,7 @@ import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
 import { usePayBackCalculation } from "@/hooks/usePayBackCalculation";
 import { ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray } from "@/utils/storage-utils";
+import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -26,6 +28,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   const dataCenterComponent = selectedComponents["datacenter"];
   const contractComponent = selectedComponents["contrato"];
   const contractDuration = contractComponent?.subtype || "0";
+
+  // CORREÇÃO: Garantir que temos listas deduplicadas para todos os cálculos
+  // Deduplique de forma agressiva os storageItems antes de qualquer processamento
+  const uniqueInternalStorage = deduplicateStorageItems(storageItems.internal);
+  const uniqueExternalStorage = deduplicateStorageItems(storageItems.external);
+  
+  console.log(`[OrderDetails] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueInternalStorage.length}`);
+  console.log(`[OrderDetails] Storages externos originais: ${storageItems.external.length}, únicos: ${uniqueExternalStorage.length}`);
   
   // Filter non-storage components and handle OS price calculation
   const otherComponents = Object.values(selectedComponents).filter(
@@ -59,8 +69,8 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     0
   );
   
-  // Apply PayBack to internal storage
-  const internalStoragePrice = storageItems.internal
+  // Apply PayBack to internal storage - IMPORTANTE: usar os arrays deduplicados
+  const internalStoragePrice = uniqueInternalStorage
     .filter(disk => disk && disk.price > 0)
     .reduce(
       (sum, disk) => {
@@ -73,8 +83,8 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
       0
     );
   
-  // Apply PayBack to external storage
-  const externalStoragePrice = storageItems.external
+  // Apply PayBack to external storage - IMPORTANTE: usar os arrays deduplicados
+  const externalStoragePrice = uniqueExternalStorage
     .filter(storage => storage && storage.price > 0)
     .reduce(
       (sum, storage) => {
@@ -130,6 +140,64 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     option: item.option,
     quantity: item.quantity
   }));
+
+  // CORREÇÃO: Função para agrupar discos internos por tipo e capacidade
+  // Esta função vai criar um mapa onde a chave é o tipo+capacidade e o valor é a quantidade
+  const groupSimilarDisks = (disks: ComponentOption[]): {
+    grouped: Record<string, { disk: ComponentOption, quantity: number }>,
+    groupedList: { disk: ComponentOption, quantity: number }[]
+  } => {
+    const diskGroups: Record<string, { disk: ComponentOption, quantity: number }> = {};
+    
+    // Primeiro passo: deduplica mais uma vez para garantir
+    const uniqueDisks = deduplicateStorageItems(disks);
+    
+    // Segundo passo: agrupa por tipo e capacidade
+    uniqueDisks.forEach(disk => {
+      if (!disk || disk.price <= 0) return;
+      
+      // Extrai tipo e capacidade para criar uma chave de agrupamento
+      let diskType = '';
+      let capacity = '';
+      
+      if (disk.specs) {
+        const typeSpec = disk.specs.find(s => s.toLowerCase().includes('tipo:'));
+        const capacitySpec = disk.specs.find(s => s.toLowerCase().includes('capacidade:'));
+        
+        if (typeSpec) diskType = typeSpec.split(':')[1]?.trim().toLowerCase() || '';
+        if (capacitySpec) capacity = capacitySpec.split(':')[1]?.trim().toLowerCase() || '';
+      }
+      
+      if (!diskType || !capacity) {
+        // Fallback: tentar extrair do nome
+        const nameParts = disk.name.toLowerCase().split(' ');
+        if (nameParts.length >= 2) {
+          diskType = nameParts[0];
+          capacity = nameParts.slice(1).join(' ');
+        }
+      }
+      
+      // Cria uma chave única de agrupamento
+      const groupKey = `${diskType}-${capacity}`;
+      
+      // Se o grupo já existe, incrementa a quantidade
+      if (diskGroups[groupKey]) {
+        diskGroups[groupKey].quantity++;
+      } else {
+        // Caso contrário, cria um novo grupo
+        diskGroups[groupKey] = { disk, quantity: 1 };
+      }
+    });
+    
+    // Converte o mapa para um array para fácil renderização
+    const groupedList = Object.values(diskGroups);
+    
+    return { grouped: diskGroups, groupedList };
+  };
+  
+  // Agrupa os discos antes de renderizar
+  const { groupedList: groupedInternalDisks } = groupSimilarDisks(uniqueInternalStorage);
+  const { groupedList: groupedExternalStorage } = groupSimilarDisks(uniqueExternalStorage);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -243,26 +311,27 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             ))}
             
             {/* Storage components section */}
-            {(storageItems.internal.length > 0 || storageItems.external.length > 0) && (
+            {(uniqueInternalStorage.length > 0 || uniqueExternalStorage.length > 0) && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Armazenamento</h3>
                 
-                {/* Internal storage disks */}
-                {storageItems.internal.length > 0 && (
+                {/* Internal storage disks - CORREÇÃO: Usar a versão agrupada por tipo/capacidade */}
+                {groupedInternalDisks.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
-                    {storageItems.internal.map((disk) => (
+                    {groupedInternalDisks.map(({disk, quantity}) => (
                       <div key={disk.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium flex items-center gap-2">
-                              {disk.metadata?.quantity && disk.metadata.quantity > 1 ? `${disk.metadata.quantity}x ` : ''}{disk.name}
+                              {quantity > 1 ? `${quantity}x ` : ''}{disk.name}
                             </h4>
                             <p className="text-sm text-muted-foreground">{disk.description}</p>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Mostrar preço total do grupo de discos */}
                             <span className="font-medium text-primary">
-                              {formatCurrency(disk.price)}
+                              {formatCurrency(disk.price * quantity)}
                             </span>
                             
                             {onRemoveItem && (
@@ -281,12 +350,23 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                         </div>
                         {disk.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                            {disk.specs.map((spec, index) => (
-                              <li key={index} className="flex items-center">
-                                <Check className="h-4 w-4 text-primary mr-2" />
-                                <span>{spec}</span>
-                              </li>
-                            ))}
+                            {/* Modificar a spec de quantidade para refletir o agrupamento */}
+                            {disk.specs.map((spec, index) => {
+                              if (spec.toLowerCase().includes('quantidade:') && quantity > 1) {
+                                return (
+                                  <li key={index} className="flex items-center">
+                                    <Check className="h-4 w-4 text-primary mr-2" />
+                                    <span>Quantidade: {quantity}</span>
+                                  </li>
+                                );
+                              }
+                              return (
+                                <li key={index} className="flex items-center">
+                                  <Check className="h-4 w-4 text-primary mr-2" />
+                                  <span>{spec}</span>
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
                         
@@ -321,21 +401,21 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                   </>
                 )}
                 
-                {/* External storage */}
-                {storageItems.external.filter(storage => storage && storage.price > 0).length > 0 && (
+                {/* External storage - CORREÇÃO: Usar a versão agrupada por tipo/capacidade */}
+                {groupedExternalStorage.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Storage Externo</h4>
-                    {storageItems.external.filter(storage => storage && storage.price > 0).map((storage) => (
+                    {groupedExternalStorage.map(({disk: storage, quantity}) => (
                       <div key={storage.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium flex items-center">
-                              {storage.name}
+                              {quantity > 1 ? `${quantity}x ` : ''}{storage.name}
                             </h4>
                             <p className="text-sm text-muted-foreground">{storage.description}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-primary">{formatCurrency(storage.price)}</span>
+                            <span className="font-medium text-primary">{formatCurrency(storage.price * quantity)}</span>
                             
                             {onRemoveItem && (
                               <button
@@ -353,12 +433,22 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                         </div>
                         {storage.specs && (
                           <ul className="text-sm text-muted-foreground space-y-1 pl-4 mt-2">
-                            {storage.specs.map((spec, index) => (
-                              <li key={index} className="flex items-center">
-                                <Check className="h-4 w-4 text-primary mr-2" />
-                                <span>{spec}</span>
-                              </li>
-                            ))}
+                            {storage.specs.map((spec, index) => {
+                              if (spec.toLowerCase().includes('quantidade:') && quantity > 1) {
+                                return (
+                                  <li key={index} className="flex items-center">
+                                    <Check className="h-4 w-4 text-primary mr-2" />
+                                    <span>Quantidade: {quantity}</span>
+                                  </li>
+                                );
+                              }
+                              return (
+                                <li key={index} className="flex items-center">
+                                  <Check className="h-4 w-4 text-primary mr-2" />
+                                  <span>{spec}</span>
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
                         <Separator className="mt-4" />

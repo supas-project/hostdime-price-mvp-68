@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { Label } from "./ui/label";
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
+import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -66,9 +68,18 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
   const { storageItems: contextStorageItems, customServices: contextCustomServices, connectivityItems: contextConnectivityItems, handleRemoveComponent } = useWizard();
   
   // Use provided items or fall back to context items
-  const effectiveStorageItems = storageItemsMap 
+  let effectiveStorageItems = storageItemsMap 
     ? convertStorageItemsMapToArray(storageItemsMap)
     : contextStorageItems;
+    
+  // CORREÇÃO: Garantir que os discos estão deduplicados antes de passar para o componente OrderDetails
+  effectiveStorageItems = {
+    internal: deduplicateStorageItems(effectiveStorageItems.internal || []),
+    external: deduplicateStorageItems(effectiveStorageItems.external || [])
+  };
+  
+  console.log(`[FinalSummary] Deduplicando discos internos: ${(effectiveStorageItems.internal || []).length} itens`);
+  console.log(`[FinalSummary] Deduplicando storages externos: ${(effectiveStorageItems.external || []).length} itens`);
     
   const effectiveCustomServices = customServicesMap 
     ? convertCustomServicesToArray(customServicesMap)
