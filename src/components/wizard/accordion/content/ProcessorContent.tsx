@@ -8,6 +8,7 @@ import { ComponentSelector } from "@/components/component-selector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { PriceService } from "@/services/price-service";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -21,9 +22,24 @@ export function ProcessorContent({
   const {
     options,
     isLoading,
-    error
+    error,
+    refetch
   } = useComponentOptions('cpu');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+
+  // Listen for price data changes
+  useEffect(() => {
+    // Add listener for price data changes to trigger a refetch
+    PriceService.addDataChangeListener(() => {
+      console.log("[ProcessorContent] Price data changed, refetching processor options");
+      refetch();
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      PriceService.removeDataChangeListener();
+    };
+  }, [refetch]);
 
   // Sync selectedOption with local state
   useEffect(() => {
@@ -48,29 +64,6 @@ export function ProcessorContent({
     }
   };
 
-  // Log options to debug duplications
-  useEffect(() => {
-    if (options.length > 0) {
-      console.log(`Rendering ${options.length} processor options`);
-
-      // Check for potential duplicates
-      const idMap = new Map();
-      const nameMap = new Map();
-      options.forEach(option => {
-        if (idMap.has(option.id)) {
-          console.warn(`Found processor with duplicate id: ${option.id}`);
-        } else {
-          idMap.set(option.id, true);
-        }
-        if (nameMap.has(option.name)) {
-          console.warn(`Found processor with duplicate name: ${option.name}`);
-        } else {
-          nameMap.set(option.name, true);
-        }
-      });
-    }
-  }, [options]);
-
   // Show loading state
   if (isLoading) {
     return <Card className="p-4 sm:p-6">
@@ -83,6 +76,7 @@ export function ProcessorContent({
         </div>
       </Card>;
   }
+  
   return <Card className="p-4 sm:p-6">
       <div className="flex flex-col gap-4">
         <div className="w-full">

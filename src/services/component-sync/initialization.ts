@@ -1,24 +1,16 @@
-import { PriceService } from "@/services/price-service";
-import { connectivityComponents } from "@/data/connectivity-components";
-import { convertConnectivityPriceDataToComponents, saveConnectivityComponentsToPriceData } from "./connectivity-converter";
-import { logDebug } from "./utils";
-import { ComponentOption } from "@/types/component";
+
+import { syncExternalStorageData, syncStorageData } from './storage-converter';
+import { cleanupCategories } from './category-manager';
+import { syncConnectivityItems } from './connectivity-converter';
+import { syncProcessorData } from './processor-converter';
+import { notifyListeners } from '@/services/price/listeners';
 
 /**
- * Sincroniza os dados de disco com o serviço de preço
+ * Syncs disk data with the price service
  */
-export async function syncDiskDataWithPriceService() {
+export async function syncDiskDataWithPriceService(): Promise<boolean> {
   try {
-    // Obter categoria de discos
-    const diskCategory = await PriceService.getCategory('disk');
-    
-    if (diskCategory && diskCategory.items && diskCategory.items.length > 0) {
-      logDebug("syncDiskDataWithPriceService", `Found ${diskCategory.items.length} disk items in the price service`);
-      // Implementação existente
-    } else {
-      logDebug("syncDiskDataWithPriceService", "No disk items found in the price service");
-    }
-    
+    await syncStorageData();
     return true;
   } catch (error) {
     console.error("Error syncing disk data with price service:", error);
@@ -27,46 +19,37 @@ export async function syncDiskDataWithPriceService() {
 }
 
 /**
- * Inicializa dados de armazenamento externo
+ * Initializes external storage data
  */
-export async function initExternalStorageData() {
-  // Implementação existente
+export async function initExternalStorageData(): Promise<boolean> {
+  try {
+    await syncExternalStorageData();
+    return true;
+  } catch (error) {
+    console.error("Error initializing external storage data:", error);
+    return false;
+  }
 }
 
 /**
- * Sincroniza os dados de conectividade
+ * Cleans up duplicate categories
+ */
+export async function cleanupDuplicateCategories(): Promise<boolean> {
+  try {
+    await cleanupCategories();
+    return true;
+  } catch (error) {
+    console.error("Error cleaning up duplicate categories:", error);
+    return false;
+  }
+}
+
+/**
+ * Syncs connectivity data
  */
 export async function syncConnectivityData(): Promise<boolean> {
   try {
-    const { portOptions, ipOptions } = await convertConnectivityPriceDataToComponents();
-    
-    logDebug("syncConnectivityData", {
-      portOptions: portOptions.length,
-      ipOptions: ipOptions.length
-    });
-    
-    // Se não houver opções, inicialize com dados padrão
-    if ((portOptions.length === 0 || ipOptions.length === 0) && connectivityComponents) {
-      // Extrair portas e IPs do arquivo estático
-      const defaultPortOptions = connectivityComponents.options
-        .filter(option => option.subtype === 'porta')
-        .map(option => ({...option}));
-        
-      const defaultIpOptions = connectivityComponents.options
-        .filter(option => option.subtype === 'ip')
-        .map(option => ({...option}));
-      
-      // Usar opções padrão se as obtidas estiverem vazias
-      const finalPortOptions = portOptions.length > 0 ? portOptions : defaultPortOptions;
-      const finalIpOptions = ipOptions.length > 0 ? ipOptions : defaultIpOptions;
-      
-      // Salvar no serviço de preços
-      await saveConnectivityComponentsToPriceData(finalPortOptions, finalIpOptions, true);
-      
-      logDebug("syncConnectivityData", "Initialized with default data");
-      return true;
-    }
-    
+    await syncConnectivityItems();
     return true;
   } catch (error) {
     console.error("Error syncing connectivity data:", error);
@@ -75,23 +58,27 @@ export async function syncConnectivityData(): Promise<boolean> {
 }
 
 /**
- * Inicializa todas as categorias do servidor
+ * Initializes server categories
  */
-export async function initializeServerCategories() {
+export async function initializeServerCategories(): Promise<boolean> {
   try {
-    await syncDiskDataWithPriceService();
-    await initExternalStorageData();
-    await syncConnectivityData();
+    // Sync storage data
+    await syncStorageData();
+    await syncExternalStorageData();
+    
+    // Sync connectivity data
+    await syncConnectivityItems();
+    
+    // Sync processor data
+    await syncProcessorData();
+    
+    // Notify listeners about the data changes
+    notifyListeners();
+    
+    console.log("Server categories initialized successfully");
     return true;
   } catch (error) {
     console.error("Error initializing server categories:", error);
     return false;
   }
-}
-
-/**
- * Limpa categorias duplicadas
- */
-export async function cleanupDuplicateCategories() {
-  // Implementação existente
 }
