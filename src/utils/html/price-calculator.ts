@@ -57,13 +57,14 @@ export function calculateQuoteTotal(
   return total;
 }
 
-// Função auxiliar para deduplicar itens de armazenamento baseado em tipo e capacidade
+// Função melhorada para deduplicar itens de armazenamento baseado em tipo e capacidade
 function deduplicateStorageItems(items: ComponentOption[]): ComponentOption[] {
+  // Inicializa um mapa vazio para armazenar itens únicos
   const uniqueMap: { [key: string]: ComponentOption } = {};
   
   // Usa apenas os discos com preço maior que zero
   items.filter(item => item && item.price > 0).forEach(item => {
-    // Extrai informações do nome ou id para criar uma chave única
+    // Extrai tipo e capacidade para criar uma chave única
     let diskType = '';
     let capacity = '';
     
@@ -72,7 +73,7 @@ function deduplicateStorageItems(items: ComponentOption[]): ComponentOption[] {
       const parts = item.id.replace('internal-disk-', '').split('-');
       diskType = parts[0];
       capacity = parts[1];
-    } else {
+    } else if (item.name) {
       // Tentar extrair do nome (fallback)
       const nameParts = item.name.split(' ');
       if (nameParts.length >= 2) {
@@ -81,7 +82,10 @@ function deduplicateStorageItems(items: ComponentOption[]): ComponentOption[] {
       }
     }
     
-    const key = `${diskType}-${capacity}`;
+    // Se não conseguimos extrair informações suficientes, use o ID como fallback final
+    const key = diskType && capacity ? `${diskType}-${capacity}` : item.id;
+    
+    // Manter apenas a versão mais recente do mesmo tipo de disco
     uniqueMap[key] = item;
   });
   

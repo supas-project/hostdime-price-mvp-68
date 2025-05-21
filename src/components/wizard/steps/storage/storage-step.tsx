@@ -43,6 +43,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       name: `${disk.type.toUpperCase()} ${capacity}`,
       description: `Disco interno: ${disk.type.toUpperCase()} ${capacity}`,
       price: totalPrice,
+      isHardware: true, // Marca como hardware para cálculos de PayBack
       metadata: {
         quantity: quantity,
         features: [`Tipo: ${disk.type}`],
@@ -75,6 +76,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       name: `Storage ${type} ${formattedCapacity}`,
       description: `Storage externo: ${type} ${formattedCapacity}`,
       price: price,
+      isHardware: true, // Marca como hardware para cálculos de PayBack
       specs: [
         `Tipo: Storage ${type}`,
         `Capacidade: ${formattedCapacity}`

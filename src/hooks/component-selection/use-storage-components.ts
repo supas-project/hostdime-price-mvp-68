@@ -25,19 +25,46 @@ export function useStorageComponents() {
           return updatedStorageItems;
         }
         
-        // Extrair tipo e capacidade do ID do disco
-        const diskTypeAndCapacity = option.id.replace('internal-disk-', '');
-        const [diskType, capacity] = diskTypeAndCapacity.split('-');
+        // Extrair tipo e capacidade do ID ou nome do disco
+        let diskType = '';
+        let capacity = '';
         
-        // Remover qualquer disco com o mesmo tipo e capacidade
-        updatedStorageItems.internal = prev.internal.filter(disk => {
-          if (!disk.id.startsWith('internal-disk-')) return true;
-          
-          const existingDiskId = disk.id.replace('internal-disk-', '');
-          const [existingType, existingCapacity] = existingDiskId.split('-');
-          
-          return !(existingType === diskType && existingCapacity === capacity);
-        });
+        if (option.id.includes('internal-disk-')) {
+          const parts = option.id.replace('internal-disk-', '').split('-');
+          diskType = parts[0];
+          capacity = parts[1];
+        } else if (option.name) {
+          const nameParts = option.name.split(' ');
+          if (nameParts.length >= 2) {
+            diskType = nameParts[0].toLowerCase();
+            capacity = nameParts[1];
+          }
+        }
+        
+        // Se encontramos tipo e capacidade válidos
+        if (diskType && capacity) {
+          // Remover qualquer disco com o mesmo tipo e capacidade (para evitar duplicações)
+          updatedStorageItems.internal = prev.internal.filter(disk => {
+            // Tentar extrair tipo e capacidade do disco existente
+            let existingType = '';
+            let existingCapacity = '';
+            
+            if (disk.id.includes('internal-disk-')) {
+              const parts = disk.id.replace('internal-disk-', '').split('-');
+              existingType = parts[0];
+              existingCapacity = parts[1];
+            } else if (disk.name) {
+              const nameParts = disk.name.split(' ');
+              if (nameParts.length >= 2) {
+                existingType = nameParts[0].toLowerCase();
+                existingCapacity = nameParts[1];
+              }
+            }
+            
+            // Manter apenas se for um tipo ou capacidade diferente
+            return !(existingType === diskType && existingCapacity === capacity);
+          });
+        }
         
         // Adicionar o novo disco
         updatedStorageItems.internal = [...updatedStorageItems.internal, option];
@@ -49,16 +76,18 @@ export function useStorageComponents() {
         }
         
         // Extrair o tipo do nome do storage externo
-        const storageType = option.name.split(' ')[1]?.toLowerCase();
+        const storageType = option.name?.split(' ')[1]?.toLowerCase();
         
         // Remover storage existente do mesmo tipo
-        updatedStorageItems.external = prev.external.filter(storage => {
-          const existingType = storage.name.split(' ')[1]?.toLowerCase();
-          return existingType !== storageType;
-        });
+        if (storageType) {
+          updatedStorageItems.external = prev.external.filter(storage => {
+            const existingType = storage.name?.split(' ')[1]?.toLowerCase();
+            return existingType !== storageType;
+          });
+        }
         
         // Adicionar o novo storage
-        updatedStorageItems.external = [...prev.external, option];
+        updatedStorageItems.external = [...updatedStorageItems.external, option];
       }
       
       return updatedStorageItems;
