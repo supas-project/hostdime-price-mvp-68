@@ -42,14 +42,22 @@ export function SummaryCart({
     (sum, component) => sum + (component.price || 0),
     0
   );
-  
-  const internalStoragePrice = storageItems.internal
+
+  // Remove internal disk duplicates before price calculation
+  const uniqueInternalDisks = [...new Map(storageItems.internal
     .filter(disk => disk && disk.price > 0)
-    .reduce((sum, disk) => sum + disk.price, 0);
+    .map(item => [item.id, item])
+  ).values()];
   
-  const externalStoragePrice = storageItems.external
+  const internalStoragePrice = uniqueInternalDisks.reduce((sum, disk) => sum + disk.price, 0);
+  
+  // Remove external storage duplicates before price calculation
+  const uniqueExternalStorage = [...new Map(storageItems.external
     .filter(storage => storage && storage.price > 0)
-    .reduce((sum, storage) => sum + storage.price, 0);
+    .map(item => [item.id, item])
+  ).values()];
+  
+  const externalStoragePrice = uniqueExternalStorage.reduce((sum, storage) => sum + storage.price, 0);
 
   const connectivityPrice = Object.values(connectivityItems)
     .filter(item => item && item.option)
