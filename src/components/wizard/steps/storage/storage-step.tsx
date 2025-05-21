@@ -18,9 +18,6 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Cria um ID baseado no tipo e capacidade
     const diskId = `internal-disk-${diskType}-${capacity}`;
     
-    // Preço unitário x quantidade
-    const totalPrice = disk.price * quantity;
-    
     // Se a quantidade for 0, é uma remoção
     if (quantity === 0) {
       const removalOption: ComponentOption = {
@@ -35,6 +32,9 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       toast.success(`Disco ${disk.type.toUpperCase()} ${capacity} removido`);
       return;
     }
+    
+    // Preço unitário x quantidade
+    const totalPrice = disk.price * quantity;
     
     const storageOption: ComponentOption = {
       id: diskId,
@@ -65,8 +65,11 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Ensure capacity has a unit (GB)
     const formattedCapacity = `${capacity}GB`;
     
+    // Criar ID consistente para storages externos
+    const storageId = `external-storage-${type.toLowerCase()}-${capacity}`;
+    
     const storageOption: ComponentOption = {
-      id: `external-storage-${type}-${capacity}`,
+      id: storageId,
       type: "Armazenamento",
       subtype: "Storage Externo",
       name: `Storage ${type} ${formattedCapacity}`,

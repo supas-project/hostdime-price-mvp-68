@@ -25,48 +25,40 @@ export function useStorageComponents() {
           return updatedStorageItems;
         }
         
-        // Encontrar o índice do disco (baseado no ID exato)
-        const existingIndex = prev.internal.findIndex(disk => disk.id === option.id);
+        // Extrair tipo e capacidade do ID do disco
+        const diskTypeAndCapacity = option.id.replace('internal-disk-', '');
+        const [diskType, capacity] = diskTypeAndCapacity.split('-');
         
-        if (existingIndex >= 0) {
-          // Substituir o disco existente com as novas informações
-          const updatedInternal = [...prev.internal];
-          updatedInternal[existingIndex] = option;
-          updatedStorageItems.internal = updatedInternal;
-        } else {
-          // Remover qualquer disco do mesmo tipo e capacidade antes de adicionar
-          const diskTypeAndCapacity = option.id.replace('internal-disk-', '');
-          const [diskType, capacity] = diskTypeAndCapacity.split('-');
+        // Remover qualquer disco com o mesmo tipo e capacidade
+        updatedStorageItems.internal = prev.internal.filter(disk => {
+          if (!disk.id.startsWith('internal-disk-')) return true;
           
-          updatedStorageItems.internal = prev.internal.filter(disk => {
-            // Manter todos os discos que não correspondem ao mesmo tipo e capacidade
-            const diskIdParts = disk.id.replace('internal-disk-', '').split('-');
-            return !(diskIdParts[0] === diskType && diskIdParts[1] === capacity);
-          });
+          const existingDiskId = disk.id.replace('internal-disk-', '');
+          const [existingType, existingCapacity] = existingDiskId.split('-');
           
-          // Adicionar novo disco
-          updatedStorageItems.internal = [...updatedStorageItems.internal, option];
-        }
+          return !(existingType === diskType && existingCapacity === capacity);
+        });
+        
+        // Adicionar o novo disco
+        updatedStorageItems.internal = [...updatedStorageItems.internal, option];
       } else {
         // Para storage externo, substituímos o existente se for do mesmo tipo
         if (option.price === 0) {
-          updatedStorageItems.external = [];
-        } else {
-          const storageType = option.name.split(' ')[1]?.toLowerCase();
-          
-          // Substituir se já existir um storage do mesmo tipo
-          const existingIndex = prev.external.findIndex(storage => 
-            storage.name.split(' ')[1]?.toLowerCase() === storageType
-          );
-          
-          if (existingIndex >= 0) {
-            const updatedExternal = [...prev.external];
-            updatedExternal[existingIndex] = option;
-            updatedStorageItems.external = updatedExternal;
-          } else {
-            updatedStorageItems.external = [...prev.external, option];
-          }
+          updatedStorageItems.external = prev.external.filter(storage => storage.id !== option.id);
+          return updatedStorageItems;
         }
+        
+        // Extrair o tipo do nome do storage externo
+        const storageType = option.name.split(' ')[1]?.toLowerCase();
+        
+        // Remover storage existente do mesmo tipo
+        updatedStorageItems.external = prev.external.filter(storage => {
+          const existingType = storage.name.split(' ')[1]?.toLowerCase();
+          return existingType !== storageType;
+        });
+        
+        // Adicionar o novo storage
+        updatedStorageItems.external = [...prev.external, option];
       }
       
       return updatedStorageItems;
