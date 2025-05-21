@@ -15,6 +15,8 @@ export interface PriceItem {
     quantity?: number;
     unitPrice?: number;
     unitInfo?: string; // Added for storing additional storage metadata as JSON string
+    cores?: number;     // Added for processor metadata
+    perCore?: boolean;  // Added for processor metadata
   };
 }
 
