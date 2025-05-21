@@ -17,39 +17,18 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
   
   if (filteredDisks.length === 0) return null;
   
-  // Agrupar discos por tipo, capacidade e ID de base
-  const groupedDisks: Record<string, ComponentOption> = {};
-  
-  filteredDisks.forEach(disk => {
-    // Criar uma chave única baseada no tipo e capacidade do disco (sem quantidade no ID)
+  // Agrupar discos por tipo e capacidade
+  const groupedDisks = filteredDisks.reduce<Record<string, ComponentOption>>((groups, disk) => {
+    // Criar uma chave única baseada no tipo e capacidade (removendo a parte de quantidade do ID)
     const baseKey = disk.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2').toLowerCase();
     
-    if (!groupedDisks[baseKey]) {
-      // Se não existe, adicionar o primeiro disco deste tipo
-      groupedDisks[baseKey] = { ...disk };
-    } else {
-      // Se já existe, apenas atualizar o preço e quantidade
-      const existingDisk = groupedDisks[baseKey];
-      const existingQuantity = existingDisk.metadata?.quantity || 1;
-      const newQuantity = disk.metadata?.quantity || 1;
-      const unitPrice = disk.metadata?.unitPrice || disk.price;
-      
-      existingDisk.metadata = {
-        ...existingDisk.metadata,
-        quantity: existingQuantity + newQuantity
-      };
-      
-      // Atualizar o preço total baseado na quantidade total e preço unitário
-      existingDisk.price = unitPrice * (existingQuantity + newQuantity);
-      
-      // Atualizar o nome para refletir a quantidade total
-      if (existingQuantity + newQuantity > 1) {
-        // Garantir que o nome só tenha um prefixo de quantidade
-        const nameWithoutQuantity = disk.name.replace(/^\d+x\s+/, '');
-        existingDisk.name = `${existingQuantity + newQuantity}x ${nameWithoutQuantity}`;
-      }
+    if (!groups[baseKey]) {
+      // Criar uma cópia do disco com todos os atributos
+      groups[baseKey] = { ...disk };
     }
-  });
+    
+    return groups;
+  }, {});
   
   // Converter o objeto agrupado de volta para um array
   const uniqueDisks = Object.values(groupedDisks);
@@ -88,13 +67,8 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
             // Obter o preço unitário do metadado, ou usar o preço total como padrão
             const unitPrice = disk.metadata?.unitPrice || (quantity > 0 ? disk.price / quantity : disk.price);
             
-            // Remover qualquer prefixo de quantidade existente para evitar duplicação
-            let displayName = disk.name.replace(/^\d+x\s+/, '');
-            
-            // Adicionar o prefixo de quantidade apenas se for maior que 1
-            if (quantity > 1) {
-              displayName = `${quantity}x ${displayName}`;
-            }
+            // Nome do disco sem qualquer prefixo de quantidade
+            const displayName = disk.name;
             
             return (
               <div 
@@ -102,7 +76,7 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
                 className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
               >
                 <p className="text-sm">
-                  {displayName}
+                  {quantity > 1 ? `${quantity}x ${displayName}` : displayName}
                 </p>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">{formatCurrency(unitPrice * quantity)}</p>

@@ -35,7 +35,7 @@ export function useStorageComponents() {
         // Extrair a chave base sem a quantidade
         const baseId = option.id.replace(/-qty-\d+$/, '');
         
-        // Verificar se já existe um disco com o mesmo ID base
+        // Verificar se já existe um disco com o mesmo ID base (mesmo tipo e capacidade)
         const existingDiskIndex = prev.internal.findIndex(disk => 
           disk.id.replace(/-qty-\d+$/, '') === baseId
         );
@@ -47,23 +47,9 @@ export function useStorageComponents() {
           updatedItems.internal = [...newInternalArray, option];
           console.log(`Updating disk with base ID ${baseId}, new option:`, option);
         } else {
-          // Verificar se não há discos duplicados com o mesmo tipo e capacidade
-          const duplicateIndex = prev.internal.findIndex(disk => {
-            const diskBaseId = disk.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2');
-            const optionBaseId = option.id.replace(/internal-disk-(\w+)-(\d+\w+).*/, '$1-$2');
-            return diskBaseId === optionBaseId;
-          });
-
-          if (duplicateIndex >= 0) {
-            // Se encontramos um disco com mesmo tipo e capacidade, atualizamos em vez de adicionar
-            const newInternalArray = prev.internal.filter((_, index) => index !== duplicateIndex);
-            updatedItems.internal = [...newInternalArray, option];
-            console.log(`Replacing duplicate disk with base type/capacity, new option:`, option);
-          } else {
-            // Adicionar novo disco se não houver duplicação
-            updatedItems.internal = [...prev.internal, option];
-            console.log(`Adding new disk ${option.id}, quantity: ${option.metadata?.quantity}`, option);
-          }
+          // Adicionar novo disco
+          updatedItems.internal = [...prev.internal, option];
+          console.log(`Adding new disk ${option.id}, quantity: ${option.metadata?.quantity}`, option);
         }
       } else if (storageType === 'external') {
         // Para storage externo

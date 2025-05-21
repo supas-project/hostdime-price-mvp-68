@@ -19,14 +19,14 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     
     console.log("Storage Step - Selecting disk with ID:", diskId, "Quantity:", quantity);
     
-    // Remover qualquer prefixo de quantidade no nome para evitar duplicação
+    // Nome básico do disco sem indicação de quantidade
     const diskName = `${disk.type.toUpperCase()} ${normalizedCapacity}`;
     
     const storageOption: ComponentOption = {
       id: diskId,
       type: "Armazenamento",
       subtype: disk.type,
-      name: quantity > 1 ? `${quantity}x ${diskName}` : diskName,
+      name: diskName, // Nome sem prefixo de quantidade - será adicionado na exibição
       description: `Disco interno: ${disk.type.toUpperCase()} ${normalizedCapacity}`,
       price: disk.price * quantity,
       metadata: {
