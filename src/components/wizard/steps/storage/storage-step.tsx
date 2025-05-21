@@ -28,6 +28,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
         type: "Armazenamento",
         subtype: "Disco Interno",
         name: `${disk.type.toUpperCase()} ${capacity}`,
+        description: `Disco interno ${disk.type.toUpperCase()} ${capacity} (removido)`,
         price: 0 // Preço zero para remoção
       };
       onSelectStorageItem(removalOption, 'internal');
