@@ -4,7 +4,7 @@ import { ComponentOption } from "@/types/component";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { extractStorageCapacity, normalizeStorageCapacity } from "@/utils/storage-utils";
-import { X } from "lucide-react";
+import { X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
@@ -76,29 +76,42 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
           {disks.map((disk) => (
             <div 
               key={disk.id} 
-              className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
+              className="flex flex-col gap-1 animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
             >
-              <p className="text-sm">
-                {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                  `${disk.metadata.quantity}x ${getDisplayCapacity(disk)}` : 
-                  getDisplayCapacity(disk)
-                }
-              </p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
-                
-                {onRemoveItem && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onRemoveItem(disk.id)}
-                  >
-                    <X className="h-3 w-3" />
-                    <span className="sr-only">Remover disco</span>
-                  </Button>
-                )}
+              <div className="flex justify-between items-center group">
+                <p className="text-sm">
+                  {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
+                    `${disk.metadata.quantity}x ${getDisplayCapacity(disk)}` : 
+                    getDisplayCapacity(disk)
+                  }
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                  
+                  {onRemoveItem && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => onRemoveItem(disk.id)}
+                    >
+                      <X className="h-3 w-3" />
+                      <span className="sr-only">Remover disco</span>
+                    </Button>
+                  )}
+                </div>
               </div>
+              
+              {/* Mostrar informações de RAID quando presentes */}
+              {disk.metadata?.raid && disk.metadata.raid.type !== 'none' && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-1">
+                  <Shield className="h-3 w-3 text-orange-500" />
+                  <span>
+                    RAID {disk.metadata.raid.type} 
+                    ({disk.metadata.raid.isHardware ? 'Hardware' : 'Software'})
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>
