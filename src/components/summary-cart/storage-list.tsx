@@ -75,34 +75,37 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
               {type.toUpperCase()}
             </Badge>
           </div>
-          {disks.map((disk) => (
-            <div 
-              key={disk.id} 
-              className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
-            >
-              <p className="text-sm">
-                {disk.metadata?.quantity && disk.metadata.quantity > 1 ? 
-                  `${disk.metadata.quantity}x ${getDisplayCapacity(disk)}` : 
-                  getDisplayCapacity(disk)
-                }
-              </p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
-                
-                {onRemoveItem && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onRemoveItem(disk.id)}
-                  >
-                    <X className="h-3 w-3" />
-                    <span className="sr-only">Remover disco</span>
-                  </Button>
-                )}
+          {disks.map((disk) => {
+            // Get disk quantity from metadata or default to 1
+            const quantity = disk.metadata?.quantity || 1;
+            const displayName = quantity > 1 ? `${quantity}x ${disk.name}` : disk.name;
+            
+            return (
+              <div 
+                key={disk.id} 
+                className="flex justify-between items-center group animate-fade-in pl-2 hover:bg-accent/20 p-1 rounded-md transition-colors"
+              >
+                <p className="text-sm">
+                  {displayName}
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
+                  
+                  {onRemoveItem && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => onRemoveItem(disk.id)}
+                    >
+                      <X className="h-3 w-3" />
+                      <span className="sr-only">Remover disco</span>
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ))}
     </>

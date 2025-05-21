@@ -105,7 +105,10 @@ export function SummaryCart({
       
       <CartContent 
         selectedComponents={selectedComponents}
-        storageItems={storageItems}
+        storageItems={{
+          internal: uniqueInternalDisks,
+          external: uniqueExternalStorage
+        }}
         connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}
       />

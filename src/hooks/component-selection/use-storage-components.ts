@@ -28,10 +28,10 @@ export function useStorageComponents() {
           const existingDiskIndex = prev.internal.findIndex(disk => disk.id === option.id);
           
           if (existingDiskIndex >= 0) {
-            // Substituir o disco existente em vez de adicionar um novo
-            const newInternalArray = [...prev.internal];
-            newInternalArray[existingDiskIndex] = option;
-            updatedItems.internal = newInternalArray;
+            // Atualizar o disco existente (normalmente para mudar a quantidade)
+            updatedItems.internal = prev.internal.map((disk, index) => 
+              index === existingDiskIndex ? option : disk
+            );
           } else {
             // Adicionar novo disco apenas se não existir
             updatedItems.internal = [...prev.internal, option];
@@ -40,19 +40,19 @@ export function useStorageComponents() {
       } else {
         // Para storage externo, substituímos o item existente se houver um
         if (option.price === 0) {
-          updatedItems.external = [];
+          updatedItems.external = prev.external.filter(storage => storage.id !== option.id);
         } else {
           // Verificar se já temos um storage externo com o mesmo ID
           const existingIndex = prev.external.findIndex(storage => storage.id === option.id);
           
           if (existingIndex >= 0) {
-            // Substituir o storage existente
-            const newExternalArray = [...prev.external];
-            newExternalArray[existingIndex] = option;
-            updatedItems.external = newExternalArray;
+            // Atualizar o storage existente
+            updatedItems.external = prev.external.map((storage, index) => 
+              index === existingIndex ? option : storage
+            );
           } else {
-            // Limpar storage anterior e adicionar o novo
-            updatedItems.external = [option];
+            // Adicionar novo storage
+            updatedItems.external = [...prev.external, option];
           }
         }
       }
