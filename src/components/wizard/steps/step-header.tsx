@@ -19,7 +19,7 @@ export function StepHeader({
   return (
     <div className="mb-4 flex items-start">
       <p className="text-sm text-muted-foreground pr-2">{description}</p>
-      <HelpTooltip content="Selecione uma opção para configurar este componente" />
+      <HelpTooltip description="Selecione uma opção para configurar este componente" />
     </div>
   );
 }
