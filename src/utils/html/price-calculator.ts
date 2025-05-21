@@ -115,7 +115,8 @@ export function deduplicateStorageItems(items: ComponentOption[]): ComponentOpti
 }
 
 // CORREÇÃO: Função expandida para gerar múltiplas possíveis chaves para um item de armazenamento
-function generatePossibleKeys(item: ComponentOption): string[] {
+// Agora exportada para poder ser usada em outros arquivos
+export function generatePossibleKeys(item: ComponentOption): string[] {
   if (!item) return [];
   
   const keys: string[] = [];

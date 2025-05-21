@@ -1,11 +1,10 @@
-
 import { useState, useCallback } from "react";
 import { ComponentOption, StorageItems } from "@/types/component";
 import { toast } from "sonner";
 import { deduplicateStorageItems, generatePossibleKeys } from "@/utils/html/price-calculator";
 
-// CORREÇÃO: Adicionamos a função generatePossibleKeys se não existir no arquivo price-calculator
-// Esta é uma versão simplificada para manter compatibilidade
+// Esta função não será mais necessária já que a função generatePossibleKeys agora está sendo exportada
+// Mas vamos mantê-la como um fallback no caso de mudanças futuras
 function generateKeysLocally(item: ComponentOption): string[] {
   if (!item) return [];
   
@@ -44,10 +43,8 @@ function generateKeysLocally(item: ComponentOption): string[] {
 
 // Usa a função do price-calculator ou nossa implementação local
 const getItemKeys = (item: ComponentOption): string[] => {
-  if (typeof generatePossibleKeys === 'function') {
-    return generatePossibleKeys(item);
-  }
-  return generateKeysLocally(item);
+  // Agora podemos usar diretamente generatePossibleKeys já que ela é exportada
+  return generatePossibleKeys(item);
 };
 
 export function useStorageComponents() {
