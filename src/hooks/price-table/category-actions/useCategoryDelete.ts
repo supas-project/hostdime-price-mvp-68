@@ -43,13 +43,15 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       
       // Get updated data after deletion
       const updatedData = await PriceService.getAllData();
+      
+      // Importante: Atualizar o estado com os dados mais recentes
       setPriceData(updatedData);
       
       // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
       toast.success("Categoria excluída", {
-        description: "A categoria foi excluída com sucesso."
+        description: `A categoria "${categoryName}" foi excluída com sucesso.`
       });
       
       return true;

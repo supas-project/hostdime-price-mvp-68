@@ -42,9 +42,15 @@ export function CategoryTabs({
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    onDeleteCategory(categoryId);
-    setConfirmingDelete(null);
-    console.log(`Excluindo categoria: ${categoryId}`);
+    try {
+      console.log(`[CategoryTabs] Solicitando exclusão da categoria: ${categoryId}`);
+      onDeleteCategory(categoryId);
+    } catch (error) {
+      console.error(`[CategoryTabs] Erro ao excluir categoria ${categoryId}:`, error);
+    } finally {
+      // Limpar o estado de confirmação independentemente do resultado
+      setConfirmingDelete(null);
+    }
   };
 
   const visibleCategories = categories.slice(tabsOffset, tabsOffset + getVisibleTabsCount());
