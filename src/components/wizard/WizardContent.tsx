@@ -1,3 +1,4 @@
+
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -76,8 +77,8 @@ export function WizardContent() {
     
     initializeData();
     
-    // Adicionar listener para atualizações de dados
-    PriceService.addDataChangeListener(() => {
+    // Modificando para passar um valor nulo para o notifyListeners
+    PriceService.addDataChangeListener((data) => {
       // Atualizar automaticamente quando houver mudanças nos dados
       initializeServerCategories();
     });

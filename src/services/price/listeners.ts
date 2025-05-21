@@ -21,8 +21,13 @@ export function addDataChangeListener(listener: DataChangeListener): void {
  * Remover um ouvinte de mudanças nos dados
  * @param listener Função a ser removida
  */
-export function removeDataChangeListener(listener: DataChangeListener): void {
-  listeners.delete(listener);
+export function removeDataChangeListener(listener?: DataChangeListener): void {
+  if (listener) {
+    listeners.delete(listener);
+  } else {
+    // Se nenhum listener específico for fornecido, não faz nada
+    // Isso evita erros quando removeDataChangeListener é chamado sem parâmetros
+  }
   console.log(`[PriceService] Listener removed. Total listeners: ${listeners.size}`);
 }
 

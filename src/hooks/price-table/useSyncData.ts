@@ -14,9 +14,10 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
         await syncWithLatestData();
         await loadPriceData();
         
-        // Notify any listeners about the data changes
-        // This ensures all components are updated when data changes
-        notifyListeners();
+        // Notificar com dados atualizados (ou null se não houver)
+        // Certifique-se de obter os dados mais recentes para notificar
+        const updatedData = await PriceService.getAllData();
+        notifyListeners(updatedData);
         
         toast.success("Data updated successfully!");
       }

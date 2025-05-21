@@ -1,52 +1,52 @@
 
-import { v4 as uuidv4 } from 'uuid';
-import { PriceItem } from '@/types/pricing';
+import { PriceItem } from "@/types/pricing";
+import { v4 as uuidv4 } from "uuid";
 
 /**
- * Cria um novo item com UUID gerado automaticamente
- * @param item Item parcial a ser completado
+ * Cria um novo item com UUID e dados padrão
+ * @param item Dados parciais do item
  * @returns Item completo com ID
  */
 export function createItem(item: Partial<PriceItem>): PriceItem {
-  // Garantir que o item tenha um ID
-  const id = item.id || uuidv4();
-  
-  // Criar o item com valores padrão para campos opcionais
   return {
-    id,
-    name: item.name || '',
-    description: item.description || '',
+    id: uuidv4(),
+    name: item.name || "",
+    description: item.description || "",
     price: item.price || 0,
-    type: item.type || 'generic',
+    type: item.type || "default",
     specs: item.specs || [],
+    subtype: item.subtype,
     tags: item.tags || [],
     metadata: {
       ...item.metadata,
       features: item.metadata?.features || [],
-    },
-  } as PriceItem;
-}
-
-/**
- * Atualiza um item existente com novas propriedades
- * @param originalItem Item original
- * @param updatedProperties Propriedades a serem atualizadas
- * @returns Item atualizado
- */
-export function updateItem(originalItem: PriceItem, updatedProperties: Partial<PriceItem>): PriceItem {
-  return {
-    ...originalItem,
-    ...updatedProperties,
-    // Garantir que metadata seja mesclada corretamente
-    metadata: {
-      ...originalItem.metadata,
-      ...updatedProperties.metadata,
-      // Mesclar arrays dentro de metadata se existirem
-      features: updatedProperties.metadata?.features || originalItem.metadata?.features || [],
-    },
-    // Mesclar arrays se existirem
-    specs: updatedProperties.specs || originalItem.specs || [],
-    tags: updatedProperties.tags || originalItem.tags || [],
+    }
   };
 }
 
+/**
+ * Atualiza um item existente com novos dados
+ * @param originalItem Item original
+ * @param updatedData Dados atualizados
+ * @returns Item atualizado
+ */
+export function updateItem(
+  originalItem: PriceItem,
+  updatedData: Partial<PriceItem>
+): PriceItem {
+  return {
+    ...originalItem,
+    name: updatedData.name !== undefined ? updatedData.name : originalItem.name,
+    description: updatedData.description !== undefined ? updatedData.description : originalItem.description,
+    price: updatedData.price !== undefined ? updatedData.price : originalItem.price,
+    type: updatedData.type !== undefined ? updatedData.type : originalItem.type,
+    specs: updatedData.specs || originalItem.specs || [],
+    subtype: updatedData.subtype !== undefined ? updatedData.subtype : originalItem.subtype,
+    tags: updatedData.tags || originalItem.tags || [],
+    metadata: {
+      ...originalItem.metadata,
+      ...updatedData.metadata,
+      features: updatedData.metadata?.features || originalItem.metadata?.features || [],
+    }
+  };
+}
