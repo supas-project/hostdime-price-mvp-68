@@ -9,6 +9,7 @@ import { ExternalStorageList } from "./external-storage-list";
 import { ConnectivityList } from "./connectivity-list";
 import { StorageItems } from "@/types/component";
 import { cn } from "@/lib/utils";
+import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface CartContentProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -23,6 +24,16 @@ export function CartContent({
   connectivityItems,
   onRemoveItem
 }: CartContentProps) {
+  // CORREÇÃO: Usar sempre listas deduplicadas
+  const uniqueStorageItems = {
+    internal: deduplicateStorageItems(storageItems.internal),
+    external: deduplicateStorageItems(storageItems.external)
+  };
+  
+  // Log para debug
+  console.log(`[CartContent] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
+  console.log(`[CartContent] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
+  
   // Separate components by type
   const dataCenterComponent = selectedComponents["datacenter"];
   const contractComponent = selectedComponents["contrato"];
@@ -40,8 +51,8 @@ export function CartContent({
   // Check if there are any components or items to display
   const hasItems = Boolean(
     standardComponents.length || 
-    storageItems.internal.length || 
-    storageItems.external.length ||
+    uniqueStorageItems.internal.length || 
+    uniqueStorageItems.external.length ||
     Object.keys(connectivityItems).length
   );
   
@@ -70,15 +81,15 @@ export function CartContent({
         onRemoveItem={onRemoveItem}
       />
       
-      {/* Internal Storage components */}
+      {/* Internal Storage components - CORREÇÃO: Usar lista deduplicada */}
       <StorageList 
-        storageItems={storageItems.internal} 
+        storageItems={uniqueStorageItems.internal} 
         onRemoveItem={onRemoveItem}
       />
       
-      {/* External Storage components */}
+      {/* External Storage components - CORREÇÃO: Usar lista deduplicada */}
       <ExternalStorageList 
-        storageItems={storageItems.external} 
+        storageItems={uniqueStorageItems.external} 
         onRemoveItem={onRemoveItem}
       />
       

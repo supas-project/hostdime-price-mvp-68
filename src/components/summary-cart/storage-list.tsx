@@ -14,8 +14,9 @@ interface StorageListProps {
 }
 
 export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
-  // Deduplica itens usando a função centralizada
+  // CORREÇÃO: Sempre deduplica itens antes de qualquer processamento
   const uniqueItems = deduplicateStorageItems(storageItems);
+  console.log(`[StorageList] Itens originais: ${storageItems.length}, itens únicos: ${uniqueItems.length}`);
   
   // Agrupar discos por tipo e capacidade para exibição
   const groupedStorage = uniqueItems.reduce((groups, disk) => {

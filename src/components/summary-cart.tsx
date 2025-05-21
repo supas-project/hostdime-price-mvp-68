@@ -7,6 +7,7 @@ import { CartContent } from "./summary-cart/cart-content";
 import { CartFooter } from "./summary-cart/cart-footer";
 import { CartNavigation } from "./summary-cart/cart-navigation";
 import { cn } from "@/lib/utils";
+import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -27,6 +28,17 @@ export function SummaryCart({
 }: SummaryCartProps) {
   const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
 
+  // CORREÇÃO: Usar sempre itens deduplicados
+  const uniqueStorageItems = {
+    internal: deduplicateStorageItems(storageItems.internal),
+    external: deduplicateStorageItems(storageItems.external)
+  };
+  
+  // Log para debug
+  console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`); 
+  console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
+  console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
+
   // Filter standard components (excluding DataCenter and Contract)
   const standardComponents = Object.values(selectedComponents).filter(
     component => {
@@ -43,11 +55,12 @@ export function SummaryCart({
     0
   );
   
-  const internalStoragePrice = storageItems.internal
+  // CORREÇÃO: Usar os arrays deduplicados para calcular os preços
+  const internalStoragePrice = uniqueStorageItems.internal
     .filter(disk => disk && disk.price > 0)
     .reduce((sum, disk) => sum + disk.price, 0);
   
-  const externalStoragePrice = storageItems.external
+  const externalStoragePrice = uniqueStorageItems.external
     .filter(storage => storage && storage.price > 0)
     .reduce((sum, storage) => sum + storage.price, 0);
 
@@ -56,15 +69,16 @@ export function SummaryCart({
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
 
   const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice + connectivityPrice;
+  console.log(`[SummaryCart] Total calculado: ${totalPrice}`);
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   
-  // Verifica se há qualquer componente ou item selecionado
+  // Verifica se há qualquer componente ou item selecionado usando os arrays deduplicados
   const hasItems = Boolean(
     Object.keys(selectedComponents).length || 
-    storageItems.internal.length || 
-    storageItems.external.length ||
+    uniqueStorageItems.internal.length || 
+    uniqueStorageItems.external.length ||
     Object.keys(connectivityItems).length
   );
   
@@ -73,6 +87,7 @@ export function SummaryCart({
   };
   
   const handleRemoveComponentWithFeedback = (type: string) => {
+    console.log(`[SummaryCart] Removendo componente: ${type}`);
     handleRemoveComponent(type);
   };
   
@@ -97,7 +112,7 @@ export function SummaryCart({
       
       <CartContent 
         selectedComponents={selectedComponents}
-        storageItems={storageItems}
+        storageItems={uniqueStorageItems}
         connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}
       />
