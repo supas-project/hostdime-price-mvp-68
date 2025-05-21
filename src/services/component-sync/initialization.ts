@@ -1,4 +1,3 @@
-
 import { PriceService } from "@/services/price-service";
 import { serverData } from "@/data/server-components";
 import { ComponentOption, ServerComponent } from "@/types/component";
@@ -6,7 +5,7 @@ import { StorageService } from "@/services/storage-service";
 import { diskPricing } from "@/data/storage-pricing";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { convertConnectivityPriceDataToComponents } from "./connectivity-converter";
-import { convertProcessorPriceDataToComponents } from "./processor-converter";
+import { convertProcessorPriceDataToComponents, syncProcessorUpdatesFromPriceTable } from "./processor-converter";
 import { logDebug } from "./utils";
 
 /**
@@ -98,6 +97,43 @@ export async function syncConnectivityData(): Promise<boolean> {
 }
 
 /**
+ * Sincroniza dados de processador
+ */
+export async function syncProcessorData(): Promise<boolean> {
+  try {
+    logDebug("Syncing processor data", {});
+    
+    // Sincronizar os dados do processador
+    const result = await syncProcessorUpdatesFromPriceTable();
+    
+    // Atualizar componente de processador no servidor se existir
+    if (result && serverData && serverData.componentes) {
+      // Obter os dados atualizados
+      const processorOptions = await convertProcessorPriceDataToComponents();
+      
+      // Encontrar o componente de processador
+      const processorComponent = serverData.componentes.find(
+        c => normalizeComponentType(c.type) === "processador"
+      );
+      
+      // Atualizar as opções se o componente existir
+      if (processorComponent && processorOptions.length > 0) {
+        processorComponent.options = processorOptions;
+        logDebug("Updated processor options", {
+          count: processorOptions.length
+        });
+      }
+    }
+    
+    logDebug("Processor data sync completed");
+    return true;
+  } catch (error) {
+    console.error("Erro ao sincronizar dados de processador:", error);
+    return false;
+  }
+}
+
+/**
  * Inicializa as categorias do servidor com base nos dados do serviço de preços
  */
 export async function initializeServerCategories() {
@@ -142,6 +178,15 @@ export async function initializeServerCategories() {
         }
       }
     }
+
+    // Configurar listeners para atualizações dos dados de preço
+    PriceService.addDataChangeListener(async () => {
+      console.log("[ServerCategories] Data change detected, refreshing categories");
+      // Atualizar processador quando houver mudanças
+      await syncProcessorData();
+      // Atualizar conectividade quando houver mudanças
+      await syncConnectivityData();
+    });
 
     logDebug("Server categories initialized successfully");
   } catch (error) {

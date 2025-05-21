@@ -2,6 +2,7 @@
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
 import { logDebug } from "./utils";
+import { notifyListeners } from "@/services/price/listeners";
 
 /**
  * Converte dados de processadores entre as tabelas de preço e os componentes do servidor
@@ -84,6 +85,9 @@ export async function saveProcessorComponentsToPriceData(
         category.items = updatedItems;
         await PriceService.updateCategory('processor', category);
         
+        // Notificar ouvintes sobre a atualização
+        notifyListeners();
+        
         logDebug("Processor data saved successfully");
         return true;
       }
@@ -92,6 +96,38 @@ export async function saveProcessorComponentsToPriceData(
     return false;
   } catch (error) {
     console.error("Erro ao salvar dados de processadores:", error);
+    return false;
+  }
+}
+
+/**
+ * Sincroniza alterações feitas na tabela de preços com os componentes do servidor
+ */
+export async function syncProcessorUpdatesFromPriceTable(): Promise<boolean> {
+  try {
+    logDebug("Syncing processor updates from price table");
+    
+    // Obter dados atualizados da categoria processor
+    const processorData = await PriceService.getCategory('processor');
+    
+    if (!processorData || !processorData.items) {
+      console.warn("Não foi possível obter dados de processador para sincronização");
+      return false;
+    }
+    
+    // Converter para formato de componentes
+    const processorComponents = await convertProcessorPriceDataToComponents();
+    
+    // Notificar listeners sobre as mudanças
+    notifyListeners();
+    
+    logDebug("Processor updates synced successfully", {
+      count: processorComponents.length
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao sincronizar atualizações de processadores:", error);
     return false;
   }
 }

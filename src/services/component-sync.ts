@@ -3,7 +3,11 @@
 export { convertConnectivityPriceDataToComponents, saveConnectivityComponentsToPriceData } from './component-sync/connectivity-converter';
 
 // Re-export from processor converter
-export { convertProcessorPriceDataToComponents, saveProcessorComponentsToPriceData } from './component-sync/processor-converter';
+export { 
+  convertProcessorPriceDataToComponents, 
+  saveProcessorComponentsToPriceData,
+  syncProcessorUpdatesFromPriceTable
+} from './component-sync/processor-converter';
 
 // Re-export utility functions
 export { logDebug } from './component-sync/utils';
@@ -14,5 +18,6 @@ export {
   initExternalStorageData,
   initializeServerCategories,
   cleanupDuplicateCategories,
-  syncConnectivityData
+  syncConnectivityData,
+  syncProcessorData
 } from './component-sync/initialization';

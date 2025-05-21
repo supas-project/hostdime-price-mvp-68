@@ -8,6 +8,7 @@ import { useProcessor } from "@/hooks/useProcessor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown } from "lucide-react";
 import { Cpu } from "lucide-react";
+import { PriceService } from "@/services/price-service";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -15,7 +16,7 @@ interface ProcessorContentProps {
 }
 
 export function ProcessorContent({ selectedOption, onSelectOption }: ProcessorContentProps) {
-  const { processorOptions, isLoading } = useProcessor();
+  const { processorOptions, isLoading, error } = useProcessor();
   const [localOptions, setLocalOptions] = useState<ComponentOption[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -26,12 +27,56 @@ export function ProcessorContent({ selectedOption, onSelectOption }: ProcessorCo
     }
   }, [processorOptions]);
 
+  // Adicionar listener para mudanças de dados
+  useEffect(() => {
+    // Adicionar listener para atualizações de dados
+    const handleDataChange = async () => {
+      console.log("[ProcessorContent] Data change detected, refreshing processor options");
+      // Recarregar opções de processador quando os dados mudarem
+      const refreshedOptions = await PriceService.getCategory('processor');
+      if (refreshedOptions && refreshedOptions.items) {
+        const convertedOptions = refreshedOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || `${item.name}`,
+          price: item.price,
+          type: 'Processador',
+          specs: item.specs || [],
+          metadata: {
+            cores: item.metadata?.cores || 0,
+            perCore: item.metadata?.perCore || false,
+            features: item.metadata?.features || []
+          }
+        }));
+        
+        setLocalOptions(convertedOptions);
+        console.log("[ProcessorContent] Refreshed processor options:", convertedOptions.length);
+      }
+    };
+
+    // Adicionar o listener
+    PriceService.addDataChangeListener(handleDataChange);
+
+    // Limpar o listener quando o componente for desmontado
+    return () => {
+      PriceService.removeDataChangeListener(handleDataChange);
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-red-500">Erro ao carregar opções de processador: {error}</p>
       </div>
     );
   }
