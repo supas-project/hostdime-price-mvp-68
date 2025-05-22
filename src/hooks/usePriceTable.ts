@@ -31,10 +31,7 @@ export function usePriceTable() {
   
   const { loadPriceData } = useDataLoader(isLoading, setIsLoading, setPriceData, isAuthenticated);
   const { filterItems } = useItemFilter(searchTerm, sortOrder);
-  
-  // Call useSyncData without any arguments as defined in its interface
-  const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
-  
+  const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData(loadPriceData);
   const tableActions = usePriceTableActions(activeTab, setPriceData);
 
   return {

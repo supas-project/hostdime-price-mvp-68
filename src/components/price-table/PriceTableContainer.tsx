@@ -28,7 +28,6 @@ export default function PriceTableContainer() {
     tableActions,
     isLoading: dataLoading,
     hasUpdates,
-    handleSyncData,
     loadPriceData,
     lastSyncTime
   } = priceTableState;
@@ -55,11 +54,7 @@ export default function PriceTableContainer() {
   useEffect(() => {
     if (hasUpdates) {
       console.log("PriceTableContainer: Updates detected, refreshing data");
-      const syncAndRefresh = async () => {
-        await handleSyncData();  // First sync with latest data
-        await loadPriceData();   // Then reload price data
-      };
-      syncAndRefresh();
+      handleRefreshData();
     }
   }, [hasUpdates]);
 
