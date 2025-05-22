@@ -75,25 +75,17 @@ export function CartContent({
       "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
       "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
     )}>
-      {/* Data Center - CORREÇÃO: Adicionar verificação de console para debug */}
-      {dataCenterComponent ? (
-        <>
-          {console.log("[CartContent] Renderizando DataCenterItem com:", dataCenterComponent)}
-          <DataCenterItem component={dataCenterComponent} />
-        </>
-      ) : (
-        console.log("[CartContent] Não há componente DataCenter para renderizar")
-      )}
+      {/* Data Center - CORREÇÃO: Mover console.log para fora do JSX */}
+      {(() => {
+        console.log("[CartContent] Renderizando DataCenterItem com:", dataCenterComponent);
+        return dataCenterComponent ? <DataCenterItem component={dataCenterComponent} /> : null;
+      })()}
       
-      {/* Contract - CORREÇÃO: Adicionar verificação de console para debug */}
-      {contractComponent ? (
-        <>
-          {console.log("[CartContent] Renderizando ContractItem com:", contractComponent)}
-          <ContractItem component={contractComponent} />
-        </>
-      ) : (
-        console.log("[CartContent] Não há componente Contrato para renderizar")
-      )}
+      {/* Contract - CORREÇÃO: Mover console.log para fora do JSX */}
+      {(() => {
+        console.log("[CartContent] Renderizando ContractItem com:", contractComponent);
+        return contractComponent ? <ContractItem component={contractComponent} /> : null;
+      })()}
       
       {/* Standard components with prices */}
       <StandardComponentList 
