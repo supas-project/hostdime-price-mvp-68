@@ -7,7 +7,7 @@ import { toast } from '@/utils/toast-utils';
 /**
  * Hook for managing data synchronization
  */
-export function useSyncData(loadPriceData: () => Promise<void>) {
+export function useSyncData() {
   const [hasUpdates, setHasUpdates] = useState(false);
   const { lastSyncTime, syncWithLatestData } = useDataSync();
 
@@ -27,8 +27,7 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
       // Sync with latest data
       await syncWithLatestData();
       
-      // Reload price data
-      await loadPriceData();
+      // Reload price data will be called by the component using this hook
       
       // Clear updates flag
       setHasUpdates(false);
