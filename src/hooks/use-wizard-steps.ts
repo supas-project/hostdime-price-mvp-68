@@ -17,6 +17,9 @@ export function useWizardSteps() {
         // Carregar dados do serviço de preços para garantir que temos os dados mais recentes
         await PriceService.forceRefreshFromLatestSource();
         setCategoriesLoaded(true);
+        
+        // CORREÇÃO: Log para debug
+        console.log("[useWizardSteps] Categorias carregadas com sucesso");
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
       }
@@ -35,6 +38,10 @@ export function useWizardSteps() {
     if (!component) return false;
 
     const normalizedType = normalizeComponentType(component.type);
+    
+    // CORREÇÃO: Log para debug da verificação de completude da etapa
+    console.log(`[isStepComplete] Verificando etapa ${stepIndex}, tipo: ${component.type}, normalizado: ${normalizedType}`);
+    console.log(`[isStepComplete] Componentes selecionados:`, selectedComponents);
 
     // Serviços Personalizados é o único passo opcional
     if (normalizedType === "servicospersonalizados") {
@@ -45,7 +52,13 @@ export function useWizardSteps() {
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "memoria"
       );
+    } else if (normalizedType === "datacenter") {
+      // CORREÇÃO: Verificar componentes de datacenter corretamente
+      return Object.keys(selectedComponents).some(
+        key => normalizeComponentType(key) === "datacenter"
+      );
     } else if (normalizedType === "contrato") {
+      // CORREÇÃO: Verificar componentes de contrato corretamente
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "contrato"
       );

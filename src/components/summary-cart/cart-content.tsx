@@ -35,9 +35,14 @@ export function CartContent({
   console.log(`[CartContent] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[CartContent] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
   
-  // Separate components by type
-  const dataCenterComponent = selectedComponents["datacenter"];
-  const contractComponent = selectedComponents["contrato"];
+  // Separate components by type - CORREÇÃO: Buscar pelo tipo correto
+  // Estas são as chaves corretas para cada tipo específico de componente
+  const dataCenterComponent = selectedComponents["datacenter"] || selectedComponents["DataCenter"];
+  const contractComponent = selectedComponents["contrato"] || selectedComponents["Contrato"];
+  
+  // Log para debug dos componentes de Data Center e Contrato
+  console.log("[CartContent] Data Center Component:", dataCenterComponent);
+  console.log("[CartContent] Contract Component:", contractComponent);
   
   // Filter other components (excluding DataCenter, Contract and Storage)
   const standardComponents = Object.values(selectedComponents).filter(
@@ -70,11 +75,25 @@ export function CartContent({
       "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
       "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
     )}>
-      {/* Data Center */}
-      <DataCenterItem component={dataCenterComponent} />
+      {/* Data Center - CORREÇÃO: Adicionar verificação de console para debug */}
+      {dataCenterComponent ? (
+        <>
+          {console.log("[CartContent] Renderizando DataCenterItem com:", dataCenterComponent)}
+          <DataCenterItem component={dataCenterComponent} />
+        </>
+      ) : (
+        console.log("[CartContent] Não há componente DataCenter para renderizar")
+      )}
       
-      {/* Contract */}
-      <ContractItem component={contractComponent} />
+      {/* Contract - CORREÇÃO: Adicionar verificação de console para debug */}
+      {contractComponent ? (
+        <>
+          {console.log("[CartContent] Renderizando ContractItem com:", contractComponent)}
+          <ContractItem component={contractComponent} />
+        </>
+      ) : (
+        console.log("[CartContent] Não há componente Contrato para renderizar")
+      )}
       
       {/* Standard components with prices */}
       <StandardComponentList 

@@ -19,12 +19,20 @@ export function DataCenterContent({
   // Local state to track selection
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
+  // CORREÇÃO: Log para debug
+  console.log("[DataCenterContent] Opções disponíveis:", options);
+  console.log("[DataCenterContent] Opção selecionada:", selectedOption);
+  
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {
     if (selectedOption) {
       // Try to find a matching component in case the selectedOption came from elsewhere
       const matchingComponent = findMatchingComponent(selectedOption, options);
       setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+      
+      // CORREÇÃO: Log para debug
+      console.log("[DataCenterContent] selectedOption alterado:", selectedOption);
+      console.log("[DataCenterContent] matchingComponent encontrado:", matchingComponent);
     } else {
       setLocalSelectedId("");
     }
@@ -33,7 +41,14 @@ export function DataCenterContent({
   const handleChange = (value: string) => {
     setLocalSelectedId(value);
     const option = options.find(opt => opt.id === value);
-    if (option) onSelectOption(option);
+    
+    // CORREÇÃO: Adicionar verificação e log
+    if (option) {
+      console.log("[DataCenterContent] Selecionando opção:", option);
+      onSelectOption({...option, type: "datacenter"}); // Garantir que o tipo é lowercase para compatibilidade
+    } else {
+      console.warn("[DataCenterContent] Opção não encontrada para id:", value);
+    }
   };
 
   return (

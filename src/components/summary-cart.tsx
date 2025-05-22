@@ -38,6 +38,11 @@ export function SummaryCart({
   console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`);
   console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
+  
+  // CORREÇÃO: Log para debug dos componentes selecionados
+  console.log("[SummaryCart] Todos os componentes selecionados:", selectedComponents);
+  console.log("[SummaryCart] Data Center:", selectedComponents["datacenter"]);
+  console.log("[SummaryCart] Contrato:", selectedComponents["contrato"]);
 
   // Filter standard components (excluding DataCenter and Contract)
   const standardComponents = Object.values(selectedComponents).filter(

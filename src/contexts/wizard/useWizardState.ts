@@ -28,21 +28,50 @@ export function useWizardState() {
   const [connectivityItems, setConnectivityItems] = useState<ConnectivityItemsMap>({});
   const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
 
+  // CORREÇÃO: Log para debug do estado inicial
+  useEffect(() => {
+    console.log("[useWizardState] Estado inicial de componentes selecionados:", selectedComponents);
+  }, []);
+
   // Função para selecionar um componente
   const selectComponent = useCallback((
     componentType: string,
     option: ComponentOption,
     quantity: number
   ) => {
-    setSelectedComponents((prevComponents) => ({
-      ...prevComponents,
-      [componentType]: option,
-    }));
+    // CORREÇÃO: Log de debug para a seleção de componentes
+    console.log(`[selectComponent] Selecionando componente tipo: ${componentType}, opção:`, option);
+    
+    // CORREÇÃO: Garantir que estamos usando a chave correta para salvar no estado
+    let normalizedType = componentType.toLowerCase();
+    
+    // Ajustes específicos para DataCenter e Contrato
+    if (normalizedType === "datacenter") {
+      normalizedType = "datacenter";
+    } else if (normalizedType === "contrato") {
+      normalizedType = "contrato";
+    }
+    
+    // Atualizar o estado com a nova seleção
+    setSelectedComponents((prevComponents) => {
+      const newComponents = {
+        ...prevComponents,
+        [normalizedType]: option,
+      };
+      
+      console.log(`[selectComponent] Componentes atualizados:`, newComponents);
+      return newComponents;
+    });
   }, []);
 
   // Wrapper para selectComponent com quantidade padrão 1
   const handleSelectOption = useCallback((option: ComponentOption) => {
-    selectComponent(option.type, option, 1);
+    // CORREÇÃO: Log para debug
+    console.log(`[handleSelectOption] Selecionando opção:`, option);
+    
+    // Garantir que estamos usando o tipo correto
+    const normalizedType = option.type.toLowerCase();
+    selectComponent(normalizedType, option, 1);
   }, [selectComponent]);
 
   // Função para selecionar itens de armazenamento
@@ -71,14 +100,23 @@ export function useWizardState() {
 
   // Função para remover componentes
   const removeComponent = useCallback((componentType: string, optionId: string) => {
+    // CORREÇÃO: Log para debug
+    console.log(`[removeComponent] Removendo componente tipo: ${componentType}, id: ${optionId}`);
+    
     setSelectedComponents((prevComponents) => {
       const newComponents = { ...prevComponents };
+      
+      // Normalizar o tipo para garantir consistência
+      const normalizedType = componentType.toLowerCase();
+      
       if (
-        newComponents[componentType] &&
-        newComponents[componentType].id === optionId
+        newComponents[normalizedType] &&
+        newComponents[normalizedType].id === optionId
       ) {
-        delete newComponents[componentType];
+        delete newComponents[normalizedType];
       }
+      
+      console.log(`[removeComponent] Componentes após remoção:`, newComponents);
       return newComponents;
     });
   }, []);

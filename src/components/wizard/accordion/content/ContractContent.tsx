@@ -20,19 +20,34 @@ export function ContractContent({
 }: ContractContentProps) {
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
+  // CORREÇÃO: Log para debug
+  console.log("[ContractContent] Opções disponíveis:", options);
+  console.log("[ContractContent] Opção selecionada:", selectedOption);
+  
   // Synchronize selected option when it changes
   useEffect(() => {
     if (selectedOption) {
       const matchingComponent = findMatchingComponent(selectedOption, options);
       setLocalSelectedId(matchingComponent?.id || selectedOption.id);
+      
+      // CORREÇÃO: Log para debug
+      console.log("[ContractContent] selectedOption alterado:", selectedOption);
+      console.log("[ContractContent] matchingComponent encontrado:", matchingComponent);
+    } else {
+      setLocalSelectedId("");
     }
   }, [selectedOption, options]);
   
   const handleOptionChange = (value: string) => {
     setLocalSelectedId(value);
     const option = options.find(opt => opt.id === value);
+    
+    // CORREÇÃO: Adicionar verificação e log
     if (option) {
-      onSelectOption(option);
+      console.log("[ContractContent] Selecionando opção:", option);
+      onSelectOption({...option, type: "contrato"}); // Garantir que o tipo é lowercase para compatibilidade
+    } else {
+      console.warn("[ContractContent] Opção não encontrada para id:", value);
     }
   };
 
