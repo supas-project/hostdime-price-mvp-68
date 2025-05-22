@@ -66,9 +66,9 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
   // Log the item being edited to debug
   useEffect(() => {
     if (isEditing && item) {
-      console.log("Editing item:", item);
-      console.log("Item specs:", item.specs);
-      console.log("Item tags:", item.tags);
+      console.log("[ItemForm] Editing item:", item);
+      console.log("[ItemForm] Item specs:", item.specs);
+      console.log("[ItemForm] Item tags:", item.tags);
     }
   }, [item, isEditing]);
   
@@ -102,17 +102,18 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
   // Atualiza o formulário quando o item muda (edição)
   useEffect(() => {
     if (item) {
+      console.log("[ItemForm] Resetting form with item data:", item);
       form.reset({
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        type: item.type,
+        name: item.name || "",
+        description: item.description || "",
+        price: item.price || 0,
+        type: item.type || defaultType || "",
         subtype: item.subtype || "",
-        specs: item.specs || [],
+        specs: Array.isArray(item.specs) ? item.specs : [],
         tags: getInitialTags(),
       });
     }
-  }, [item, form]);
+  }, [item, form, defaultType]);
 
   // Check if component is hardware based on type
   const isHardwareCategory = () => {
@@ -135,7 +136,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     }
     
     // Log values before submission to debug
-    console.log("Form values to submit:", values);
+    console.log("[ItemForm] Form values to submit:", values);
     
     // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
     if (isHardwareCategory() && !values.tags.includes("Hardware")) {
@@ -262,7 +263,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
                   onChange={e => {
                     const specLines = e.target.value.split('\n').filter(Boolean).map(line => line.trim());
                     field.onChange(specLines);
-                    console.log("Updated specs:", specLines);
+                    console.log("[ItemForm] Updated specs:", specLines);
                   }}
                 />
               </FormControl>
@@ -286,7 +287,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
                   value={field.value || []} 
                   onChange={(newTags) => {
                     field.onChange(newTags);
-                    console.log("Updated tags:", newTags);
+                    console.log("[ItemForm] Updated tags:", newTags);
                   }}
                   defaultTags={["Hardware"]}  
                 />

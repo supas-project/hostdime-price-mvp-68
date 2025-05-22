@@ -1,42 +1,53 @@
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { CategoryForm } from "./forms/CategoryForm";
 import { ItemForm } from "./forms/ItemForm";
-import { Plus, Download, RefreshCw } from "lucide-react";
+import { BulkItemImport } from "./forms/BulkItemImport";
+import { Plus, Download, RefreshCw, Upload } from "lucide-react";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { useState } from "react";
+
 interface TableActionsProps {
   activeTab: string;
   priceData: Record<string, PriceCategory>;
   openAddCategory: boolean;
   openAddItem: boolean;
   openEditItem: boolean;
+  openBulkImport: boolean;
   itemToEdit?: PriceItem;
   setOpenAddCategory: (open: boolean) => void;
   setOpenAddItem: (open: boolean) => void;
   setOpenEditItem: (open: boolean) => void;
+  setOpenBulkImport: (open: boolean) => void;
   setItemToEdit: (item?: PriceItem) => void;
   onAddCategory: (values: any) => void;
   onAddItem: (values: any) => void;
   onEditItem: (values: any, itemId?: string) => void;
+  onBulkImport: (items: PriceItem[]) => Promise<{success: boolean, message: string, importedCount: number}>;
   onExportData: () => void;
   onResetData: () => void;
 }
+
 export function TableActions({
   activeTab,
   priceData,
   openAddCategory,
   openAddItem,
   openEditItem,
+  openBulkImport,
   itemToEdit,
   setOpenAddCategory,
   setOpenAddItem,
   setOpenEditItem,
+  setOpenBulkImport,
   setItemToEdit,
   onAddCategory,
   onAddItem,
   onEditItem,
+  onBulkImport,
   onExportData,
   onResetData
 }: TableActionsProps) {
@@ -54,6 +65,7 @@ export function TableActions({
     onEditItem(values, itemId);
     handleCloseEditDialog();
   };
+  
   return <div className="flex flex-wrap gap-2">
       <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
         <DialogTrigger asChild>
@@ -84,6 +96,26 @@ export function TableActions({
                 <DialogTitle>Adicionar Item à {priceData[activeTab]?.name}</DialogTitle>
               </DialogHeader>
               <ItemForm onSubmit={onAddItem} defaultType={activeTab} />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={openBulkImport} onOpenChange={setOpenBulkImport}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar Múltiplos
+                <HelpTooltip title="Importar itens em massa" description={`Adiciona múltiplos itens à categoria ${priceData[activeTab]?.name || ''} via JSON`} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Importar Itens em Massa para {priceData[activeTab]?.name}</DialogTitle>
+              </DialogHeader>
+              <BulkItemImport 
+                categoryId={activeTab} 
+                onImport={onBulkImport} 
+                onClose={() => setOpenBulkImport(false)} 
+              />
             </DialogContent>
           </Dialog>
 

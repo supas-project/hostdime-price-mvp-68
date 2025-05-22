@@ -2,6 +2,7 @@
 import { useItemAdd } from "./item-actions/useItemAdd";
 import { useItemEdit } from "./item-actions/useItemEdit";
 import { useItemDelete } from "./item-actions/useItemDelete";
+import { useItemBulkImport } from "./item-actions/useItemBulkImport";
 import { PriceItem } from "@/types/pricing";
 import { syncProcessorData, syncMemoryData } from "@/services/component-sync";
 
@@ -31,9 +32,16 @@ export function useItemActions(
   } = useItemEdit(activeTab, setPriceData);
   
   const { handleDeleteItem } = useItemDelete(activeTab, setPriceData);
+  
+  const {
+    openBulkImport,
+    setOpenBulkImport,
+    isImporting,
+    handleBulkImport
+  } = useItemBulkImport(activeTab, setPriceData);
 
   // Combine isSubmitting states
-  const isSubmittingItem = isSubmittingAdd || isSubmittingEdit;
+  const isSubmittingItem = isSubmittingAdd || isSubmittingEdit || isImporting;
 
   // Check if the updated category needs special synchronization
   const handleCategorySync = async (categoryId: string) => {
@@ -54,8 +62,8 @@ export function useItemActions(
     return result;
   };
 
-  const handleEditItemWithSync = async (item: PriceItem) => {
-    const result = await handleEditItem(item);
+  const handleEditItemWithSync = async (values: any, itemId?: string) => {
+    const result = await handleEditItem(values, itemId);
     await handleCategorySync(activeTab);
     return result;
   };
@@ -65,12 +73,20 @@ export function useItemActions(
     await handleCategorySync(activeTab);
     return result;
   };
+  
+  const handleBulkImportWithSync = async (items: PriceItem[]) => {
+    const result = await handleBulkImport(items);
+    await handleCategorySync(activeTab);
+    return result;
+  };
 
   return {
     openAddItem,
     setOpenAddItem,
     openEditItem,
     setOpenEditItem,
+    openBulkImport,
+    setOpenBulkImport,
     itemToEdit,
     setItemToEdit,
     isSubmittingItem,
@@ -78,5 +94,6 @@ export function useItemActions(
     handleAddItem: handleAddItemWithSync,
     handleEditItem: handleEditItemWithSync,
     handleDeleteItem: handleDeleteItemWithSync,
+    handleBulkImport: handleBulkImportWithSync,
   };
 }

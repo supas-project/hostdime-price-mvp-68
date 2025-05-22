@@ -31,6 +31,7 @@ export function useItemEdit(
       return;
     }
     
+    console.log("[useItemEdit] Initiating edit for item:", item);
     setItemToEdit(item);
     setOpenEditItem(true);
   };
@@ -41,7 +42,7 @@ export function useItemEdit(
       toast.error("Você precisa estar autenticado", {
         description: "Faça login para editar itens."
       });
-      return;
+      return false;
     }
     
     // Check admin permission
@@ -49,18 +50,21 @@ export function useItemEdit(
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
       });
-      return;
+      return false;
     }
     
     if (!activeTab || !itemId) {
       toast.error("Erro ao editar item", {
         description: "Nenhuma categoria ou item selecionado."
       });
-      return;
+      return false;
     }
     
     try {
       setIsSubmittingItem(true);
+      
+      console.log("[useItemEdit] Editing item with values:", values);
+      console.log("[useItemEdit] Item ID:", itemId);
       
       const updatedItemData = {
         name: values.name,
@@ -74,8 +78,16 @@ export function useItemEdit(
         isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
       };
       
+      console.log("[useItemEdit] Prepared update data:", updatedItemData);
+      
       // Update item using existing method
-      await PriceService.updateItem(activeTab, itemId, updatedItemData);
+      const updated = await PriceService.updateItem(activeTab, itemId, updatedItemData);
+      
+      if (!updated) {
+        throw new Error("Falha ao atualizar o item. Verifique os logs para mais detalhes.");
+      }
+      
+      console.log("[useItemEdit] Item updated successfully:", updated);
       
       // Get fresh data
       const updatedData = await PriceService.getAllData();
@@ -93,11 +105,14 @@ export function useItemEdit(
       toast.success("Item atualizado", {
         description: `O item ${values.name} foi atualizado com sucesso.`
       });
+      
+      return true;
     } catch (error) {
-      console.error("Erro ao atualizar item:", error);
+      console.error("[useItemEdit] Error updating item:", error);
       toast.error("Erro ao editar item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
+      return false;
     } finally {
       setIsSubmittingItem(false);
     }

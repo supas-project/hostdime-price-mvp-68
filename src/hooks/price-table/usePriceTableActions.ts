@@ -28,6 +28,8 @@ export function usePriceTableActions(
     setOpenAddItem: itemActions.setOpenAddItem,
     openEditItem: itemActions.openEditItem,
     setOpenEditItem: itemActions.setOpenEditItem,
+    openBulkImport: itemActions.openBulkImport,
+    setOpenBulkImport: itemActions.setOpenBulkImport,
     itemToEdit: itemActions.itemToEdit,
     setItemToEdit: itemActions.setItemToEdit,
     isSubmittingItem: itemActions.isSubmittingItem,
@@ -35,6 +37,7 @@ export function usePriceTableActions(
     handleAddItem: itemActions.handleAddItem,
     handleEditItem: itemActions.handleEditItem,
     handleDeleteItem: itemActions.handleDeleteItem,
+    handleBulkImport: itemActions.handleBulkImport,
     
     // Data actions
     handleExportData: dataActions.handleExportData,

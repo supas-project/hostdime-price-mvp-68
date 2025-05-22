@@ -194,4 +194,3 @@ export function PriceTableContent({
     </Tabs>
   );
 }
-
