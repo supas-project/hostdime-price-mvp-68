@@ -66,12 +66,17 @@ export function BulkItemImport({ categoryId, onImport, onClose }: BulkItemImport
         };
       }
 
-      // Normalize the structure to an array of items
+      // Normalize the structure - handle nested arrays (important fix)
       let items: any[] = [];
       
-      // Handle if it's an array of items directly
       if (Array.isArray(parsed)) {
-        items = parsed;
+        // Check for nested arrays - common issue when pasting from other sources
+        if (parsed.length > 0 && Array.isArray(parsed[0])) {
+          items = parsed.flat();
+          corrections.push("Corrigido array aninhado (array dentro de array)");
+        } else {
+          items = parsed;
+        }
       } 
       // Handle if it's a category object with an items array
       else if (parsed && typeof parsed === 'object' && parsed.items && Array.isArray(parsed.items)) {
