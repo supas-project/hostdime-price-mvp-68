@@ -121,6 +121,23 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     return ["cpu", "memory", "disk", "storage", "chassis", "network"].includes(itemType.toLowerCase());
   };
 
+  // Função para normalizar valor monetário (converter formato brasileiro para número)
+  const normalizePrice = (value: string): number => {
+    if (!value) return 0;
+    
+    // Remove todos os caracteres não numéricos, exceto ponto e vírgula
+    const cleanedValue = value.replace(/[^\d.,]/g, '');
+    
+    // Verifica se está no formato brasileiro (1.234,56)
+    if (cleanedValue.indexOf('.') < cleanedValue.indexOf(',')) {
+      // Remove pontos e substitui vírgula por ponto
+      return parseFloat(cleanedValue.replace(/\./g, '').replace(',', '.'));
+    }
+    
+    // Se não estiver no formato brasileiro, apenas converte para float
+    return parseFloat(cleanedValue.replace(',', '.'));
+  };
+
   const handleSubmit = (values: FormValues) => {
     // Evita múltiplas submissões
     if (isSubmitting) return;
@@ -197,24 +214,34 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
               <FormLabel>Preço (R$)</FormLabel>
               <FormControl>
                 <Input 
-                  type="number" 
-                  min="0" 
-                  step="0.01" 
-                  placeholder="0.00"
+                  type="text" 
+                  placeholder="0,00"
                   {...field}
+                  value={typeof field.value === 'number' ? field.value.toString().replace('.', ',') : field.value}
                   onChange={(e) => {
-                    // Garantir que o valor seja um número válido
-                    const value = e.target.value;
-                    const numValue = parseFloat(value);
-                    if (isNaN(numValue) || numValue < 0) {
-                      e.target.setCustomValidity("Preço deve ser um número positivo");
+                    const inputValue = e.target.value;
+                    // Permitir números, vírgulas, pontos e remover outros caracteres
+                    const filteredValue = inputValue.replace(/[^\d.,]/g, '');
+                    
+                    // Atualizar o campo com o valor filtrado
+                    field.onChange(filteredValue);
+                  }}
+                  onBlur={(e) => {
+                    // Na perda de foco, converte para número corretamente
+                    const normalizedValue = normalizePrice(e.target.value);
+                    if (!isNaN(normalizedValue)) {
+                      // Usar o valor numérico normalizado
+                      field.onChange(normalizedValue);
                     } else {
-                      e.target.setCustomValidity("");
-                      field.onChange(value);
+                      // Se for inválido, zerar
+                      field.onChange(0);
                     }
                   }}
                 />
               </FormControl>
+              <FormDescription>
+                Use o formato brasileiro (ex: 1.234,56)
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -275,7 +302,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
           )}
         />
 
-        {/* Add Tags field */}
         <FormField
           control={form.control}
           name="tags"

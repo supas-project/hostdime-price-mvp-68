@@ -11,7 +11,11 @@ export function useSyncData() {
   const handleSyncData = async () => {
     try {
       if (hasUpdates) {
+        console.log("[useSyncData] Syncing data with latest version...");
         await syncWithLatestData();
+        
+        // Ensure data is properly refreshed from server
+        await PriceService.forceRefreshFromLatestSource();
         
         // Notify any listeners about the data changes
         // This ensures all components are updated when data changes
@@ -20,7 +24,7 @@ export function useSyncData() {
         toast.success("Data updated successfully!");
       }
     } catch (error) {
-      console.error("Error syncing data:", error);
+      console.error("[useSyncData] Error syncing data:", error);
       toast.error("Failed to sync data. Please try again.");
     }
   };

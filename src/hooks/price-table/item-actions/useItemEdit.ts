@@ -36,6 +36,31 @@ export function useItemEdit(
     setOpenEditItem(true);
   };
 
+  // Ensure price is always a valid number
+  const validatePrice = (price: any): number => {
+    // If it's already a number, return it
+    if (typeof price === 'number' && !isNaN(price)) {
+      return price;
+    }
+    
+    // If it's a string, try to convert it
+    if (typeof price === 'string') {
+      // Handle comma as decimal separator (Brazilian format)
+      const normalizedValue = price
+        .replace(/\./g, '') // Remove dots (thousand separators)
+        .replace(',', '.'); // Replace comma with dot (decimal separator)
+      
+      const numValue = parseFloat(normalizedValue);
+      if (!isNaN(numValue)) {
+        return numValue;
+      }
+    }
+    
+    // Default case: if conversion failed or input was invalid
+    console.warn("[useItemEdit] Invalid price value:", price);
+    return 0;
+  };
+
   const handleEditItem = async (values: any, itemId?: string) => {
     // Check authentication
     if (!isAuthenticated) {
@@ -66,10 +91,14 @@ export function useItemEdit(
       console.log("[useItemEdit] Editing item with values:", values);
       console.log("[useItemEdit] Item ID:", itemId);
       
+      // Ensure price is properly formatted
+      const price = validatePrice(values.price);
+      console.log("[useItemEdit] Validated price:", price);
+      
       const updatedItemData = {
         name: values.name,
         description: values.description,
-        price: values.price,
+        price: price,
         type: values.type,
         subtype: values.subtype,
         specs: Array.isArray(values.specs) ? values.specs : [],

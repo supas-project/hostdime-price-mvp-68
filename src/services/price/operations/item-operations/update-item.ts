@@ -1,4 +1,3 @@
-
 import { PriceItem } from '@/types/pricing';
 import { getAllData } from '../data-retrieval';
 import { saveData } from '../data-persistence';
@@ -24,6 +23,23 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
     if (itemIndex === -1) {
       console.error(`Item ${itemId} not found in category ${categoryId}`);
       return null;
+    }
+    
+    // Ensure price is a valid number
+    if (updates.price !== undefined) {
+      if (typeof updates.price !== 'number') {
+        try {
+          updates.price = Number(updates.price);
+          console.log(`Converted price to number: ${updates.price}`);
+        } catch (error) {
+          console.error(`Failed to convert price to number: ${updates.price}`);
+          // If conversion fails, keep the original price
+          updates.price = allData[categoryId].items[itemIndex].price;
+        }
+      }
+      
+      // Log the price being saved
+      console.log(`[updateItem] Saving price for ${itemId}: ${updates.price}`);
     }
     
     // Update the item

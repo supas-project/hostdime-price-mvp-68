@@ -3,7 +3,7 @@ import React from 'react';
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/utils/number-formatter";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,11 @@ export function TableContent({
   
   // Calculate price with possible contract discount
   const calculatePrice = (item: PriceItem): number => {
+    // Ensure price is a valid number
+    const basePrice = typeof item.price === 'number' && !isNaN(item.price) 
+      ? item.price 
+      : 0;
+      
     // If this is hardware and we have a contract, apply discount
     if ((item.isHardware || item.tags?.includes('Hardware')) && contractDuration !== "0") {
       // Map contract duration to discount percentage
@@ -48,10 +53,10 @@ export function TableContent({
       };
       
       const discount = discountMap[contractDuration] || 0;
-      return item.price * (1 - discount / 100);
+      return basePrice * (1 - discount / 100);
     }
     
-    return item.price;
+    return basePrice;
   };
 
   if (displayMode === "card") {
