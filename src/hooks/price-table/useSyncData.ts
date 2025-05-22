@@ -1,32 +1,50 @@
 
+import { useState, useEffect } from 'react';
 import { useDataSync } from '@/hooks/useDataSync';
-import { toast } from '@/utils/toast-utils';
 import { PriceService } from '@/services/price-service';
-import { notifyListeners } from '@/services/price/listeners';
+import { toast } from '@/utils/toast-utils';
 
+/**
+ * Hook for managing data synchronization
+ */
 export function useSyncData(loadPriceData: () => Promise<void>) {
-  const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
-  
-  // Function to sync with latest data when updates are available
+  const [hasUpdates, setHasUpdates] = useState(false);
+  const { lastSyncTime, syncWithLatestData } = useDataSync();
+
+  // Check for updates when lastSyncTime changes
+  useEffect(() => {
+    const checkUpdates = async () => {
+      const hasConflicts = await PriceService.checkForDataConflicts();
+      setHasUpdates(hasConflicts);
+    };
+    
+    checkUpdates();
+  }, [lastSyncTime]);
+
+  // Handle data synchronization
   const handleSyncData = async () => {
     try {
-      if (hasUpdates) {
-        await syncWithLatestData();
-        await loadPriceData();
-        
-        // Notify any listeners about the data changes
-        // This ensures all components are updated when data changes
-        notifyListeners();
-        
-        toast.success("Data updated successfully!");
-      }
+      // Sync with latest data
+      await syncWithLatestData();
+      
+      // Reload price data
+      await loadPriceData();
+      
+      // Clear updates flag
+      setHasUpdates(false);
+      
+      toast.success("Dados sincronizados", {
+        description: "Os dados foram sincronizados com sucesso."
+      });
     } catch (error) {
-      console.error("Error syncing data:", error);
-      toast.error("Failed to sync data. Please try again.");
+      toast.error("Erro na sincronização", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao sincronizar os dados."
+      });
+      console.error("[SyncData] Error syncing data:", error);
     }
   };
 
-  return {
+  return { 
     hasUpdates,
     handleSyncData,
     lastSyncTime
