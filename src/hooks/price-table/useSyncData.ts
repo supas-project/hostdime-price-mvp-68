@@ -4,7 +4,7 @@ import { toast } from '@/utils/toast-utils';
 import { PriceService } from '@/services/price-service';
 import { notifyListeners } from '@/services/price/listeners';
 
-export function useSyncData(loadPriceData: () => Promise<void>) {
+export function useSyncData() {
   const { hasUpdates, syncWithLatestData, lastSyncTime } = useDataSync();
   
   // Function to sync with latest data when updates are available
@@ -12,7 +12,6 @@ export function useSyncData(loadPriceData: () => Promise<void>) {
     try {
       if (hasUpdates) {
         await syncWithLatestData();
-        await loadPriceData();
         
         // Notify any listeners about the data changes
         // This ensures all components are updated when data changes

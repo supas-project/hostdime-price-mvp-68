@@ -28,6 +28,7 @@ export default function PriceTableContainer() {
     tableActions,
     isLoading: dataLoading,
     hasUpdates,
+    handleSyncData,
     loadPriceData,
     lastSyncTime
   } = priceTableState;
@@ -43,9 +44,18 @@ export default function PriceTableContainer() {
     isRefreshing,
     hasConflicts,
     checkForConflicts,
-    handleRefreshData,
+    handleRefreshData: originalHandleRefreshData,
     handleResetData
   } = useDataActions(setPriceData);
+
+  // Wrapper function to ensure sync and load happen in sequence
+  const handleRefreshData = async () => {
+    await handleSyncData();
+    await loadPriceData();
+    
+    // Also call the original refresh function
+    await originalHandleRefreshData();
+  };
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing || !isInitialized;
