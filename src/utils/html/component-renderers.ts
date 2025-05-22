@@ -73,6 +73,15 @@ export function generateStorageRows(
       
       specsHtml += `<li><span class="check-icon">✓</span> Capacidade: ${capacity}</li>`;
       specsHtml += `<li><span class="check-icon">✓</span> Quantidade: ${quantity}</li>`;
+      
+      // Adicionar informações RAID se disponíveis
+      if (item.metadata?.raid && item.metadata.raid.type !== 'none') {
+        specsHtml += `<li><span class="check-icon">✓</span> RAID: ${item.metadata.raid.type}</li>`;
+        specsHtml += `<li><span class="check-icon">✓</span> ${item.metadata.raid.isHardware ? 'Hardware RAID' : 'Software RAID'}</li>`;
+        specsHtml += `<li><span class="check-icon">✓</span> Proteção: ${item.metadata.raid.protection}</li>`;
+        specsHtml += `<li><span class="check-icon">✓</span> Capacidade útil: ${item.metadata.raid.usableCapacity}GB</li>`;
+      }
+      
       specsHtml += '</ul></div>';
       
       rows += `
