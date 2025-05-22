@@ -32,7 +32,7 @@ export function usePriceTable() {
   const { loadPriceData } = useDataLoader(isLoading, setIsLoading, setPriceData, isAuthenticated);
   const { filterItems } = useItemFilter(searchTerm, sortOrder);
   
-  // Fix: Pass loadPriceData function to useSyncData as per its expected signature
+  // Fix: Use loadPriceData function as the only argument to useSyncData
   const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData(loadPriceData);
   
   const tableActions = usePriceTableActions(activeTab, setPriceData);
