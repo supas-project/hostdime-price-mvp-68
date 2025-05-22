@@ -1,9 +1,8 @@
 
-import { useState, useEffect } from "react";
-import { ComponentSelector } from "@/components/component-selector";
+import React from 'react';
 import { ComponentOption } from "@/types/component";
-import { Card } from "@/components/ui/card";
-import { findMatchingComponent } from "@/utils/component-matching";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface DataCenterContentProps {
   options: ComponentOption[];
@@ -11,43 +10,44 @@ interface DataCenterContentProps {
   onSelectOption: (option: ComponentOption) => void;
 }
 
-export function DataCenterContent({ 
-  options, 
-  selectedOption, 
-  onSelectOption 
+export function DataCenterContent({
+  options,
+  selectedOption,
+  onSelectOption
 }: DataCenterContentProps) {
-  // Local state to track selection
-  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  // Adicionar log para rastrear a seleção
+  console.log("[DataCenterContent] Opção selecionada:", selectedOption?.name, "ID:", selectedOption?.id);
+  console.log("[DataCenterContent] Opções disponíveis:", options.length);
   
-  // Synchronize local state with props when selectedOption changes
-  useEffect(() => {
-    if (selectedOption) {
-      // Try to find a matching component in case the selectedOption came from elsewhere
-      const matchingComponent = findMatchingComponent(selectedOption, options);
-      setLocalSelectedId(matchingComponent?.id || selectedOption.id);
-    } else {
-      setLocalSelectedId("");
-    }
-  }, [selectedOption, options]);
-  
-  const handleChange = (value: string) => {
-    setLocalSelectedId(value);
-    const option = options.find(opt => opt.id === value);
-    if (option) onSelectOption(option);
-  };
-
   return (
-    <Card className="p-4 sm:p-6 overflow-hidden">
-      <div className="w-full overflow-x-hidden">
-        <ComponentSelector
-          label="Data Center"
-          options={options}
-          value={localSelectedId}
-          onChange={handleChange}
-          tooltip="Escolha a localização ideal para seu servidor"
-          highlightSelection={true}
-        />
-      </div>
-    </Card>
+    <div className="space-y-4 py-4">
+      <RadioGroup
+        value={selectedOption?.id || ""}
+        onValueChange={(value) => {
+          const option = options.find(opt => opt.id === value);
+          if (option) {
+            console.log("[DataCenterContent] Selecionando:", option.name, option);
+            onSelectOption(option);
+          }
+        }}
+      >
+        <div className="space-y-3">
+          {options.map((option) => (
+            <div
+              key={option.id}
+              className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/10 transition-colors"
+            >
+              <RadioGroupItem value={option.id} id={option.id} />
+              <Label
+                htmlFor={option.id}
+                className="flex-1 flex justify-between cursor-pointer"
+              >
+                <span>{option.name}</span>
+              </Label>
+            </div>
+          ))}
+        </div>
+      </RadioGroup>
+    </div>
   );
 }
