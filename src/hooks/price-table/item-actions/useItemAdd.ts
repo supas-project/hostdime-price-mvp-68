@@ -4,6 +4,7 @@ import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/utils/toast-utils";
+import { parseBRLToFloat } from "@/utils/number-formatter";
 
 export function useItemAdd(
   activeTab: string,
@@ -44,10 +45,14 @@ export function useItemAdd(
     try {
       setIsSubmittingItem(true);
       
+      // Processar preço para garantir formato numérico correto
+      const price = parseBRLToFloat(values.price);
+      console.log(`[useItemAdd] Processed price: ${values.price} -> ${price}`);
+      
       const itemData = {
         name: values.name,
         description: values.description,
-        price: values.price,
+        price: price,
         type: values.type || activeTab,
         subtype: values.subtype,
         specs: Array.isArray(values.specs) ? values.specs : [],

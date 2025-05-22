@@ -1,8 +1,8 @@
-
 import { PriceItem } from '@/types/pricing';
 import { getAllData } from '../data-retrieval';
 import { saveData } from '../data-persistence';
 import { notifyListeners } from '../../listeners';
+import { parseBRLToFloat } from '@/utils/number-formatter';
 
 /**
  * Updates an existing item in a category
@@ -30,33 +30,23 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
     if (updates.price !== undefined) {
       console.log(`[updateItem] Original price value: ${updates.price} (${typeof updates.price})`);
       
-      if (typeof updates.price !== 'number' || isNaN(updates.price)) {
-        try {
-          // If it's a string with comma as decimal separator (Brazilian format)
-          if (typeof updates.price === 'string') {
-            // Fix for the replace method by safely checking type first
-            const priceStr = updates.price as string;
-            const normalizedPrice = priceStr
-              .replace(/\./g, '') // Remove dots (thousand separators)
-              .replace(',', '.'); // Replace comma with dot (decimal separator)
-            
-            updates.price = parseFloat(normalizedPrice);
-          } else {
-            updates.price = Number(updates.price);
-          }
-          
-          // If still NaN after conversion, use original price
-          if (isNaN(updates.price)) {
-            console.error(`[updateItem] Price conversion failed, using original price`);
-            updates.price = allData[categoryId].items[itemIndex].price;
-          }
-          
-          console.log(`[updateItem] Converted price to number: ${updates.price}`);
-        } catch (error) {
-          console.error(`[updateItem] Failed to convert price: ${error}`);
-          // Keep the original price
+      try {
+        // Processar o valor para garantir que é um número
+        if (typeof updates.price === 'string' || (typeof updates.price !== 'number')) {
+          updates.price = parseBRLToFloat(updates.price);
+        } 
+        
+        // Verificação final
+        if (typeof updates.price !== 'number' || isNaN(updates.price)) {
+          console.error(`[updateItem] Price conversion failed, using original price`);
           updates.price = allData[categoryId].items[itemIndex].price;
         }
+        
+        console.log(`[updateItem] Converted price to number: ${updates.price}`);
+      } catch (error) {
+        console.error(`[updateItem] Failed to convert price: ${error}`);
+        // Keep the original price
+        updates.price = allData[categoryId].items[itemIndex].price;
       }
       
       // Ensure we always have a valid number with at most 2 decimal places

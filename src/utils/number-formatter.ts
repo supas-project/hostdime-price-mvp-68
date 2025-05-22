@@ -7,19 +7,53 @@ export function formatCurrency(value: number): string {
     value = 0;
   }
   
-  // Log the original value for debugging
-  console.log(`[formatCurrency] Original value: ${value}`);
-  
   try {
-    return value.toLocaleString('pt-BR', {
+    return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    });
+    }).format(value);
   } catch (error) {
     console.error(`[formatCurrency] Error formatting value ${value}:`, error);
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
+  }
+}
+
+// Função para converter string formatada em BRL para número
+export function parseBRLToFloat(value: string | number): number {
+  if (typeof value === 'number' && !isNaN(value)) {
+    return value; // Já é um número válido
+  }
+  
+  try {
+    if (value === null || value === undefined || value === '') {
+      return 0;
+    }
+    
+    // Converter para string se for outro tipo
+    const valueStr = String(value);
+    
+    // Remover símbolo de moeda e espaços
+    const cleaned = valueStr.replace(/[R$\s]/g, '');
+    
+    // Substituir pontos (separadores de milhar) e trocar vírgula por ponto
+    const normalized = cleaned
+      .replace(/\./g, '')  // Remove pontos
+      .replace(',', '.'); // Substitui vírgula por ponto
+      
+    // Converter para float
+    const result = parseFloat(normalized);
+    
+    if (isNaN(result)) {
+      console.warn(`[parseBRLToFloat] Failed to parse value: ${value}, defaulting to 0`);
+      return 0;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error(`[parseBRLToFloat] Error parsing value ${value}:`, error);
+    return 0;
   }
 }
 

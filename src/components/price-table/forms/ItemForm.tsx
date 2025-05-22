@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +16,8 @@ import {
 import { TagSelector } from "./TagSelector";
 import { PriceItem } from "@/types/pricing";
 import { useEffect, useState } from "react";
+import { InputPreco } from "@/components/ui/input-preco";
+import { parseBRLToFloat } from "@/utils/number-formatter";
 
 // Define o schema com tipagem explícita para specs como string[]
 const itemFormSchema = z.object({
@@ -69,6 +70,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       console.log("[ItemForm] Editing item:", item);
       console.log("[ItemForm] Item specs:", item.specs);
       console.log("[ItemForm] Item tags:", item.tags);
+      console.log("[ItemForm] Item price:", item.price, "Type:", typeof item.price);
     }
   }, [item, isEditing]);
   
@@ -121,23 +123,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     return ["cpu", "memory", "disk", "storage", "chassis", "network"].includes(itemType.toLowerCase());
   };
 
-  // Função para normalizar valor monetário (converter formato brasileiro para número)
-  const normalizePrice = (value: string): number => {
-    if (!value) return 0;
-    
-    // Remove todos os caracteres não numéricos, exceto ponto e vírgula
-    const cleanedValue = value.replace(/[^\d.,]/g, '');
-    
-    // Verifica se está no formato brasileiro (1.234,56)
-    if (cleanedValue.indexOf('.') < cleanedValue.indexOf(',')) {
-      // Remove pontos e substitui vírgula por ponto
-      return parseFloat(cleanedValue.replace(/\./g, '').replace(',', '.'));
-    }
-    
-    // Se não estiver no formato brasileiro, apenas converte para float
-    return parseFloat(cleanedValue.replace(',', '.'));
-  };
-
   const handleSubmit = (values: FormValues) => {
     // Evita múltiplas submissões
     if (isSubmitting) return;
@@ -154,6 +139,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     
     // Log values before submission to debug
     console.log("[ItemForm] Form values to submit:", values);
+    console.log("[ItemForm] Price value to submit:", values.price, "Type:", typeof values.price);
     
     // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
     if (isHardwareCategory() && !values.tags.includes("Hardware")) {
@@ -213,29 +199,16 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
             <FormItem>
               <FormLabel>Preço (R$)</FormLabel>
               <FormControl>
-                <Input 
-                  type="text" 
-                  placeholder="0,00"
-                  {...field}
-                  value={typeof field.value === 'number' ? field.value.toString().replace('.', ',') : field.value}
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    // Permitir números, vírgulas, pontos e remover outros caracteres
-                    const filteredValue = inputValue.replace(/[^\d.,]/g, '');
-                    
-                    // Atualizar o campo com o valor filtrado
-                    field.onChange(filteredValue);
+                <InputPreco
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    console.log("[ItemForm] Price changed to:", value, "Type:", typeof value);
                   }}
-                  onBlur={(e) => {
-                    // Na perda de foco, converte para número corretamente
-                    const normalizedValue = normalizePrice(e.target.value);
-                    if (!isNaN(normalizedValue)) {
-                      // Usar o valor numérico normalizado
-                      field.onChange(normalizedValue);
-                    } else {
-                      // Se for inválido, zerar
-                      field.onChange(0);
-                    }
+                  placeholder="R$ 0,00"
+                  onBlur={(value) => {
+                    field.onBlur();
+                    console.log("[ItemForm] Price on blur:", value);
                   }}
                 />
               </FormControl>

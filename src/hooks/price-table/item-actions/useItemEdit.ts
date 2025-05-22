@@ -5,6 +5,7 @@ import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/utils/toast-utils";
+import { parseBRLToFloat } from "@/utils/number-formatter";
 
 export function useItemEdit(
   activeTab: string,
@@ -37,33 +38,13 @@ export function useItemEdit(
     setOpenEditItem(true);
   };
 
-  // Ensure price is always a valid number
+  // Função para garantir que o preço é um número válido
   const validatePrice = (price: any): number => {
-    // Log the original value for debugging
+    // Log do valor original para debug
     console.log("[useItemEdit] validatePrice received:", price, "Type:", typeof price);
     
-    // If it's already a number, return it
-    if (typeof price === 'number' && !isNaN(price)) {
-      return price;
-    }
-    
-    // If it's a string, try to convert it
-    if (typeof price === 'string') {
-      // Handle comma as decimal separator (Brazilian format)
-      const normalizedValue = price
-        .replace(/\./g, '') // Remove dots (thousand separators)
-        .replace(',', '.'); // Replace comma with dot (decimal separator)
-      
-      const numValue = parseFloat(normalizedValue);
-      if (!isNaN(numValue)) {
-        console.log("[useItemEdit] Converted string price to number:", numValue);
-        return numValue;
-      }
-    }
-    
-    // Default case: if conversion failed or input was invalid
-    console.warn("[useItemEdit] Invalid price value:", price);
-    return 0;
+    // Usar a função centralizada para converter
+    return parseBRLToFloat(price);
   };
 
   const handleEditItem = async (values: any, itemId?: string) => {
@@ -97,7 +78,7 @@ export function useItemEdit(
       console.log("[useItemEdit] Item ID:", itemId);
       console.log("[useItemEdit] Original price value:", values.price, "Type:", typeof values.price);
       
-      // Ensure price is properly formatted
+      // Garantir que o preço está corretamente formatado
       const price = validatePrice(values.price);
       console.log("[useItemEdit] Validated price:", price);
       
