@@ -29,8 +29,8 @@ export function usePriceTable() {
     setIsLoading
   } = usePriceTableState();
   
-  // Pass the correct parameters to useDataLoader
-  const { loadPriceData } = useDataLoader(isLoading, setIsLoading, setPriceData, isAuthenticated);
+  // Fix: Don't pass arguments here since useDataLoader accesses them from the parameters it receives
+  const { loadPriceData } = useDataLoader();
   const { filterItems } = useItemFilter(searchTerm, sortOrder);
   const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
   const tableActions = usePriceTableActions(activeTab, setPriceData);
