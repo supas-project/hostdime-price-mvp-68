@@ -3,13 +3,13 @@ import { useEffect } from 'react';
 import { PriceService } from '@/services/price-service';
 import { toast } from 'sonner';
 import { initializeServerCategories } from '@/services/component-sync/initialization';
-import { useAuth } from '@/contexts/AuthContext';
-import { usePriceTableState } from './usePriceTableState';
 
-export function useDataLoader() {
-  const { isAuthenticated } = useAuth();
-  const { setIsLoading, setPriceData } = usePriceTableState();
-  
+export function useDataLoader(
+  isLoading: boolean,
+  setIsLoading: (loading: boolean) => void, 
+  setPriceData: (data: any) => void,
+  isAuthenticated: boolean
+) {
   // Load price data
   const loadPriceData = async () => {
     setIsLoading(true);
