@@ -32,12 +32,16 @@ export function useItemEdit(
     }
     
     console.log("[useItemEdit] Initiating edit for item:", item);
+    console.log("[useItemEdit] Item price:", item.price, "Type:", typeof item.price);
     setItemToEdit(item);
     setOpenEditItem(true);
   };
 
   // Ensure price is always a valid number
   const validatePrice = (price: any): number => {
+    // Log the original value for debugging
+    console.log("[useItemEdit] validatePrice received:", price, "Type:", typeof price);
+    
     // If it's already a number, return it
     if (typeof price === 'number' && !isNaN(price)) {
       return price;
@@ -52,6 +56,7 @@ export function useItemEdit(
       
       const numValue = parseFloat(normalizedValue);
       if (!isNaN(numValue)) {
+        console.log("[useItemEdit] Converted string price to number:", numValue);
         return numValue;
       }
     }
@@ -90,6 +95,7 @@ export function useItemEdit(
       
       console.log("[useItemEdit] Editing item with values:", values);
       console.log("[useItemEdit] Item ID:", itemId);
+      console.log("[useItemEdit] Original price value:", values.price, "Type:", typeof values.price);
       
       // Ensure price is properly formatted
       const price = validatePrice(values.price);
