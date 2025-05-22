@@ -138,14 +138,17 @@ function PriceTableHeaderActions({
       openAddCategory={tableActions.openAddCategory}
       openAddItem={tableActions.openAddItem}
       openEditItem={tableActions.openEditItem}
+      openBulkImport={tableActions.openBulkImport}
       itemToEdit={tableActions.itemToEdit}
       setOpenAddCategory={tableActions.setOpenAddCategory}
       setOpenAddItem={tableActions.setOpenAddItem}
       setOpenEditItem={tableActions.setOpenEditItem}
+      setOpenBulkImport={tableActions.setOpenBulkImport}
       setItemToEdit={tableActions.setItemToEdit}
       onAddCategory={tableActions.handleAddCategory}
       onAddItem={tableActions.handleAddItem}
       onEditItem={tableActions.handleEditItem}
+      onBulkImport={tableActions.handleBulkImport}
       onExportData={tableActions.handleExportData}
       onResetData={tableActions.handleResetData}
     />
