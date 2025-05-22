@@ -26,7 +26,7 @@ export function useCategoryActions(setPriceData: (data: any) => void) {
     openAddCategory,
     setOpenAddCategory,
     handleAddCategory,
-    handleDeleteCategory,
+    handleDeleteCategory, // This function returns Promise<boolean>
     isDeleting
   };
 }

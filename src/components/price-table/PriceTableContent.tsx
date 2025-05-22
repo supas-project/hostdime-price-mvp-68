@@ -21,7 +21,7 @@ interface PriceTableContentProps {
   collapsedCategories: Record<string, boolean>;
   toggleCategoryCollapse: (categoryId: string) => void;
   filterItems: (items: PriceItem[]) => PriceItem[];
-  onDeleteCategory: (categoryId: string) => void;
+  onDeleteCategory: (categoryId: string) => Promise<boolean>;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (item: PriceItem) => void;
   contractDuration?: string;
@@ -194,3 +194,4 @@ export function PriceTableContent({
     </Tabs>
   );
 }
+
