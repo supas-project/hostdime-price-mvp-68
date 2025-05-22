@@ -36,10 +36,8 @@ export function CartContent({
   console.log(`[CartContent] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
   
   // Separate components by type
-  const dataCenterComponent = selectedComponents["datacenter"] || selectedComponents["DataCenter"];
-  console.log("[CartContent] DataCenter encontrado:", dataCenterComponent?.name || "não encontrado");
-  
-  const contractComponent = selectedComponents["contrato"] || selectedComponents["Contrato"];
+  const dataCenterComponent = selectedComponents["datacenter"];
+  const contractComponent = selectedComponents["contrato"];
   
   // Filter other components (excluding DataCenter, Contract and Storage)
   const standardComponents = Object.values(selectedComponents).filter(
@@ -56,12 +54,10 @@ export function CartContent({
     standardComponents.length || 
     uniqueStorageItems.internal.length || 
     uniqueStorageItems.external.length ||
-    Object.keys(connectivityItems).length ||
-    dataCenterComponent ||
-    contractComponent
+    Object.keys(connectivityItems).length
   );
   
-  if (!hasItems) {
+  if (!hasItems && !dataCenterComponent && !contractComponent) {
     return (
       <div className="px-3 sm:px-4 py-4 sm:py-6 text-center text-muted-foreground">
         Nenhum componente selecionado

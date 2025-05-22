@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -33,28 +34,15 @@ export function useWizardState() {
     option: ComponentOption,
     quantity: number
   ) => {
-    console.log(`[WizardState] Selecionando componente tipo: ${componentType}, nome: ${option.name}`);
-    
-    // Corrigindo caso específico do DataCenter, garantindo que seja armazenado com a chave correta
-    const adjustedType = option.type === "DataCenter" ? "datacenter" : componentType;
-    
-    setSelectedComponents((prevComponents) => {
-      const newComponents = {
-        ...prevComponents,
-        [adjustedType]: option,
-      };
-      console.log(`[WizardState] Componentes atualizados:`, newComponents);
-      return newComponents;
-    });
+    setSelectedComponents((prevComponents) => ({
+      ...prevComponents,
+      [componentType]: option,
+    }));
   }, []);
 
   // Wrapper para selectComponent com quantidade padrão 1
   const handleSelectOption = useCallback((option: ComponentOption) => {
-    console.log(`[WizardState] handleSelectOption chamado para: ${option.type} - ${option.name}`);
-    
-    // Normalizar o tipo para minúsculo para consistência
-    const normalizedType = option.type.toLowerCase();
-    selectComponent(normalizedType, option, 1);
+    selectComponent(option.type, option, 1);
   }, [selectComponent]);
 
   // Função para selecionar itens de armazenamento

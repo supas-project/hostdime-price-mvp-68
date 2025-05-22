@@ -1,42 +1,36 @@
 
 import React from 'react';
 import { ComponentOption } from "@/types/component";
-import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils";
-import { MapPin } from "lucide-react";
+import { Check } from "lucide-react";
 
 interface DataCenterItemProps {
-  component: ComponentOption | undefined;
+  component: ComponentOption;
 }
 
 export function DataCenterItem({ component }: DataCenterItemProps) {
   if (!component) return null;
-  
-  // Log para debug
-  console.log("[DataCenterItem] Renderizando:", component.name, component);
-  
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 mb-1">
-        <MapPin className="h-3.5 w-3.5" />
-        <h3 className="font-medium text-xs sm:text-sm">Data Center</h3>
-      </div>
-      
-      <div className={cn(
-        "pl-2 animate-fade-in",
-        "hover:bg-accent/20 p-1 rounded-md transition-colors"
-      )}>
-        <div className="flex justify-between items-center">
-          <p className="text-sm">{component.name}</p>
-          <p className="text-sm font-medium">{formatCurrency(component.price || 0)}</p>
-        </div>
-        
-        {component.metadata?.location && (
-          <p className="text-xs text-muted-foreground">
-            {component.metadata.location}
-          </p>
+    <div className="flex justify-between items-center group animate-fade-in hover:bg-accent/20 p-1 rounded-md transition-colors">
+      <div>
+        <p className="text-sm font-medium flex items-center gap-2">
+          {component.name}
+          <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+            Data Center
+          </span>
+        </p>
+        {component.metadata?.features && (
+          <div className="mt-1">
+            {component.metadata.features.map((feature, index) => (
+              <p key={index} className="text-xs text-muted-foreground flex items-center">
+                <Check className="h-3 w-3 text-primary mr-1" />
+                {feature}
+              </p>
+            ))}
+          </div>
         )}
       </div>
+      <span className="text-sm text-muted-foreground">Incluído</span>
     </div>
   );
 }
