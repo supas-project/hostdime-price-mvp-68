@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ComponentOption } from "@/types/component";
 import { DataCenterItem } from "./data-center-item";
 import { ContractItem } from "./contract-item";
@@ -40,9 +40,11 @@ export function CartContent({
   const dataCenterComponent = selectedComponents["datacenter"] || selectedComponents["DataCenter"];
   const contractComponent = selectedComponents["contrato"] || selectedComponents["Contrato"];
   
-  // Log para debug dos componentes de Data Center e Contrato
-  console.log("[CartContent] Data Center Component:", dataCenterComponent);
-  console.log("[CartContent] Contract Component:", contractComponent);
+  // Log para debug dos componentes
+  useEffect(() => {
+    console.log("[CartContent] Componentes selecionados atualizados:", 
+      Object.keys(selectedComponents).length ? Object.keys(selectedComponents).join(", ") : "nenhum");
+  }, [selectedComponents]);
   
   // Filter other components (excluding DataCenter, Contract and Storage)
   const standardComponents = Object.values(selectedComponents).filter(
@@ -75,17 +77,11 @@ export function CartContent({
       "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
       "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
     )}>
-      {/* Data Center - CORREÇÃO: Mover console.log para fora do JSX */}
-      {(() => {
-        console.log("[CartContent] Renderizando DataCenterItem com:", dataCenterComponent);
-        return dataCenterComponent ? <DataCenterItem component={dataCenterComponent} /> : null;
-      })()}
+      {/* Data Center */}
+      {dataCenterComponent && <DataCenterItem component={dataCenterComponent} />}
       
-      {/* Contract - CORREÇÃO: Mover console.log para fora do JSX */}
-      {(() => {
-        console.log("[CartContent] Renderizando ContractItem com:", contractComponent);
-        return contractComponent ? <ContractItem component={contractComponent} /> : null;
-      })()}
+      {/* Contract */}
+      {contractComponent && <ContractItem component={contractComponent} />}
       
       {/* Standard components with prices */}
       <StandardComponentList 

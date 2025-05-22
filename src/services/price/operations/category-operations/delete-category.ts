@@ -23,6 +23,12 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
     const { [categoryId]: removed, ...updatedData } = allData;
     console.log(`[PriceService] Category ${categoryId} removed, saving updated data`);
     
+    // Verificação adicional para garantir que a categoria foi removida
+    if (updatedData[categoryId]) {
+      console.error(`[PriceService] Failed to remove category ${categoryId} from data`);
+      return false;
+    }
+    
     // Save the updated data
     await saveData(updatedData);
     

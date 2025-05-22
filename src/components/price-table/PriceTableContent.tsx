@@ -8,6 +8,7 @@ import { TableContent } from "@/components/price-table/TableContent";
 import { PriceTableHeader } from "@/components/price-table/TableHeader";
 import { CategoryHeader } from "@/components/price-table/CategoryHeader";
 import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
+import { useEffect, useState } from "react";
 
 interface PriceTableContentProps {
   priceData: PriceData;
@@ -43,6 +44,24 @@ export function PriceTableContent({
   contractDuration
 }: PriceTableContentProps) {
   
+  // Estado para rastrear categorias disponíveis
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  
+  // Efeito para monitorar mudanças nas categorias disponíveis
+  useEffect(() => {
+    if (priceData) {
+      const categoryIds = Object.keys(priceData);
+      setAvailableCategories(categoryIds);
+      console.log("[PriceTableContent] Categorias disponíveis atualizadas:", categoryIds.join(", "));
+      
+      // Se a categoria ativa não existir mais, selecionar a primeira disponível
+      if (activeTab && !categoryIds.includes(activeTab) && categoryIds.length > 0) {
+        console.log(`[PriceTableContent] Categoria ativa ${activeTab} não existe mais, alterando para ${categoryIds[0]}`);
+        setActiveTab(categoryIds[0]);
+      }
+    }
+  }, [priceData, activeTab, setActiveTab]);
+  
   // Debug para verificar os dados recebidos
   console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
   
@@ -62,7 +81,7 @@ export function PriceTableContent({
     );
   }
   
-  // Garantir que todas as categorias tenham a propriedade 'items' como array
+  // Validação adicional para verificar cada categoria
   Object.keys(priceData).forEach(key => {
     if (!priceData[key]) {
       console.warn(`PriceTableContent: Category ${key} is undefined`);
@@ -77,32 +96,33 @@ export function PriceTableContent({
     console.log(`PriceTableContent: Category ${key} has ${priceData[key].items.length} items`);
   });
   
-  // Verificar categorias específicas
-  if (priceData.storage) {
-    console.log("PriceTableContent: Storage category has", priceData.storage.items.length, "items");
-  }
-  
-  if (priceData.external_storage) {
-    console.log("PriceTableContent: External storage category has", priceData.external_storage.items.length, "items");
-  }
-  
-  // Verificar se alguma categoria está selecionada e existe
-  if (activeTab && !priceData[activeTab]) {
-    console.log(`PriceTableContent: Active tab ${activeTab} não existe nas categorias disponíveis`);
-    // Se a categoria ativa não existir, selecionar a primeira
-    if (Object.keys(priceData).length > 0) {
-      const firstCategory = Object.keys(priceData)[0];
-      console.log(`PriceTableContent: Alterando para a primeira categoria: ${firstCategory}`);
-      setTimeout(() => setActiveTab(firstCategory), 0);
+  // Custom function para lidar com a exclusão de categorias
+  const handleDeleteCategory = async (categoryId: string) => {
+    // Chama a função de exclusão passada por props
+    const success = await onDeleteCategory(categoryId);
+    
+    if (success) {
+      console.log(`[PriceTableContent] Categoria ${categoryId} excluída com sucesso`);
+      
+      // Se a categoria excluída era a ativa, precisamos mudar para outra
+      if (categoryId === activeTab) {
+        const remainingCategories = availableCategories.filter(id => id !== categoryId);
+        if (remainingCategories.length > 0) {
+          console.log(`[PriceTableContent] Alterando categoria ativa para ${remainingCategories[0]}`);
+          setActiveTab(remainingCategories[0]);
+        }
+      }
     }
-  }
+    
+    return success;
+  };
 
   return (
-    <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
       <CategoryTabs
         categories={Object.values(priceData)}
         isAdmin={isAdmin}
-        onDeleteCategory={onDeleteCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       <div className="mt-4 space-y-3 animate-fade-in">
