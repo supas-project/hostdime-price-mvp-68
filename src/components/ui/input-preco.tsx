@@ -33,8 +33,15 @@ export function InputPreco({
   // Inicializa e atualiza o valor formatado quando a prop value muda
   useEffect(() => {
     if (value !== undefined) {
-      // CORREÇÃO: Garantir que estamos trabalhando com números primeiro
-      const numValue = typeof value === 'number' ? value : parseBRLToFloat(value);
+      // Garantir que estamos trabalhando com números primeiro
+      let numValue: number;
+      
+      if (typeof value === 'number' && !isNaN(value)) {
+        numValue = value;
+      } else {
+        numValue = parseBRLToFloat(String(value));
+      }
+      
       console.log(`[InputPreco] Formatting value ${value} (${typeof value}) to display, parsed: ${numValue}`);
       setDisplayValue(formatCurrency(numValue));
     }

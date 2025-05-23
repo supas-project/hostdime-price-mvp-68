@@ -34,16 +34,12 @@ export function TableContent({
     items = items.sort((a, b) => b.price - a.price);
   }
   
-  // Calculate price with possible contract discount
-  const calculatePrice = (item: PriceItem): number => {
+  // Exibir o preço original cadastrado, sem aplicar PayBack
+  const getDisplayPrice = (item: PriceItem): number => {
     // Ensure price is a valid number
-    const basePrice = typeof item.price === 'number' && !isNaN(item.price) 
+    return typeof item.price === 'number' && !isNaN(item.price) 
       ? item.price 
       : 0;
-    
-    // CORREÇÃO: Não aplicamos descontos na exibição da tabela de preços
-    // Mostramos sempre o valor original cadastrado
-    return basePrice;
   };
 
   // Debug log for prices
@@ -54,7 +50,7 @@ export function TableContent({
     return (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.map((item) => {
-          const price = calculatePrice(item);
+          const price = getDisplayPrice(item);
           console.log(`[TableContent] Card Item ${item.id} price:`, price);
           
           return (
@@ -100,7 +96,7 @@ export function TableContent({
   return (
     <>
       {items.map((item) => {
-        const price = calculatePrice(item);
+        const price = getDisplayPrice(item);
         console.log(`[TableContent] Table Item ${item.id} price:`, price);
         
         return (

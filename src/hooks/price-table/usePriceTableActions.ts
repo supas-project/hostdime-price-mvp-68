@@ -46,6 +46,5 @@ export function usePriceTableActions(
     // PayBack actions
     selectedContract: payBackActions.selectedContract,
     setSelectedContract: payBackActions.setSelectedContract,
-    applyPayBackDiscount: payBackActions.applyPayBackDiscount,
   };
 }

@@ -27,7 +27,7 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
       return null;
     }
     
-    // CORREÇÃO: Garantir que o preço é processado corretamente
+    // Garantir que o preço é processado corretamente - Sem aplicação de PayBack
     if (updates.price !== undefined) {
       console.log(`[updateItem] Original price value: ${updates.price} (${typeof updates.price})`);
       
@@ -35,7 +35,7 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
         // Se é uma string ou algo que não é um número, converter
         if (typeof updates.price !== 'number' || isNaN(updates.price)) {
           console.log(`[updateItem] Converting non-number price: ${updates.price}`);
-          const parsedPrice = parseBRLToFloat(updates.price);
+          const parsedPrice = parseBRLToFloat(String(updates.price));
           console.log(`[updateItem] Converted price to: ${parsedPrice}`);
           updates.price = parsedPrice;
         }
