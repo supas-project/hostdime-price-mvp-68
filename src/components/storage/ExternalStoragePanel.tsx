@@ -65,29 +65,39 @@ export function ExternalStoragePanel({
   const [selectedType, setSelectedType] = useState<string>(Object.keys(availableStorageTypes)[0]);
   const [capacity, setCapacity] = useState<number>(100);
   const [selectedTypeDetails, setSelectedTypeDetails] = useState(availableStorageTypes[selectedType]);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   // Update selected type details when type changes
   useEffect(() => {
     if (availableStorageTypes[selectedType]) {
       setSelectedTypeDetails(availableStorageTypes[selectedType]);
+      
+      // Atualiza o preço total quando o tipo muda
+      const newPrice = calculatePrice(availableStorageTypes[selectedType].pricePerGB, capacity);
+      setTotalPrice(newPrice);
     }
   }, [selectedType, availableStorageTypes]);
 
+  // Atualiza o preço quando a capacidade muda
+  useEffect(() => {
+    const newPrice = calculatePrice(selectedTypeDetails?.pricePerGB, capacity);
+    setTotalPrice(newPrice);
+  }, [capacity, selectedTypeDetails]);
+
   // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
-  const calculatePrice = () => {
-    if (!selectedTypeDetails || typeof selectedTypeDetails.pricePerGB !== 'number') {
-      console.error('Invalid storage type details or pricePerGB:', selectedTypeDetails);
+  const calculatePrice = (pricePerGB: number = 0, storageCapacity: number = 0): number => {
+    if (typeof pricePerGB !== 'number' || isNaN(pricePerGB)) {
+      console.error('[ExternalStoragePanel] Preço por GB inválido:', pricePerGB);
       return 0;
     }
     
-    const totalPrice = selectedTypeDetails.pricePerGB * capacity;
-    console.log(`[ExternalStoragePanel] PRICE CALCULATION: ${selectedTypeDetails.pricePerGB} × ${capacity} = ${totalPrice}`);
-    return totalPrice;
+    const calculatedPrice = pricePerGB * storageCapacity;
+    console.log(`[ExternalStoragePanel] PRICE CALCULATION: ${pricePerGB} × ${storageCapacity} = ${calculatedPrice}`);
+    return calculatedPrice;
   };
 
   // Handle the add storage button click
   const handleAddStorage = () => {
-    const totalPrice = calculatePrice();
     console.log(`[ExternalStoragePanel] Adding storage: ${selectedTypeDetails.name}, ${capacity}GB, Price per GB: ${selectedTypeDetails.pricePerGB}, Total: ${totalPrice}`);
     
     if (onSelectStorage) {
@@ -130,7 +140,7 @@ export function ExternalStoragePanel({
         <StorageSpecs 
           iops={selectedTypeDetails.iops}
           throughput={selectedTypeDetails.throughput}
-          price={calculatePrice()}
+          price={totalPrice}
           description={selectedTypeDetails.description}
           storageType={selectedTypeDetails.name}
           pricePerGB={selectedTypeDetails.pricePerGB}
@@ -143,7 +153,7 @@ export function ExternalStoragePanel({
         <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="text-xs sm:text-sm text-muted-foreground">Preço mensal</p>
-            <p className="text-lg sm:text-xl font-semibold text-primary">{formatCurrency(calculatePrice())}</p>
+            <p className="text-lg sm:text-xl font-semibold text-primary">{formatCurrency(totalPrice)}</p>
           </div>
           <Button 
             onClick={handleAddStorage}

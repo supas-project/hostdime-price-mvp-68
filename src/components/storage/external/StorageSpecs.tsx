@@ -20,8 +20,8 @@ export function StorageSpecs({
   storageType,
   pricePerGB 
 }: StorageSpecsProps) {
-  // Console log para debug do preço
-  console.log(`[StorageSpecs] Preço por GB: ${pricePerGB}, Preço total: ${price} para o tipo ${storageType}`);
+  // Log para debug com valores formatados para evitar arredondamentos
+  console.log(`[StorageSpecs] Preço por GB: ${pricePerGB?.toFixed(4)}, Preço total: ${price?.toFixed(2)} para o tipo ${storageType}`);
 
   return (
     <div className="space-y-3">
@@ -47,7 +47,7 @@ export function StorageSpecs({
         {pricePerGB !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-xs sm:text-sm font-medium">Preço por GB:</span>
-            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(pricePerGB)}</Badge>
+            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(pricePerGB)}/GB</Badge>
           </div>
         )}
       </div>
