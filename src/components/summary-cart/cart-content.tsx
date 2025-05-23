@@ -36,8 +36,8 @@ export function CartContent({
   
   // Separate components by type - CORREÇÃO: Buscar pelo tipo correto
   // Estas são as chaves corretas para cada tipo específico de componente
-  const dataCenterComponent = selectedComponents["datacenter"] || selectedComponents["DataCenter"];
-  const contractComponent = selectedComponents["contrato"] || selectedComponents["Contrato"];
+  const dataCenterComponent = selectedComponents["datacenter"];
+  const contractComponent = selectedComponents["contrato"];
   
   // Log para debug dos componentes
   useEffect(() => {
@@ -48,7 +48,12 @@ export function CartContent({
   // Filter other components (excluding DataCenter, Contract and Storage)
   const standardComponents = Object.values(selectedComponents).filter(
     component => {
-      if (!component || component.type === "DataCenter" || component.type === "Contrato" || component.type === "Armazenamento") {
+      // CORREÇÃO: Verificar tanto pelo tipo em si quanto pelo tipo lowercase
+      const type = component?.type?.toLowerCase();
+      if (!component || 
+          type === "datacenter" || 
+          type === "contrato" || 
+          type === "armazenamento") {
         return false;
       }
       return true;
@@ -76,10 +81,10 @@ export function CartContent({
       "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
       "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
     )}>
-      {/* Data Center */}
+      {/* Data Center - CORREÇÃO: Verificar que tipo está em lowercase */}
       {dataCenterComponent && <DataCenterItem component={dataCenterComponent} />}
       
-      {/* Contract */}
+      {/* Contract - CORREÇÃO: Verificar que tipo está em lowercase */}
       {contractComponent && <ContractItem component={contractComponent} />}
       
       {/* Standard components with prices */}

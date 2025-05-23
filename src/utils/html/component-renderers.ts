@@ -10,9 +10,13 @@ export function generateComponentsRows(selectedComponents: { [key: string]: Comp
   Object.values(selectedComponents)
     .filter(component => {
       // CORREÇÃO: Garantir que não renderizamos DataCenter e Contrato aqui (são renderizados separadamente)
+      // Verificar tanto pelo tipo original quanto pelo tipo em lowercase
+      const type = component?.type?.toLowerCase();
       return component && 
              component.price !== undefined && 
-             !['DataCenter', 'datacenter', 'Contrato', 'contrato', 'Armazenamento'].includes(component.type);
+             type !== 'datacenter' &&
+             type !== 'contrato' &&
+             type !== 'armazenamento';
     })
     .forEach(component => {
       const price = formatCurrency(component.price || 0);

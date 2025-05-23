@@ -86,10 +86,6 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
     
   const effectiveConnectivityItems = connectivityItems || contextConnectivityItems;
 
-  // CORREÇÃO: Filtrar os componentes de datacenter e contrato para exibição na OrderDetails
-  // Isso evita que sejam mostrados valores R$0,00 duplicados
-  const filteredComponents = { ...selectedComponents };
-
   const handleSaveQuote = async () => {
     setIsSaving(true);
     try {
@@ -371,7 +367,7 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
       </div>
       
       <OrderDetails 
-        selectedComponents={filteredComponents}
+        selectedComponents={selectedComponents}
         margin={profitMargin}
         onRemoveItem={handleRemoveItem}
       />

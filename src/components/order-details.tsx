@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -22,7 +23,7 @@ interface OrderDetailsProps {
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
 
-  // Separate DataCenter and Contract components
+  // CORREÇÃO: Buscar explicitamente os componentes de datacenter e contrato usando lowercase
   const dataCenterComponent = selectedComponents["datacenter"];
   const contractComponent = selectedComponents["contrato"];
   const contractDuration = contractComponent?.subtype || "0";
@@ -37,9 +38,13 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   // Filter non-storage components and handle OS price calculation
   const otherComponents = Object.values(selectedComponents).filter(
     component => {
-      // Skip storage components and components without prices
-      if (component.type === "Armazenamento") return false;
-      if (component.type === "DataCenter" || component.type === "Contrato") return false;
+      // CORREÇÃO: Verificar tanto pelo tipo original quanto pelo tipo em lowercase
+      const type = component?.type?.toLowerCase();
+      
+      // Skip storage, datacenter and contract components
+      if (type === "armazenamento" || type === "datacenter" || type === "contrato") {
+        return false;
+      }
       
       // Special handling for OS price calculation
       if (component.type === "SistemaOperacional" && component.metadata?.perCore) {
@@ -238,7 +243,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                     <h4 className="font-medium flex items-center">
                       {dataCenterComponent.name}
                       <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                        {dataCenterComponent.type}
+                        Data Center
                       </span>
                     </h4>
                     <p className="text-sm text-muted-foreground">{dataCenterComponent.description}</p>
@@ -266,7 +271,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                     <h4 className="font-medium flex items-center">
                       {contractComponent.name}
                       <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                        {contractComponent.type}
+                        Contrato
                       </span>
                     </h4>
                     <p className="text-sm text-muted-foreground">{contractComponent.description}</p>
@@ -283,8 +288,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
               </div>
             )}
 
-            {/* CORREÇÃO: Remover as entradas duplicadas de DataCenter e Contrato com price=0 */}
-            {/* Other regular components */}
+            {/* CORREÇÃO: Já filtramos os componentes duplicados de datacenter e contrato */}
             {otherComponents.map((component) => (
               <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
                 <div className="flex justify-between items-start">
