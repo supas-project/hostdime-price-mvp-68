@@ -8,7 +8,12 @@ export function generateComponentsRows(selectedComponents: { [key: string]: Comp
   let rows = '';
   
   Object.values(selectedComponents)
-    .filter(component => component && component.price !== undefined && !['DataCenter', 'Contrato', 'Armazenamento'].includes(component.type))
+    .filter(component => {
+      // CORREÇÃO: Garantir que não renderizamos DataCenter e Contrato aqui (são renderizados separadamente)
+      return component && 
+             component.price !== undefined && 
+             !['DataCenter', 'datacenter', 'Contrato', 'contrato', 'Armazenamento'].includes(component.type);
+    })
     .forEach(component => {
       const price = formatCurrency(component.price || 0);
       

@@ -25,7 +25,6 @@ export function CartContent({
   onRemoveItem
 }: CartContentProps) {
   // CORREÇÃO: Deduplica mais agressivamente os itens de armazenamento
-  // Isso garante que não haja duplicatas, mesmo com chamadas repetidas ou IDs diferentes
   const uniqueStorageItems = {
     internal: deduplicateStorageItems(storageItems.internal),
     external: deduplicateStorageItems(storageItems.external)

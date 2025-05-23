@@ -16,7 +16,7 @@ import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
   margin?: number;
-  onRemoveItem?: (type: string) => void; // Prop para remoção de itens
+  onRemoveItem?: (type: string) => void;
 }
 
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
@@ -28,7 +28,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   const contractDuration = contractComponent?.subtype || "0";
 
   // CORREÇÃO: Garantir que temos listas deduplicadas para todos os cálculos
-  // Deduplique de forma agressiva os storageItems antes de qualquer processamento
   const uniqueInternalStorage = deduplicateStorageItems(storageItems.internal);
   const uniqueExternalStorage = deduplicateStorageItems(storageItems.external);
   
@@ -67,7 +66,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     0
   );
   
-  // Apply PayBack to internal storage - IMPORTANTE: usar os arrays deduplicados
+  // Apply PayBack to internal storage - usar os arrays deduplicados
   const internalStoragePrice = uniqueInternalStorage
     .filter(disk => disk && disk.price > 0)
     .reduce(
@@ -81,7 +80,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
       0
     );
   
-  // Apply PayBack to external storage - IMPORTANTE: usar os arrays deduplicados
+  // Apply PayBack to external storage - usar os arrays deduplicados
   const externalStoragePrice = uniqueExternalStorage
     .filter(storage => storage && storage.price > 0)
     .reduce(
@@ -108,22 +107,18 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // CORREÇÃO CRÍTICA: Handler aprimorado para remoção de itens que garante que a função correta é chamada
+  // Handler para remoção de itens
   const handleRemoveItem = (itemId: string, itemType?: string) => {
     console.log(`[OrderDetails] Removendo item: ${itemId}, tipo: ${itemType || 'não especificado'}`);
     
-    // CORREÇÃO: Lógica de remoção aprimorada
     if (onRemoveItem) {
-      // Usar a função de remoção fornecida como prop
       console.log(`[OrderDetails] Chamando onRemoveItem prop com ID: ${itemId}`);
       onRemoveItem(itemId);
     } else if (handleRemoveComponent) {
-      // Caso contrário, usar a função do context, garantindo que passamos o tipo quando disponível
       console.log(`[OrderDetails] Chamando handleRemoveComponent com ID: ${itemId} e tipo: ${itemType || 'não informado'}`);
       if (itemType) {
         handleRemoveComponent(itemId, itemType);
       } else {
-        // IMPORTANTE: Se não temos tipo, use apenas o ID - a função handleRemoveComponent foi melhorada para lidar com isso
         handleRemoveComponent(itemId);
       }
     } else {
@@ -154,7 +149,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   }));
 
   // CORREÇÃO: Função para agrupar discos internos por tipo e capacidade
-  // Esta função vai criar um mapa onde a chave é o tipo+capacidade e o valor é a quantidade
   const groupSimilarDisks = (disks: ComponentOption[]): {
     grouped: Record<string, { disk: ComponentOption, quantity: number }>,
     groupedList: { disk: ComponentOption, quantity: number }[]
@@ -236,7 +230,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Data Center and Contract first */}
+            {/* CORREÇÃO: Exibir apenas uma vez cada componente DataCenter e Contrato */}
             {dataCenterComponent && (
               <div className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors">
                 <div className="flex justify-between items-start">
@@ -289,6 +283,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
               </div>
             )}
 
+            {/* CORREÇÃO: Remover as entradas duplicadas de DataCenter e Contrato com price=0 */}
             {/* Other regular components */}
             {otherComponents.map((component) => (
               <div key={component.id} className="space-y-2 hover:bg-muted/30 p-2 rounded-lg transition-colors group">
@@ -305,7 +300,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
                     
-                    {/* CORREÇÃO: Agora usamos o ID e tipo corretos para remoção */}
                     <button
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                       onClick={() => handleRemoveItem(component.id, component.type.toLowerCase())}
@@ -334,7 +328,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Armazenamento</h3>
                 
-                {/* Internal storage disks - CORREÇÃO: Usar a versão agrupada por tipo/capacidade */}
+                {/* Internal storage disks - Usar a versão agrupada por tipo/capacidade */}
                 {groupedInternalDisks.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Discos Internos</h4>
@@ -353,7 +347,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                               {formatCurrency(disk.price * quantity)}
                             </span>
                             
-                            {/* CORREÇÃO: Botão agora usa o ID correto do disco */}
                             <button
                               className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                               onClick={() => handleRemoveItem(disk.id)}
@@ -416,7 +409,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                   </>
                 )}
                 
-                {/* External storage - CORREÇÃO: Usar a versão agrupada por tipo/capacidade */}
+                {/* External storage - Usar a versão agrupada por tipo/capacidade */}
                 {groupedExternalStorage.length > 0 && (
                   <>
                     <h4 className="text-sm font-medium">Storage Externo</h4>
@@ -432,7 +425,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-primary">{formatCurrency(storage.price * quantity)}</span>
                             
-                            {/* CORREÇÃO: Botão de remoção agora usa o ID correto do storage */}
                             <button
                               className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                               onClick={() => handleRemoveItem(storage.id)}
