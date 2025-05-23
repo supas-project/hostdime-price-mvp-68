@@ -7,7 +7,6 @@ import { PriceTableHeader } from "@/components/price-table/PriceTableHeader";
 import { TableControls } from "@/components/price-table/TableControls";
 import { TableActions } from "@/components/price-table/TableActions";
 import { PriceTableContent } from "@/components/price-table/PriceTableContent";
-import { ImportButton } from "@/components/price-table/ImportButton";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 import { PriceData } from "@/types/pricing";
@@ -84,9 +83,6 @@ export function PriceTablePage({
               contractDuration={contractDuration}
               setContractDuration={setContractDuration}
               isAdminAccess={isAdminAccess}
-              isLoading={isLoading}
-              fileInputRef={fileInputRef}
-              handleFileUpload={handleFileUpload}
             />
           </div>
         </CardHeader>
@@ -163,10 +159,7 @@ function PriceTableHeaderControls({
   isRefreshing,
   contractDuration,
   setContractDuration,
-  isAdminAccess,
-  isLoading,
-  fileInputRef,
-  handleFileUpload
+  isAdminAccess
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-2 ml-auto">
@@ -182,14 +175,6 @@ function PriceTableHeaderControls({
           value={contractDuration}
           onChange={(value) => setContractDuration(value)}
         />
-        
-        {isAdminAccess && (
-          <ImportButton 
-            isLoading={isLoading}
-            fileInputRef={fileInputRef}
-            onFileUpload={handleFileUpload}
-          />
-        )}
       </div>
     </div>
   );
