@@ -9,6 +9,7 @@ interface StorageSpecsProps {
   price: number;
   description: string;
   storageType: string;
+  pricePerGB?: number;
 }
 
 export function StorageSpecs({ 
@@ -16,10 +17,11 @@ export function StorageSpecs({
   throughput, 
   price, 
   description, 
-  storageType 
+  storageType,
+  pricePerGB 
 }: StorageSpecsProps) {
   // Console log para debug do preço
-  console.log(`[StorageSpecs] Preço total: ${price} para o tipo ${storageType}`);
+  console.log(`[StorageSpecs] Preço por GB: ${pricePerGB}, Preço total: ${price} para o tipo ${storageType}`);
 
   return (
     <div className="space-y-3">
@@ -41,6 +43,13 @@ export function StorageSpecs({
             description="Velocidade máxima de leitura e escrita de dados, medida em MB/s."
           />
         </div>
+
+        {pricePerGB !== undefined && (
+          <div className="flex items-center gap-1">
+            <span className="text-xs sm:text-sm font-medium">Preço por GB:</span>
+            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(pricePerGB)}</Badge>
+          </div>
+        )}
       </div>
       
       <div className="text-xs sm:text-sm text-muted-foreground">

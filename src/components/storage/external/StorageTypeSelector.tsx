@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { Circle, CircleDashed, CircleDot } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { formatCurrency } from "@/lib/utils";
 
 interface StorageType {
   name: string;
@@ -27,6 +28,7 @@ export function StorageTypeSelector({
 }: StorageTypeSelectorProps) {
   // Log para debug
   console.log('[StorageTypeSelector] Available storage types:', Object.keys(storageTypes));
+  console.log('[StorageTypeSelector] Selected type details:', storageTypes[selectedType]);
   
   // Verificar se temos tipos de armazenamento
   if (Object.keys(storageTypes).length === 0) {
@@ -124,7 +126,7 @@ export function StorageTypeSelector({
                     {label}
                   </Badge>
                   <div className="text-xs text-muted-foreground mt-1">
-                    R$ {type.pricePerGB.toFixed(2)}/GB
+                    {formatCurrency(type.pricePerGB)}/GB
                   </div>
                 </Label>
               </div>
