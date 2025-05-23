@@ -97,147 +97,143 @@ export function useWizardState() {
     // Implementação existente (mantida vazia neste exemplo)
   }, []);
 
-  // Função para remover componentes - CORREÇÃO CRÍTICA
-  const removeComponent = useCallback((componentType: string, optionId: string) => {
-    // Log mais detalhado para debug
-    console.log(`[removeComponent] Removendo componente tipo: ${componentType}, id: ${optionId}`);
-    
-    // CORREÇÃO: Verificar primeiro se é um disco interno ou externo
-    setStorageItems(prev => {
-      // Verificar discos internos
-      const internalIndex = prev.internal.findIndex(item => item.id === optionId);
-      if (internalIndex >= 0) {
-        const newInternal = [...prev.internal];
-        newInternal.splice(internalIndex, 1);
-        console.log(`[removeComponent] Disco interno removido, restantes: ${newInternal.length}`);
-        return { ...prev, internal: newInternal };
-      }
-      
-      // Verificar storage externo
-      const externalIndex = prev.external.findIndex(item => item.id === optionId);
-      if (externalIndex >= 0) {
-        const newExternal = [...prev.external];
-        newExternal.splice(externalIndex, 1);
-        console.log(`[removeComponent] Disco externo removido, restantes: ${newExternal.length}`);
-        return { ...prev, external: newExternal };
-      }
-      
-      return prev;
-    });
-    
-    // Verificar itens de conectividade
-    setConnectivityItems(prev => {
-      if (prev[optionId]) {
-        const newItems = { ...prev };
-        delete newItems[optionId];
-        console.log(`[removeComponent] Item de conectividade removido: ${optionId}`);
-        return newItems;
-      }
-      return prev;
-    });
-    
-    // Verificar serviços personalizados
-    setCustomServices(prev => {
-      const serviceIndex = prev.findIndex(service => service.id === optionId);
-      if (serviceIndex >= 0) {
-        const newServices = [...prev];
-        newServices.splice(serviceIndex, 1);
-        console.log(`[removeComponent] Serviço personalizado removido: ${optionId}`);
-        return newServices;
-      }
-      return prev;
-    });
-    
-    // Por fim, verificar componentes regulares
-    setSelectedComponents((prevComponents) => {
-      const newComponents = { ...prevComponents };
-      
-      // Normalizar o tipo para consistência
-      const normalizedType = componentType.toLowerCase();
-      
-      if (
-        newComponents[normalizedType] &&
-        newComponents[normalizedType].id === optionId
-      ) {
-        delete newComponents[normalizedType];
-        console.log(`[removeComponent] Componente regular removido: ${normalizedType}`);
-      } else if (optionId && newComponents[optionId]) {
-        // Tenta remover diretamente pelo ID como chave
-        delete newComponents[optionId];
-        console.log(`[removeComponent] Componente removido pelo ID como chave: ${optionId}`);
-      }
-      
-      console.log(`[removeComponent] Componentes após remoção:`, newComponents);
-      return newComponents;
-    });
-  }, []);
-
-  // CORREÇÃO PRINCIPAL: Implementação robusta para lidar com remoção de componentes
+  // CORREÇÃO PRINCIPAL: Reimplementação completa do handleRemoveComponent para garantir remoção robusta
   const handleRemoveComponent = useCallback((componentId: string, componentType?: string) => {
-    console.log(`[handleRemoveComponent] Removendo: id=${componentId}, tipo=${componentType || 'não especificado'}`);
+    console.log(`[handleRemoveComponent] Removendo componente: ID=${componentId}, Tipo=${componentType || 'não especificado'}`);
     
-    // Caso 1: Se temos ID e tipo, usamos ambos
-    if (componentType) {
-      removeComponent(componentType, componentId);
-      return;
-    }
-    
-    // Caso 2: Se o ID for um disco específico (verificação direta na lista de storage)
-    let removedFromStorage = false;
-    
-    // Verificar e remover disco interno
-    setStorageItems(prev => {
-      const internalIndex = prev.internal.findIndex(item => item.id === componentId);
-      if (internalIndex >= 0) {
-        removedFromStorage = true;
-        const newInternal = [...prev.internal];
-        newInternal.splice(internalIndex, 1);
-        console.log(`[handleRemoveComponent] Disco interno removido diretamente, restantes: ${newInternal.length}`);
-        return { ...prev, internal: newInternal };
-      }
+    // Verificar se o componentId é um disco interno específico
+    if (componentId.startsWith('internal-disk-')) {
+      console.log(`[handleRemoveComponent] Removendo disco interno: ${componentId}`);
       
-      // Verificar e remover storage externo
-      const externalIndex = prev.external.findIndex(item => item.id === componentId);
-      if (externalIndex >= 0) {
-        removedFromStorage = true;
-        const newExternal = [...prev.external];
-        newExternal.splice(externalIndex, 1);
-        console.log(`[handleRemoveComponent] Disco externo removido diretamente, restantes: ${newExternal.length}`);
-        return { ...prev, external: newExternal };
-      }
-      
-      return prev;
-    });
-    
-    if (removedFromStorage) {
-      return; // Se já removemos da lista de storage, não precisamos continuar
-    }
-    
-    // Caso 3: Se o ID contiver '_' (como storage_internal), tratar especialmente
-    if (componentId.includes('_')) {
-      const parts = componentId.split('_');
-      if (parts.length > 1) {
-        // Se for storage_internal ou storage_external, limpar toda a lista correspondente
-        if (componentId === 'storage_internal') {
-          setStorageItems(prev => ({ ...prev, internal: [] }));
-          console.log('[handleRemoveComponent] Removidos todos os discos internos');
-          return;
-        }
-        if (componentId === 'storage_external') {
-          setStorageItems(prev => ({ ...prev, external: [] }));
-          console.log('[handleRemoveComponent] Removidos todos os storages externos');
-          return;
+      // CORREÇÃO CRÍTICA: Corrigir imutabilidade para garantir atualização de UI
+      setStorageItems(prev => {
+        // Encontra e remove o disco pelo ID exato
+        const updatedInternal = prev.internal.filter(disk => disk.id !== componentId);
+        console.log(`[handleRemoveComponent] Discos antes: ${prev.internal.length}, depois: ${updatedInternal.length}`);
+        
+        // Se nenhum disco foi removido, tentar buscar por substrings ou padrões no ID
+        if (updatedInternal.length === prev.internal.length) {
+          console.log(`[handleRemoveComponent] Tentando remoção alternativa para: ${componentId}`);
+          
+          // Tenta encontrar correspondências parciais
+          const diskToRemove = prev.internal.find(disk => 
+            disk.id.includes(componentId) || componentId.includes(disk.id)
+          );
+          
+          if (diskToRemove) {
+            console.log(`[handleRemoveComponent] Encontrado disco por correspondência parcial: ${diskToRemove.id}`);
+            return {
+              ...prev,
+              internal: prev.internal.filter(disk => disk.id !== diskToRemove.id)
+            };
+          }
         }
         
-        // Se for outro formato composto, tentar remover por tipo e ID
-        removeComponent(parts[0], componentId);
-        return;
-      }
+        return {
+          ...prev,
+          internal: updatedInternal
+        };
+      });
+      
+      // CORREÇÃO: Também atualizar o selectedComponents para manter consistência
+      setSelectedComponents(prev => {
+        const newComponents = { ...prev };
+        if (newComponents['storage_internal'] && 
+            newComponents['storage_internal'].id === componentId) {
+          delete newComponents['storage_internal'];
+        }
+        return newComponents;
+      });
+      
+      return; // Termina aqui se for um disco interno
     }
     
-    // Caso 4: Último recurso, tratar o ID como tipo e como ID
-    removeComponent(componentId, componentId);
-  }, [removeComponent]);
+    // Verificar se o componentId é um disco externo específico
+    if (componentId.startsWith('external-storage-')) {
+      console.log(`[handleRemoveComponent] Removendo storage externo: ${componentId}`);
+      
+      setStorageItems(prev => {
+        const updatedExternal = prev.external.filter(storage => storage.id !== componentId);
+        return {
+          ...prev,
+          external: updatedExternal
+        };
+      });
+      
+      // Atualizar selectedComponents para manter consistência
+      setSelectedComponents(prev => {
+        const newComponents = { ...prev };
+        if (newComponents['storage_external'] && 
+            newComponents['storage_external'].id === componentId) {
+          delete newComponents['storage_external'];
+        }
+        return newComponents;
+      });
+      
+      return; // Termina aqui se for um storage externo
+    }
+    
+    // Caso seja um componente regular com tipo especificado
+    if (componentType) {
+      console.log(`[handleRemoveComponent] Removendo componente regular: ${componentType}, ID: ${componentId}`);
+      
+      // Normaliza o tipo para consistência
+      const normalizedType = componentType.toLowerCase();
+      
+      setSelectedComponents(prev => {
+        const newComponents = { ...prev };
+        
+        // Se o componente existir e tiver o ID especificado, remover
+        if (newComponents[normalizedType] && 
+            newComponents[normalizedType].id === componentId) {
+          console.log(`[handleRemoveComponent] Removido componente: ${normalizedType}`);
+          delete newComponents[normalizedType];
+        } 
+        // Se não encontrar pelo tipo+id, tentar apenas pelo ID
+        else if (Object.values(newComponents).some(comp => comp.id === componentId)) {
+          // Encontrar a chave do componente pelo ID
+          const keyToRemove = Object.keys(newComponents).find(
+            key => newComponents[key].id === componentId
+          );
+          
+          if (keyToRemove) {
+            console.log(`[handleRemoveComponent] Removido componente pela chave: ${keyToRemove}`);
+            delete newComponents[keyToRemove];
+          }
+        }
+        
+        return newComponents;
+      });
+      
+      return; // Termina aqui se for um componente regular
+    }
+    
+    // Se chegarmos aqui, tenta remover usando o ID como tipo (último recurso)
+    console.log(`[handleRemoveComponent] Tentando remoção pelo ID como tipo: ${componentId}`);
+    
+    setSelectedComponents(prev => {
+      const newComponents = { ...prev };
+      
+      // Caso 1: ID é uma chave direta
+      if (newComponents[componentId]) {
+        console.log(`[handleRemoveComponent] Removido componente com ID como chave: ${componentId}`);
+        delete newComponents[componentId];
+        return newComponents;
+      }
+      
+      // Caso 2: Procurar componente com este ID
+      const keyWithId = Object.keys(newComponents).find(
+        key => newComponents[key].id === componentId
+      );
+      
+      if (keyWithId) {
+        console.log(`[handleRemoveComponent] Encontrado e removido pelo ID: ${componentId}, chave: ${keyWithId}`);
+        delete newComponents[keyWithId];
+      }
+      
+      return newComponents;
+    });
+  }, [setStorageItems, setSelectedComponents]);
 
   // Verifica se um componente está selecionado
   const isComponentSelected = useCallback((componentType: string, optionId: string) => {
@@ -307,7 +303,8 @@ export function useWizardState() {
     setSelectedComponents, // Garantir que isso é explicitamente incluído no valor de retorno
     selectComponent,
     updateComponentQuantity,
-    removeComponent,
+    handleRemoveComponent,
+    removeComponent: handleRemoveComponent, // Alias para manter compatibilidade
     isComponentSelected,
     getComponentQuantity,
     showFinalSummary,
@@ -322,7 +319,7 @@ export function useWizardState() {
     handleSelectOption,
     setConnectivityItems,
     handleSelectStorageItem,
-    handleRemoveComponent,
+    handleRemoveComponent: handleRemoveComponent, // Alias para manter compatibilidade
     categoriesLoaded,
     beginnerMode,
     setBeginnerMode,

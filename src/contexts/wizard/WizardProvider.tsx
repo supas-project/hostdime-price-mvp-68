@@ -7,10 +7,15 @@ import { WizardProviderProps } from "./types";
 export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
   const wizardState = useWizardState();
   
-  // Garantir que todas as propriedades, incluindo setSelectedComponents, estão disponíveis no contexto
+  // CORREÇÃO CRÍTICA: Garantir explicitamente que setSelectedComponents está disponível no contexto
   const contextValue = {
-    ...wizardState
+    ...wizardState,
+    // Garantir explicitamente que setSelectedComponents está no valor do contexto
+    setSelectedComponents: wizardState.setSelectedComponents
   };
+  
+  // Console log para verificar se setSelectedComponents está acessível
+  console.log("[WizardProvider] setSelectedComponents disponível:", !!contextValue.setSelectedComponents);
   
   return (
     <WizardContext.Provider value={contextValue}>
