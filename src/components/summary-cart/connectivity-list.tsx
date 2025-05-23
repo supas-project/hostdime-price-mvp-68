@@ -12,25 +12,32 @@ interface ConnectivityListProps {
 }
 
 export function ConnectivityList({ connectivityItems, onRemoveItem }: ConnectivityListProps) {
-  const items = Object.entries(connectivityItems).filter(([_, item]) => item && item.option);
+  // Verificar e remover possíveis itens duplicados ou inválidos
+  const validItems = Object.entries(connectivityItems)
+    .filter(([_, item]) => item && item.option)
+    // Remover duplicatas (manter apenas o primeiro item de cada ID)
+    .filter((entry, index, self) => {
+      const firstIndex = self.findIndex(([_, item]) => item.option.id === entry[1].option.id);
+      return index === firstIndex;
+    });
   
   // Debug para verificar os itens recebidos
   useEffect(() => {
-    console.log("ConnectivityList: Rendering with", items.length, "items");
+    console.log("ConnectivityList: Rendering with", validItems.length, "items");
     
-    if (items.length > 0) {
+    if (validItems.length > 0) {
       // Log detalhes dos itens para debugging
-      items.forEach(([itemId, item]) => {
+      validItems.forEach(([itemId, item]) => {
         console.log(`ConnectivityItem: ${itemId} - ${item.option.name} (${item.option.subtype}) - Quantity: ${item.quantity}`);
       });
     }
   }, [connectivityItems]);
   
-  if (!items.length) return null;
+  if (!validItems.length) return null;
 
   // Organizar itens por tipo (porta/ip) para exibição mais clara
-  const portItems = items.filter(([_, item]) => item.option.subtype === 'porta');
-  const ipItems = items.filter(([_, item]) => item.option.subtype === 'ip');
+  const portItems = validItems.filter(([_, item]) => item.option.subtype === 'porta');
+  const ipItems = validItems.filter(([_, item]) => item.option.subtype === 'ip');
 
   return (
     <>

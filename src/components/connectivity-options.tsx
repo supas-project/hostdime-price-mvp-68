@@ -34,12 +34,19 @@ export function ConnectivityOptions({
   const { connectivityOptions, isLoading } = useConnectivity();
   
   // Usar as opções sincronizadas se estiverem disponíveis
-  const finalOptions = connectivityOptions.length > 0 ? connectivityOptions : options;
+  const finalOptions = connectivityOptions.length > 0 
+    ? connectivityOptions.filter((option, index, self) => 
+        // Filtrar duplicatas baseado no ID
+        index === self.findIndex(o => o.id === option.id)
+      )
+    : options.filter((option, index, self) =>
+        index === self.findIndex(o => o.id === option.id)
+      );
   
   // Debug para verificar as opções e itens selecionados
   useEffect(() => {
     console.log("ConnectivityOptions: Received", options.length, "options");
-    console.log("ConnectivityOptions: Using", finalOptions.length, "final options");
+    console.log("ConnectivityOptions: Using", finalOptions.length, "final options (duplicates removed)");
     console.log("ConnectivityOptions: Current selected items:", Object.keys(selectedItems).length);
     
     // Separar por tipo para debug
@@ -48,13 +55,6 @@ export function ConnectivityOptions({
     const otherOptions = finalOptions.filter(opt => opt.subtype !== "porta" && opt.subtype !== "ip");
     
     console.log(`ConnectivityOptions: port=${portOptions.length}, ip=${ipOptions.length}, other=${otherOptions.length}`);
-    
-    // Log dos itens selecionados
-    if (Object.keys(selectedItems).length > 0) {
-      Object.entries(selectedItems).forEach(([id, item]) => {
-        console.log(`Selected item: ${id} - ${item.option.name} (${item.option.subtype}) - Quantity: ${item.quantity}`);
-      });
-    }
   }, [options, finalOptions, selectedItems]);
   
   const handleAddItem = () => {
@@ -98,10 +98,18 @@ export function ConnectivityOptions({
     onUpdateItems(newItems);
   };
   
-  // Separar opções por tipo
-  const portOptions = finalOptions.filter(opt => opt.subtype === 'porta');
-  const ipOptions = finalOptions.filter(opt => opt.subtype === 'ip');
-  const otherOptions = finalOptions.filter(opt => opt.subtype !== 'porta' && opt.subtype !== 'ip');
+  // Separar opções por tipo (eliminando duplicatas)
+  const portOptions = Array.from(
+    new Set(finalOptions.filter(opt => opt.subtype === 'porta').map(opt => opt.id))
+  ).map(id => finalOptions.find(opt => opt.id === id)).filter(Boolean) as ComponentOption[];
+  
+  const ipOptions = Array.from(
+    new Set(finalOptions.filter(opt => opt.subtype === 'ip').map(opt => opt.id))
+  ).map(id => finalOptions.find(opt => opt.id === id)).filter(Boolean) as ComponentOption[];
+  
+  const otherOptions = Array.from(
+    new Set(finalOptions.filter(opt => opt.subtype !== 'porta' && opt.subtype !== 'ip').map(opt => opt.id))
+  ).map(id => finalOptions.find(opt => opt.id === id)).filter(Boolean) as ComponentOption[];
   
   // Combinar opções para seletores, organizadas por tipo
   const organizedOptions: (ComponentOption | SectionHeader)[] = [
@@ -113,6 +121,7 @@ export function ConnectivityOptions({
     ...otherOptions
   ];
   
+  // O resto da função permanece igual...
   return (
     <Card className="p-4">
       <CardHeader className="p-2">

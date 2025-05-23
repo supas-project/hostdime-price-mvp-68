@@ -17,8 +17,20 @@ export async function deleteItem(categoryId: string, itemId: string): Promise<bo
       return false;
     }
     
-    // Filter out the item
+    console.log(`[deleteItem] Removing item ${itemId} from ${categoryId}`);
+    console.log(`[deleteItem] Before deletion: ${allData[categoryId].items.length} items`);
+    
+    // Verificar se o item existe antes de tentar remover
+    const itemExists = allData[categoryId].items.some(item => item.id === itemId);
+    if (!itemExists) {
+      console.error(`Item ${itemId} not found in category ${categoryId}`);
+      return false;
+    }
+    
+    // Filter out the item - garantindo que removemos exatamente o item com ID correto
     const updatedItems = allData[categoryId].items.filter(item => item.id !== itemId);
+    
+    console.log(`[deleteItem] After deletion: ${updatedItems.length} items (removed ${allData[categoryId].items.length - updatedItems.length} items)`);
     
     // Update the category
     const updatedCategory = {

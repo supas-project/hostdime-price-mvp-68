@@ -62,8 +62,31 @@ export function PriceTableContent({
     }
   }, [priceData, activeTab, setActiveTab]);
   
+  // Ajuste para remover itens duplicados das categorias
+  useEffect(() => {
+    if (priceData && activeTab === "connectivity") {
+      // Verificar se a categoria atual é a de conectividade
+      console.log("[PriceTableContent] Verificando itens de conectividade para detectar duplicatas");
+      
+      const connectivityCategory = priceData.connectivity;
+      if (connectivityCategory && Array.isArray(connectivityCategory.items)) {
+        const itemCount = connectivityCategory.items.length;
+        
+        // Verificar quantos itens estão duplicados
+        const uniqueIds = new Set(connectivityCategory.items.map(item => item.id));
+        console.log(`[PriceTableContent] Total items: ${itemCount}, Unique items: ${uniqueIds.size}`);
+        
+        if (uniqueIds.size < itemCount) {
+          console.log(`[PriceTableContent] Detectadas ${itemCount - uniqueIds.size} duplicatas em conectividade`);
+        }
+      }
+    }
+  }, [priceData, activeTab]);
+  
   // Debug para verificar os dados recebidos
-  console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
+  useEffect(() => {
+    console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
+  }, [priceData]);
   
   // Garantir que priceData é um objeto válido
   if (!priceData || typeof priceData !== 'object' || Object.keys(priceData).length === 0) {
@@ -81,19 +104,28 @@ export function PriceTableContent({
     );
   }
   
-  // Validação adicional para verificar cada categoria
-  Object.keys(priceData).forEach(key => {
-    if (!priceData[key]) {
-      console.warn(`PriceTableContent: Category ${key} is undefined`);
-      return;
+  // Processar o priceData para remover duplicatas das categorias críticas
+  const processedPriceData = { ...priceData };
+  
+  // Remover duplicatas de categorias específicas (connectivity, port_speed, ip_blocks)
+  ["connectivity", "port_speed", "ip_blocks"].forEach(categoryId => {
+    if (processedPriceData[categoryId] && Array.isArray(processedPriceData[categoryId].items)) {
+      const originalLength = processedPriceData[categoryId].items.length;
+      
+      // Usar Set para encontrar IDs únicos
+      const uniqueIds = new Set<string>();
+      processedPriceData[categoryId].items = processedPriceData[categoryId].items.filter(item => {
+        if (!item || !item.id) return false;
+        if (uniqueIds.has(item.id)) return false;
+        uniqueIds.add(item.id);
+        return true;
+      });
+      
+      const newLength = processedPriceData[categoryId].items.length;
+      if (newLength < originalLength) {
+        console.log(`[PriceTableContent] Removed ${originalLength - newLength} duplicate items from ${categoryId}`);
+      }
     }
-    
-    if (!Array.isArray(priceData[key].items)) {
-      console.warn(`PriceTableContent: Items is not an array for category ${key}, fixing...`);
-      priceData[key].items = priceData[key].items || [];
-    }
-    
-    console.log(`PriceTableContent: Category ${key} has ${priceData[key].items.length} items`);
   });
   
   // Custom function para lidar com a exclusão de categorias
@@ -120,13 +152,13 @@ export function PriceTableContent({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <CategoryTabs
-        categories={Object.values(priceData)}
+        categories={Object.values(processedPriceData)}
         isAdmin={isAdmin}
         onDeleteCategory={handleDeleteCategory}
       />
 
       <div className="mt-4 space-y-3 animate-fade-in">
-        {Object.values(priceData).map((category) => {
+        {Object.values(processedPriceData).map((category) => {
           // Garantir que category.items seja um array
           if (!Array.isArray(category.items)) {
             console.warn(`PriceTableContent: Category ${category.id} items is not an array:`, category.items);

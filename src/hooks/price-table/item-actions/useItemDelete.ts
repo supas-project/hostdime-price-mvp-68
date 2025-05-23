@@ -34,12 +34,30 @@ export function useItemDelete(
     
     try {
       setIsDeleting(true);
+      console.log(`[useItemDelete] Deletando item ${itemId} da categoria ${activeTab}`);
       
       // Get item name before deleting for message
       const category = await PriceService.getCategory(activeTab);
       const itemToDelete = category?.items.find(item => item.id === itemId);
       
-      await PriceService.deleteItem(activeTab, itemId);
+      if (!itemToDelete) {
+        console.warn(`[useItemDelete] Item ${itemId} não encontrado na categoria ${activeTab}`);
+        toast.error("Item não encontrado", {
+          description: "O item que você está tentando excluir não foi encontrado."
+        });
+        return false;
+      }
+      
+      // Chamar deleteItem com ID correto
+      const success = await PriceService.deleteItem(activeTab, itemId);
+      
+      if (!success) {
+        console.error(`[useItemDelete] Falha ao excluir o item ${itemId}`);
+        toast.error("Erro ao excluir item", {
+          description: "Ocorreu um erro ao excluir o item. Tente novamente."
+        });
+        return false;
+      }
       
       // Get fresh data
       const updatedData = await PriceService.getAllData();
@@ -54,6 +72,7 @@ export function useItemDelete(
       
       return true;
     } catch (error) {
+      console.error("[useItemDelete] Erro ao excluir item:", error);
       toast.error("Erro ao excluir item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });

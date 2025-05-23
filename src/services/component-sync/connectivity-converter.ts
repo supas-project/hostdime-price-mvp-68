@@ -28,46 +28,48 @@ export async function convertConnectivityPriceDataToComponents(): Promise<{
     // Obter dados das categorias port_speed e ip_blocks
     const portSpeedData = await PriceService.getCategory('port_speed');
     const ipBlocksData = await PriceService.getCategory('ip_blocks');
-    const connectivityData = await PriceService.getCategory('connectivity');
     
     logDebug("Connectivity Converter", {
       portSpeed: portSpeedData?.items?.length || 0,
-      ipBlocks: ipBlocksData?.items?.length || 0,
-      connectivity: connectivityData?.items?.length || 0
+      ipBlocks: ipBlocksData?.items?.length || 0
     });
     
-    // Opções de velocidade de porta
+    // Opções de velocidade de porta - removendo duplicatas por ID
     const portOptions: ComponentOption[] = [];
+    const portIdsAdded = new Set<string>();
+    
     if (portSpeedData && portSpeedData.items && portSpeedData.items.length > 0) {
-      portOptions.push(...portSpeedData.items.map(item => ({
-        ...item,
-        type: 'Conectividade',
-        subtype: 'porta',
-        isHardware: true
-      })));
-    } else if (connectivityData && connectivityData.items) {
-      // Fallback: extrair opções de porta do connectivity geral se port_speed estiver vazio
-      const connPortOptions = connectivityData.items.filter(item => item.subtype === 'porta');
-      if (connPortOptions.length > 0) {
-        portOptions.push(...connPortOptions);
-      }
+      // Filtrar duplicatas por ID
+      portSpeedData.items.forEach(item => {
+        if (!portIdsAdded.has(item.id)) {
+          portIdsAdded.add(item.id);
+          portOptions.push({
+            ...item,
+            type: 'Conectividade',
+            subtype: 'porta',
+            isHardware: true
+          });
+        }
+      });
     }
     
-    // Opções de blocos de IP
+    // Opções de blocos de IP - removendo duplicatas por ID
     const ipOptions: ComponentOption[] = [];
+    const ipIdsAdded = new Set<string>();
+    
     if (ipBlocksData && ipBlocksData.items && ipBlocksData.items.length > 0) {
-      ipOptions.push(...ipBlocksData.items.map(item => ({
-        ...item,
-        type: 'Conectividade',
-        subtype: 'ip',
-        isHardware: true
-      })));
-    } else if (connectivityData && connectivityData.items) {
-      // Fallback: extrair opções de IP do connectivity geral se ip_blocks estiver vazio
-      const connIpOptions = connectivityData.items.filter(item => item.subtype === 'ip');
-      if (connIpOptions.length > 0) {
-        ipOptions.push(...connIpOptions);
-      }
+      // Filtrar duplicatas por ID
+      ipBlocksData.items.forEach(item => {
+        if (!ipIdsAdded.has(item.id)) {
+          ipIdsAdded.add(item.id);
+          ipOptions.push({
+            ...item,
+            type: 'Conectividade',
+            subtype: 'ip',
+            isHardware: true
+          });
+        }
+      });
     }
     
     logDebug("Connectivity Options Converted", {
@@ -101,20 +103,30 @@ export async function saveConnectivityComponentsToPriceData(
       ips: ipOptions.length
     });
     
-    // Atualizar categoria port_speed
+    // Atualizar categoria port_speed - sem duplicatas
     if (portOptions.length > 0) {
       const category = await PriceService.getCategory('port_speed');
       if (category) {
-        // Atualizar itens existentes
-        const updatedItems = portOptions.map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Velocidade de porta`,
-          price: option.price,
-          type: 'network',
-          subtype: 'porta',
-          isHardware: true
-        }));
+        // Criar um mapa de IDs para detecção de duplicatas
+        const uniqueItems = new Map();
+        
+        // Adicionar somente itens únicos ao mapa
+        portOptions.forEach(option => {
+          if (!uniqueItems.has(option.id)) {
+            uniqueItems.set(option.id, {
+              id: option.id,
+              name: option.name,
+              description: option.description || `${option.name} - Velocidade de porta`,
+              price: option.price,
+              type: 'network',
+              subtype: 'porta',
+              isHardware: true
+            });
+          }
+        });
+        
+        // Converter o mapa para array
+        const updatedItems = Array.from(uniqueItems.values());
         
         // Substituir os itens existentes
         category.items = updatedItems;
@@ -122,20 +134,30 @@ export async function saveConnectivityComponentsToPriceData(
       }
     }
     
-    // Atualizar categoria ip_blocks
+    // Atualizar categoria ip_blocks - sem duplicatas
     if (ipOptions.length > 0) {
       const category = await PriceService.getCategory('ip_blocks');
       if (category) {
-        // Atualizar itens existentes
-        const updatedItems = ipOptions.map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Bloco de IPs`,
-          price: option.price,
-          type: 'network',
-          subtype: 'ip',
-          isHardware: true
-        }));
+        // Criar um mapa de IDs para detecção de duplicatas
+        const uniqueItems = new Map();
+        
+        // Adicionar somente itens únicos ao mapa
+        ipOptions.forEach(option => {
+          if (!uniqueItems.has(option.id)) {
+            uniqueItems.set(option.id, {
+              id: option.id,
+              name: option.name,
+              description: option.description || `${option.name} - Bloco de IPs`,
+              price: option.price,
+              type: 'network',
+              subtype: 'ip',
+              isHardware: true
+            });
+          }
+        });
+        
+        // Converter o mapa para array
+        const updatedItems = Array.from(uniqueItems.values());
         
         // Substituir os itens existentes
         category.items = updatedItems;
@@ -143,30 +165,44 @@ export async function saveConnectivityComponentsToPriceData(
       }
     }
     
-    // Sincronizar também com a categoria geral de conectividade
+    // Sincronizar também com a categoria geral de conectividade - sem duplicatas
     const connectivityCategory = await PriceService.getCategory('connectivity');
     if (connectivityCategory) {
-      // Combinar as opções de porta e IP
-      const allItems = [
-        ...portOptions.map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Velocidade de porta`,
-          price: option.price,
-          type: 'network',
-          subtype: 'porta',
-          isHardware: true
-        })),
-        ...ipOptions.map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Bloco de IPs`,
-          price: option.price,
-          type: 'network',
-          subtype: 'ip',
-          isHardware: true
-        }))
-      ];
+      // Criar um mapa de IDs para detecção de duplicatas
+      const uniqueItems = new Map();
+      
+      // Adicionar portas ao mapa (somente itens únicos)
+      portOptions.forEach(option => {
+        if (!uniqueItems.has(option.id)) {
+          uniqueItems.set(option.id, {
+            id: option.id,
+            name: option.name,
+            description: option.description || `${option.name} - Velocidade de porta`,
+            price: option.price,
+            type: 'network',
+            subtype: 'porta',
+            isHardware: true
+          });
+        }
+      });
+      
+      // Adicionar IPs ao mapa (somente itens únicos)
+      ipOptions.forEach(option => {
+        if (!uniqueItems.has(option.id)) {
+          uniqueItems.set(option.id, {
+            id: option.id,
+            name: option.name,
+            description: option.description || `${option.name} - Bloco de IPs`,
+            price: option.price,
+            type: 'network',
+            subtype: 'ip',
+            isHardware: true
+          });
+        }
+      });
+      
+      // Converter o mapa para array
+      const allItems = Array.from(uniqueItems.values());
       
       // Substituir os itens existentes
       connectivityCategory.items = allItems;
