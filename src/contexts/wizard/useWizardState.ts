@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -101,6 +100,32 @@ export function useWizardState() {
   // CORREÇÃO PRINCIPAL: Reimplementação completa do handleRemoveComponent para garantir remoção robusta
   const handleRemoveComponent = useCallback((componentId: string, componentType?: string) => {
     console.log(`[handleRemoveComponent] Removendo componente: ID=${componentId}, Tipo=${componentType || 'não especificado'}`);
+    
+    // NOVA CORREÇÃO: Verificar se é um item de conectividade para remover corretamente da lista
+    if (componentId.startsWith('network-') || componentId.startsWith('ip-')) {
+      console.log(`[handleRemoveComponent] Removendo item de conectividade: ${componentId}`);
+      
+      setConnectivityItems(prev => {
+        const newItems = { ...prev };
+        if (newItems[componentId]) {
+          delete newItems[componentId];
+          console.log(`[handleRemoveComponent] Item de conectividade removido: ${componentId}`);
+        } else {
+          // Busca avançada por ID parcial
+          const keyToRemove = Object.keys(newItems).find(k => 
+            k.includes(componentId) || componentId.includes(k)
+          );
+          
+          if (keyToRemove) {
+            delete newItems[keyToRemove];
+            console.log(`[handleRemoveComponent] Item de conectividade removido via busca parcial: ${keyToRemove}`);
+          }
+        }
+        return newItems;
+      });
+      
+      return; // Termina aqui para itens de conectividade
+    }
     
     // Verificar se o componentId é um disco interno específico
     if (componentId.startsWith('internal-disk-')) {
@@ -234,7 +259,7 @@ export function useWizardState() {
       
       return newComponents;
     });
-  }, [setStorageItems, setSelectedComponents]);
+  }, [setStorageItems, setSelectedComponents, setConnectivityItems]);
 
   // Verifica se um componente está selecionado
   const isComponentSelected = useCallback((componentType: string, optionId: string) => {
@@ -320,7 +345,6 @@ export function useWizardState() {
     handleSelectOption,
     setConnectivityItems,
     handleSelectStorageItem,
-    // CORREÇÃO: Removida a linha duplicada de handleRemoveComponent que estava causando o erro
     categoriesLoaded,
     beginnerMode,
     setBeginnerMode,

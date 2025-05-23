@@ -33,6 +33,7 @@ export function CartContent({
   // Log para debug
   console.log(`[CartContent] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[CartContent] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
+  console.log(`[CartContent] Conectividade itens:`, connectivityItems);
   
   // Separate components by type - CORREÇÃO: Buscar pelo tipo correto
   // Estas são as chaves corretas para cada tipo específico de componente

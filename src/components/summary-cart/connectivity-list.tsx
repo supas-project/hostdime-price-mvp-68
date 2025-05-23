@@ -37,7 +37,7 @@ export function ConnectivityList({ connectivityItems, onRemoveItem }: Connectivi
       {/* Exibir primeiro os itens de porta */}
       {portItems.map(([itemId, item]) => (
         <div 
-          key={item.option.id} 
+          key={itemId} 
           className="flex justify-between items-center group animate-fade-in hover:bg-accent/20 py-1 px-1.5 rounded-md transition-colors"
         >
           <p className="text-sm font-medium">
@@ -65,7 +65,7 @@ export function ConnectivityList({ connectivityItems, onRemoveItem }: Connectivi
       {/* Em seguida, exibir os blocos de IP */}
       {ipItems.map(([itemId, item]) => (
         <div 
-          key={item.option.id} 
+          key={itemId} 
           className="flex justify-between items-center group animate-fade-in hover:bg-accent/20 py-1 px-1.5 rounded-md transition-colors"
         >
           <p className="text-sm font-medium">

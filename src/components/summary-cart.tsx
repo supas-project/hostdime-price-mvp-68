@@ -38,6 +38,7 @@ export function SummaryCart({
   console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`);
   console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
+  console.log(`[SummaryCart] Itens de conectividade:`, connectivityItems);
   
   // CORREÇÃO: Log para debug dos componentes selecionados
   console.log("[SummaryCart] Todos os componentes selecionados:", selectedComponents);
@@ -93,6 +94,12 @@ export function SummaryCart({
   
   const handleRemoveComponentWithFeedback = (type: string) => {
     console.log(`[SummaryCart] Removendo componente: ${type}`);
+    
+    // CORREÇÃO CRÍTICA: Identificar corretamente os itens de conectividade para remoção adequada
+    if (type.includes('network-') || type.includes('ip-')) {
+      console.log(`[SummaryCart] Removendo item de conectividade: ${type}`);
+    }
+    
     handleRemoveComponent(type);
   };
   
