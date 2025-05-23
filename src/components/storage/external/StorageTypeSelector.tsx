@@ -101,9 +101,13 @@ export function StorageTypeSelector({
           {Object.entries(storageTypes).map(([key, type]) => {
             const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
             
-            // Verificação adicional para o preço por GB
-            const pricePerGB = typeof type.pricePerGB === 'number' ? type.pricePerGB : 0;
-            console.log(`[StorageTypeSelector] Type ${key} price per GB: ${pricePerGB}`);
+            // Garantir que temos um número válido para o preço por GB
+            const pricePerGB = typeof type.pricePerGB === 'number' && !isNaN(type.pricePerGB) 
+              ? type.pricePerGB 
+              : 0;
+              
+            // Log detalhado para debug do preço
+            console.log(`[StorageTypeSelector] Type ${key} price per GB: ${pricePerGB} (original value: ${type.pricePerGB})`);
             
             return (
               <div key={key} className="relative">

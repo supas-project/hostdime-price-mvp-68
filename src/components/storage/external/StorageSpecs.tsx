@@ -20,8 +20,11 @@ export function StorageSpecs({
   storageType,
   pricePerGB 
 }: StorageSpecsProps) {
+  // Garantir que exibimos um preço por GB válido
+  const displayPricePerGB = typeof pricePerGB === 'number' && !isNaN(pricePerGB) ? pricePerGB : 0;
+  
   // Log para debug com valores formatados para evitar arredondamentos
-  console.log(`[StorageSpecs] Preço por GB: ${pricePerGB?.toFixed(4)}, Preço total: ${price?.toFixed(2)} para o tipo ${storageType}`);
+  console.log(`[StorageSpecs] Preço por GB: ${displayPricePerGB.toFixed(4)}, Preço total: ${price?.toFixed(2)} para o tipo ${storageType}`);
 
   return (
     <div className="space-y-3">
@@ -44,10 +47,10 @@ export function StorageSpecs({
           />
         </div>
 
-        {pricePerGB !== undefined && (
+        {displayPricePerGB !== undefined && (
           <div className="flex items-center gap-1">
             <span className="text-xs sm:text-sm font-medium">Preço por GB:</span>
-            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(pricePerGB)}/GB</Badge>
+            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(displayPricePerGB)}/GB</Badge>
           </div>
         )}
       </div>

@@ -72,20 +72,33 @@ export function ExternalStoragePanel({
     if (availableStorageTypes[selectedType]) {
       setSelectedTypeDetails(availableStorageTypes[selectedType]);
       
-      // Atualiza o preço total quando o tipo muda
-      const newPrice = calculatePrice(availableStorageTypes[selectedType].pricePerGB, capacity);
+      // Verificar e garantir que o preço por GB é um valor numérico válido
+      const pricePerGB = typeof availableStorageTypes[selectedType].pricePerGB === 'number' && 
+                        !isNaN(availableStorageTypes[selectedType].pricePerGB) 
+                        ? availableStorageTypes[selectedType].pricePerGB 
+                        : 0;
+      
+      // Calcular preço total (preço por GB × capacidade)
+      const newPrice = pricePerGB * capacity;
       setTotalPrice(newPrice);
       
-      console.log(`[ExternalStoragePanel] Type changed: ${selectedType}, price per GB: ${availableStorageTypes[selectedType].pricePerGB}, capacity: ${capacity}, total: ${newPrice}`);
+      console.log(`[ExternalStoragePanel] Type changed: ${selectedType}, price per GB: ${pricePerGB}, capacity: ${capacity}, total: ${newPrice}`);
     }
   }, [selectedType, availableStorageTypes]);
 
   // Atualiza o preço quando a capacidade muda
   useEffect(() => {
-    const newPrice = calculatePrice(selectedTypeDetails?.pricePerGB, capacity);
+    // Verificar e garantir que o preço por GB é um valor numérico válido
+    const pricePerGB = typeof selectedTypeDetails?.pricePerGB === 'number' && 
+                      !isNaN(selectedTypeDetails?.pricePerGB) 
+                      ? selectedTypeDetails?.pricePerGB 
+                      : 0;
+    
+    // Calcular preço total de forma explícita
+    const newPrice = pricePerGB * capacity;
     setTotalPrice(newPrice);
     
-    console.log(`[ExternalStoragePanel] Capacity changed: ${capacity}, price per GB: ${selectedTypeDetails?.pricePerGB}, total: ${newPrice}`);
+    console.log(`[ExternalStoragePanel] Capacity changed: ${capacity}, price per GB: ${pricePerGB}, total: ${newPrice}`);
   }, [capacity, selectedTypeDetails]);
 
   // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
@@ -102,17 +115,25 @@ export function ExternalStoragePanel({
 
   // Handle the add storage button click
   const handleAddStorage = () => {
-    console.log(`[ExternalStoragePanel] Adding storage: ${selectedTypeDetails.name}, ${capacity}GB, Price per GB: ${selectedTypeDetails.pricePerGB}, Total: ${totalPrice}`);
+    // Garantir que estamos usando o preço por GB correto
+    const pricePerGB = typeof selectedTypeDetails?.pricePerGB === 'number' && !isNaN(selectedTypeDetails?.pricePerGB) 
+                      ? selectedTypeDetails.pricePerGB 
+                      : 0;
+    
+    // Recalcular o preço total para garantir precisão
+    const finalPrice = pricePerGB * capacity;
+    
+    console.log(`[ExternalStoragePanel] Adding storage: ${selectedTypeDetails.name}, ${capacity}GB, Price per GB: ${pricePerGB}, Total: ${finalPrice}`);
     
     if (onSelectStorage) {
       // Enviar o preço total calculado (preço por GB × capacidade)
-      onSelectStorage(selectedTypeDetails.name, capacity, totalPrice);
+      onSelectStorage(selectedTypeDetails.name, capacity, finalPrice);
     }
     
     if (onSelect) {
       const tier: StorageTier = {
         name: `${selectedTypeDetails.name} ${capacity}GB`,
-        price: totalPrice,
+        price: finalPrice,
         iops: selectedTypeDetails.iops,
         throughput: selectedTypeDetails.throughput,
         description: selectedTypeDetails.description

@@ -70,7 +70,11 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Criar ID consistente para storages externos
     const storageId = `external-storage-${type.toLowerCase()}-${capacity}`;
     
-    console.log(`[StorageStep] Adicionando storage externo: ${type}, ${formattedCapacity}, Preço total: ${price}`);
+    // Log detalhado do preço que estamos passando
+    console.log(`[StorageStep] Adicionando storage externo: ${type}, ${formattedCapacity}, Preço total (recebido): ${price}`);
+    
+    // Garantir que o preço é um número válido
+    const validPrice = typeof price === 'number' && !isNaN(price) ? price : 0;
     
     const storageOption: ComponentOption = {
       id: storageId,
@@ -78,7 +82,7 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
       subtype: "Storage Externo",
       name: `Storage ${type} ${formattedCapacity}`,
       description: `Storage externo: ${type} ${formattedCapacity}`,
-      price: price, // Usando o preço total calculado externamente
+      price: validPrice, // Usando o preço total calculado e validado
       isHardware: true, // Marca como hardware para cálculos de PayBack
       specs: [
         `Tipo: Storage ${type}`,
