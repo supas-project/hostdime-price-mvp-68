@@ -33,7 +33,9 @@ export function InputPreco({
   // Inicializa e atualiza o valor formatado quando a prop value muda
   useEffect(() => {
     if (value !== undefined) {
+      // CORREÇÃO: Garantir que estamos trabalhando com números primeiro
       const numValue = typeof value === 'number' ? value : parseBRLToFloat(value);
+      console.log(`[InputPreco] Formatting value ${value} (${typeof value}) to display, parsed: ${numValue}`);
       setDisplayValue(formatCurrency(numValue));
     }
   }, [value]);
@@ -47,11 +49,17 @@ export function InputPreco({
   // Função para lidar com o blur (perda de foco)
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     try {
-      // Converte para número
+      console.log(`[InputPreco] Handling blur with value: ${displayValue}`);
+      
+      // Converte para número usando a função aprimorada
       const numericValue = parseBRLToFloat(displayValue);
+      console.log(`[InputPreco] Parsed value: ${numericValue}`);
       
       // Formata para exibição
-      setDisplayValue(formatCurrency(numericValue));
+      const formattedValue = formatCurrency(numericValue);
+      console.log(`[InputPreco] Formatted back to: ${formattedValue}`);
+      
+      setDisplayValue(formattedValue);
       
       // Chama o onChange com o valor numérico
       onChange(numericValue);
@@ -60,8 +68,6 @@ export function InputPreco({
       if (onBlur) {
         onBlur(numericValue);
       }
-      
-      console.log(`[InputPreco] Value formatted: ${displayValue} -> ${formatCurrency(numericValue)} (${numericValue})`);
     } catch (error) {
       console.error("[InputPreco] Error formatting price:", error);
       // Em caso de erro, mantém o valor atual e notifica

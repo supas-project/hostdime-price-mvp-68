@@ -1,3 +1,4 @@
+
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -20,11 +21,13 @@ interface OrderDetailsProps {
 }
 
 // CORREÇÃO: Definir a função auxiliar antes de usá-la
+// Corrigido cálculo de PayBack - não estamos mais descontando o valor mas sim aplicando a divisão pelo fator
 const calculatePriceWithPayBack = (component: ComponentOption, contractDuration: string): number => {
   if (component.isHardware && contractDuration !== "0") {
     const paybackValue = getPayBackValue(component, contractDuration);
     if (paybackValue) {
-      return component.price * (1 - paybackValue);
+      // Preço dividido pelo fator de PayBack
+      return component.price / paybackValue;
     }
   }
   return component.price;

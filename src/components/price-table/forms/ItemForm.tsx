@@ -64,7 +64,7 @@ type ItemFormProps = {
 export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: ItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Log the item being edited to debug
+  // Log the item being edited for debugging
   useEffect(() => {
     if (isEditing && item) {
       console.log("[ItemForm] Editing item:", item);
@@ -98,17 +98,24 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
       specs: item?.specs || [],
       tags: getInitialTags(),
     },
-    mode: "onBlur", // Validar ao perder o foco
+    mode: "onBlur",
   });
 
-  // Atualiza o formulário quando o item muda (edição)
+  // CORREÇÃO: Garantir que o preço é inicializado corretamente
   useEffect(() => {
     if (item) {
       console.log("[ItemForm] Resetting form with item data:", item);
+      console.log("[ItemForm] Price being set:", item.price, "Type:", typeof item.price);
+      
+      // Garantir que o preço é um número válido
+      const price = typeof item.price === 'number' && !isNaN(item.price) 
+        ? item.price 
+        : parseBRLToFloat(item.price);
+      
       form.reset({
         name: item.name || "",
         description: item.description || "",
-        price: item.price || 0,
+        price: price,
         type: item.type || defaultType || "",
         subtype: item.subtype || "",
         specs: Array.isArray(item.specs) ? item.specs : [],
@@ -127,6 +134,17 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     // Evita múltiplas submissões
     if (isSubmitting) return;
     
+    // CORREÇÃO: Garantir que o preço é um número válido
+    const price = typeof values.price === 'number' && !isNaN(values.price) 
+      ? values.price 
+      : parseBRLToFloat(values.price);
+    
+    console.log(`[ItemForm] Original price: ${values.price} (${typeof values.price})`);
+    console.log(`[ItemForm] Validated price: ${price} (${typeof price})`);
+    
+    // Update the price value
+    values.price = price;
+    
     // Ensure specs is always an array
     if (!values.specs) {
       values.specs = [];
@@ -139,7 +157,6 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     
     // Log values before submission to debug
     console.log("[ItemForm] Form values to submit:", values);
-    console.log("[ItemForm] Price value to submit:", values.price, "Type:", typeof values.price);
     
     // Auto-add Hardware tag if type is hardware category and doesn't have Hardware tag
     if (isHardwareCategory() && !values.tags.includes("Hardware")) {
@@ -157,7 +174,7 @@ export function ItemForm({ onSubmit, defaultType, item, isEditing = false }: Ite
     // Passa o item ID se estamos em modo de edição
     onSubmit(values, isEditing ? item?.id : undefined);
     
-    // Reset o estado após um tempo, caso o componente ainda esteja montado
+    // Reset o estado após um tempo
     setTimeout(() => {
       setIsSubmitting(false);
     }, 1000);

@@ -1,3 +1,4 @@
+
 import { PriceItem } from '@/types/pricing';
 import { getAllData } from '../data-retrieval';
 import { saveData } from '../data-persistence';
@@ -26,35 +27,31 @@ export async function updateItem(categoryId: string, itemId: string, updates: Pa
       return null;
     }
     
-    // Ensure price is a valid number
+    // CORREÇÃO: Garantir que o preço é processado corretamente
     if (updates.price !== undefined) {
       console.log(`[updateItem] Original price value: ${updates.price} (${typeof updates.price})`);
       
       try {
-        // Processar o valor para garantir que é um número
-        if (typeof updates.price === 'string' || (typeof updates.price !== 'number')) {
-          updates.price = parseBRLToFloat(updates.price);
-        } 
-        
-        // Verificação final
+        // Se é uma string ou algo que não é um número, converter
         if (typeof updates.price !== 'number' || isNaN(updates.price)) {
-          console.error(`[updateItem] Price conversion failed, using original price`);
-          updates.price = allData[categoryId].items[itemIndex].price;
+          console.log(`[updateItem] Converting non-number price: ${updates.price}`);
+          const parsedPrice = parseBRLToFloat(updates.price);
+          console.log(`[updateItem] Converted price to: ${parsedPrice}`);
+          updates.price = parsedPrice;
         }
         
-        console.log(`[updateItem] Converted price to number: ${updates.price}`);
+        // Verificar se é um número válido
+        if (isNaN(updates.price as number)) {
+          console.error(`[updateItem] Invalid price after conversion: ${updates.price}`);
+          updates.price = allData[categoryId].items[itemIndex].price;
+        }
       } catch (error) {
-        console.error(`[updateItem] Failed to convert price: ${error}`);
-        // Keep the original price
+        console.error(`[updateItem] Error processing price: ${error}`);
+        // Manter o preço original
         updates.price = allData[categoryId].items[itemIndex].price;
       }
       
-      // Ensure we always have a valid number with at most 2 decimal places
-      if (typeof updates.price === 'number' && !isNaN(updates.price)) {
-        // Leave the full precision but log the rounded value for debugging
-        const roundedForDisplay = Math.round(updates.price * 100) / 100;
-        console.log(`[updateItem] Final price value for ${itemId}: ${updates.price} (rounded for display: ${roundedForDisplay})`);
-      }
+      console.log(`[updateItem] Final price: ${updates.price}`);
     }
     
     // Update the item

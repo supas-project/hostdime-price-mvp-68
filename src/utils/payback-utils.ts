@@ -22,14 +22,21 @@ export type ContractDuration = keyof typeof PAYBACK_VALUES;
 export function getPayBackValue(component: ComponentOption | null, contractDuration: string | number): number | null {
   // Return null if no component or not hardware
   if (!component || component.isHardware !== true) {
+    console.log(`[PayBack] Component is not hardware or null: ${component?.name || 'null'}`);
     return null;
   }
 
   // Convert to string to ensure proper lookup
   const duration = String(contractDuration) as ContractDuration;
   
+  // Log for debugging
+  console.log(`[PayBack] Getting value for contract duration: ${duration}, component: ${component.name}`);
+  
   // Return payback value or default to 4 (indeterminate) if duration not found
-  return PAYBACK_VALUES[duration] || PAYBACK_VALUES["0"];
+  const paybackValue = PAYBACK_VALUES[duration] || PAYBACK_VALUES["0"];
+  console.log(`[PayBack] Returned value: ${paybackValue}`);
+  
+  return paybackValue;
 }
 
 /**

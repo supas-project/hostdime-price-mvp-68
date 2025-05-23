@@ -22,8 +22,9 @@ export function formatCurrency(value: number): string {
 
 // Função para converter string formatada em BRL para número
 export function parseBRLToFloat(value: string | number): number {
+  // Se já for um número, retorna diretamente
   if (typeof value === 'number' && !isNaN(value)) {
-    return value; // Já é um número válido
+    return value;
   }
   
   try {
@@ -31,25 +32,29 @@ export function parseBRLToFloat(value: string | number): number {
       return 0;
     }
     
-    // Converter para string se for outro tipo
+    // Converter para string
     const valueStr = String(value);
     
-    // Remover símbolo de moeda e espaços
-    const cleaned = valueStr.replace(/[R$\s]/g, '');
+    // Remover R$ e espaços
+    let cleaned = valueStr.replace(/[R$\s]/g, '');
     
-    // Substituir pontos (separadores de milhar) e trocar vírgula por ponto
-    const normalized = cleaned
-      .replace(/\./g, '')  // Remove pontos
-      .replace(',', '.'); // Substitui vírgula por ponto
-      
-    // Converter para float
-    const result = parseFloat(normalized);
+    // Verificar se estamos lidando com formato brasileiro (vírgula como decimal)
+    if (cleaned.includes(',')) {
+      // Formato brasileiro: primeiro substituir pontos (separadores de milhar)
+      cleaned = cleaned.replace(/\./g, '');
+      // Depois substituir vírgula por ponto para decimal
+      cleaned = cleaned.replace(',', '.');
+    }
+    
+    // Converter para número
+    const result = parseFloat(cleaned);
     
     if (isNaN(result)) {
       console.warn(`[parseBRLToFloat] Failed to parse value: ${value}, defaulting to 0`);
       return 0;
     }
     
+    console.log(`[parseBRLToFloat] Successfully parsed: ${valueStr} → ${result}`);
     return result;
   } catch (error) {
     console.error(`[parseBRLToFloat] Error parsing value ${value}:`, error);

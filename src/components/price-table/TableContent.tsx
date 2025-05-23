@@ -40,22 +40,9 @@ export function TableContent({
     const basePrice = typeof item.price === 'number' && !isNaN(item.price) 
       ? item.price 
       : 0;
-      
-    // If this is hardware and we have a contract, apply discount
-    if ((item.isHardware || item.tags?.includes('Hardware')) && contractDuration !== "0") {
-      // Map contract duration to discount percentage
-      const discountMap: Record<string, number> = {
-        "12": 5,
-        "24": 10,
-        "36": 15,
-        "48": 20,
-        "60": 25,
-      };
-      
-      const discount = discountMap[contractDuration] || 0;
-      return basePrice * (1 - discount / 100);
-    }
     
+    // CORREÇÃO: Não aplicamos descontos na exibição da tabela de preços
+    // Mostramos sempre o valor original cadastrado
     return basePrice;
   };
 
