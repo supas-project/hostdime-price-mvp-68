@@ -64,11 +64,12 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
     return "N/A";
   };
 
-  // CORREÇÃO: Função aprimorada para remover item
+  // CORREÇÃO: Função corrigida para garantir que a remoção do disco funcione corretamente
   const handleRemoveClick = (diskId: string) => {
     console.log(`[StorageList] Removendo disco: ${diskId}`);
     
     if (onRemoveItem) {
+      // Chama a função de remoção com o ID do disco
       onRemoveItem(diskId);
     }
   };
@@ -96,12 +97,12 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
                 
-                {/* CORREÇÃO: Melhorar a visibilidade do botão de remoção e garantir que ele chame a função correta */}
+                {/* CORREÇÃO: Botão de remoção com feedback visual mais forte e garantia de evento de clique */}
                 {onRemoveItem && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 p-0 opacity-70 group-hover:opacity-100 transition-opacity"
+                    className="h-6 w-6 p-0 opacity-80 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
                     onClick={() => handleRemoveClick(disk.id)}
                   >
                     <X className="h-3 w-3" />

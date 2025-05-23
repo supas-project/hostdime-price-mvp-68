@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -98,40 +97,35 @@ export function useWizardState() {
     // Implementação existente (mantida vazia neste exemplo)
   }, []);
 
-  // Função para remover componentes
+  // Função para remover componentes - CORREÇÃO CRÍTICA
   const removeComponent = useCallback((componentType: string, optionId: string) => {
-    // CORREÇÃO: Log para debug
+    // Log mais detalhado para debug
     console.log(`[removeComponent] Removendo componente tipo: ${componentType}, id: ${optionId}`);
     
-    // CORREÇÃO: Verificar primeiro se é um ID de disco interno ou externo
-    // e removê-lo do storageItems
-    let removedFromStorage = false;
-
-    // Verificar e remover de discos internos se aplicável
+    // CORREÇÃO: Verificar primeiro se é um disco interno ou externo
     setStorageItems(prev => {
+      // Verificar discos internos
       const internalIndex = prev.internal.findIndex(item => item.id === optionId);
       if (internalIndex >= 0) {
         const newInternal = [...prev.internal];
         newInternal.splice(internalIndex, 1);
         console.log(`[removeComponent] Disco interno removido, restantes: ${newInternal.length}`);
-        removedFromStorage = true;
         return { ...prev, internal: newInternal };
       }
       
-      // Verificar e remover de storage externo se aplicável
+      // Verificar storage externo
       const externalIndex = prev.external.findIndex(item => item.id === optionId);
       if (externalIndex >= 0) {
         const newExternal = [...prev.external];
         newExternal.splice(externalIndex, 1);
         console.log(`[removeComponent] Disco externo removido, restantes: ${newExternal.length}`);
-        removedFromStorage = true;
         return { ...prev, external: newExternal };
       }
       
       return prev;
     });
     
-    // Verificar e remover de connectivityItems se aplicável
+    // Verificar itens de conectividade
     setConnectivityItems(prev => {
       if (prev[optionId]) {
         const newItems = { ...prev };
@@ -142,7 +136,7 @@ export function useWizardState() {
       return prev;
     });
     
-    // Verificar e remover de customServices se aplicável
+    // Verificar serviços personalizados
     setCustomServices(prev => {
       const serviceIndex = prev.findIndex(service => service.id === optionId);
       if (serviceIndex >= 0) {
@@ -154,55 +148,95 @@ export function useWizardState() {
       return prev;
     });
     
-    // Se não for um item especial, verificar nos componentes normais
-    // e remover do estado selectedComponents
-    if (!removedFromStorage) {
-      setSelectedComponents((prevComponents) => {
-        const newComponents = { ...prevComponents };
-        
-        // Normalizar o tipo para garantir consistência
-        const normalizedType = componentType.toLowerCase();
-        
-        // Verificar por tipo e ID
-        if (
-          newComponents[normalizedType] &&
-          newComponents[normalizedType].id === optionId
-        ) {
-          delete newComponents[normalizedType];
-          console.log(`[removeComponent] Componente standard removido: ${normalizedType}`);
-        } else if (optionId && newComponents[optionId]) {
-          // Também tenta remover diretamente pelo ID como chave
-          delete newComponents[optionId];
-          console.log(`[removeComponent] Componente removido pelo ID como chave: ${optionId}`);
-        }
-        
-        console.log(`[removeComponent] Componentes após remoção:`, newComponents);
-        return newComponents;
-      });
-    }
+    // Por fim, verificar componentes regulares
+    setSelectedComponents((prevComponents) => {
+      const newComponents = { ...prevComponents };
+      
+      // Normalizar o tipo para consistência
+      const normalizedType = componentType.toLowerCase();
+      
+      if (
+        newComponents[normalizedType] &&
+        newComponents[normalizedType].id === optionId
+      ) {
+        delete newComponents[normalizedType];
+        console.log(`[removeComponent] Componente regular removido: ${normalizedType}`);
+      } else if (optionId && newComponents[optionId]) {
+        // Tenta remover diretamente pelo ID como chave
+        delete newComponents[optionId];
+        console.log(`[removeComponent] Componente removido pelo ID como chave: ${optionId}`);
+      }
+      
+      console.log(`[removeComponent] Componentes após remoção:`, newComponents);
+      return newComponents;
+    });
   }, []);
 
-  // CORREÇÃO: Implementação melhorada para lidar com ambos os casos
+  // CORREÇÃO PRINCIPAL: Implementação robusta para lidar com remoção de componentes
   const handleRemoveComponent = useCallback((componentId: string, componentType?: string) => {
     console.log(`[handleRemoveComponent] Removendo: id=${componentId}, tipo=${componentType || 'não especificado'}`);
     
-    // Caso 1: Se temos tanto ID quanto tipo, usamos ambos
+    // Caso 1: Se temos ID e tipo, usamos ambos
     if (componentType) {
       removeComponent(componentType, componentId);
       return;
     }
     
-    // Caso 2: Se temos apenas o ID, o tratamos como ID e como tipo
-    // Isso garante que funcionará se o ID estiver armazenado como chave ou como valor
-    removeComponent(componentId, componentId);
+    // Caso 2: Se o ID for um disco específico (verificação direta na lista de storage)
+    let removedFromStorage = false;
     
-    // Caso 3: Se o ID contém um tipo composto (como storage_internal), tratamos especialmente
+    // Verificar e remover disco interno
+    setStorageItems(prev => {
+      const internalIndex = prev.internal.findIndex(item => item.id === componentId);
+      if (internalIndex >= 0) {
+        removedFromStorage = true;
+        const newInternal = [...prev.internal];
+        newInternal.splice(internalIndex, 1);
+        console.log(`[handleRemoveComponent] Disco interno removido diretamente, restantes: ${newInternal.length}`);
+        return { ...prev, internal: newInternal };
+      }
+      
+      // Verificar e remover storage externo
+      const externalIndex = prev.external.findIndex(item => item.id === componentId);
+      if (externalIndex >= 0) {
+        removedFromStorage = true;
+        const newExternal = [...prev.external];
+        newExternal.splice(externalIndex, 1);
+        console.log(`[handleRemoveComponent] Disco externo removido diretamente, restantes: ${newExternal.length}`);
+        return { ...prev, external: newExternal };
+      }
+      
+      return prev;
+    });
+    
+    if (removedFromStorage) {
+      return; // Se já removemos da lista de storage, não precisamos continuar
+    }
+    
+    // Caso 3: Se o ID contiver '_' (como storage_internal), tratar especialmente
     if (componentId.includes('_')) {
       const parts = componentId.split('_');
       if (parts.length > 1) {
+        // Se for storage_internal ou storage_external, limpar toda a lista correspondente
+        if (componentId === 'storage_internal') {
+          setStorageItems(prev => ({ ...prev, internal: [] }));
+          console.log('[handleRemoveComponent] Removidos todos os discos internos');
+          return;
+        }
+        if (componentId === 'storage_external') {
+          setStorageItems(prev => ({ ...prev, external: [] }));
+          console.log('[handleRemoveComponent] Removidos todos os storages externos');
+          return;
+        }
+        
+        // Se for outro formato composto, tentar remover por tipo e ID
         removeComponent(parts[0], componentId);
+        return;
       }
     }
+    
+    // Caso 4: Último recurso, tratar o ID como tipo e como ID
+    removeComponent(componentId, componentId);
   }, [removeComponent]);
 
   // Verifica se um componente está selecionado

@@ -108,20 +108,19 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // CORREÇÃO: Handler aprimorado para remoção de itens
+  // CORREÇÃO: Handler aprimorado para remoção de itens que garante que a função correta é chamada
   const handleRemoveItem = (itemId: string, itemType?: string) => {
     console.log(`[OrderDetails] Removendo item: ${itemId}, tipo: ${itemType || 'não especificado'}`);
     
     if (onRemoveItem) {
-      // Usar a função de remoção fornecida como prop, se disponível
+      // Usar a função de remoção fornecida como prop
       onRemoveItem(itemId);
     } else if (handleRemoveComponent) {
-      // Caso contrário, usar a função do context
-      // Se o tipo for fornecido, usamos ambos os parâmetros
+      // Caso contrário, usar a função do context, garantindo que passamos o tipo quando disponível
       if (itemType) {
         handleRemoveComponent(itemId, itemType);
       } else {
-        // Caso contrário, apenas passamos o ID
+        // Se não tivermos o tipo, passamos apenas o ID e deixamos a função handleRemoveComponent resolver
         handleRemoveComponent(itemId);
       }
     }

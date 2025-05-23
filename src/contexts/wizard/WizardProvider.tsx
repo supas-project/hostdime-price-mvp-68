@@ -7,10 +7,9 @@ import { WizardProviderProps } from "./types";
 export const WizardProvider: React.FC<WizardProviderProps> = ({ children }) => {
   const wizardState = useWizardState();
   
-  // Garantir que todas as propriedades de useWizardState correspondam à interface WizardContextProps
+  // Garantir que todas as propriedades, incluindo setSelectedComponents, estão disponíveis no contexto
   const contextValue = {
-    ...wizardState,
-    setSelectedComponents: wizardState.setSelectedComponents
+    ...wizardState
   };
   
   return (
