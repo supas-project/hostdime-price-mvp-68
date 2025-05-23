@@ -22,41 +22,59 @@ export function StorageSpecs({
 }: StorageSpecsProps) {
   // Garantir que exibimos um preço por GB válido
   const displayPricePerGB = typeof pricePerGB === 'number' && !isNaN(pricePerGB) ? pricePerGB : 0;
-  
-  // Log para debug com valores formatados para evitar arredondamentos
-  console.log(`[StorageSpecs] Preço por GB: ${displayPricePerGB.toFixed(4)}, Preço total: ${price?.toFixed(2)} para o tipo ${storageType}`);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <div className="flex items-center gap-1">
-          <span className="text-xs sm:text-sm font-medium">IOPS:</span>
-          <Badge variant="outline" className="text-xs font-normal">{iops}</Badge>
-          <HelpTooltip
-            title="Input/Output Operations Per Second"
-            description="Medida de desempenho que indica quantas operações de leitura/escrita o storage pode realizar por segundo."
-          />
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <span className="text-xs sm:text-sm font-medium">Throughput:</span>
-          <Badge variant="outline" className="text-xs font-normal">{throughput}</Badge>
-          <HelpTooltip
-            title="Taxa de Transferência"
-            description="Velocidade máxima de leitura e escrita de dados, medida em MB/s."
-          />
+    <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Performance</span>
+            <HelpTooltip
+              title="Especificações de Performance"
+              description="IOPS (operações por segundo) e Throughput (taxa de transferência) determinam a velocidade do storage."
+            />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">IOPS:</span>
+              <Badge variant="outline" className="text-xs">{iops}</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Throughput:</span>
+              <Badge variant="outline" className="text-xs">{throughput}</Badge>
+            </div>
+          </div>
         </div>
 
-        {displayPricePerGB !== undefined && (
-          <div className="flex items-center gap-1">
-            <span className="text-xs sm:text-sm font-medium">Preço por GB:</span>
-            <Badge variant="outline" className="text-xs font-normal">{formatCurrency(displayPricePerGB)}/GB</Badge>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Preços</span>
+            <HelpTooltip
+              title="Estrutura de Preços"
+              description="Preço por GB e valor total baseado na capacidade selecionada."
+            />
           </div>
-        )}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Por GB:</span>
+              <Badge variant="outline" className="text-xs font-medium text-primary">
+                {formatCurrency(displayPricePerGB)}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Total:</span>
+              <Badge variant="default" className="text-xs font-medium">
+                {formatCurrency(price)}
+              </Badge>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div className="text-xs sm:text-sm text-muted-foreground">
-        {description}
+      <div className="pt-2 border-t">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {description}
+        </p>
       </div>
     </div>
   );
