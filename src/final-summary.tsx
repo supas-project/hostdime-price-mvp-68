@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe } from "lucide-react";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe, X } from "lucide-react";
 import { toast } from "sonner";
-import { OrderDetails } from "./order-details";
+import { OrderDetails } from "@/components/order-details"; // Fixed import path
 import { generateQuotePDF, generateQuoteWebView } from "@/utils/quote-export";
 import { useWizard } from "@/contexts/WizardContext";
 import { 
@@ -28,13 +28,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
+import { Textarea } from "@/components/ui/textarea"; // Fixed import path
+import { Label } from "@/components/ui/label"; // Fixed import path
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
-import { X } from "lucide-react";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };

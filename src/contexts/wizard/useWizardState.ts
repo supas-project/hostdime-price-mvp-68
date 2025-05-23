@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -249,6 +248,7 @@ export function useWizardState() {
     currentStep,
     setCurrentStep,
     selectedComponents,
+    setSelectedComponents, // Ensure this is explicitly included in the return value
     selectComponent,
     updateComponentQuantity,
     removeComponent,
