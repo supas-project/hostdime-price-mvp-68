@@ -64,6 +64,15 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
     return "N/A";
   };
 
+  // CORREÇÃO: Função aprimorada para remover item
+  const handleRemoveClick = (diskId: string) => {
+    console.log(`[StorageList] Removendo disco: ${diskId}`);
+    
+    if (onRemoveItem) {
+      onRemoveItem(diskId);
+    }
+  };
+
   return (
     <>
       {Object.entries(groupedStorage).map(([type, disks]) => (
@@ -87,12 +96,13 @@ export function StorageList({ storageItems, onRemoveItem }: StorageListProps) {
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium">{formatCurrency(disk.price)}</p>
                 
+                {/* CORREÇÃO: Melhorar a visibilidade do botão de remoção e garantir que ele chame a função correta */}
                 {onRemoveItem && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onRemoveItem(disk.id)}
+                    className="h-6 w-6 p-0 opacity-70 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleRemoveClick(disk.id)}
                   >
                     <X className="h-3 w-3" />
                     <span className="sr-only">Remover disco</span>

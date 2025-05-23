@@ -16,12 +16,11 @@ import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 interface OrderDetailsProps {
   selectedComponents: { [key: string]: ComponentOption };
   margin?: number;
-  onRemoveItem?: (type: string) => void; // Adicionando prop para remoção de itens
+  onRemoveItem?: (type: string) => void; // Prop para remoção de itens
 }
 
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
-  const { calculatePriceWithPayBack } = usePayBackCalculation();
 
   // Separate DataCenter and Contract components
   const dataCenterComponent = selectedComponents["datacenter"];
@@ -109,12 +108,22 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // Handler para remoção de itens
-  const handleRemoveItem = (type: string) => {
+  // CORREÇÃO: Handler aprimorado para remoção de itens
+  const handleRemoveItem = (itemId: string, itemType?: string) => {
+    console.log(`[OrderDetails] Removendo item: ${itemId}, tipo: ${itemType || 'não especificado'}`);
+    
     if (onRemoveItem) {
-      onRemoveItem(type);
+      // Usar a função de remoção fornecida como prop, se disponível
+      onRemoveItem(itemId);
     } else if (handleRemoveComponent) {
-      handleRemoveComponent(type);
+      // Caso contrário, usar a função do context
+      // Se o tipo for fornecido, usamos ambos os parâmetros
+      if (itemType) {
+        handleRemoveComponent(itemId, itemType);
+      } else {
+        // Caso contrário, apenas passamos o ID
+        handleRemoveComponent(itemId);
+      }
     }
   };
 
@@ -197,6 +206,17 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   // Agrupa os discos antes de renderizar
   const { groupedList: groupedInternalDisks } = groupSimilarDisks(uniqueInternalStorage);
   const { groupedList: groupedExternalStorage } = groupSimilarDisks(uniqueExternalStorage);
+
+  // Função auxiliar para calcular preço com payback
+  const calculatePriceWithPayBack = (component: ComponentOption, contractDuration: string): number => {
+    if (component.isHardware && contractDuration !== "0") {
+      const paybackValue = getPayBackValue(component, contractDuration);
+      if (paybackValue) {
+        return component.price * (1 - paybackValue);
+      }
+    }
+    return component.price;
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -281,15 +301,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-primary">{formatCurrency(component.price)}</span>
                     
-                    {onRemoveItem && (
-                      <button
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveItem(component.type.toLowerCase())}
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Remover {component.name}</span>
-                      </button>
-                    )}
+                    {/* CORREÇÃO: Agora usamos o ID e tipo corretos para remoção */}
+                    <button
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveItem(component.id, component.type.toLowerCase())}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Remover {component.name}</span>
+                    </button>
                   </div>
                 </div>
                 {component.specs && (
@@ -330,15 +349,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                               {formatCurrency(disk.price * quantity)}
                             </span>
                             
-                            {onRemoveItem && (
-                              <button
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                                onClick={() => handleRemoveItem(disk.id)}
-                              >
-                                <X className="h-4 w-4" />
-                                <span className="sr-only">Remover disco</span>
-                              </button>
-                            )}
+                            {/* CORREÇÃO: Botão agora usa o ID correto do disco */}
+                            <button
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveItem(disk.id)}
+                            >
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Remover disco</span>
+                            </button>
                           </div>
                         </div>
                         {disk.specs && (
@@ -410,15 +428,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-primary">{formatCurrency(storage.price * quantity)}</span>
                             
-                            {onRemoveItem && (
-                              <button
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                                onClick={() => handleRemoveItem(storage.id)}
-                              >
-                                <X className="h-4 w-4" />
-                                <span className="sr-only">Remover storage</span>
-                              </button>
-                            )}
+                            {/* CORREÇÃO: Botão de remoção agora usa o ID correto do storage */}
+                            <button
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveItem(storage.id)}
+                            >
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Remover storage</span>
+                            </button>
                           </div>
                         </div>
                         {storage.specs && (
@@ -469,15 +486,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
                         
-                        {onRemoveItem && (
-                          <button
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveItem(id)}
-                          >
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Remover item</span>
-                          </button>
-                        )}
+                        {/* CORREÇÃO: Botão de remoção agora usa o ID correto do item */}
+                        <button
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveItem(id)}
+                        >
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Remover item</span>
+                        </button>
                       </div>
                     </div>
                     <Separator className="mt-4" />
@@ -503,15 +519,14 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-primary">{formatCurrency(service.price)}</span>
                         
-                        {onRemoveItem && (
-                          <button
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveItem(service.id)}
-                          >
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Remover serviço</span>
-                          </button>
-                        )}
+                        {/* CORREÇÃO: Botão de remoção agora usa o ID correto do serviço */}
+                        <button
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveItem(service.id)}
+                        >
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Remover serviço</span>
+                        </button>
                       </div>
                     </div>
                     {service.specs && (
