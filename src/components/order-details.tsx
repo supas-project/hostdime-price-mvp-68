@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -19,6 +18,17 @@ interface OrderDetailsProps {
   margin?: number;
   onRemoveItem?: (type: string) => void;
 }
+
+// CORREÇÃO: Definir a função auxiliar antes de usá-la
+const calculatePriceWithPayBack = (component: ComponentOption, contractDuration: string): number => {
+  if (component.isHardware && contractDuration !== "0") {
+    const paybackValue = getPayBackValue(component, contractDuration);
+    if (paybackValue) {
+      return component.price * (1 - paybackValue);
+    }
+  }
+  return component.price;
+};
 
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
@@ -209,17 +219,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   // Agrupa os discos antes de renderizar
   const { groupedList: groupedInternalDisks } = groupSimilarDisks(uniqueInternalStorage);
   const { groupedList: groupedExternalStorage } = groupSimilarDisks(uniqueExternalStorage);
-
-  // Função auxiliar para calcular preço com payback
-  const calculatePriceWithPayBack = (component: ComponentOption, contractDuration: string): number => {
-    if (component.isHardware && contractDuration !== "0") {
-      const paybackValue = getPayBackValue(component, contractDuration);
-      if (paybackValue) {
-        return component.price * (1 - paybackValue);
-      }
-    }
-    return component.price;
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
