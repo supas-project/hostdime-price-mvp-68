@@ -1,10 +1,9 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { HelpTooltip } from "./help-tooltip";
 import { Separator } from "@/components/ui/separator";
-import { Check, Shield, Wifi } from "lucide-react";
+import { Check, Shield, Wifi, X } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { cn } from "@/lib/utils";
 import { CustomService } from "@/types/wizard";
@@ -287,10 +286,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                         onClick={() => handleRemoveItem(component.type.toLowerCase())}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                          <path d="M18 6 6 18"></path>
-                          <path d="m6 6 12 12"></path>
-                        </svg>
+                        <X className="h-4 w-4" />
                         <span className="sr-only">Remover {component.name}</span>
                       </button>
                     )}
@@ -339,10 +335,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                                 onClick={() => handleRemoveItem(disk.id)}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                                  <path d="M18 6 6 18"></path>
-                                  <path d="m6 6 12 12"></path>
-                                </svg>
+                                <X className="h-4 w-4" />
                                 <span className="sr-only">Remover disco</span>
                               </button>
                             )}
@@ -422,10 +415,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                                 onClick={() => handleRemoveItem(storage.id)}
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                                  <path d="M18 6 6 18"></path>
-                                  <path d="m6 6 12 12"></path>
-                                </svg>
+                                <X className="h-4 w-4" />
                                 <span className="sr-only">Remover storage</span>
                               </button>
                             )}
@@ -484,10 +474,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             onClick={() => handleRemoveItem(id)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                              <path d="M18 6 6 18"></path>
-                              <path d="m6 6 12 12"></path>
-                            </svg>
+                            <X className="h-4 w-4" />
                             <span className="sr-only">Remover item</span>
                           </button>
                         )}
@@ -521,10 +508,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             onClick={() => handleRemoveItem(service.id)}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
-                              <path d="M18 6 6 18"></path>
-                              <path d="m6 6 12 12"></path>
-                            </svg>
+                            <X className="h-4 w-4" />
                             <span className="sr-only">Remover serviço</span>
                           </button>
                         )}
@@ -611,12 +595,12 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                     <HelpTooltip 
                       title="O que é isso?"
                       description="Valor dos serviços adicionais contratados"
-                    />
-                  </span>
-                </div>
-                <span className="font-medium">{formatCurrency(customServicesPrice)}</span>
+                  />
+                </span>
               </div>
-            )}
+              <span className="font-medium">{formatCurrency(customServicesPrice)}</span>
+            </div>
+          )}
             
             <Separator />
             

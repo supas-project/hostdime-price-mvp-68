@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -134,7 +135,10 @@ export function TableActions({
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          
+          <Button variant="outline" size="sm" className="bg-red-500/10 hover:bg-red-500/20 text-red-500 hover:text-red-600 border-red-500/30">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Restaurar Padrões
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,8 +1,8 @@
 
 import React from "react";
 import { WizardProvider as NewWizardProvider } from "./wizard";
-import { useWizard as newUseWizard } from "./wizard";
-import type { WizardContextProps } from "./wizard";
+import { useWizard as newUseWizard } from "./wizard/WizardContext";
+import type { WizardContextProps } from "./wizard/types";
 
 // Exportar o novo provider e hook para manter compatibilidade com o código existente
 export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
