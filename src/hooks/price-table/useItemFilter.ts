@@ -27,11 +27,11 @@ export function useItemFilter() {
     // Sort items
     if (sortOrder) {
       filteredItems = [...filteredItems].sort((a, b) => {
-        if (sortOrder === 'name') {
-          return (a.name || '').localeCompare(b.name || '');
-        } else if (sortOrder === 'price') {
+        if (sortOrder === 'asc') {
+          // Ascending sort by price
           return (a.price || 0) - (b.price || 0);
-        } else if (sortOrder === 'price-desc') {
+        } else if (sortOrder === 'desc') {
+          // Descending sort by price
           return (b.price || 0) - (a.price || 0);
         }
         return 0;
