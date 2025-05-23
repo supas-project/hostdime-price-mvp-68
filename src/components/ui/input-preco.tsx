@@ -3,12 +3,19 @@ import React, { useState, useEffect } from "react";
 import { Input } from "./input";
 import { formatCurrency, parseBRLToFloat } from "@/utils/number-formatter";
 
-interface InputPrecoProps extends React.InputHTMLAttributes<HTMLInputElement> {
+// Modified the interface to avoid the type conflict with onChange
+interface InputPrecoProps {
   value: number | string;
   onChange: (value: number) => void;
   label?: string;
   onBlur?: (value: number) => void;
   className?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  // Add other input props we need to pass through
+  id?: string;
+  name?: string;
+  required?: boolean;
 }
 
 export function InputPreco({
@@ -20,7 +27,7 @@ export function InputPreco({
   disabled = false,
   onBlur,
   ...props
-}: InputPrecoProps) {
+}: InputPrecoProps & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'onBlur'>) {
   const [displayValue, setDisplayValue] = useState<string>("");
 
   // Inicializa e atualiza o valor formatado quando a prop value muda
