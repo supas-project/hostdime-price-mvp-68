@@ -12,6 +12,7 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Garantir que estamos definindo o estado de carregamento
     setIsLoading(true);
     
     try {
@@ -19,16 +20,14 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
       let importedData: PriceData;
       
       if (file.name.toLowerCase().endsWith('.json')) {
-        // Use type assertion to ensure TypeScript recognizes these methods
-        importedData = (PriceService as any).importFromJSON(content);
+        importedData = PriceService.importFromJSON(content);
         setPriceData(importedData);
         toast.success("Dados importados com sucesso", {
           description: "Os dados JSON foram validados e carregados."
         });
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         try {
-          // Use type assertion to ensure TypeScript recognizes these methods
-          importedData = (PriceService as any).importFromCSV(content);
+          importedData = PriceService.importFromCSV(content);
           setPriceData(importedData);
           toast.success("Dados importados com sucesso", {
             description: "Os dados CSV foram validados e carregados."
@@ -36,6 +35,8 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
         } catch (csvError) {
           throw new Error("Formato CSV não suportado ainda. Use JSON.");
         }
+      } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+        throw new Error("Formatos Excel (.xlsx, .xls) serão suportados em breve. Por favor, use JSON ou CSV.");
       } else {
         throw new Error("Formato de arquivo não suportado. Use JSON ou CSV.");
       }
@@ -44,7 +45,9 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
         description: error instanceof Error ? error.message : "Verifique se o arquivo está no formato correto."
       });
     } finally {
+      // Garantir que o estado de carregamento é redefinido
       setIsLoading(false);
+      
       // Resetar o valor do input para permitir que o mesmo arquivo seja selecionado novamente
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

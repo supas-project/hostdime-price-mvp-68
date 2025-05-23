@@ -1,13 +1,12 @@
 
-import { usePriceTableState } from './usePriceTableState';
+import { useMemo } from 'react';
 import { PriceItem } from '@/types/pricing';
 
+// Modificamos o hook para não depender diretamente de usePriceTableState
+// e receber os parâmetros necessários
 export function useItemFilter() {
-  // Use internal state from usePriceTableState
-  const { searchTerm, sortOrder } = usePriceTableState();
-  
-  // Function to filter items based on search and sort
-  const filterItems = (items: PriceItem[]): PriceItem[] => {
+  // Função para filtrar itens baseado em busca e ordenação
+  const filterItems = (items: PriceItem[], searchTerm: string, sortOrder?: 'asc' | 'desc'): PriceItem[] => {
     if (!items || !Array.isArray(items)) return [];
     
     // Filter by search term

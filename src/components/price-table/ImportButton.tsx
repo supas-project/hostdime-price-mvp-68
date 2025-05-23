@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { useEffect, useState } from "react";
 
 interface ImportButtonProps {
   isLoading: boolean;
@@ -11,6 +12,23 @@ interface ImportButtonProps {
 }
 
 export function ImportButton({ isLoading, fileInputRef, onFileUpload }: ImportButtonProps) {
+  // Estado local para rastrear se o botão foi clicado mas ainda não terminou de carregar
+  const [wasClicked, setWasClicked] = useState(false);
+  
+  // Resetar o estado wasClicked quando isLoading mudar para false
+  useEffect(() => {
+    if (!isLoading && wasClicked) {
+      setWasClicked(false);
+    }
+  }, [isLoading]);
+  
+  // Manipulador para detectar quando o input é clicado
+  const handleInputClick = () => {
+    if (!isLoading) {
+      setWasClicked(true);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       <Button 
@@ -26,7 +44,11 @@ export function ImportButton({ isLoading, fileInputRef, onFileUpload }: ImportBu
           type="file" 
           className="absolute inset-0 opacity-0 cursor-pointer"
           accept=".xlsx,.xls,.json,.csv"
-          onChange={onFileUpload}
+          onChange={(e) => {
+            onFileUpload(e);
+            setWasClicked(true);
+          }}
+          onClick={handleInputClick}
           disabled={isLoading}
         />
         {isLoading ? (

@@ -5,6 +5,7 @@ import { useItemFilter } from './price-table/useItemFilter';
 import { useSyncData } from './price-table/useSyncData';
 import { usePriceTableActions } from './price-table/usePriceTableActions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMemo } from 'react';
 
 export function usePriceTable() {
   const { isAuthenticated } = useAuth();
@@ -31,8 +32,16 @@ export function usePriceTable() {
   
   // useDataLoader takes no arguments
   const { loadPriceData } = useDataLoader();
-  // Verify implementation of useItemFilter and call it correctly
+  
+  // Usar o hook de filtro de forma correta, passando os parâmetros
   const { filterItems } = useItemFilter();
+  
+  // Aplicar o filtro ao priceData atual
+  const filteredItems = useMemo(() => {
+    if (!priceData || !activeTab || !priceData[activeTab]) return [];
+    return filterItems(priceData[activeTab].items || [], searchTerm, sortOrder);
+  }, [priceData, activeTab, searchTerm, sortOrder, filterItems]);
+  
   const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
   const tableActions = usePriceTableActions(activeTab, setPriceData);
 
@@ -56,6 +65,7 @@ export function usePriceTable() {
     collapsedCategories,
     toggleCategoryCollapse,
     filterItems,
+    filteredItems,
     contractDuration,
     setContractDuration,
   };
