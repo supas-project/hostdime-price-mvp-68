@@ -1,16 +1,44 @@
 
+import { usePriceTableState } from './usePriceTableState';
 import { PriceItem } from '@/types/pricing';
 
 export function useItemFilter() {
-  // Filter function for items based on search term
-  const filterItems = (items: PriceItem[], searchTerm: string): PriceItem[] => {
-    if (!searchTerm || searchTerm.trim() === '') return items;
-    const lowerTerm = searchTerm.toLowerCase();
-    return items.filter(item => 
-      item.name.toLowerCase().includes(lowerTerm) ||
-      item.description?.toLowerCase().includes(lowerTerm) ||
-      item.specs?.some((spec: string) => spec.toLowerCase().includes(lowerTerm))
-    );
+  // Use internal state from usePriceTableState
+  const { searchTerm, sortOrder } = usePriceTableState();
+  
+  // Function to filter items based on search and sort
+  const filterItems = (items: PriceItem[]): PriceItem[] => {
+    if (!items || !Array.isArray(items)) return [];
+    
+    // Filter by search term
+    let filteredItems = items;
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchLower = searchTerm.toLowerCase();
+      filteredItems = items.filter(item => {
+        return (
+          (item.name && item.name.toLowerCase().includes(searchLower)) ||
+          (item.description && item.description.toLowerCase().includes(searchLower)) ||
+          (item.specs && Array.isArray(item.specs) && item.specs.some(spec => spec.toLowerCase().includes(searchLower))) ||
+          (item.tags && Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        );
+      });
+    }
+    
+    // Sort items
+    if (sortOrder) {
+      filteredItems = [...filteredItems].sort((a, b) => {
+        if (sortOrder === 'name') {
+          return (a.name || '').localeCompare(b.name || '');
+        } else if (sortOrder === 'price') {
+          return (a.price || 0) - (b.price || 0);
+        } else if (sortOrder === 'price-desc') {
+          return (b.price || 0) - (a.price || 0);
+        }
+        return 0;
+      });
+    }
+    
+    return filteredItems;
   };
 
   return {

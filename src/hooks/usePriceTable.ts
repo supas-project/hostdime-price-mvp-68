@@ -31,8 +31,8 @@ export function usePriceTable() {
   
   // useDataLoader takes no arguments
   const { loadPriceData } = useDataLoader();
-  // Fix: Pass searchTerm and sortOrder as separate arguments, not as a tuple
-  const { filterItems } = useItemFilter(searchTerm, sortOrder);
+  // Verify implementation of useItemFilter and call it correctly
+  const { filterItems } = useItemFilter();
   const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
   const tableActions = usePriceTableActions(activeTab, setPriceData);
 

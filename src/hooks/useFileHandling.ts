@@ -1,13 +1,12 @@
 
 import { useRef, useState } from "react";
 import { PriceService } from "@/services/price-service";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/utils/toast-utils";
 import { PriceData } from "@/types/pricing";
 
 export function useFileHandling(setPriceData: (data: PriceData) => void) {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -46,6 +45,7 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
       });
     } finally {
       setIsLoading(false);
+      // Resetar o valor do input para permitir que o mesmo arquivo seja selecionado novamente
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
