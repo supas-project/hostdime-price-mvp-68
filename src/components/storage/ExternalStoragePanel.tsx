@@ -38,21 +38,21 @@ export function ExternalStoragePanel({
   const defaultStorageTypes = {
     standard: { 
       name: "Standard", 
-      pricePerGB: 0.30, 
+      pricePerGB: 0.80, 
       iops: "Até 3.000 IOPS", 
       throughput: "125 MB/s",
       description: "Econômico para armazenamento geral e backups"
     },
     performance: { 
       name: "Performance", 
-      pricePerGB: 0.45, 
+      pricePerGB: 0.95, 
       iops: "Até 6.000 IOPS", 
       throughput: "250 MB/s",
       description: "Recomendado para sites e aplicações de média demanda"
     },
     premium: { 
       name: "Premium", 
-      pricePerGB: 0.60, 
+      pricePerGB: 1.20, 
       iops: "Até 16.000 IOPS", 
       throughput: "500 MB/s",
       description: "Para aplicações intensivas que precisam de alta velocidade"
@@ -63,7 +63,7 @@ export function ExternalStoragePanel({
   const availableStorageTypes = Object.keys(storageTypes).length > 0 ? storageTypes : defaultStorageTypes;
   
   const [selectedType, setSelectedType] = useState<string>(Object.keys(availableStorageTypes)[0]);
-  const [capacity, setCapacity] = useState<number>(500);
+  const [capacity, setCapacity] = useState<number>(100);
   const [selectedTypeDetails, setSelectedTypeDetails] = useState(availableStorageTypes[selectedType]);
 
   // Update selected type details when type changes
@@ -75,20 +75,25 @@ export function ExternalStoragePanel({
 
   // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
   const calculatePrice = () => {
-    return (selectedTypeDetails.pricePerGB * capacity);
+    const totalPrice = selectedTypeDetails.pricePerGB * capacity;
+    console.log(`Calculando preço: ${selectedTypeDetails.pricePerGB} por GB × ${capacity} GB = ${totalPrice}`);
+    return totalPrice;
   };
 
   // Handle the add storage button click
   const handleAddStorage = () => {
+    const totalPrice = calculatePrice();
+    console.log(`Adicionando storage: ${selectedTypeDetails.name}, ${capacity}GB, Preço total: ${totalPrice}`);
+    
     if (onSelectStorage) {
       // Enviar o preço total calculado (preço por GB × capacidade)
-      onSelectStorage(selectedTypeDetails.name, capacity, calculatePrice());
+      onSelectStorage(selectedTypeDetails.name, capacity, totalPrice);
     }
     
     if (onSelect) {
       const tier: StorageTier = {
         name: `${selectedTypeDetails.name} ${capacity}GB`,
-        price: calculatePrice(),
+        price: totalPrice,
         iops: selectedTypeDetails.iops,
         throughput: selectedTypeDetails.throughput,
         description: selectedTypeDetails.description

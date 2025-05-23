@@ -39,8 +39,9 @@ export function calculateQuoteTotal(
   // Calcular preço do storage externo (deduplificado)
   uniqueExternalStorage.forEach(storage => {
     if (storage && storage.price) {
-      total += storage.price;
-      console.log(`[Price Calc] Storage ${storage.name}: ${storage.price}`);
+      const storagePrice = storage.price;
+      total += storagePrice;
+      console.log(`[Price Calc] Storage ${storage.name}: ${storagePrice}`);
     }
   });
 
@@ -98,6 +99,10 @@ export function deduplicateStorageItems(items: ComponentOption[]): ComponentOpti
     // Usar a primeira chave válida que encontrarmos
     if (keys.length > 0) {
       const key = keys[0];
+      
+      // Debug para verificar os valores
+      console.log(`[Dedupe] Item: ${item.name}, Preço: ${item.price}`);
+      
       uniqueMap[key] = item;
       console.log(`[Dedupe] Item com chave ${key} adicionado/atualizado: ${item.id}`);
     } else {
@@ -110,6 +115,11 @@ export function deduplicateStorageItems(items: ComponentOption[]): ComponentOpti
   // Converte o mapa de volta para um array
   const uniqueItems = Object.values(uniqueMap);
   console.log(`[Dedupe] Itens originais: ${items.length}, itens válidos: ${validItems.length}, itens únicos: ${uniqueItems.length}`);
+  
+  // Debug dos preços finais dos itens
+  uniqueItems.forEach(item => {
+    console.log(`[Dedupe] Item único final: ${item.name}, Preço: ${item.price}`);
+  });
   
   return uniqueItems;
 }
@@ -188,8 +198,11 @@ export function generatePossibleKeys(item: ComponentOption): string[] {
     keys.push(normalized);
   }
   
-  // Garante que não temos chaves vazias
-  return keys.filter(key => key && key.length > 0);
+  // Garante que não temos chaves vazias e faz debug dos valores
+  const filteredKeys = keys.filter(key => key && key.length > 0);
+  console.log(`[Keys] Item ${item.name}: gerou ${filteredKeys.length} chaves`);
+  
+  return filteredKeys;
 }
 
 // Função de compatibilidade mantida para código existente

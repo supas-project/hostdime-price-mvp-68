@@ -70,6 +70,8 @@ export function StorageStep({ onSelectStorageItem }: StorageStepProps) {
     // Criar ID consistente para storages externos
     const storageId = `external-storage-${type.toLowerCase()}-${capacity}`;
     
+    console.log(`[StorageStep] Adicionando storage externo: ${type}, ${formattedCapacity}, Preço: ${price}`);
+    
     const storageOption: ComponentOption = {
       id: storageId,
       type: "Armazenamento",
