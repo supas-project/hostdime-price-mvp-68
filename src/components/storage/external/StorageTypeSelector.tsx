@@ -101,6 +101,10 @@ export function StorageTypeSelector({
           {Object.entries(storageTypes).map(([key, type]) => {
             const { variant, icon, label, simpleDesc } = getTypeVisuals(key);
             
+            // Verificação adicional para o preço por GB
+            const pricePerGB = typeof type.pricePerGB === 'number' ? type.pricePerGB : 0;
+            console.log(`[StorageTypeSelector] Type ${key} price per GB: ${pricePerGB}`);
+            
             return (
               <div key={key} className="relative">
                 <RadioGroupItem 
@@ -126,7 +130,7 @@ export function StorageTypeSelector({
                     {label}
                   </Badge>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {formatCurrency(type.pricePerGB)}/GB
+                    {formatCurrency(pricePerGB)}/GB
                   </div>
                 </Label>
               </div>

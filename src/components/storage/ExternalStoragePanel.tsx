@@ -75,6 +75,8 @@ export function ExternalStoragePanel({
       // Atualiza o preço total quando o tipo muda
       const newPrice = calculatePrice(availableStorageTypes[selectedType].pricePerGB, capacity);
       setTotalPrice(newPrice);
+      
+      console.log(`[ExternalStoragePanel] Type changed: ${selectedType}, price per GB: ${availableStorageTypes[selectedType].pricePerGB}, capacity: ${capacity}, total: ${newPrice}`);
     }
   }, [selectedType, availableStorageTypes]);
 
@@ -82,6 +84,8 @@ export function ExternalStoragePanel({
   useEffect(() => {
     const newPrice = calculatePrice(selectedTypeDetails?.pricePerGB, capacity);
     setTotalPrice(newPrice);
+    
+    console.log(`[ExternalStoragePanel] Capacity changed: ${capacity}, price per GB: ${selectedTypeDetails?.pricePerGB}, total: ${newPrice}`);
   }, [capacity, selectedTypeDetails]);
 
   // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
