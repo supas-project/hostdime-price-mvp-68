@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -9,7 +8,6 @@ import { Plus, Download, RefreshCw, Upload } from "lucide-react";
 import { PriceCategory, PriceItem } from "@/types/pricing";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { useState } from "react";
-
 interface TableActionsProps {
   activeTab: string;
   priceData: Record<string, PriceCategory>;
@@ -26,11 +24,14 @@ interface TableActionsProps {
   onAddCategory: (values: any) => void;
   onAddItem: (values: any) => void;
   onEditItem: (values: any, itemId?: string) => void;
-  onBulkImport: (items: PriceItem[]) => Promise<{success: boolean, message: string, importedCount: number}>;
+  onBulkImport: (items: PriceItem[]) => Promise<{
+    success: boolean;
+    message: string;
+    importedCount: number;
+  }>;
   onExportData: () => void;
   onResetData: () => void;
 }
-
 export function TableActions({
   activeTab,
   priceData,
@@ -65,7 +66,6 @@ export function TableActions({
     onEditItem(values, itemId);
     handleCloseEditDialog();
   };
-  
   return <div className="flex flex-wrap gap-2">
       <Dialog open={openAddCategory} onOpenChange={setOpenAddCategory}>
         <DialogTrigger asChild>
@@ -111,11 +111,7 @@ export function TableActions({
               <DialogHeader>
                 <DialogTitle>Importar Itens em Massa para {priceData[activeTab]?.name}</DialogTitle>
               </DialogHeader>
-              <BulkItemImport 
-                categoryId={activeTab} 
-                onImport={onBulkImport} 
-                onClose={() => setOpenBulkImport(false)} 
-              />
+              <BulkItemImport categoryId={activeTab} onImport={onBulkImport} onClose={() => setOpenBulkImport(false)} />
             </DialogContent>
           </Dialog>
 
@@ -138,10 +134,7 @@ export function TableActions({
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" title="Restaurar dados para os valores padrão">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Restaurar Padrões
-          </Button>
+          
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
