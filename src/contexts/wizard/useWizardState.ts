@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
@@ -319,7 +320,7 @@ export function useWizardState() {
     handleSelectOption,
     setConnectivityItems,
     handleSelectStorageItem,
-    handleRemoveComponent: handleRemoveComponent, // Alias para manter compatibilidade
+    // CORREÇÃO: Removida a linha duplicada de handleRemoveComponent que estava causando o erro
     categoriesLoaded,
     beginnerMode,
     setBeginnerMode,
