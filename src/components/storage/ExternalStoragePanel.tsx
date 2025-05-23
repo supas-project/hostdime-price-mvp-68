@@ -73,7 +73,7 @@ export function ExternalStoragePanel({
     }
   }, [selectedType, availableStorageTypes]);
 
-  // Calculate price based on capacity and price per GB
+  // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
   const calculatePrice = () => {
     return (selectedTypeDetails.pricePerGB * capacity);
   };
@@ -81,6 +81,7 @@ export function ExternalStoragePanel({
   // Handle the add storage button click
   const handleAddStorage = () => {
     if (onSelectStorage) {
+      // Enviar o preço total calculado (preço por GB × capacidade)
       onSelectStorage(selectedTypeDetails.name, capacity, calculatePrice());
     }
     
