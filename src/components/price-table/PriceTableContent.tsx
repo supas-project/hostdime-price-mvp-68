@@ -20,7 +20,7 @@ interface PriceTableContentProps {
   displayMode: "table" | "card";
   collapsedCategories: Record<string, boolean>;
   toggleCategoryCollapse: (categoryId: string) => void;
-  filterItems: (items: PriceItem[]) => PriceItem[];
+  filterItems: (items: PriceItem[], searchTerm: string, sortOrder?: 'asc' | 'desc' | null) => PriceItem[];
   onDeleteCategory: (categoryId: string) => Promise<boolean>;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (item: PriceItem) => void;
@@ -62,31 +62,12 @@ export function PriceTableContent({
     }
   }, [priceData, activeTab, setActiveTab]);
   
-  // Ajuste para remover itens duplicados das categorias
-  useEffect(() => {
-    if (priceData && activeTab === "connectivity") {
-      // Verificar se a categoria atual é a de conectividade
-      console.log("[PriceTableContent] Verificando itens de conectividade para detectar duplicatas");
-      
-      const connectivityCategory = priceData.connectivity;
-      if (connectivityCategory && Array.isArray(connectivityCategory.items)) {
-        const itemCount = connectivityCategory.items.length;
-        
-        // Verificar quantos itens estão duplicados
-        const uniqueIds = new Set(connectivityCategory.items.map(item => item.id));
-        console.log(`[PriceTableContent] Total items: ${itemCount}, Unique items: ${uniqueIds.size}`);
-        
-        if (uniqueIds.size < itemCount) {
-          console.log(`[PriceTableContent] Detectadas ${itemCount - uniqueIds.size} duplicatas em conectividade`);
-        }
-      }
-    }
-  }, [priceData, activeTab]);
-  
   // Debug para verificar os dados recebidos
   useEffect(() => {
     console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
-  }, [priceData]);
+    console.log("PriceTableContent: Search term:", searchTerm);
+    console.log("PriceTableContent: Sort order:", sortOrder);
+  }, [priceData, searchTerm, sortOrder]);
   
   // Garantir que priceData é um objeto válido
   if (!priceData || typeof priceData !== 'object' || Object.keys(priceData).length === 0) {
@@ -165,10 +146,11 @@ export function PriceTableContent({
             category.items = [];
           }
           
-          const filteredItems = filterItems(category.items);
+          // Aplicar o filtro corretamente com os parâmetros necessários
+          const filteredItems = filterItems(category.items, searchTerm, sortOrder);
           const isCollapsed = collapsedCategories[category.id] || false;
           
-          console.log(`PriceTableContent: Rendering category ${category.id} with ${filteredItems.length}/${category.items.length} items`);
+          console.log(`PriceTableContent: Rendering category ${category.id} with ${filteredItems.length}/${category.items.length} items (search: "${searchTerm}", sort: ${sortOrder})`);
           
           return (
             <TabsContent key={category.id} value={category.id} className="space-y-3">

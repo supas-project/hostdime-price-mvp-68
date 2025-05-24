@@ -33,14 +33,38 @@ export function usePriceTable() {
   // useDataLoader takes no arguments
   const { loadPriceData } = useDataLoader();
   
-  // Usar o hook de filtro de forma correta, passando os parâmetros
-  const { filterItems } = useItemFilter();
-  
-  // Aplicar o filtro ao priceData atual
-  const filteredItems = useMemo(() => {
-    if (!priceData || !activeTab || !priceData[activeTab]) return [];
-    return filterItems(priceData[activeTab].items || [], searchTerm, sortOrder);
-  }, [priceData, activeTab, searchTerm, sortOrder, filterItems]);
+  // Criar uma função de filtro que será usada pelos componentes
+  const filterItems = (items: any[], searchTerm: string, sortOrder?: 'asc' | 'desc') => {
+    if (!items || !Array.isArray(items)) return [];
+    
+    // Filter by search term
+    let filteredItems = items;
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchLower = searchTerm.toLowerCase();
+      filteredItems = items.filter(item => {
+        return (
+          (item.name && item.name.toLowerCase().includes(searchLower)) ||
+          (item.description && item.description.toLowerCase().includes(searchLower)) ||
+          (item.specs && Array.isArray(item.specs) && item.specs.some(spec => spec.toLowerCase().includes(searchLower))) ||
+          (item.tags && Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        );
+      });
+    }
+    
+    // Sort items
+    if (sortOrder) {
+      filteredItems = [...filteredItems].sort((a, b) => {
+        if (sortOrder === 'asc') {
+          return (a.price || 0) - (b.price || 0);
+        } else if (sortOrder === 'desc') {
+          return (b.price || 0) - (a.price || 0);
+        }
+        return 0;
+      });
+    }
+    
+    return filteredItems;
+  };
   
   const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
   const tableActions = usePriceTableActions(activeTab, setPriceData);
@@ -65,7 +89,6 @@ export function usePriceTable() {
     collapsedCategories,
     toggleCategoryCollapse,
     filterItems,
-    filteredItems,
     contractDuration,
     setContractDuration,
   };
