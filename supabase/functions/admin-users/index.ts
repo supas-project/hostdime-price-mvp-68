@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -124,18 +123,23 @@ serve(async (req) => {
       )
     }
 
-    // Parse request body for non-GET requests
+    // Parse request body for non-GET requests only
     let body;
     
     try {
-      body = await req.json()
+      const rawBody = await req.text()
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Empty request body')
+      }
+      
+      body = JSON.parse(rawBody)
       console.log('🚀 RECEBIDO NA FUNÇÃO:', JSON.stringify(body))
       console.log('🔍 Body keys:', Object.keys(body))
       console.log('🔢 Body object size:', Object.keys(body).length)
     } catch (parseError) {
       console.error('❌ FALHA NO PARSE:', parseError.message)
       return new Response(
-        JSON.stringify({ error: 'Erro ao parsear JSON' }),
+        JSON.stringify({ error: 'Invalid or missing JSON body' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -284,7 +288,7 @@ serve(async (req) => {
         details: 'Check function logs for more information'
       }),
       { 
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
