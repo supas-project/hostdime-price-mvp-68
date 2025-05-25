@@ -47,12 +47,28 @@ serve(async (req) => {
       throw new Error('Unauthorized: Admin access required')
     }
 
-    const { method } = req
-    const url = new URL(req.url)
-    const pathSegments = url.pathname.split('/').filter(segment => segment)
-    const userId = pathSegments.length > 1 ? pathSegments[pathSegments.length - 1] : null
+    // Parse request body
+    let requestData: any = {}
+    try {
+      const requestText = await req.text()
+      console.log('Raw request body:', requestText)
+      
+      if (requestText && requestText.trim() !== '') {
+        requestData = JSON.parse(requestText)
+        console.log('Parsed request data:', requestData)
+      }
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError)
+      if (req.method !== 'GET') {
+        throw new Error('Invalid JSON in request body')
+      }
+    }
 
-    console.log('Processing request:', { method, userId, pathname: url.pathname })
+    const method = requestData.method || req.method
+    const userId = requestData.userId
+    const data = requestData.data
+
+    console.log('Processing request:', { method, userId, data })
 
     switch (method) {
       case 'GET':
@@ -103,23 +119,11 @@ serve(async (req) => {
       case 'POST':
         console.log('Creating new user...')
         
-        let createData
-        try {
-          const requestText = await req.text()
-          console.log('Raw request body:', requestText)
-          
-          if (!requestText || requestText.trim() === '') {
-            throw new Error('Empty request body')
-          }
-          
-          createData = JSON.parse(requestText)
-          console.log('Parsed create data:', createData)
-        } catch (parseError) {
-          console.error('Error parsing request body:', parseError)
-          throw new Error('Invalid JSON in request body')
+        if (!data) {
+          throw new Error('No user data provided')
         }
         
-        const { email, password, nome_completo, tipo } = createData
+        const { email, password, nome_completo, tipo } = data
 
         if (!email || !password) {
           throw new Error('Email and password are required')
@@ -153,23 +157,11 @@ serve(async (req) => {
           throw new Error('User ID is required for update operation')
         }
         
-        let updateData
-        try {
-          const requestText = await req.text()
-          console.log('Raw update request body:', requestText)
-          
-          if (!requestText || requestText.trim() === '') {
-            throw new Error('Empty request body')
-          }
-          
-          updateData = JSON.parse(requestText)
-          console.log('Parsed update data:', updateData)
-        } catch (parseError) {
-          console.error('Error parsing update request body:', parseError)
-          throw new Error('Invalid JSON in request body')
+        if (!data) {
+          throw new Error('No update data provided')
         }
         
-        const { email: newEmail, nome_completo: newNome, tipo: newTipo } = updateData
+        const { email: newEmail, nome_completo: newNome, tipo: newTipo } = data
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,

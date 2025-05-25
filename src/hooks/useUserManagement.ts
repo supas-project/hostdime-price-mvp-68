@@ -33,16 +33,28 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
   const isAdmin = user?.email === 'admin@hostdime.com.br';
 
-  const callAdminFunction = async (userId?: string, options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: any } = {}) => {
+  const callAdminFunction = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', userId?: string, body?: any) => {
     if (!session?.access_token) {
       throw new Error('No access token available');
     }
 
-    console.log('Calling admin function with userId:', userId, 'method:', options.method || 'GET');
+    console.log('Calling admin function with method:', method, 'userId:', userId, 'body:', body);
+
+    const functionData: any = {};
+    
+    if (body) {
+      functionData.method = method;
+      functionData.userId = userId;
+      functionData.data = body;
+    } else if (userId) {
+      functionData.method = method;
+      functionData.userId = userId;
+    } else {
+      functionData.method = method;
+    }
 
     const { data, error } = await supabase.functions.invoke('admin-users', {
-      body: options.body,
-      method: options.method || 'GET',
+      body: functionData,
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
@@ -63,7 +75,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
     try {
       console.log('Loading users...');
       setLoading(true);
-      const data = await callAdminFunction();
+      const data = await callAdminFunction('GET');
       console.log('Users loaded:', data);
       setUsers(data.users || []);
     } catch (error) {
@@ -80,10 +92,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
     try {
       console.log('Creating user:', userForm);
       setLoading(true);
-      await callAdminFunction(undefined, {
-        method: 'POST',
-        body: userForm,
-      });
+      await callAdminFunction('POST', undefined, userForm);
       
       toast.success('Usuário criado com sucesso');
       loadUsers();
@@ -102,10 +111,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
       console.log('Updating user:', userId, editForm);
       setLoading(true);
       
-      await callAdminFunction(userId, {
-        method: 'PUT',
-        body: editForm,
-      });
+      await callAdminFunction('PUT', userId, editForm);
       
       toast.success('Usuário atualizado com sucesso');
       loadUsers();
@@ -124,9 +130,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
       console.log('Deleting user:', userId);
       setLoading(true);
       
-      await callAdminFunction(userId, {
-        method: 'DELETE',
-      });
+      await callAdminFunction('DELETE', userId);
       
       toast.success('Usuário removido com sucesso');
       loadUsers();
