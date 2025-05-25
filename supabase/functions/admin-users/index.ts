@@ -19,13 +19,36 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       console.error('❌ No authorization header provided')
-      throw new Error('No authorization header')
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
+
+    // Verify the token is the service role key
+    const token = authHeader.replace('Bearer ', '')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    if (token !== serviceRoleKey) {
+      console.error('🚫 Invalid or missing service role token')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    console.log('✅ Service role token validated successfully')
 
     // Create Supabase client for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      serviceRoleKey,
       {
         auth: {
           autoRefreshToken: false,
@@ -35,17 +58,6 @@ serve(async (req) => {
     )
 
     console.log('✅ Supabase admin client created')
-
-    // Verify the requesting user is admin
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
-    
-    console.log('👤 User verification:', { user: user?.email, error: userError })
-    
-    if (userError || !user || user.email !== 'admin@hostdime.com.br') {
-      console.error('🚫 Unauthorized access attempt:', { userEmail: user?.email, error: userError })
-      throw new Error('Unauthorized: Admin access required')
-    }
 
     // Handle GET requests separately (no body)
     if (req.method === 'GET') {
@@ -88,22 +100,7 @@ serve(async (req) => {
     let body;
     
     try {
-      const requestText = await req.text()
-      console.log('📦 Raw request body received:', requestText)
-      console.log('📏 Request body length:', requestText.length)
-      
-      if (!requestText || requestText.trim() === '') {
-        console.error('💀 Empty request body for non-GET request')
-        return new Response(
-          JSON.stringify({ error: 'Request body is required for this operation' }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
-      }
-      
-      body = JSON.parse(requestText)
+      body = await req.json()
       console.log('🚀 RECEBIDO NA FUNÇÃO:', JSON.stringify(body))
       console.log('🔍 Body keys:', Object.keys(body))
       console.log('🔢 Body object size:', Object.keys(body).length)
@@ -215,17 +212,6 @@ serve(async (req) => {
         if (!userId) {
           return new Response(
             JSON.stringify({ error: 'User ID is required for delete operation' }),
-            { 
-              status: 400,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          )
-        }
-        
-        // Prevent admin from deleting their own account
-        if (userId === user.id) {
-          return new Response(
-            JSON.stringify({ error: 'Não é possível remover sua própria conta' }),
             { 
               status: 400,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
