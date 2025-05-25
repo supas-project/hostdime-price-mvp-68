@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,27 +52,34 @@ export default function UserManagement() {
       throw new Error('No access token available');
     }
 
-    const response = await fetch(`/api/admin-users${endpoint}`, {
-      ...options,
+    console.log('Calling admin function:', endpoint, options.method || 'GET');
+
+    const response = await supabase.functions.invoke('admin-users', {
+      method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      body: options.body,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Request failed');
+    console.log('Admin function response:', response);
+
+    if (response.error) {
+      console.error('Function invocation error:', response.error);
+      throw new Error(response.error.message || 'Request failed');
     }
 
-    return response.json();
+    return response.data;
   };
 
   const loadUsers = async () => {
     try {
+      console.log('Loading users...');
       setLoading(true);
       const data = await callAdminFunction('');
+      console.log('Users loaded:', data);
       setUsers(data.users || []);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -88,6 +94,7 @@ export default function UserManagement() {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Creating user:', newUserForm);
       setLoading(true);
       await callAdminFunction('', {
         method: 'POST',
@@ -112,6 +119,7 @@ export default function UserManagement() {
     if (!selectedUser) return;
 
     try {
+      console.log('Updating user:', selectedUser.id, editForm);
       setLoading(true);
       await callAdminFunction(`/${selectedUser.id}`, {
         method: 'PUT',
@@ -136,6 +144,7 @@ export default function UserManagement() {
     if (!selectedUser) return;
 
     try {
+      console.log('Deleting user:', selectedUser.id);
       setLoading(true);
       await callAdminFunction(`/${selectedUser.id}`, {
         method: 'DELETE',
@@ -187,10 +196,11 @@ export default function UserManagement() {
   };
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && session?.access_token) {
+      console.log('Component mounted, loading users...');
       loadUsers();
     }
-  }, [isAdmin]);
+  }, [isAdmin, session?.access_token]);
 
   if (!isAdmin) {
     return (
@@ -327,54 +337,62 @@ export default function UserManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.profile?.nome_completo || 'Não informado'}
+                      {users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            Nenhum usuário encontrado
                           </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              user.profile?.tipo === 'admin' 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {user.profile?.tipo === 'admin' ? 'Administrador' : 'Usuário'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openEditModal(user)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => sendPasswordReset(user.email)}
-                              >
-                                <Key className="w-4 h-4" />
-                              </Button>
-                              {user.email !== 'admin@hostdime.com.br' && (
+                        </TableRow>
+                      ) : (
+                        users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                              {user.profile?.nome_completo || 'Não informado'}
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                user.profile?.tipo === 'admin' 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {user.profile?.tipo === 'admin' ? 'Administrador' : 'Usuário'}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex justify-center gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openDeleteModal(user)}
-                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => openEditModal(user)}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Edit className="w-4 h-4" />
                                 </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => sendPasswordReset(user.email)}
+                                >
+                                  <Key className="w-4 h-4" />
+                                </Button>
+                                {user.email !== 'admin@hostdime.com.br' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openDeleteModal(user)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
