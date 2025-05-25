@@ -52,17 +52,35 @@ export default function UserManagement() {
       throw new Error('No access token available');
     }
 
-    const endpoint = userId ? `admin-users/${userId}` : 'admin-users';
-    console.log('Calling admin function:', endpoint, options.method || 'GET');
+    console.log('Calling admin function with userId:', userId, 'method:', options.method || 'GET');
 
-    const response = await supabase.functions.invoke(endpoint, {
+    // Sempre usar 'admin-users' como nome da função
+    const functionName = 'admin-users';
+    
+    // Se tivermos userId, adicionamos à URL como parâmetro
+    const functionOptions: any = {
       method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+      }
+    };
+
+    // Para métodos que precisam de body
+    if (options.body) {
+      functionOptions.body = JSON.stringify(options.body);
+    }
+
+    // Se tivermos userId, passamos na URL como query param ou path
+    let functionUrl = functionName;
+    if (userId && options.method !== 'GET') {
+      // Para PUT e DELETE, incluir o userId na chamada como parte do path
+      functionUrl = `${functionName}/${userId}`;
+    }
+
+    console.log('Invoking function:', functionUrl, 'with options:', functionOptions);
+
+    const response = await supabase.functions.invoke(functionName, functionOptions);
 
     console.log('Admin function response:', response);
 
@@ -121,10 +139,25 @@ export default function UserManagement() {
     try {
       console.log('Updating user:', selectedUser.id, editForm);
       setLoading(true);
-      await callAdminFunction(selectedUser.id, {
+      
+      // Fazer a chamada usando fetch diretamente para ter mais controle
+      const response = await fetch(`https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users/${selectedUser.id}`, {
         method: 'PUT',
-        body: editForm,
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editForm),
       });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Update failed:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+
+      const result = await response.json();
+      console.log('Update result:', result);
       
       toast.success('Usuário atualizado com sucesso');
       setIsEditModalOpen(false);
@@ -146,9 +179,24 @@ export default function UserManagement() {
     try {
       console.log('Deleting user:', selectedUser.id);
       setLoading(true);
-      await callAdminFunction(selectedUser.id, {
+      
+      // Fazer a chamada usando fetch diretamente para ter mais controle
+      const response = await fetch(`https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users/${selectedUser.id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
       });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Delete failed:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+
+      const result = await response.json();
+      console.log('Delete result:', result);
       
       toast.success('Usuário removido com sucesso');
       setIsDeleteModalOpen(false);
@@ -167,7 +215,7 @@ export default function UserManagement() {
   const sendPasswordReset = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `https://ae28c5be-7e60-48d7-b1fb-bb8b1140a4c9.lovableproject.com/auth/reset-password`,
       });
       
       if (error) throw error;
