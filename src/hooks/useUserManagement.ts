@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
@@ -39,10 +40,36 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
     console.log('Calling admin function with:', { method, userId, userData });
 
-    // Para GET requests, não enviar body
-    if (method === 'GET') {
-      try {
+    try {
+      if (method === 'GET') {
+        // Para GET requests, não enviar body
         const { data, error } = await supabase.functions.invoke('admin-users', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        console.log('Admin function response (GET):', { data, error });
+
+        if (error) {
+          console.error('Function invocation error:', error);
+          throw new Error(error.message || 'Request failed');
+        }
+
+        return data;
+      } else {
+        // Para POST, PUT, DELETE, estruturar corretamente o payload
+        const requestBody = {
+          method,
+          ...(userId && { userId }),
+          ...(userData && userData)
+        };
+
+        console.log('Sending request body:', JSON.stringify(requestBody, null, 2));
+
+        const { data, error } = await supabase.functions.invoke('admin-users', {
+          body: requestBody,
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
@@ -57,41 +84,10 @@ export function useUserManagement(user: User | null, session: Session | null) {
         }
 
         return data;
-      } catch (err) {
-        console.error('Call admin function error:', err);
-        throw err;
       }
-    } else {
-      // Para POST, PUT, DELETE, enviar o body com os dados
-      const payload = {
-        method,
-        ...(userId && { userId }),
-        ...(userData && { data: userData })
-      };
-
-      console.log('Function payload:', payload);
-
-      try {
-        const { data, error } = await supabase.functions.invoke('admin-users', {
-          body: payload,
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-
-        console.log('Admin function response:', { data, error });
-
-        if (error) {
-          console.error('Function invocation error:', error);
-          throw new Error(error.message || 'Request failed');
-        }
-
-        return data;
-      } catch (err) {
-        console.error('Call admin function error:', err);
-        throw err;
-      }
+    } catch (err) {
+      console.error('Call admin function error:', err);
+      throw err;
     }
   };
 

@@ -87,15 +87,15 @@ serve(async (req) => {
     // Parse request body for non-GET requests
     let requestData: any = {}
     
-    const requestText = await req.text()
-    console.log('Raw request body:', requestText)
-    
-    if (!requestText || requestText.trim() === '') {
-      console.error('Empty request body for non-GET request')
-      throw new Error('Request body is required for this operation')
-    }
-    
     try {
+      const requestText = await req.text()
+      console.log('Raw request body:', requestText)
+      
+      if (!requestText || requestText.trim() === '') {
+        console.error('Empty request body for non-GET request')
+        throw new Error('Request body is required for this operation')
+      }
+      
       requestData = JSON.parse(requestText)
       console.log('Parsed request data:', requestData)
     } catch (parseError) {
@@ -105,20 +105,14 @@ serve(async (req) => {
 
     const method = requestData.method || req.method
     const userId = requestData.userId
-    const data = requestData.data
 
-    console.log('Processing request:', { method, userId, hasData: !!data })
+    console.log('Processing request:', { method, userId, requestData })
 
     switch (method) {
       case 'POST':
         console.log('Creating new user...')
         
-        if (!data) {
-          console.error('No user data provided for creation')
-          throw new Error('User data is required for creation')
-        }
-        
-        const { email, password, nome_completo, tipo } = data
+        const { email, password, nome_completo, tipo } = requestData
 
         if (!email || !password) {
           console.error('Missing required fields:', { email: !!email, password: !!password })
@@ -155,11 +149,7 @@ serve(async (req) => {
           throw new Error('User ID is required for update operation')
         }
         
-        if (!data) {
-          throw new Error('Update data is required')
-        }
-        
-        const { email: newEmail, nome_completo: newNome, tipo: newTipo } = data
+        const { email: newEmail, nome_completo: newNome, tipo: newTipo } = requestData
 
         console.log('Updating user with data:', { email: newEmail, nome_completo: newNome, tipo: newTipo })
 
