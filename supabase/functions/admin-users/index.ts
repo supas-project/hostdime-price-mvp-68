@@ -47,25 +47,60 @@ serve(async (req) => {
       throw new Error('Unauthorized: Admin access required')
     }
 
-    // Parse request body for all non-GET requests
+    // Handle GET requests separately (no body)
+    if (req.method === 'GET') {
+      console.log('Fetching users list...')
+      // List all users
+      const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+      
+      if (listError) {
+        console.error('Error listing users:', listError)
+        throw listError
+      }
+
+      console.log('Auth users fetched:', authUsers?.users?.length)
+
+      // Get profiles for additional user data
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+
+      console.log('Profiles fetched:', profiles?.length)
+
+      const usersWithProfiles = authUsers.users.map(user => {
+        const profile = profiles?.find(p => p.id === user.id)
+        return {
+          ...user,
+          profile: profile || { 
+            nome_completo: user.user_metadata?.nome_completo || '', 
+            tipo: user.user_metadata?.tipo || 'user' 
+          }
+        }
+      })
+
+      return new Response(
+        JSON.stringify({ users: usersWithProfiles }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Parse request body for non-GET requests
     let requestData: any = {}
     
-    if (req.method !== 'GET') {
-      const requestText = await req.text()
-      console.log('Raw request body:', requestText)
-      
-      if (!requestText || requestText.trim() === '') {
-        console.error('Empty request body for non-GET request')
-        throw new Error('Request body is required for this operation')
-      }
-      
-      try {
-        requestData = JSON.parse(requestText)
-        console.log('Parsed request data:', requestData)
-      } catch (parseError) {
-        console.error('Error parsing JSON:', parseError)
-        throw new Error('Invalid JSON in request body')
-      }
+    const requestText = await req.text()
+    console.log('Raw request body:', requestText)
+    
+    if (!requestText || requestText.trim() === '') {
+      console.error('Empty request body for non-GET request')
+      throw new Error('Request body is required for this operation')
+    }
+    
+    try {
+      requestData = JSON.parse(requestText)
+      console.log('Parsed request data:', requestData)
+    } catch (parseError) {
+      console.error('Error parsing JSON:', parseError)
+      throw new Error('Invalid JSON in request body')
     }
 
     const method = requestData.method || req.method
@@ -75,41 +110,6 @@ serve(async (req) => {
     console.log('Processing request:', { method, userId, hasData: !!data })
 
     switch (method) {
-      case 'GET':
-        console.log('Fetching users list...')
-        // List all users
-        const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-        
-        if (listError) {
-          console.error('Error listing users:', listError)
-          throw listError
-        }
-
-        console.log('Auth users fetched:', authUsers?.users?.length)
-
-        // Get profiles for additional user data
-        const { data: profiles, error: profilesError } = await supabaseAdmin
-          .from('profiles')
-          .select('*')
-
-        console.log('Profiles fetched:', profiles?.length)
-
-        const usersWithProfiles = authUsers.users.map(user => {
-          const profile = profiles?.find(p => p.id === user.id)
-          return {
-            ...user,
-            profile: profile || { 
-              nome_completo: user.user_metadata?.nome_completo || '', 
-              tipo: user.user_metadata?.tipo || 'user' 
-            }
-          }
-        })
-
-        return new Response(
-          JSON.stringify({ users: usersWithProfiles }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-
       case 'POST':
         console.log('Creating new user...')
         
