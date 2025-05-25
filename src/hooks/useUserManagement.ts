@@ -40,37 +40,23 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
     console.log('Calling admin function with userId:', userId, 'method:', options.method || 'GET');
 
-    const functionName = 'admin-users';
-    
-    const functionOptions: any = {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: options.body,
       method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       }
-    };
+    });
 
-    if (options.body) {
-      functionOptions.body = JSON.stringify(options.body);
+    console.log('Admin function response:', { data, error });
+
+    if (error) {
+      console.error('Function invocation error:', error);
+      throw new Error(error.message || 'Request failed');
     }
 
-    let functionUrl = functionName;
-    if (userId && options.method !== 'GET') {
-      functionUrl = `${functionName}/${userId}`;
-    }
-
-    console.log('Invoking function:', functionUrl, 'with options:', functionOptions);
-
-    const response = await supabase.functions.invoke(functionName, functionOptions);
-
-    console.log('Admin function response:', response);
-
-    if (response.error) {
-      console.error('Function invocation error:', response.error);
-      throw new Error(response.error.message || 'Request failed');
-    }
-
-    return response.data;
+    return data;
   };
 
   const loadUsers = async () => {
@@ -116,23 +102,10 @@ export function useUserManagement(user: User | null, session: Session | null) {
       console.log('Updating user:', userId, editForm);
       setLoading(true);
       
-      const response = await fetch(`https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users/${userId}`, {
+      await callAdminFunction(userId, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
+        body: editForm,
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Update failed:', errorData);
-        throw new Error(`HTTP ${response.status}: ${errorData}`);
-      }
-
-      const result = await response.json();
-      console.log('Update result:', result);
       
       toast.success('Usuário atualizado com sucesso');
       loadUsers();
@@ -151,22 +124,9 @@ export function useUserManagement(user: User | null, session: Session | null) {
       console.log('Deleting user:', userId);
       setLoading(true);
       
-      const response = await fetch(`https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users/${userId}`, {
+      await callAdminFunction(userId, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Delete failed:', errorData);
-        throw new Error(`HTTP ${response.status}: ${errorData}`);
-      }
-
-      const result = await response.json();
-      console.log('Delete result:', result);
       
       toast.success('Usuário removido com sucesso');
       loadUsers();
@@ -183,7 +143,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
   const sendPasswordReset = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://ae28c5be-7e60-48d7-b1fb-bb8b1140a4c9.lovableproject.com/auth/reset-password`,
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
       
       if (error) throw error;

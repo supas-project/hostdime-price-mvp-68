@@ -50,7 +50,7 @@ serve(async (req) => {
     const { method } = req
     const url = new URL(req.url)
     const pathSegments = url.pathname.split('/').filter(segment => segment)
-    const userId = pathSegments[pathSegments.length - 1]
+    const userId = pathSegments.length > 1 ? pathSegments[pathSegments.length - 1] : null
 
     console.log('Processing request:', { method, userId, pathname: url.pathname })
 
@@ -102,11 +102,28 @@ serve(async (req) => {
 
       case 'POST':
         console.log('Creating new user...')
-        // Create new user
-        const createData = await req.json()
-        console.log('Create user data:', { email: createData.email, nome_completo: createData.nome_completo })
+        
+        let createData
+        try {
+          const requestText = await req.text()
+          console.log('Raw request body:', requestText)
+          
+          if (!requestText || requestText.trim() === '') {
+            throw new Error('Empty request body')
+          }
+          
+          createData = JSON.parse(requestText)
+          console.log('Parsed create data:', createData)
+        } catch (parseError) {
+          console.error('Error parsing request body:', parseError)
+          throw new Error('Invalid JSON in request body')
+        }
         
         const { email, password, nome_completo, tipo } = createData
+
+        if (!email || !password) {
+          throw new Error('Email and password are required')
+        }
 
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -132,13 +149,26 @@ serve(async (req) => {
       case 'PUT':
         console.log('Updating user:', userId)
         
-        if (!userId || userId === 'admin-users') {
+        if (!userId) {
           throw new Error('User ID is required for update operation')
         }
         
-        // Update user
-        const updateData = await req.json()
-        console.log('Update user data:', updateData)
+        let updateData
+        try {
+          const requestText = await req.text()
+          console.log('Raw update request body:', requestText)
+          
+          if (!requestText || requestText.trim() === '') {
+            throw new Error('Empty request body')
+          }
+          
+          updateData = JSON.parse(requestText)
+          console.log('Parsed update data:', updateData)
+        } catch (parseError) {
+          console.error('Error parsing update request body:', parseError)
+          throw new Error('Invalid JSON in request body')
+        }
+        
         const { email: newEmail, nome_completo: newNome, tipo: newTipo } = updateData
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -167,7 +197,7 @@ serve(async (req) => {
       case 'DELETE':
         console.log('Deleting user:', userId)
         
-        if (!userId || userId === 'admin-users') {
+        if (!userId) {
           throw new Error('User ID is required for delete operation')
         }
         
