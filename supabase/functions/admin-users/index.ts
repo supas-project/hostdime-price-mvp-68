@@ -28,14 +28,42 @@ serve(async (req) => {
       )
     }
 
-    // Verify the token is the service role key
+    // 1. Check if it's a service role token
     const token = authHeader.replace('Bearer ', '')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    if (token !== serviceRoleKey) {
-      console.error('🚫 Invalid or missing service role token')
+    const isServiceRole = token === serviceRoleKey
+
+    // 2. Check if it's an authenticated admin user
+    let userEmail = null
+    if (!isServiceRole) {
+      // Create client with user token to verify session
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: {
+              Authorization: authHeader,
+            },
+          },
+        }
+      )
+
+      const { data, error } = await supabaseClient.auth.getUser()
+      userEmail = data?.user?.email
+      
+      if (error) {
+        console.log('🔍 Token validation error:', error.message)
+      }
+    }
+
+    // 3. Authorization check: either service role OR admin user
+    const isAuthorized = isServiceRole || userEmail === 'admin@hostdime.com.br'
+
+    if (!isAuthorized) {
+      console.log('🚫 Unauthorized access attempt:', { userEmail, isServiceRole })
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        JSON.stringify({ error: 'Unauthorized access' }),
         { 
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -43,9 +71,9 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Service role token validated successfully')
+    console.log('✅ Access authorized:', { isServiceRole, userEmail })
 
-    // Create Supabase client for admin operations
+    // Create Supabase admin client for operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       serviceRoleKey,
