@@ -47,7 +47,7 @@ export default function UserManagement() {
   // Check if current user is admin
   const isAdmin = user?.email === 'admin@hostdime.com.br';
 
-  const callAdminFunction = async (endpoint: string, options: RequestInit = {}) => {
+  const callAdminFunction = async (endpoint: string, options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: string } = {}) => {
     if (!session?.access_token) {
       throw new Error('No access token available');
     }
@@ -59,7 +59,6 @@ export default function UserManagement() {
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
-        ...options.headers,
       },
       body: options.body,
     });
