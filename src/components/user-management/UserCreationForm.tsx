@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus } from 'lucide-react';
-import { NewUserForm } from '@/hooks/useUserManagement';
+import { NewUserForm } from '@/types/userManagement';
 
 interface UserCreationFormProps {
   onCreateUser: (userForm: NewUserForm) => Promise<void>;

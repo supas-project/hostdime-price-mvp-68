@@ -2,7 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/hooks/useUserManagement';
+import { UserProfile } from '@/types/userManagement';
 
 interface DeleteUserModalProps {
   isOpen: boolean;

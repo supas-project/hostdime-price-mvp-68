@@ -9,7 +9,7 @@ import { UserCreationForm } from '@/components/user-management/UserCreationForm'
 import { UsersList } from '@/components/user-management/UsersList';
 import { EditUserModal } from '@/components/user-management/EditUserModal';
 import { DeleteUserModal } from '@/components/user-management/DeleteUserModal';
-import { UserProfile } from '@/hooks/useUserManagement';
+import { UserProfile } from '@/types/userManagement';
 
 export default function UserManagement() {
   const { user, session } = useAuth();
