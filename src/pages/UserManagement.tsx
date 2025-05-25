@@ -47,20 +47,21 @@ export default function UserManagement() {
   // Check if current user is admin
   const isAdmin = user?.email === 'admin@hostdime.com.br';
 
-  const callAdminFunction = async (endpoint: string, options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: string } = {}) => {
+  const callAdminFunction = async (userId?: string, options: { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: any } = {}) => {
     if (!session?.access_token) {
       throw new Error('No access token available');
     }
 
+    const endpoint = userId ? `admin-users/${userId}` : 'admin-users';
     console.log('Calling admin function:', endpoint, options.method || 'GET');
 
-    const response = await supabase.functions.invoke('admin-users', {
+    const response = await supabase.functions.invoke(endpoint, {
       method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
-      body: options.body,
+      body: options.body ? JSON.stringify(options.body) : undefined,
     });
 
     console.log('Admin function response:', response);
@@ -77,7 +78,7 @@ export default function UserManagement() {
     try {
       console.log('Loading users...');
       setLoading(true);
-      const data = await callAdminFunction('');
+      const data = await callAdminFunction();
       console.log('Users loaded:', data);
       setUsers(data.users || []);
     } catch (error) {
@@ -95,9 +96,9 @@ export default function UserManagement() {
     try {
       console.log('Creating user:', newUserForm);
       setLoading(true);
-      await callAdminFunction('', {
+      await callAdminFunction(undefined, {
         method: 'POST',
-        body: JSON.stringify(newUserForm),
+        body: newUserForm,
       });
       
       toast.success('Usuário criado com sucesso');
@@ -120,9 +121,9 @@ export default function UserManagement() {
     try {
       console.log('Updating user:', selectedUser.id, editForm);
       setLoading(true);
-      await callAdminFunction(`/${selectedUser.id}`, {
+      await callAdminFunction(selectedUser.id, {
         method: 'PUT',
-        body: JSON.stringify(editForm),
+        body: editForm,
       });
       
       toast.success('Usuário atualizado com sucesso');
@@ -145,7 +146,7 @@ export default function UserManagement() {
     try {
       console.log('Deleting user:', selectedUser.id);
       setLoading(true);
-      await callAdminFunction(`/${selectedUser.id}`, {
+      await callAdminFunction(selectedUser.id, {
         method: 'DELETE',
       });
       

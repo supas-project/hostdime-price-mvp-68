@@ -49,10 +49,10 @@ serve(async (req) => {
 
     const { method } = req
     const url = new URL(req.url)
-    const pathParts = url.pathname.split('/')
-    const userId = pathParts[pathParts.length - 1]
+    const pathSegments = url.pathname.split('/').filter(segment => segment)
+    const userId = pathSegments[pathSegments.length - 1]
 
-    console.log('Processing request:', { method, userId })
+    console.log('Processing request:', { method, userId, pathname: url.pathname })
 
     switch (method) {
       case 'GET':
@@ -131,8 +131,14 @@ serve(async (req) => {
 
       case 'PUT':
         console.log('Updating user:', userId)
+        
+        if (!userId || userId === 'admin-users') {
+          throw new Error('User ID is required for update operation')
+        }
+        
         // Update user
         const updateData = await req.json()
+        console.log('Update user data:', updateData)
         const { email: newEmail, nome_completo: newNome, tipo: newTipo } = updateData
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -160,6 +166,11 @@ serve(async (req) => {
 
       case 'DELETE':
         console.log('Deleting user:', userId)
+        
+        if (!userId || userId === 'admin-users') {
+          throw new Error('User ID is required for delete operation')
+        }
+        
         // Delete user
         if (userId === user.id) {
           throw new Error('Não é possível remover sua própria conta')
