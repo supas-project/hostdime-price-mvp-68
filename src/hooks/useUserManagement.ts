@@ -38,23 +38,18 @@ export function useUserManagement(user: User | null, session: Session | null) {
       throw new Error('No access token available');
     }
 
-    console.log('Calling admin function with method:', method, 'userId:', userId, 'body:', body);
+    console.log('Calling admin function with:', { method, userId, body });
 
-    const functionData: any = {};
-    
-    if (body) {
-      functionData.method = method;
-      functionData.userId = userId;
-      functionData.data = body;
-    } else if (userId) {
-      functionData.method = method;
-      functionData.userId = userId;
-    } else {
-      functionData.method = method;
-    }
+    const requestBody = {
+      method,
+      ...(userId && { userId }),
+      ...(body && { data: body })
+    };
+
+    console.log('Request body:', requestBody);
 
     const { data, error } = await supabase.functions.invoke('admin-users', {
-      body: functionData,
+      body: requestBody,
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',

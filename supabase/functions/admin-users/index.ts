@@ -49,17 +49,21 @@ serve(async (req) => {
 
     // Parse request body
     let requestData: any = {}
-    try {
-      const requestText = await req.text()
-      console.log('Raw request body:', requestText)
-      
-      if (requestText && requestText.trim() !== '') {
-        requestData = JSON.parse(requestText)
-        console.log('Parsed request data:', requestData)
-      }
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError)
-      if (req.method !== 'GET') {
+    
+    if (req.method !== 'GET') {
+      try {
+        const requestText = await req.text()
+        console.log('Raw request body:', requestText)
+        
+        if (requestText && requestText.trim() !== '') {
+          requestData = JSON.parse(requestText)
+          console.log('Parsed request data:', requestData)
+        } else {
+          console.error('Empty request body for non-GET request')
+          throw new Error('Request body is required for this operation')
+        }
+      } catch (parseError) {
+        console.error('Error parsing request body:', parseError)
         throw new Error('Invalid JSON in request body')
       }
     }
@@ -120,14 +124,18 @@ serve(async (req) => {
         console.log('Creating new user...')
         
         if (!data) {
-          throw new Error('No user data provided')
+          console.error('No user data provided for creation')
+          throw new Error('User data is required for creation')
         }
         
         const { email, password, nome_completo, tipo } = data
 
         if (!email || !password) {
+          console.error('Missing required fields:', { email: !!email, password: !!password })
           throw new Error('Email and password are required')
         }
+
+        console.log('Creating user with data:', { email, nome_completo, tipo })
 
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -158,10 +166,12 @@ serve(async (req) => {
         }
         
         if (!data) {
-          throw new Error('No update data provided')
+          throw new Error('Update data is required')
         }
         
         const { email: newEmail, nome_completo: newNome, tipo: newTipo } = data
+
+        console.log('Updating user with data:', { email: newEmail, nome_completo: newNome, tipo: newTipo })
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
@@ -193,7 +203,7 @@ serve(async (req) => {
           throw new Error('User ID is required for delete operation')
         }
         
-        // Delete user
+        // Prevent admin from deleting their own account
         if (userId === user.id) {
           throw new Error('Não é possível remover sua própria conta')
         }
@@ -212,6 +222,7 @@ serve(async (req) => {
         )
 
       default:
+        console.error('Unsupported method:', method)
         return new Response('Method not allowed', { 
           status: 405, 
           headers: corsHeaders 
@@ -220,7 +231,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Check function logs for more information'
+      }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
