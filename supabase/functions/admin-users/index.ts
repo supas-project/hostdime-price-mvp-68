@@ -89,24 +89,37 @@ serve(async (req) => {
     
     try {
       const requestText = await req.text()
-      console.log('Raw request body:', requestText)
+      console.log('Raw request body received:', requestText)
+      console.log('Request body length:', requestText.length)
       
       if (!requestText || requestText.trim() === '') {
         console.error('Empty request body for non-GET request')
-        throw new Error('Request body is required for this operation')
+        return new Response(
+          JSON.stringify({ error: 'Request body is required for this operation' }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
       }
       
       requestData = JSON.parse(requestText)
-      console.log('Parsed request data:', requestData)
+      console.log('Successfully parsed request data:', JSON.stringify(requestData, null, 2))
     } catch (parseError) {
       console.error('Error parsing JSON:', parseError)
-      throw new Error('Invalid JSON in request body')
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
 
     const method = requestData.method || req.method
     const userId = requestData.userId
 
-    console.log('Processing request:', { method, userId, requestData })
+    console.log('Processing request:', { method, userId, hasRequestData: !!requestData })
 
     switch (method) {
       case 'POST':
@@ -116,7 +129,13 @@ serve(async (req) => {
 
         if (!email || !password) {
           console.error('Missing required fields:', { email: !!email, password: !!password })
-          throw new Error('Email and password are required')
+          return new Response(
+            JSON.stringify({ error: 'Email and password are required' }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
 
         console.log('Creating user with data:', { email, nome_completo, tipo })
@@ -132,7 +151,13 @@ serve(async (req) => {
 
         if (createError) {
           console.error('Error creating user:', createError)
-          throw createError
+          return new Response(
+            JSON.stringify({ error: createError.message }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
 
         console.log('User created successfully:', newUser.user?.email)
@@ -146,7 +171,13 @@ serve(async (req) => {
         console.log('Updating user:', userId)
         
         if (!userId) {
-          throw new Error('User ID is required for update operation')
+          return new Response(
+            JSON.stringify({ error: 'User ID is required for update operation' }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
         
         const { email: newEmail, nome_completo: newNome, tipo: newTipo } = requestData
@@ -166,7 +197,13 @@ serve(async (req) => {
 
         if (updateError) {
           console.error('Error updating user:', updateError)
-          throw updateError
+          return new Response(
+            JSON.stringify({ error: updateError.message }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
 
         console.log('User updated successfully:', updatedUser.user?.email)
@@ -180,18 +217,36 @@ serve(async (req) => {
         console.log('Deleting user:', userId)
         
         if (!userId) {
-          throw new Error('User ID is required for delete operation')
+          return new Response(
+            JSON.stringify({ error: 'User ID is required for delete operation' }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
         
         // Prevent admin from deleting their own account
         if (userId === user.id) {
-          throw new Error('Não é possível remover sua própria conta')
+          return new Response(
+            JSON.stringify({ error: 'Não é possível remover sua própria conta' }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
 
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
         if (deleteError) {
           console.error('Error deleting user:', deleteError)
-          throw deleteError
+          return new Response(
+            JSON.stringify({ error: deleteError.message }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          )
         }
 
         console.log('User deleted successfully:', userId)
@@ -203,10 +258,13 @@ serve(async (req) => {
 
       default:
         console.error('Unsupported method:', method)
-        return new Response('Method not allowed', { 
-          status: 405, 
-          headers: corsHeaders 
-        })
+        return new Response(
+          JSON.stringify({ error: 'Method not allowed' }),
+          { 
+            status: 405, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
     }
   } catch (error) {
     console.error('Function error:', error)

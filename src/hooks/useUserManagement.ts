@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
@@ -66,23 +65,31 @@ export function useUserManagement(user: User | null, session: Session | null) {
           ...(userData && userData)
         };
 
-        console.log('Sending request body:', JSON.stringify(requestBody, null, 2));
+        console.log('Sending request body (stringified):', JSON.stringify(requestBody, null, 2));
 
-        const { data, error } = await supabase.functions.invoke('admin-users', {
-          body: requestBody,
+        // Usar fetch diretamente para ter controle total sobre o body
+        const functionUrl = `${supabase.supabaseUrl}/functions/v1/admin-users`;
+        
+        const response = await fetch(functionUrl, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
-          }
+            'apikey': supabase.supabaseKey,
+          },
+          body: JSON.stringify(requestBody)
         });
 
-        console.log('Admin function response:', { data, error });
-
-        if (error) {
-          console.error('Function invocation error:', error);
-          throw new Error(error.message || 'Request failed');
+        console.log('Function response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Function error response:', errorText);
+          throw new Error(`Function failed with status ${response.status}: ${errorText}`);
         }
 
+        const data = await response.json();
+        console.log('Admin function response:', data);
         return data;
       }
     } catch (err) {
