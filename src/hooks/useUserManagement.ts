@@ -41,7 +41,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
     try {
       if (method === 'GET') {
-        // Para GET requests, não enviar body
+        // Para GET requests, usar supabase.functions.invoke
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -58,29 +58,31 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
         return data;
       } else {
-        // Para POST, PUT, DELETE, estruturar corretamente o payload
+        // Para POST, PUT, DELETE, usar fetch com body JSON
         const requestBody = {
           method,
           ...(userId && { userId }),
           ...(userData && userData)
         };
 
+        console.log('Sending request body:', requestBody);
         console.log('Sending request body (stringified):', JSON.stringify(requestBody, null, 2));
 
-        // Usar fetch diretamente para ter controle total sobre o body
-        const functionUrl = `${supabase.supabaseUrl}/functions/v1/admin-users`;
+        // Usar fetch diretamente com URL completa
+        const functionUrl = `https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users`;
         
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
-            'apikey': supabase.supabaseKey,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nbHdqZHBvY3hlbHZhcnFqZ3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4NTE3OTMsImV4cCI6MjA2MTQyNzc5M30.8xCetXorVi2SehrE_Tfgf-I_96o75alWXTMSHZLNh7s',
           },
           body: JSON.stringify(requestBody)
         });
 
         console.log('Function response status:', response.status);
+        console.log('Function response headers:', response.headers);
         
         if (!response.ok) {
           const errorText = await response.text();
