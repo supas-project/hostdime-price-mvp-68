@@ -47,23 +47,23 @@ serve(async (req) => {
       throw new Error('Unauthorized: Admin access required')
     }
 
-    // Parse request body
+    // Parse request body for all non-GET requests
     let requestData: any = {}
     
     if (req.method !== 'GET') {
+      const requestText = await req.text()
+      console.log('Raw request body:', requestText)
+      
+      if (!requestText || requestText.trim() === '') {
+        console.error('Empty request body for non-GET request')
+        throw new Error('Request body is required for this operation')
+      }
+      
       try {
-        const requestText = await req.text()
-        console.log('Raw request body:', requestText)
-        
-        if (requestText && requestText.trim() !== '') {
-          requestData = JSON.parse(requestText)
-          console.log('Parsed request data:', requestData)
-        } else {
-          console.error('Empty request body for non-GET request')
-          throw new Error('Request body is required for this operation')
-        }
+        requestData = JSON.parse(requestText)
+        console.log('Parsed request data:', requestData)
       } catch (parseError) {
-        console.error('Error parsing request body:', parseError)
+        console.error('Error parsing JSON:', parseError)
         throw new Error('Invalid JSON in request body')
       }
     }
@@ -72,7 +72,7 @@ serve(async (req) => {
     const userId = requestData.userId
     const data = requestData.data
 
-    console.log('Processing request:', { method, userId, data })
+    console.log('Processing request:', { method, userId, hasData: !!data })
 
     switch (method) {
       case 'GET':
@@ -80,27 +80,19 @@ serve(async (req) => {
         // List all users
         const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
         
-        console.log('Auth users response:', { 
-          usersCount: authUsers?.users?.length, 
-          error: listError,
-          users: authUsers?.users?.map(u => ({ id: u.id, email: u.email }))
-        })
-        
         if (listError) {
           console.error('Error listing users:', listError)
           throw listError
         }
+
+        console.log('Auth users fetched:', authUsers?.users?.length)
 
         // Get profiles for additional user data
         const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('profiles')
           .select('*')
 
-        console.log('Profiles response:', { 
-          profilesCount: profiles?.length, 
-          error: profilesError,
-          profiles: profiles?.map(p => ({ id: p.id, email: p.email, nome_completo: p.nome_completo }))
-        })
+        console.log('Profiles fetched:', profiles?.length)
 
         const usersWithProfiles = authUsers.users.map(user => {
           const profile = profiles?.find(p => p.id === user.id)
@@ -112,8 +104,6 @@ serve(async (req) => {
             }
           }
         })
-
-        console.log('Final users with profiles:', usersWithProfiles.length)
 
         return new Response(
           JSON.stringify({ users: usersWithProfiles }),

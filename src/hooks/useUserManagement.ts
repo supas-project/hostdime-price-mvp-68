@@ -33,37 +33,41 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
   const isAdmin = user?.email === 'admin@hostdime.com.br';
 
-  const callAdminFunction = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', userId?: string, body?: any) => {
+  const callAdminFunction = async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', userId?: string, userData?: any) => {
     if (!session?.access_token) {
       throw new Error('No access token available');
     }
 
-    console.log('Calling admin function with:', { method, userId, body });
+    console.log('Calling admin function with:', { method, userId, userData });
 
-    const requestBody = {
-      method,
-      ...(userId && { userId }),
-      ...(body && { data: body })
-    };
+    // Prepare the request payload
+    const payload: any = { method };
+    if (userId) payload.userId = userId;
+    if (userData) payload.data = userData;
 
-    console.log('Request body:', requestBody);
+    console.log('Function payload:', payload);
 
-    const { data, error } = await supabase.functions.invoke('admin-users', {
-      body: requestBody,
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: payload,
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      console.log('Admin function response:', { data, error });
+
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw new Error(error.message || 'Request failed');
       }
-    });
 
-    console.log('Admin function response:', { data, error });
-
-    if (error) {
-      console.error('Function invocation error:', error);
-      throw new Error(error.message || 'Request failed');
+      return data;
+    } catch (err) {
+      console.error('Call admin function error:', err);
+      throw err;
     }
-
-    return data;
   };
 
   const loadUsers = async () => {
