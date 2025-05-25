@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { LoginDialog } from "@/components/login-dialog";
-import { ChevronRight, Database } from "lucide-react";
+import { ChevronRight, Database, Users } from "lucide-react";
 
 interface NavbarProps {
   notifications?: React.ReactNode;
@@ -26,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
             <img 
               src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
               alt="HostDime Logo"
-              className="h-5 w-auto" // Ajustado para um tamanho mais harmonioso
+              className="h-5 w-auto"
             />
           </div>
           
@@ -42,16 +42,29 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
               </Button>
               
               {isAdminAccess && (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="text-primary hover:text-primary/80 flex items-center"
-                  onClick={() => navigate("/price-table")}
-                >
-                  <Database className="w-4 h-4 mr-1" />
-                  Tabela de Preços
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-primary hover:text-primary/80 flex items-center"
+                    onClick={() => navigate("/price-table")}
+                  >
+                    <Database className="w-4 h-4 mr-1" />
+                    Tabela de Preços
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-primary hover:text-primary/80 flex items-center"
+                    onClick={() => navigate("/user-management")}
+                  >
+                    <Users className="w-4 h-4 mr-1" />
+                    Gestão de Usuários
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </>
               )}
             </nav>
           )}

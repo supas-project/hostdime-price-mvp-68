@@ -11,6 +11,8 @@ import PriceTable from "./pages/PriceTable";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
+import UserManagement from "./pages/UserManagement";
+import ResetPassword from "./pages/ResetPassword";
 import Diagnostics from "./pages/Diagnostics";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -37,8 +39,9 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Routes>
-            {/* Public route */}
+            {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             
             {/* Protected routes */}
             <Route path="/" element={
@@ -52,6 +55,12 @@ const App = () => (
               <Route path="price-table" element={
                 <AdminProtectedRoute>
                   <PriceTable />
+                </AdminProtectedRoute>
+              } />
+              
+              <Route path="user-management" element={
+                <AdminProtectedRoute>
+                  <UserManagement />
                 </AdminProtectedRoute>
               } />
               
