@@ -13,12 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Admin Users Function - Request received:', req.method, req.url)
+    console.log('🚀 Admin Users Function - Request received:', req.method, req.url)
     
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      console.error('No authorization header provided')
+      console.error('❌ No authorization header provided')
       throw new Error('No authorization header')
     }
 
@@ -34,38 +34,38 @@ serve(async (req) => {
       }
     )
 
-    console.log('Supabase admin client created')
+    console.log('✅ Supabase admin client created')
 
     // Verify the requesting user is admin
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
     
-    console.log('User verification:', { user: user?.email, error: userError })
+    console.log('👤 User verification:', { user: user?.email, error: userError })
     
     if (userError || !user || user.email !== 'admin@hostdime.com.br') {
-      console.error('Unauthorized access attempt:', { userEmail: user?.email, error: userError })
+      console.error('🚫 Unauthorized access attempt:', { userEmail: user?.email, error: userError })
       throw new Error('Unauthorized: Admin access required')
     }
 
     // Handle GET requests separately (no body)
     if (req.method === 'GET') {
-      console.log('Fetching users list...')
+      console.log('📋 Fetching users list...')
       // List all users
       const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
       
       if (listError) {
-        console.error('Error listing users:', listError)
+        console.error('❌ Error listing users:', listError)
         throw listError
       }
 
-      console.log('Auth users fetched:', authUsers?.users?.length)
+      console.log('👥 Auth users fetched:', authUsers?.users?.length)
 
       // Get profiles for additional user data
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
         .select('*')
 
-      console.log('Profiles fetched:', profiles?.length)
+      console.log('📝 Profiles fetched:', profiles?.length)
 
       const usersWithProfiles = authUsers.users.map(user => {
         const profile = profiles?.find(p => p.id === user.id)
@@ -85,15 +85,15 @@ serve(async (req) => {
     }
 
     // Parse request body for non-GET requests
-    let requestData: any = {}
+    let body;
     
     try {
       const requestText = await req.text()
-      console.log('Raw request body received:', requestText)
-      console.log('Request body length:', requestText.length)
+      console.log('📦 Raw request body received:', requestText)
+      console.log('📏 Request body length:', requestText.length)
       
       if (!requestText || requestText.trim() === '') {
-        console.error('Empty request body for non-GET request')
+        console.error('💀 Empty request body for non-GET request')
         return new Response(
           JSON.stringify({ error: 'Request body is required for this operation' }),
           { 
@@ -103,12 +103,14 @@ serve(async (req) => {
         )
       }
       
-      requestData = JSON.parse(requestText)
-      console.log('Successfully parsed request data:', JSON.stringify(requestData, null, 2))
+      body = JSON.parse(requestText)
+      console.log('🚀 RECEBIDO NA FUNÇÃO:', JSON.stringify(body))
+      console.log('🔍 Body keys:', Object.keys(body))
+      console.log('🔢 Body object size:', Object.keys(body).length)
     } catch (parseError) {
-      console.error('Error parsing JSON:', parseError)
+      console.error('❌ FALHA NO PARSE:', parseError.message)
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        JSON.stringify({ error: 'Erro ao parsear JSON' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -116,19 +118,19 @@ serve(async (req) => {
       )
     }
 
-    const method = requestData.method || req.method
-    const userId = requestData.userId
+    const method = body.method || req.method
+    const userId = body.userId
 
-    console.log('Processing request:', { method, userId, hasRequestData: !!requestData })
+    console.log('⚙️ Processing request:', { method, userId, hasRequestData: !!body })
 
     switch (method) {
       case 'POST':
-        console.log('Creating new user...')
+        console.log('➕ Creating new user...')
         
-        const { email, password, nome_completo, tipo } = requestData
+        const { email, password, user_metadata } = body
 
         if (!email || !password) {
-          console.error('Missing required fields:', { email: !!email, password: !!password })
+          console.error('⚠️ Missing required fields:', { email: !!email, password: !!password })
           return new Response(
             JSON.stringify({ error: 'Email and password are required' }),
             { 
@@ -138,19 +140,16 @@ serve(async (req) => {
           )
         }
 
-        console.log('Creating user with data:', { email, nome_completo, tipo })
+        console.log('📝 Creating user with data:', { email, user_metadata })
 
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
           password,
-          user_metadata: {
-            nome_completo: nome_completo || '',
-            tipo: tipo || 'user'
-          }
+          user_metadata: user_metadata || {}
         })
 
         if (createError) {
-          console.error('Error creating user:', createError)
+          console.error('❌ Error creating user:', createError)
           return new Response(
             JSON.stringify({ error: createError.message }),
             { 
@@ -160,7 +159,7 @@ serve(async (req) => {
           )
         }
 
-        console.log('User created successfully:', newUser.user?.email)
+        console.log('✅ User created successfully:', newUser.user?.email)
 
         return new Response(
           JSON.stringify({ user: newUser, message: 'Usuário criado com sucesso' }),
@@ -168,7 +167,7 @@ serve(async (req) => {
         )
 
       case 'PUT':
-        console.log('Updating user:', userId)
+        console.log('✏️ Updating user:', userId)
         
         if (!userId) {
           return new Response(
@@ -180,23 +179,20 @@ serve(async (req) => {
           )
         }
         
-        const { email: newEmail, nome_completo: newNome, tipo: newTipo } = requestData
+        const { email: newEmail, user_metadata: updateMetadata } = body
 
-        console.log('Updating user with data:', { email: newEmail, nome_completo: newNome, tipo: newTipo })
+        console.log('📝 Updating user with data:', { email: newEmail, user_metadata: updateMetadata })
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
           {
             email: newEmail,
-            user_metadata: {
-              nome_completo: newNome || '',
-              tipo: newTipo || 'user'
-            }
+            user_metadata: updateMetadata || {}
           }
         )
 
         if (updateError) {
-          console.error('Error updating user:', updateError)
+          console.error('❌ Error updating user:', updateError)
           return new Response(
             JSON.stringify({ error: updateError.message }),
             { 
@@ -206,7 +202,7 @@ serve(async (req) => {
           )
         }
 
-        console.log('User updated successfully:', updatedUser.user?.email)
+        console.log('✅ User updated successfully:', updatedUser.user?.email)
 
         return new Response(
           JSON.stringify({ user: updatedUser, message: 'Usuário atualizado com sucesso' }),
@@ -214,7 +210,7 @@ serve(async (req) => {
         )
 
       case 'DELETE':
-        console.log('Deleting user:', userId)
+        console.log('🗑️ Deleting user:', userId)
         
         if (!userId) {
           return new Response(
@@ -239,7 +235,7 @@ serve(async (req) => {
 
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
         if (deleteError) {
-          console.error('Error deleting user:', deleteError)
+          console.error('❌ Error deleting user:', deleteError)
           return new Response(
             JSON.stringify({ error: deleteError.message }),
             { 
@@ -249,7 +245,7 @@ serve(async (req) => {
           )
         }
 
-        console.log('User deleted successfully:', userId)
+        console.log('✅ User deleted successfully:', userId)
 
         return new Response(
           JSON.stringify({ message: 'Usuário removido com sucesso' }),
@@ -257,7 +253,7 @@ serve(async (req) => {
         )
 
       default:
-        console.error('Unsupported method:', method)
+        console.error('❌ Unsupported method:', method)
         return new Response(
           JSON.stringify({ error: 'Method not allowed' }),
           { 
@@ -267,7 +263,7 @@ serve(async (req) => {
         )
     }
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('💥 Function error:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message,

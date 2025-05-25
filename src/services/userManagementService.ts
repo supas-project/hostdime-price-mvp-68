@@ -35,15 +35,20 @@ export class UserManagementService {
 
         return data;
       } else {
-        // Para POST, PUT, DELETE, usar fetch com body JSON
-        const requestBody = {
+        // Para POST, PUT, DELETE, usar fetch com body JSON HARDCODED para teste
+        const hardcodedBody = JSON.stringify({
           method,
+          email: "teste@hostdime.com.br",
+          password: "123456",
+          user_metadata: { 
+            nome_completo: "Teste Final", 
+            tipo: "user" 
+          },
           ...(userId && { userId }),
-          ...(userData && userData)
-        };
+        });
 
-        console.log('Sending request body:', requestBody);
-        console.log('Sending request body (stringified):', JSON.stringify(requestBody, null, 2));
+        console.log('🧪 TESTE - Enviando JSON hardcoded:', hardcodedBody);
+        console.log('🧪 TESTE - Body length:', hardcodedBody.length);
 
         // Usar fetch diretamente com URL completa
         const functionUrl = `https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/admin-users`;
@@ -55,20 +60,20 @@ export class UserManagementService {
             'Content-Type': 'application/json',
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nbHdqZHBvY3hlbHZhcnFqZ3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4NTE3OTMsImV4cCI6MjA2MTQyNzc5M30.8xCetXorVi2SehrE_Tfgf-I_96o75alWXTMSHZLNh7s',
           },
-          body: JSON.stringify(requestBody)
+          body: hardcodedBody
         });
 
-        console.log('Function response status:', response.status);
-        console.log('Function response headers:', response.headers);
+        console.log('🧪 TESTE - Response status:', response.status);
+        console.log('🧪 TESTE - Response headers:', response.headers);
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Function error response:', errorText);
+          console.error('🧪 TESTE - Error response:', errorText);
           throw new Error(`Function failed with status ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
-        console.log('Admin function response:', data);
+        console.log('🧪 TESTE - Success response:', data);
         return data;
       }
     } catch (err) {
@@ -85,17 +90,17 @@ export class UserManagementService {
   }
 
   static async createUser(session: Session, userForm: NewUserForm) {
-    console.log('Creating user:', userForm);
+    console.log('🧪 TESTE - Creating user (ignoring form, using hardcoded):', userForm);
     await this.callAdminFunction('POST', session, undefined, userForm);
   }
 
   static async updateUser(session: Session, userId: string, editForm: EditUserForm) {
-    console.log('Updating user:', userId, editForm);
+    console.log('🧪 TESTE - Updating user (ignoring form, using hardcoded):', userId, editForm);
     await this.callAdminFunction('PUT', session, userId, editForm);
   }
 
   static async deleteUser(session: Session, userId: string) {
-    console.log('Deleting user:', userId);
+    console.log('🧪 TESTE - Deleting user (ignoring userId, using hardcoded):', userId);
     await this.callAdminFunction('DELETE', session, userId);
   }
 
