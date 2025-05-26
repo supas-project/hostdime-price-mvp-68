@@ -60,7 +60,7 @@ export function MemoryPanel({
     }
   }, [memoryOptions, propSelectedOption]);
 
-  // GARANTIR que usamos EXATAMENTE os mesmos preços da seleção rápida
+  // CORREÇÃO: Sempre usar EXATAMENTE a opção correspondente da seleção rápida
   useEffect(() => {
     if (memoryOptions.length > 0) {
       // Buscar a opção EXATA que corresponde à capacidade selecionada
@@ -74,34 +74,25 @@ export function MemoryPanel({
       });
 
       if (exactMatch) {
-        // Usar a opção EXATA da seleção rápida - mesmo preço, tudo igual
+        // Usar EXATAMENTE a opção da seleção rápida - mesmo preço, tudo igual
         setCurrentSelectedOption(exactMatch);
         setSelectedType(exactMatch.id);
         console.log("[MemoryPanel] Using EXACT match from quick selection:", exactMatch);
+        console.log("[MemoryPanel] Price from exact match:", exactMatch.price);
       } else {
-        // Se não existe uma opção exata, manter a funcionalidade existente
-        // mas garantir que o preço seja consistente
-        const referenceOption = memoryOptions[0];
-        if (referenceOption) {
-          // Usar a primeira opção como referência para calcular preço por GB
-          const refCapacityMatch = referenceOption.name.match(/(\d+)GB/i);
-          const refCapacity = refCapacityMatch ? parseInt(refCapacityMatch[1]) : 64;
-          const pricePerGB = referenceOption.price / refCapacity;
-          
-          // Criar uma opção sintética com preço calculado baseado na primeira opção
-          const syntheticOption: ComponentOption = {
-            id: `memory-${capacity}gb`,
-            name: `${capacity}GB RAM`,
-            description: referenceOption.description,
-            price: Math.round(pricePerGB * capacity * 100) / 100, // Arredondar para 2 casas decimais
-            type: referenceOption.type,
-            isHardware: true,
-            specs: referenceOption.specs
-          };
-          
-          setCurrentSelectedOption(syntheticOption);
-          setSelectedType(syntheticOption.id);
-          console.log("[MemoryPanel] Created synthetic option with calculated price:", syntheticOption);
+        // CORREÇÃO: Se não existe opção exata, não calcular preço sintético
+        // Manter a primeira opção da lista como padrão
+        const defaultOption = memoryOptions[0];
+        if (defaultOption) {
+          setCurrentSelectedOption(defaultOption);
+          setSelectedType(defaultOption.id);
+          // Ajustar a capacidade para corresponder à opção padrão
+          const defaultCapacityMatch = defaultOption.name.match(/(\d+)GB/i);
+          if (defaultCapacityMatch) {
+            setCapacity(parseInt(defaultCapacityMatch[1]));
+          }
+          console.log("[MemoryPanel] No exact match, using default option:", defaultOption);
+          console.log("[MemoryPanel] Price from default option:", defaultOption.price);
         }
       }
     }
@@ -139,7 +130,7 @@ export function MemoryPanel({
   // Get selected type details
   const selectedTypeDetails = selectedType && memoryTypes[selectedType] ? memoryTypes[selectedType] : null;
   
-  // Use the current selected option's price (which matches quick selection)
+  // CORREÇÃO: Usar SEMPRE o preço da opção atual (que vem da seleção rápida)
   const totalPrice = currentSelectedOption?.price || 0;
   
   // Calculate price per GB from current option
