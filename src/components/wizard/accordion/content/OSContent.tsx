@@ -2,36 +2,29 @@
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
-import { OSSelector } from "./os/OSSelector";
-import { findMatchingComponent } from "@/utils/component-matching";
+import { MultipleOSSelector } from "./os/MultipleOSSelector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
 import { useWizard } from "@/contexts/WizardContext";
 
 interface OSContentProps {
-  // Make options optional by adding the ? modifier
   options?: ComponentOption[];
   selectedOption: ComponentOption | null;
   onSelectOption: (option: ComponentOption) => void;
 }
 
 export function OSContent({ 
-  options: propOptions, // Rename to avoid conflict with the hook's options
+  options: propOptions,
   selectedOption, 
   onSelectOption 
 }: OSContentProps) {
-  // Use propOptions if provided, otherwise fetch from the price service
-  const { options, isLoading, error } = useComponentOptions('os');
+  const { options, isLoading } = useComponentOptions('os');
   const { selectedComponents } = useWizard();
   const [finalOptions, setFinalOptions] = useState<ComponentOption[]>([]);
-  const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
-  
-  const processorInfo = selectedComponents["processador"];
+  const [osItems, setOSItems] = useState<{ [key: string]: { option: ComponentOption; quantity: number; cores?: number } }>({});
   
   useEffect(() => {
-    // Set final options based on propOptions or fetched options
     if (propOptions?.length) {
       setFinalOptions(propOptions);
     } else if (options?.length) {
@@ -40,7 +33,6 @@ export function OSContent({
   }, [propOptions, options]);
   
   useEffect(() => {
-    // Try to load data from the price service, but don't show errors if not authenticated
     const updateFromPriceTable = async () => {
       try {
         const { data: session } = await PriceService.supabase.auth.getSession();
@@ -50,40 +42,57 @@ export function OSContent({
         }
         
         await PriceService.forceRefreshFromLatestSource().catch(error => {
-          // Only log authentication errors, don't display them to users
           if (!error.message.includes("Authentication")) {
             console.error("Erro ao carregar dados de SO da tabela de preços:", error);
           }
         });
       } catch (error) {
-        // Silent fail - just for logging purposes
         console.log("Error during OS data refresh:", error);
       }
     };
     
     updateFromPriceTable();
+  }, []);
+
+  const handleUpdateOSItems = (items: { [key: string]: { option: ComponentOption; quantity: number; cores?: number } }) => {
+    setOSItems(items);
     
-    // Log information about options for debugging
-    console.log("OSContent options from useComponentOptions:", finalOptions);
-    console.log("OSContent processor info:", processorInfo);
-    
-    if (finalOptions.length === 0 && !isLoading) {
-      console.warn("Nenhuma opção de SO disponível. Verificando opções alternativas.");
-    }
-  }, [finalOptions.length, processorInfo]);
-  
-  // Synchronize local state with props when selectedOption changes
-  useEffect(() => {
-    if (selectedOption) {
-      // Find the matching option in available options
-      const matchingOption = findMatchingComponent(selectedOption, finalOptions);
-      setLocalSelectedId(matchingOption?.id || selectedOption.id);
+    // Calcular o primeiro item para compatibilidade com o sistema existente
+    const firstItem = Object.values(items)[0];
+    if (firstItem) {
+      let optionToSend = firstItem.option;
+      
+      // Para Windows Server com cores, calcular o preço total
+      if (firstItem.option.subtype === "windows" && firstItem.option.metadata?.perCore && firstItem.cores) {
+        const licensesNeeded = Math.ceil(firstItem.cores / 2);
+        const calculatedPrice = firstItem.option.price * licensesNeeded;
+        
+        optionToSend = {
+          ...firstItem.option,
+          price: calculatedPrice,
+          metadata: {
+            ...firstItem.option.metadata,
+            cores: firstItem.cores,
+            licensesNeeded: licensesNeeded,
+            unitPrice: firstItem.option.price
+          }
+        };
+      }
+      
+      onSelectOption(optionToSend);
     } else {
-      setLocalSelectedId("");
+      // Se não há itens, enviar opção vazia
+      const emptyOption: ComponentOption = {
+        id: "",
+        name: "",
+        description: "",
+        price: 0,
+        type: "os"
+      };
+      onSelectOption(emptyOption);
     }
-  }, [selectedOption, finalOptions]);
+  };
   
-  // Show loading state
   if (isLoading && !propOptions) {
     return (
       <Card className="p-4 sm:p-6">
@@ -114,10 +123,10 @@ export function OSContent({
   return (
     <Card className="p-4 sm:p-6 overflow-hidden">
       <div className="w-full overflow-x-hidden">
-        <OSSelector
+        <MultipleOSSelector
           options={finalOptions}
-          selectedOption={finalOptions.find(opt => opt.id === localSelectedId) || null}
-          onSelectOption={onSelectOption}
+          selectedOSItems={osItems}
+          onUpdateOSItems={handleUpdateOSItems}
         />
       </div>
     </Card>

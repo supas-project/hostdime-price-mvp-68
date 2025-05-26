@@ -31,10 +31,10 @@ export interface ComponentOption {
     perCore?: boolean;
     cores?: number;
     licensesNeeded?: number;
-    raid?: RaidMetadata;
     quantity?: number;
     unitPrice?: number;
     unitInfo?: string;
+    raid?: RaidMetadata;
   };
 }
 
