@@ -10,127 +10,104 @@ import { MemorySpecs } from "./MemorySpecs";
 import { MemoryStick, Plus } from "lucide-react";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { cn } from "@/lib/utils";
+import { useComponentOptions } from "@/hooks/use-component-options";
 
 interface MemoryPanelProps {
   selectedOption?: ComponentOption | null;
   onSelectOption?: (option: ComponentOption) => void;
-  memoryTypes?: {
-    [key: string]: { 
-      name: string;
-      pricePerGB: number;
-      frequency: string;
-      type: string;
-      description: string;
-    }
-  };
 }
 
 export function MemoryPanel({ 
   selectedOption,
-  onSelectOption,
-  memoryTypes = {
-    "ddr4-standard": {
-      name: "DDR4 Standard",
-      pricePerGB: 7.5,
-      frequency: "2400MHz",
-      type: "DDR4",
-      description: "Memória DDR4 padrão com boa relação custo-benefício para aplicações gerais."
-    },
-    "ddr4-performance": {
-      name: "DDR4 Performance", 
-      pricePerGB: 9.0,
-      frequency: "3200MHz",
-      type: "DDR4",
-      description: "Memória DDR4 de alta performance para aplicações que exigem maior velocidade."
-    },
-    "ddr5-standard": {
-      name: "DDR5 Standard",
-      pricePerGB: 12.0,
-      frequency: "4800MHz", 
-      type: "DDR5",
-      description: "Nova geração DDR5 com maior velocidade e eficiência energética."
-    },
-    "ddr5-performance": {
-      name: "DDR5 Performance",
-      pricePerGB: 15.0,
-      frequency: "6400MHz",
-      type: "DDR5", 
-      description: "DDR5 de alta performance para aplicações que exigem máxima velocidade."
-    }
-  }
+  onSelectOption
 }: MemoryPanelProps) {
-  // Verificar se temos tipos de memória válidos
-  const hasValidMemoryTypes = Object.keys(memoryTypes).length > 0;
-  
-  const [selectedType, setSelectedType] = useState<string>(
-    hasValidMemoryTypes ? Object.keys(memoryTypes)[0] : ''
-  );
+  const { options: memoryOptions } = useComponentOptions('memory');
+  const [selectedType, setSelectedType] = useState<string>('');
   const [capacity, setCapacity] = useState<number>(64);
-  const [selectedTypeDetails, setSelectedTypeDetails] = useState(
-    hasValidMemoryTypes ? memoryTypes[selectedType] : null
-  );
-  const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [selectedOption, setSelectedMemoryOption] = useState<ComponentOption | null>(null);
 
   // Debug log
   useEffect(() => {
-    console.log("[MemoryPanel] Component mounted with memoryTypes:", memoryTypes);
-    console.log("[MemoryPanel] hasValidMemoryTypes:", hasValidMemoryTypes);
-  }, []);
+    console.log("[MemoryPanel] Component mounted with memoryOptions:", memoryOptions);
+    console.log("[MemoryPanel] Available options count:", memoryOptions.length);
+  }, [memoryOptions]);
 
-  // Update selected type details when type changes
+  // Initialize with first available option
   useEffect(() => {
-    if (hasValidMemoryTypes && memoryTypes[selectedType]) {
-      setSelectedTypeDetails(memoryTypes[selectedType]);
+    if (memoryOptions.length > 0 && !selectedOption) {
+      const firstOption = memoryOptions[0];
+      setSelectedMemoryOption(firstOption);
+      setSelectedType(firstOption.id);
       
-      // Calcular preço total usando valores da configuração
-      const pricePerGB = memoryTypes[selectedType].pricePerGB || 0;
-      const newPrice = pricePerGB * capacity;
-      setTotalPrice(newPrice);
-      console.log("[MemoryPanel] Updated type details:", memoryTypes[selectedType]);
-    } else {
-      setSelectedTypeDetails(null);
-      setTotalPrice(0);
+      // Extract capacity from the option name if possible
+      const capacityMatch = firstOption.name.match(/(\d+)GB/i);
+      if (capacityMatch) {
+        setCapacity(parseInt(capacityMatch[1]));
+      }
+      
+      console.log("[MemoryPanel] Initialized with first option:", firstOption);
     }
-  }, [selectedType, memoryTypes, capacity, hasValidMemoryTypes]);
+  }, [memoryOptions]);
 
-  // Atualiza o preço quando a capacidade muda
+  // Update selected option when type or capacity changes
   useEffect(() => {
-    if (selectedTypeDetails && selectedTypeDetails.pricePerGB) {
-      const pricePerGB = selectedTypeDetails.pricePerGB;
-      const newPrice = pricePerGB * capacity;
-      setTotalPrice(newPrice);
-      console.log("[MemoryPanel] Updated price:", newPrice, "for capacity:", capacity);
+    if (memoryOptions.length > 0) {
+      // Find the best matching option based on capacity
+      const matchingOption = memoryOptions.find(option => {
+        const optionCapacityMatch = option.name.match(/(\d+)GB/i);
+        if (optionCapacityMatch) {
+          const optionCapacity = parseInt(optionCapacityMatch[1]);
+          return optionCapacity === capacity;
+        }
+        return false;
+      });
+
+      if (matchingOption) {
+        setSelectedMemoryOption(matchingOption);
+        setSelectedType(matchingOption.id);
+        console.log("[MemoryPanel] Found matching option:", matchingOption);
+      } else if (memoryOptions.length > 0) {
+        // Fallback to first option if no exact match
+        const fallbackOption = memoryOptions[0];
+        setSelectedMemoryOption(fallbackOption);
+        setSelectedType(fallbackOption.id);
+        console.log("[MemoryPanel] Using fallback option:", fallbackOption);
+      }
     }
-  }, [capacity, selectedTypeDetails]);
+  }, [capacity, memoryOptions]);
+
+  // Create memory types from available options
+  const memoryTypes = memoryOptions.reduce((types, option) => {
+    const capacityMatch = option.name.match(/(\d+)GB/i);
+    const baseCapacity = capacityMatch ? parseInt(capacityMatch[1]) : 64;
+    
+    types[option.id] = {
+      name: option.name,
+      pricePerGB: option.price / baseCapacity,
+      frequency: option.specs?.[0]?.includes('DDR') ? option.specs[0] : "DDR4 2400MHz",
+      type: option.specs?.[0]?.includes('DDR5') ? "DDR5" : "DDR4",
+      description: option.description
+    };
+    
+    return types;
+  }, {} as { [key: string]: { name: string; pricePerGB: number; frequency: string; type: string; description: string; } });
 
   // Handle the add memory button click
   const handleAddMemory = () => {
-    if (!selectedTypeDetails || !selectedTypeDetails.pricePerGB) {
-      console.error('[MemoryPanel] Cannot add memory - no valid type selected or no price data');
+    if (!selectedOption) {
+      console.error('[MemoryPanel] Cannot add memory - no option selected');
       return;
     }
     
-    const pricePerGB = selectedTypeDetails.pricePerGB;
-    const finalPrice = pricePerGB * capacity;
-    
     if (onSelectOption) {
-      const memoryOption: ComponentOption = {
-        id: `memory-${selectedType}-${capacity}gb`,
-        name: `${selectedTypeDetails.name} ${capacity}GB`,
-        description: selectedTypeDetails.description,
-        price: finalPrice,
-        type: 'memoria',
-        isHardware: true,
-        specs: [
-          `Capacidade: ${capacity}GB`,
-          `Tipo: ${selectedTypeDetails.type}`,
-          `Frequência: ${selectedTypeDetails.frequency}`
-        ]
-      };
-      console.log("[MemoryPanel] Selecting memory option:", memoryOption);
-      onSelectOption(memoryOption);
+      console.log("[MemoryPanel] Selecting memory option:", selectedOption);
+      onSelectOption(selectedOption);
     }
   };
+
+  // Get selected type details
+  const selectedTypeDetails = selectedType && memoryTypes[selectedType] ? memoryTypes[selectedType] : null;
+  const totalPrice = selectedOption?.price || 0;
 
   return (
     <Card className={cn(
@@ -149,23 +126,52 @@ export function MemoryPanel({
       </CardHeader>
       <CardContent className="space-y-6 pt-2 px-4">
         {/* Memory Type Selector */}
-        <MemoryTypeSelector
-          memoryTypes={memoryTypes}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-        />
+        {Object.keys(memoryTypes).length > 0 && (
+          <MemoryTypeSelector
+            memoryTypes={memoryTypes}
+            selectedType={selectedType}
+            onTypeChange={(newType) => {
+              setSelectedType(newType);
+              const option = memoryOptions.find(opt => opt.id === newType);
+              if (option) {
+                setSelectedMemoryOption(option);
+                // Extract capacity from selected option
+                const capacityMatch = option.name.match(/(\d+)GB/i);
+                if (capacityMatch) {
+                  setCapacity(parseInt(capacityMatch[1]));
+                }
+              }
+            }}
+          />
+        )}
         
         {/* Capacity Selector */}
         <MemoryCapacitySelector 
           capacity={capacity} 
-          onCapacityChange={setCapacity}
+          onCapacityChange={(newCapacity) => {
+            setCapacity(newCapacity);
+            // Try to find an option that matches the new capacity
+            const matchingOption = memoryOptions.find(option => {
+              const optionCapacityMatch = option.name.match(/(\d+)GB/i);
+              if (optionCapacityMatch) {
+                const optionCapacity = parseInt(optionCapacityMatch[1]);
+                return optionCapacity === newCapacity;
+              }
+              return false;
+            });
+            
+            if (matchingOption) {
+              setSelectedMemoryOption(matchingOption);
+              setSelectedType(matchingOption.id);
+            }
+          }}
           min={8}
           max={512}
           step={8}
         />
         
         {/* Memory Specs */}
-        {selectedTypeDetails && (
+        {selectedTypeDetails && selectedOption && (
           <MemorySpecs 
             frequency={selectedTypeDetails.frequency}
             type={selectedTypeDetails.type}
@@ -192,7 +198,7 @@ export function MemoryPanel({
               onClick={handleAddMemory}
               className="gap-2 min-w-[140px] bg-[#f58220] hover:bg-[#e07420] text-white"
               size="default"
-              disabled={!selectedTypeDetails}
+              disabled={!selectedOption}
             >
               <Plus className="h-4 w-4" />
               Selecionar
