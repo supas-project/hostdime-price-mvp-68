@@ -41,6 +41,7 @@ export interface WizardContextProps {
   
   // Step Management
   isStepComplete: (stepIndex: number) => boolean;
+  setStepComplete: (stepIndex: number, complete: boolean) => void;
   
   // UI State
   showFinalSummary: boolean;
@@ -48,4 +49,8 @@ export interface WizardContextProps {
   beginnerMode: boolean;
   setBeginnerMode: (value: boolean) => void;
   categoriesLoaded: boolean;
+}
+
+export interface WizardProviderProps {
+  children: React.ReactNode;
 }

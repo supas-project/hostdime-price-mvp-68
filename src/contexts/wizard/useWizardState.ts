@@ -16,6 +16,7 @@ export function useWizardState() {
   const [showFinalSummary, setShowFinalSummary] = useState(false);
   const [beginnerMode, setBeginnerMode] = useState(false);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [stepCompletionStatus, setStepCompletionStatus] = useState<{ [key: number]: boolean }>({});
 
   const totalSteps = 8; // Adjust based on your wizard steps
 
@@ -125,9 +126,15 @@ export function useWizardState() {
     setConnectivityItems({});
     setCustomServices([]);
     setShowFinalSummary(false);
+    setStepCompletionStatus({});
   }, []);
 
   const isStepComplete = useCallback((stepIndex: number) => {
+    // Check manual override first
+    if (stepCompletionStatus[stepIndex] !== undefined) {
+      return stepCompletionStatus[stepIndex];
+    }
+    
     // Implement step completion logic based on your requirements
     switch (stepIndex) {
       case 0: // DataCenter
@@ -147,7 +154,14 @@ export function useWizardState() {
       default:
         return false;
     }
-  }, [selectedComponents, selectedContractOption, storageItems, connectivityItems]);
+  }, [selectedComponents, selectedContractOption, storageItems, connectivityItems, stepCompletionStatus]);
+
+  const setStepComplete = useCallback((stepIndex: number, complete: boolean) => {
+    setStepCompletionStatus(prev => ({
+      ...prev,
+      [stepIndex]: complete
+    }));
+  }, []);
 
   return {
     currentStep,
@@ -173,6 +187,7 @@ export function useWizardState() {
     addCustomService,
     removeCustomService,
     handleRestart,
-    isStepComplete
+    isStepComplete,
+    setStepComplete
   };
 }
