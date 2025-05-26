@@ -10,7 +10,6 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
-import { MemoryPanel } from "@/components/memory/MemoryPanel";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -23,12 +22,10 @@ export function MemoryContent({
 }: MemoryContentProps) {
   const { options, isLoading, error, refreshOptions } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
-  const [showAdvancedSelector, setShowAdvancedSelector] = useState(false);
 
   // Debug logs
   useEffect(() => {
     console.log("[MemoryContent] Component mounted");
-    console.log("[MemoryContent] showAdvancedSelector:", showAdvancedSelector);
   }, []);
 
   // Sync selectedOption with local state
@@ -76,11 +73,6 @@ export function MemoryContent({
     }
   };
 
-  const handleToggleAdvanced = (isAdvanced: boolean) => {
-    console.log("[MemoryContent] Toggling to advanced mode:", isAdvanced);
-    setShowAdvancedSelector(isAdvanced);
-  };
-
   // Show loading state
   if (isLoading) {
     return (
@@ -112,71 +104,40 @@ export function MemoryContent({
           </label>
         </div>
 
-        {/* Toggle between simple and advanced selector */}
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => handleToggleAdvanced(false)}
-            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-              !showAdvancedSelector 
-                ? 'bg-[#f58220] text-white shadow-md' 
-                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white hover:bg-[#3a3a3a]'
-            }`}
-          >
-            Seleção Rápida
-          </button>
-          <button
-            onClick={() => handleToggleAdvanced(true)}
-            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-              showAdvancedSelector 
-                ? 'bg-[#f58220] text-white shadow-md' 
-                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white hover:bg-[#3a3a3a]'
-            }`}
-          >
-            Configuração Avançada
-          </button>
-        </div>
-
         <div className="w-full overflow-x-hidden">
-          {showAdvancedSelector ? (
-            <MemoryPanel
-              selectedOption={selectedOption}
-              onSelectOption={onSelectOption}
-            />
-          ) : (
-            <Select 
-              value={localSelectedId}
-              onValueChange={handleSelectionChange}
-            >
-              <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
-                <SelectValue placeholder="Escolha a memória ideal para você" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
-                {options.map((option) => (
-                  <SelectItem
-                    key={option.id}
-                    value={option.id}
-                    className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
-                  >
-                    <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-xs sm:text-sm">{option.name}</span>
-                        {option.specs && (
-                          <HelpTooltip
-                            title={option.name}
-                            description={option.specs.join('\n')}
-                            iconOnly
-                          />
-                        )}
-                      </div>
-                      <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
-                        {formatCurrency(option.price)}
-                      </span>
+          <Select 
+            value={localSelectedId}
+            onValueChange={handleSelectionChange}
+          >
+            <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
+              <SelectValue placeholder="Escolha a memória ideal para você" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
+              {options.map((option) => (
+                <SelectItem
+                  key={option.id}
+                  value={option.id}
+                  className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
+                >
+                  <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-xs sm:text-sm">{option.name}</span>
+                      {option.specs && (
+                        <HelpTooltip
+                          title={option.name}
+                          description={option.specs.join('\n')}
+                          iconOnly
+                        />
+                      )}
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+                    <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
+                      {formatCurrency(option.price)}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </Card>
