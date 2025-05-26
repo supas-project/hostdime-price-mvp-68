@@ -1,6 +1,7 @@
 
 import { ComponentOption } from "@/types/component";
 import { ComponentSelector } from "@/components/component-selector";
+import { CoreSelector } from "./CoreSelector";
 import { useMemo, useState, useEffect } from "react";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { useWizard } from "@/contexts/WizardContext";
@@ -19,30 +20,11 @@ export function OSSelector({
   onSelectOption
 }: OSSelectorProps) {
   const { selectedComponents } = useWizard();
-  const processorInfo = selectedComponents["processador"];
-  const coreCount = processorInfo?.metadata?.cores || 0;
-  
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
-  
-  // Log information about options for debugging
-  useEffect(() => {
-    console.log("OSSelector received options:", options);
-    console.log("Current processor:", processorInfo);
-    console.log("Core count:", coreCount);
-    
-    if (processorInfo?.metadata?.cores) {
-      console.log(`[OSSelector] Processador detectado com ${coreCount} cores`);
-    } else {
-      console.log("[OSSelector] Nenhum processador selecionado ou cores não definidos");
-    }
-    
-    if (options.length === 0) {
-      console.info("No operating system options available in OSSelector");
-    } else {
-      console.info(`Found ${options.length} OS options`);
-    }
-  }, [options, processorInfo, coreCount]);
-  
+  const [windowsLicenses, setWindowsLicenses] = useState<{
+    [key: string]: { option: ComponentOption; coreCount: number }
+  }>({});
+
   // Synchronize selected option when it changes
   useEffect(() => {
     if (selectedOption) {
@@ -58,52 +40,8 @@ export function OSSelector({
       return [];
     }
     
-    // Exibe todos os itens se não estiverem agrupados por subtipo
-    if (!options.some(opt => opt.subtype)) {
-      return [{
-        group: "Sistemas Operacionais",
-        options: options
-      }];
-    }
-    
-    const windowsOptions = options
-      .filter(opt => opt.subtype === "windows")
-      .map(opt => {
-        // LÓGICA DE CÁLCULO: Calcular preço baseado nos cores para Windows Server
-        if (opt.metadata?.perCore && coreCount > 0) {
-          const licensesNeeded = Math.ceil(coreCount / 2); // Windows Server licencia a cada 2 cores
-          const basePrice = opt.price; // Preço base por licença
-          const calculatedPrice = basePrice * licensesNeeded;
-          
-          console.log(`[OSSelector] Calculando preço Windows Server:`);
-          console.log(`  - Produto: ${opt.name}`);
-          console.log(`  - Preço base por licença: R$ ${basePrice}`);
-          console.log(`  - Cores do processador: ${coreCount}`);
-          console.log(`  - Licenças necessárias: ${licensesNeeded}`);
-          console.log(`  - Preço total calculado: R$ ${calculatedPrice}`);
-          
-          return {
-            ...opt,
-            price: calculatedPrice,
-            description: `${opt.description} (${licensesNeeded} licenças para ${coreCount} cores)`,
-            metadata: {
-              ...opt.metadata,
-              unitPrice: basePrice,
-              cores: coreCount,
-              licensesNeeded: licensesNeeded
-            },
-            specs: [
-              `Licenças necessárias: ${licensesNeeded} (a cada 2 cores)`,
-              `Cores do processador: ${coreCount}`,
-              `Preço por licença: R$ ${basePrice.toFixed(2)}`,
-              `Preço total: R$ ${calculatedPrice.toFixed(2)}`,
-              ...(opt.specs?.slice(1) || [])
-            ]
-          };
-        }
-        return opt;
-      });
-
+    // Separar opções por subtipo
+    const windowsOptions = options.filter(opt => opt.subtype === "windows");
     const linuxOptions = options.filter(opt => opt.subtype === "linux");
     const virtualizationOptions = options.filter(opt => opt.subtype === "virtualization");
     const unixOptions = options.filter(opt => opt.subtype === "unix");
@@ -112,9 +50,7 @@ export function OSSelector({
       {
         group: "Windows",
         options: windowsOptions,
-        tooltip: coreCount > 0 
-          ? `Licenças Windows são cobradas a cada 2 cores. Seu processador tem ${coreCount} cores, necessitando ${Math.ceil(coreCount / 2)} licenças.`
-          : `Licenças Windows são cobradas a cada 2 cores. Selecione um processador primeiro para cálculo automático.`
+        tooltip: "Windows Server com licenciamento por cores. Selecione e configure a quantidade de cores necessárias."
       },
       {
         group: "Linux",
@@ -129,73 +65,153 @@ export function OSSelector({
         options: unixOptions
       }
     ].filter(group => group.options.length > 0);
-  }, [options, coreCount]);
+  }, [options]);
 
   const handleValueChange = (value: string) => {
-    setLocalSelectedId(value);
     const option = formattedOptions
       .flatMap(group => group.options)
       .find(opt => opt.id === value);
     
     if (option) {
-      console.log(`[OSSelector] Selecionando opção:`, option);
+      setLocalSelectedId(value);
       
-      // Se for Windows Server com licenciamento por core, notificar sobre o cálculo
-      if (option.metadata?.perCore && coreCount > 0) {
-        const licensesNeeded = Math.ceil(coreCount / 2);
-        const unitPrice = option.metadata?.unitPrice || option.price;
+      // Se for Windows Server, adicionar à lista de licenças para configuração
+      if (option.subtype === "windows" && option.metadata?.perCore) {
+        const licenseKey = `${option.id}-license`;
+        setWindowsLicenses(prev => ({
+          ...prev,
+          [licenseKey]: {
+            option: option,
+            coreCount: 2 // Valor inicial mínimo
+          }
+        }));
         
-        toast.success("Licenciamento Windows Server Calculado", {
-          description: `${licensesNeeded} licenças para ${coreCount} cores (R$ ${option.price.toFixed(2)} total)`,
-          duration: 4000,
+        // Criar uma cópia da opção com preço calculado para 2 cores
+        const licensesNeeded = Math.ceil(2 / 2); // 1 licença para 2 cores
+        const calculatedPrice = option.price * licensesNeeded;
+        const optionWithCalculatedPrice = {
+          ...option,
+          price: calculatedPrice,
+          metadata: {
+            ...option.metadata,
+            cores: 2,
+            licensesNeeded: licensesNeeded,
+            unitPrice: option.price
+          }
+        };
+        
+        onSelectOption(optionWithCalculatedPrice);
+        
+        toast.success("Windows Server Adicionado", {
+          description: "Configure a quantidade de cores necessárias abaixo.",
+          duration: 3000,
         });
-        
-        console.log(`[OSSelector] Notificação exibida para licenciamento Windows Server`);
+      } else {
+        // Para outros SOs, comportamento normal
+        onSelectOption(option);
       }
-      
-      onSelectOption(option);
     }
   };
 
-  // Mostrar aviso se não há processador selecionado e há opções Windows
-  const hasWindowsOptions = options.some(opt => opt.subtype === "windows" && opt.metadata?.perCore);
-  const showProcessorWarning = hasWindowsOptions && coreCount === 0;
+  const handleCoreCountChange = (licenseKey: string, newCoreCount: number) => {
+    setWindowsLicenses(prev => {
+      const updated = {
+        ...prev,
+        [licenseKey]: {
+          ...prev[licenseKey],
+          coreCount: newCoreCount
+        }
+      };
+      
+      // Atualizar a opção selecionada com o novo preço
+      const license = updated[licenseKey];
+      if (license) {
+        const licensesNeeded = Math.ceil(newCoreCount / 2);
+        const calculatedPrice = license.option.price * licensesNeeded;
+        const optionWithCalculatedPrice = {
+          ...license.option,
+          price: calculatedPrice,
+          metadata: {
+            ...license.option.metadata,
+            cores: newCoreCount,
+            licensesNeeded: licensesNeeded,
+            unitPrice: license.option.price
+          }
+        };
+        
+        onSelectOption(optionWithCalculatedPrice);
+      }
+      
+      return updated;
+    });
+  };
+
+  const handleRemoveLicense = (licenseKey: string) => {
+    setWindowsLicenses(prev => {
+      const updated = { ...prev };
+      delete updated[licenseKey];
+      return updated;
+    });
+    
+    // Se não há mais licenças Windows, limpar seleção
+    if (Object.keys(windowsLicenses).length === 1) {
+      setLocalSelectedId("");
+      // Limpar seleção chamando onSelectOption com uma opção vazia
+      const emptyOption: ComponentOption = {
+        id: "",
+        name: "",
+        description: "",
+        price: 0,
+        type: "os"
+      };
+      onSelectOption(emptyOption);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <HelpTooltip
           title="Sistema Operacional"
-          description="Escolha o sistema operacional ideal para seu servidor. O Windows Server possui licenciamento por core, sendo calculado automaticamente baseado no processador selecionado."
+          description="Escolha o sistema operacional ideal para seu servidor. O Windows Server permite configurar a quantidade de cores para cálculo automático do licenciamento."
           iconOnly
         />
       </div>
-      
-      {showProcessorWarning && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-          <div className="font-medium text-yellow-800 mb-1">
-            ⚠️ Atenção: Licenciamento Windows Server
-          </div>
-          <div className="text-yellow-700">
-            Para calcular automaticamente o preço das licenças Windows Server, selecione primeiro um processador na categoria anterior.
-          </div>
-        </div>
-      )}
       
       {options.length === 0 ? (
         <div className="text-sm text-muted-foreground py-2">
           Nenhuma opção de sistema operacional disponível. Entre em contato com o suporte.
         </div>
       ) : (
-        <ComponentSelector
-          label="Sistema Operacional"
-          options={formattedOptions.flatMap(group => group.options)}
-          value={localSelectedId}
-          onChange={handleValueChange}
-          tooltip="Escolha o sistema operacional ideal para seu servidor"
-          highlightSelection={true}
-          groupedOptions={formattedOptions}
-        />
+        <>
+          <ComponentSelector
+            label="Sistema Operacional"
+            options={formattedOptions.flatMap(group => group.options)}
+            value={localSelectedId}
+            onChange={handleValueChange}
+            tooltip="Escolha o sistema operacional ideal para seu servidor"
+            highlightSelection={true}
+            groupedOptions={formattedOptions}
+          />
+          
+          {/* Lista de licenças Windows configuradas */}
+          {Object.keys(windowsLicenses).length > 0 && (
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-muted-foreground">
+                Licenças Windows Server Configuradas:
+              </div>
+              {Object.entries(windowsLicenses).map(([licenseKey, license]) => (
+                <CoreSelector
+                  key={licenseKey}
+                  option={license.option}
+                  coreCount={license.coreCount}
+                  onCoreCountChange={(count) => handleCoreCountChange(licenseKey, count)}
+                  onRemove={() => handleRemoveLicense(licenseKey)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
