@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,11 +60,12 @@ export function MemoryPanel({
     }
   }, [memoryOptions, propSelectedOption]);
 
-  // Update selected option when type or capacity changes
+  // Find the exact option that matches the selected capacity
+  // This ensures we use the SAME prices as the quick selection
   useEffect(() => {
     if (memoryOptions.length > 0) {
-      // Find the best matching option based on capacity
-      const matchingOption = memoryOptions.find(option => {
+      // Find the EXACT matching option based on capacity
+      const exactMatch = memoryOptions.find(option => {
         const optionCapacityMatch = option.name.match(/(\d+)GB/i);
         if (optionCapacityMatch) {
           const optionCapacity = parseInt(optionCapacityMatch[1]);
@@ -72,16 +74,35 @@ export function MemoryPanel({
         return false;
       });
 
-      if (matchingOption) {
-        setCurrentSelectedOption(matchingOption);
-        setSelectedType(matchingOption.id);
-        console.log("[MemoryPanel] Found matching option:", matchingOption);
-      } else if (memoryOptions.length > 0) {
-        // Fallback to first option if no exact match
-        const fallbackOption = memoryOptions[0];
-        setCurrentSelectedOption(fallbackOption);
-        setSelectedType(fallbackOption.id);
-        console.log("[MemoryPanel] Using fallback option:", fallbackOption);
+      if (exactMatch) {
+        // Use the EXACT option from quick selection - same price, same everything
+        setCurrentSelectedOption(exactMatch);
+        setSelectedType(exactMatch.id);
+        console.log("[MemoryPanel] Using EXACT match from quick selection:", exactMatch);
+      } else {
+        // If no exact match exists, calculate price based on available options
+        // Find the closest option to use as reference
+        const referenceOption = memoryOptions[0]; // Use first option as reference
+        if (referenceOption) {
+          const refCapacityMatch = referenceOption.name.match(/(\d+)GB/i);
+          const refCapacity = refCapacityMatch ? parseInt(refCapacityMatch[1]) : 64;
+          const pricePerGB = referenceOption.price / refCapacity;
+          
+          // Create a synthetic option with calculated price
+          const syntheticOption: ComponentOption = {
+            id: `memory-${capacity}gb`,
+            name: `${capacity}GB RAM`,
+            description: referenceOption.description,
+            price: pricePerGB * capacity, // Calculate exact price based on capacity
+            type: referenceOption.type,
+            isHardware: true,
+            specs: referenceOption.specs
+          };
+          
+          setCurrentSelectedOption(syntheticOption);
+          setSelectedType(syntheticOption.id);
+          console.log("[MemoryPanel] Created synthetic option with calculated price:", syntheticOption);
+        }
       }
     }
   }, [capacity, memoryOptions]);
@@ -117,7 +138,12 @@ export function MemoryPanel({
 
   // Get selected type details
   const selectedTypeDetails = selectedType && memoryTypes[selectedType] ? memoryTypes[selectedType] : null;
+  
+  // Use the current selected option's price (which matches quick selection)
   const totalPrice = currentSelectedOption?.price || 0;
+  
+  // Calculate price per GB from current option
+  const pricePerGB = currentSelectedOption ? currentSelectedOption.price / capacity : 0;
 
   return (
     <Card className={cn(
@@ -159,34 +185,21 @@ export function MemoryPanel({
           capacity={capacity} 
           onCapacityChange={(newCapacity) => {
             setCapacity(newCapacity);
-            // Try to find an option that matches the new capacity
-            const matchingOption = memoryOptions.find(option => {
-              const optionCapacityMatch = option.name.match(/(\d+)GB/i);
-              if (optionCapacityMatch) {
-                const optionCapacity = parseInt(optionCapacityMatch[1]);
-                return optionCapacity === newCapacity;
-              }
-              return false;
-            });
-            
-            if (matchingOption) {
-              setCurrentSelectedOption(matchingOption);
-              setSelectedType(matchingOption.id);
-            }
+            // The useEffect will handle finding the correct option and price
           }}
           min={8}
           max={2048}
           step={8}
         />
         
-        {selectedTypeDetails && currentSelectedOption && (
+        {currentSelectedOption && (
           <MemorySpecs 
-            frequency={selectedTypeDetails.frequency}
-            type={selectedTypeDetails.type}
+            frequency={selectedTypeDetails?.frequency || "DDR4 2400MHz"}
+            type={selectedTypeDetails?.type || "DDR4"}
             price={totalPrice}
-            description={selectedTypeDetails.description}
-            memoryType={selectedTypeDetails.name}
-            pricePerGB={selectedTypeDetails.pricePerGB}
+            description={currentSelectedOption.description}
+            memoryType={currentSelectedOption.name}
+            pricePerGB={pricePerGB}
           />
         )}
         
@@ -196,11 +209,9 @@ export function MemoryPanel({
             <div>
               <p className="text-sm text-muted-foreground">Preço mensal total</p>
               <p className="text-2xl font-bold text-[#f58220]">{formatCurrency(totalPrice)}</p>
-              {selectedTypeDetails && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatCurrency(selectedTypeDetails.pricePerGB)}/GB × {capacity}GB
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatCurrency(pricePerGB)}/GB × {capacity}GB
+              </p>
             </div>
             <Button 
               onClick={handleAddMemory}

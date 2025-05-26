@@ -39,7 +39,13 @@ export function useComponentOptions(componentType: string) {
               price: item.price,
               type: 'memoria',
               isHardware: true,
-              specs: item.specs || ["Memória RAM de alta performance"]
+              specs: item.specs || ["Memória RAM de alta performance"],
+              metadata: item.metadata ? {
+                ...item.metadata,
+                cores: item.metadata.cores,
+                perCore: item.metadata.perCore,
+                licensesNeeded: item.metadata.licensesNeeded
+              } : undefined
             }));
           } else {
             console.log('[useComponentOptions] Memória: Nenhum item encontrado na tabela de preços, usando dados estáticos');
@@ -184,12 +190,12 @@ export function useComponentOptions(componentType: string) {
               type: 'os',
               subtype: item.subtype,
               isHardware: false,
-              metadata: {
+              metadata: item.metadata ? {
                 ...item.metadata,
-                cores: item.metadata?.cores,
-                perCore: item.metadata?.perCore,
-                licensesNeeded: item.metadata?.licensesNeeded
-              },
+                cores: item.metadata.cores,
+                perCore: item.metadata.perCore,
+                licensesNeeded: item.metadata.licensesNeeded
+              } : undefined,
               specs: item.specs || []
             }));
           } else {
