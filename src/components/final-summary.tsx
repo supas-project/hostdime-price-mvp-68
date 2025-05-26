@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe } from "lucide-react";
+import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe, X } from "lucide-react";
 import { toast } from "sonner";
-import { OrderDetails } from "./order-details";
+import { OrderDetails } from "@/components/order-details"; // Caminho correto para o componente
 import { generateQuotePDF, generateQuoteWebView } from "@/utils/quote-export";
 import { useWizard } from "@/contexts/WizardContext";
 import { 
@@ -28,12 +28,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
+import { Textarea } from "@/components/ui/textarea"; // Caminho correto
+import { Label } from "@/components/ui/label"; // Caminho correto
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
+import { PDFTemplateSelector } from "@/components/pdf/PDFTemplateSelector";
 
 interface FinalSummaryProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -85,7 +86,9 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
     : contextCustomServices;
     
   const effectiveConnectivityItems = connectivityItems || contextConnectivityItems;
-
+  
+  const [selectedTemplate, setSelectedTemplate] = useState("hostdime-corporate");
+  
   const handleSaveQuote = async () => {
     setIsSaving(true);
     try {
@@ -217,37 +220,45 @@ export function FinalSummary({ selectedComponents, onRestart, storageItems: stor
               <Settings className="h-4 w-4" /> Configurações
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Configurações da Cotação</DialogTitle>
               <DialogDescription>
-                Ajuste a margem de lucro e as informações que aparecerão no documento.
+                Ajuste a margem de lucro, template do PDF e as informações que aparecerão no documento.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 py-4">
-              <div className="space-y-4">
-                <div className="font-medium text-sm">Margem de lucro</div>
-                <div className="flex items-center justify-between">
-                  <span>Margem:</span>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      type="number"
-                      value={profitMargin}
-                      onChange={(e) => setProfitMargin(Number(e.target.value))}
-                      className="w-20 text-right"
-                      min={0}
-                      max={100}
-                    />
-                    <span>%</span>
+              {/* Template Selection */}
+              <PDFTemplateSelector
+                selectedTemplate={selectedTemplate}
+                onTemplateChange={setSelectedTemplate}
+              />
+              
+              <div className="border-t pt-4">
+                <div className="space-y-4">
+                  <div className="font-medium text-sm">Margem de lucro</div>
+                  <div className="flex items-center justify-between">
+                    <span>Margem:</span>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="number"
+                        value={profitMargin}
+                        onChange={(e) => setProfitMargin(Number(e.target.value))}
+                        className="w-20 text-right"
+                        min={0}
+                        max={100}
+                      />
+                      <span>%</span>
+                    </div>
                   </div>
+                  <Slider 
+                    value={[profitMargin]} 
+                    onValueChange={(values) => setProfitMargin(values[0])}
+                    max={100}
+                    step={1}
+                    className="my-2"
+                  />
                 </div>
-                <Slider 
-                  value={[profitMargin]} 
-                  onValueChange={(values) => setProfitMargin(values[0])}
-                  max={100}
-                  step={1}
-                  className="my-2"
-                />
               </div>
               
               <div className="space-y-4 pt-2 border-t">
