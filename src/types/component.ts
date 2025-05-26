@@ -34,6 +34,7 @@ export interface ComponentOption {
     raid?: RaidMetadata;
     quantity?: number;
     unitPrice?: number;
+    unitInfo?: string;
   };
 }
 
