@@ -1,8 +1,10 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
 import { syncDiskDataWithPriceService, initExternalStorageData, syncConnectivityData } from "@/services/component-sync";
 import { ConnectivityItemsMap } from "@/types/wizard";
+import { normalizeComponentType } from "@/hooks/use-component-selection";
 
 export function useWizardState() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -273,10 +275,55 @@ export function useWizardState() {
     return component ? 1 : 0;
   }, [selectedComponents]);
 
-  // Verifica se um passo está completo
+  // CORREÇÃO: Verifica se um passo está completo - função melhorada
   const isStepComplete = useCallback((stepIndex: number) => {
-    return completedSteps[stepIndex] || false;
-  }, [completedSteps]);
+    const component = serverData.componentes[stepIndex];
+    if (!component) return false;
+
+    const normalizedType = normalizeComponentType(component.type);
+    
+    console.log(`[isStepComplete] Verificando etapa ${stepIndex}, tipo: ${component.type}, normalizado: ${normalizedType}`);
+    console.log(`[isStepComplete] Componentes selecionados:`, selectedComponents);
+
+    // Serviços Personalizados é o único passo opcional
+    if (normalizedType === "servicospersonalizados") {
+      return true; // Sempre considerado completo, já que é opcional
+    }
+    
+    // Para categorias simples, verificar se há um componente selecionado
+    if (["datacenter", "contrato", "processador", "memoria", "sistemaoperacional"].includes(normalizedType)) {
+      const hasSelection = Object.keys(selectedComponents).some(key => {
+        const keyNormalized = normalizeComponentType(key);
+        const matches = keyNormalized === normalizedType;
+        console.log(`[isStepComplete] Comparando chave '${key}' (${keyNormalized}) com tipo '${normalizedType}': ${matches}`);
+        return matches;
+      });
+      console.log(`[isStepComplete] Categoria '${normalizedType}' tem seleção: ${hasSelection}`);
+      return hasSelection;
+    }
+    
+    // Para conectividade, verificar porta + IP
+    if (normalizedType === "conectividade") {
+      const hasPort = Object.values(connectivityItems).some(
+        item => item.option.subtype === "porta"
+      );
+      const hasIp = Object.values(connectivityItems).some(
+        item => item.option.subtype === "ip"
+      );
+      const complete = hasPort && hasIp;
+      console.log(`[isStepComplete] Conectividade completa: ${complete}, porta: ${hasPort}, IP: ${hasIp}`);
+      return complete;
+    }
+    
+    // Para armazenamento, verificar se há pelo menos um disco interno
+    if (normalizedType === "armazenamento") {
+      const complete = storageItems.internal.length > 0;
+      console.log(`[isStepComplete] Armazenamento completo: ${complete}, discos internos: ${storageItems.internal.length}`);
+      return complete;
+    }
+    
+    return false;
+  }, [selectedComponents, connectivityItems, storageItems]);
 
   // Define se um passo está completo
   const setStepComplete = useCallback((stepIndex: number, complete: boolean) => {

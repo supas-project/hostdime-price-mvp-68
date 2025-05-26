@@ -57,7 +57,7 @@ export function useAutoProgression({
     };
   }, []);
 
-  // Determinar se é uma categoria simples que deve auto-avançar imediatamente
+  // Determinar se é uma categoria simples - SEMPRE definido, não condicional
   const isSimpleCategory = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
     console.log(`[isSimpleCategory] Verificando tipo: ${type}, normalizado: ${normalizedType}`);
@@ -75,13 +75,13 @@ export function useAutoProgression({
     return isSimple;
   }, []);
 
-  // Determinar se é uma categoria opcional
+  // Determinar se é uma categoria opcional - SEMPRE definido
   const isOptionalCategory = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
     return normalizedType === "servicospersonalizados";
   }, []);
 
-  // Verificar se categoria complexa está pronta para avançar
+  // Verificar se categoria complexa está pronta - SEMPRE definido
   const isComplexCategoryReady = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
     
@@ -106,7 +106,7 @@ export function useAutoProgression({
     return false;
   }, [connectivityItems, storageItems]);
 
-  // Cancelar progressão automática
+  // Cancelar progressão automática - SEMPRE definido
   const cancelProgression = useCallback(() => {
     console.log("[cancelProgression] Cancelando progressão automática");
     setShouldProgress(false);
@@ -121,7 +121,38 @@ export function useAutoProgression({
     }
   }, []);
 
-  // Iniciar countdown para progressão automática
+  // Verificar se step atual está completo - função melhorada
+  const checkStepComplete = useCallback((): boolean => {
+    const normalizedType = normalizeComponentType(componentType);
+    console.log(`[checkStepComplete] Verificando step ${currentStep}, tipo: ${componentType}, normalizado: ${normalizedType}`);
+    console.log(`[checkStepComplete] Componentes selecionados:`, selectedComponents);
+
+    // Para categorias simples, verificar se há um componente selecionado do tipo correto
+    if (isSimpleCategory(componentType)) {
+      const hasSelection = Object.keys(selectedComponents).some(key => {
+        const keyNormalized = normalizeComponentType(key);
+        const matches = keyNormalized === normalizedType;
+        console.log(`[checkStepComplete] Comparando chave '${key}' (${keyNormalized}) com tipo '${normalizedType}': ${matches}`);
+        return matches;
+      });
+      console.log(`[checkStepComplete] Categoria simples '${normalizedType}' tem seleção: ${hasSelection}`);
+      return hasSelection;
+    }
+
+    // Para categorias complexas, usar a lógica específica
+    if (normalizedType === "armazenamento") {
+      return storageItems.internal.length > 0;
+    }
+    
+    if (normalizedType === "conectividade") {
+      return isComplexCategoryReady(componentType);
+    }
+
+    // Para outras categorias, usar o isStepComplete original
+    return isStepComplete(currentStep);
+  }, [componentType, currentStep, selectedComponents, storageItems, connectivityItems, isStepComplete, isSimpleCategory, isComplexCategoryReady]);
+
+  // Iniciar countdown para progressão automática - SEMPRE definido
   const startCountdown = useCallback(() => {
     if (!config.enabled) {
       console.log("[startCountdown] Progressão automática desabilitada");
@@ -180,7 +211,7 @@ export function useAutoProgression({
     
     // Categoria simples: progressão imediata após seleção
     if (isSimpleCategory(componentType)) {
-      const stepComplete = isStepComplete(currentStep);
+      const stepComplete = checkStepComplete();
       console.log(`[useAutoProgression] Categoria simples - step complete: ${stepComplete}`);
       
       if (stepComplete) {
@@ -216,7 +247,7 @@ export function useAutoProgression({
     selectedComponents,
     connectivityItems,
     storageItems,
-    isStepComplete,
+    checkStepComplete,
     isSimpleCategory,
     isComplexCategoryReady,
     isOptionalCategory,
