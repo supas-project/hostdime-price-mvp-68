@@ -122,8 +122,7 @@ export function OSSelector({
       // Se for Windows Server com licenciamento por core, notificar sobre o cálculo
       if (option.metadata?.perCore && processorInfo?.metadata?.cores) {
         const licensesNeeded = Math.ceil(coreCount / 2);
-        toast({
-          title: "Licenciamento Windows Server Calculado",
+        toast.success("Licenciamento Windows Server Calculado", {
           description: `Calculado automaticamente: ${licensesNeeded} licenças para ${coreCount} cores (R$ ${option.price.toFixed(2)})`,
           duration: 4000,
         });
