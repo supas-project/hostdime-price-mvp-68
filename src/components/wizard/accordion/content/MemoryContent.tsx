@@ -10,6 +10,7 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { MemoryPanel } from "@/components/memory/MemoryPanel";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -22,6 +23,7 @@ export function MemoryContent({
 }: MemoryContentProps) {
   const { options, isLoading, error, refreshOptions } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  const [showAdvancedSelector, setShowAdvancedSelector] = useState(false);
 
   // Sync selectedOption with local state
   useEffect(() => {
@@ -99,40 +101,71 @@ export function MemoryContent({
           </label>
         </div>
 
-        <div className="w-full overflow-x-hidden">
-          <Select 
-            value={localSelectedId}
-            onValueChange={handleSelectionChange}
+        {/* Toggle between simple and advanced selector */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setShowAdvancedSelector(false)}
+            className={`px-3 py-1 text-xs rounded ${
+              !showAdvancedSelector 
+                ? 'bg-primary text-white' 
+                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white'
+            }`}
           >
-            <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
-              <SelectValue placeholder="Escolha a memória ideal para você" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
-              {options.map((option) => (
-                <SelectItem
-                  key={option.id}
-                  value={option.id}
-                  className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
-                >
-                  <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-xs sm:text-sm">{option.name}</span>
-                      {option.specs && (
-                        <HelpTooltip
-                          title={option.name}
-                          description={option.specs.join('\n')}
-                          iconOnly
-                        />
-                      )}
+            Seleção Rápida
+          </button>
+          <button
+            onClick={() => setShowAdvancedSelector(true)}
+            className={`px-3 py-1 text-xs rounded ${
+              showAdvancedSelector 
+                ? 'bg-primary text-white' 
+                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white'
+            }`}
+          >
+            Configuração Avançada
+          </button>
+        </div>
+
+        <div className="w-full overflow-x-hidden">
+          {showAdvancedSelector ? (
+            <MemoryPanel
+              selectedOption={selectedOption}
+              onSelectOption={onSelectOption}
+            />
+          ) : (
+            <Select 
+              value={localSelectedId}
+              onValueChange={handleSelectionChange}
+            >
+              <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
+                <SelectValue placeholder="Escolha a memória ideal para você" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
+                {options.map((option) => (
+                  <SelectItem
+                    key={option.id}
+                    value={option.id}
+                    className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
+                  >
+                    <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-xs sm:text-sm">{option.name}</span>
+                        {option.specs && (
+                          <HelpTooltip
+                            title={option.name}
+                            description={option.specs.join('\n')}
+                            iconOnly
+                          />
+                        )}
+                      </div>
+                      <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
+                        {formatCurrency(option.price)}
+                      </span>
                     </div>
-                    <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
-                      {formatCurrency(option.price)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
     </Card>
