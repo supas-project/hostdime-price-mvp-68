@@ -1,16 +1,18 @@
 
+import { RGB } from 'pdf-lib';
+
 export const COLOR = {
-  PRIMARY: [1, 0.4, 0] as [number, number, number], // Orange HostDime
-  SECONDARY: [0.2, 0.2, 0.2] as [number, number, number],
-  ACCENT: [1, 0.4, 0] as [number, number, number], // Orange accent
-  SUCCESS: [0, 0.7, 0] as [number, number, number],
-  TEXT: [0.2, 0.2, 0.2] as [number, number, number],
-  TEXT_LIGHT: [0.5, 0.5, 0.5] as [number, number, number], // Added missing color
-  MUTED: [0.5, 0.5, 0.5] as [number, number, number],
-  WHITE: [1, 1, 1] as [number, number, number],
-  BACKGROUND: [0.98, 0.98, 0.98] as [number, number, number],
-  HIGHLIGHT: [1, 0.95, 0.9] as [number, number, number], // Light orange for highlights
-  PRIMARY_LIGHT: [1, 0.9, 0.8] as [number, number, number], // Added missing color
-  TABLE_ROW_ALT: [0.99, 0.99, 0.99] as [number, number, number], // Added missing color
-  BORDER: [0.9, 0.9, 0.9] as [number, number, number]
+  PRIMARY: { r: 1, g: 0.4, b: 0 } as RGB, // Orange HostDime
+  SECONDARY: { r: 0.2, g: 0.2, b: 0.2 } as RGB,
+  ACCENT: { r: 1, g: 0.4, b: 0 } as RGB, // Orange accent
+  SUCCESS: { r: 0, g: 0.7, b: 0 } as RGB,
+  TEXT: { r: 0.2, g: 0.2, b: 0.2 } as RGB,
+  TEXT_LIGHT: { r: 0.5, g: 0.5, b: 0.5 } as RGB,
+  MUTED: { r: 0.5, g: 0.5, b: 0.5 } as RGB,
+  WHITE: { r: 1, g: 1, b: 1 } as RGB,
+  BACKGROUND: { r: 0.98, g: 0.98, b: 0.98 } as RGB,
+  HIGHLIGHT: { r: 1, g: 0.95, b: 0.9 } as RGB, // Light orange for highlights
+  PRIMARY_LIGHT: { r: 1, g: 0.9, b: 0.8 } as RGB,
+  TABLE_ROW_ALT: { r: 0.99, g: 0.99, b: 0.99 } as RGB,
+  BORDER: { r: 0.9, g: 0.9, b: 0.9 } as RGB
 } as const;

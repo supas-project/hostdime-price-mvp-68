@@ -41,16 +41,18 @@ export async function buildQuotePDF(
     const marginRight = 50;
     
     // Render header section
-    let pageContext = await renderHeaderSection(
+    const headerResult = await renderHeaderSection(
       pdfDoc,
-      { page, y: height - 50 },
-      quoteVariables,
+      page,
       width,
-      marginX,
-      marginRight,
+      height,
       helvetica,
-      helveticaBold
+      helveticaBold,
+      marginX,
+      quoteVariables
     );
+    
+    let pageContext = { page, y: headerResult.currentY };
     
     // Render contract section (destacado conforme solicitado)
     pageContext = renderContractSection(

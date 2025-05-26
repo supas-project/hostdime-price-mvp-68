@@ -11,8 +11,7 @@ function renderComponentDetails(
   component: ComponentOption,
   x: number,
   y: number,
-  helvetica: PDFFont,
-  helveticaOblique: PDFFont
+  helvetica: PDFFont
 ): number {
   let currentY = y;
   
@@ -21,7 +20,7 @@ function renderComponentDetails(
       x: x + 15,
       y: currentY,
       size: 10,
-      font: helveticaOblique,
+      font: helvetica,
       color: COLOR.TEXT_LIGHT
     });
     currentY -= 15;
@@ -51,8 +50,7 @@ export function renderComponentsSection(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  helveticaOblique: PDFFont
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -148,7 +146,7 @@ export function renderComponentsSection(
     currentY -= 20;
     
     // Render component details
-    currentY = renderComponentDetails(page, component, marginX, currentY, helvetica, helveticaOblique);
+    currentY = renderComponentDetails(page, component, marginX, currentY, helvetica);
     
     currentY -= 10;
   });
