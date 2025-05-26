@@ -1,3 +1,4 @@
+
 import { PDFDocument, PDFFont } from "pdf-lib";
 import { ComponentOption } from "@/types/component";
 import { COLOR } from "../../colors";
@@ -13,8 +14,7 @@ export function renderInternalStorage(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  helveticaOblique: PDFFont
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -73,7 +73,7 @@ export function renderInternalStorage(
         x: marginX + 30,
         y: currentY,
         size: 10,
-        font: helveticaOblique,
+        font: helvetica,
         color: COLOR.TEXT_LIGHT
       });
       currentY -= 15;

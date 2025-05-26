@@ -14,8 +14,7 @@ export function renderExternalStorage(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  helveticaOblique: PDFFont
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -74,7 +73,7 @@ export function renderExternalStorage(
         x: marginX + 30,
         y: currentY,
         size: 10,
-        font: helveticaOblique,
+        font: helvetica,
         color: COLOR.TEXT_LIGHT
       });
       currentY -= 15;
