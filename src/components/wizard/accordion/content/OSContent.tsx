@@ -2,11 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
-import { MultipleOSSelector } from "./os/MultipleOSSelector";
+import { OSSelector } from "./os/OSSelector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PriceService } from "@/services/price-service";
-import { useWizard } from "@/contexts/WizardContext";
 
 interface OSContentProps {
   options?: ComponentOption[];
@@ -20,9 +19,7 @@ export function OSContent({
   onSelectOption 
 }: OSContentProps) {
   const { options, isLoading } = useComponentOptions('os');
-  const { selectedComponents } = useWizard();
   const [finalOptions, setFinalOptions] = useState<ComponentOption[]>([]);
-  const [osItems, setOSItems] = useState<{ [key: string]: { option: ComponentOption; quantity: number; cores?: number } }>({});
   
   useEffect(() => {
     if (propOptions?.length) {
@@ -53,45 +50,6 @@ export function OSContent({
     
     updateFromPriceTable();
   }, []);
-
-  const handleUpdateOSItems = (items: { [key: string]: { option: ComponentOption; quantity: number; cores?: number } }) => {
-    setOSItems(items);
-    
-    // Calcular o primeiro item para compatibilidade com o sistema existente
-    const firstItem = Object.values(items)[0];
-    if (firstItem) {
-      let optionToSend = firstItem.option;
-      
-      // Para Windows Server com cores, calcular o preço total
-      if (firstItem.option.subtype === "windows" && firstItem.option.metadata?.perCore && firstItem.cores) {
-        const licensesNeeded = Math.ceil(firstItem.cores / 2);
-        const calculatedPrice = firstItem.option.price * licensesNeeded;
-        
-        optionToSend = {
-          ...firstItem.option,
-          price: calculatedPrice,
-          metadata: {
-            ...firstItem.option.metadata,
-            cores: firstItem.cores,
-            licensesNeeded: licensesNeeded,
-            unitPrice: firstItem.option.price
-          }
-        };
-      }
-      
-      onSelectOption(optionToSend);
-    } else {
-      // Se não há itens, enviar opção vazia
-      const emptyOption: ComponentOption = {
-        id: "",
-        name: "",
-        description: "",
-        price: 0,
-        type: "os"
-      };
-      onSelectOption(emptyOption);
-    }
-  };
   
   if (isLoading && !propOptions) {
     return (
@@ -123,10 +81,10 @@ export function OSContent({
   return (
     <Card className="p-4 sm:p-6 overflow-hidden">
       <div className="w-full overflow-x-hidden">
-        <MultipleOSSelector
+        <OSSelector
           options={finalOptions}
-          selectedOSItems={osItems}
-          onUpdateOSItems={handleUpdateOSItems}
+          selectedOption={selectedOption}
+          onSelectOption={onSelectOption}
         />
       </div>
     </Card>
