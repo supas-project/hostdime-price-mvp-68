@@ -64,14 +64,19 @@ export function ComponentSelector({
       key={option.id}
       value={option.id}
       className={cn(
-        "flex items-center justify-between py-2 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white",
-        "transition-colors duration-200 min-h-[44px]", // Improved touch target
-        highlightSelection && option.id === localValue && "bg-primary/10 border-l-2 border-primary"
+        "flex items-center justify-between py-3 px-4 hover:bg-[#f58220]/10 focus:bg-[#f58220]/10 cursor-pointer text-white",
+        "transition-all duration-300 min-h-[48px] group hover:shadow-md", // Micro-interação aprimorada
+        highlightSelection && option.id === localValue && "bg-[#f58220]/20 border-l-4 border-[#f58220] shadow-lg" // Destaque estratégico
       )}
     >
-      <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
-        <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
-          <span className="truncate text-xs sm:text-sm">{option.name}</span>
+      <div className="flex justify-between items-center w-full gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <span className={cn(
+            "truncate text-sm sm:text-base transition-all duration-200",
+            "group-hover:text-[#f58220] group-hover:font-medium" // Micro-interação de texto
+          )}>
+            {option.name}
+          </span>
           {option.specs && (
             <HelpTooltip
               title={option.name}
@@ -81,7 +86,10 @@ export function ComponentSelector({
           )}
         </div>
         {shouldShowPrice(option) && (
-          <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0">
+          <span className={cn(
+            "font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0 transition-all duration-200",
+            "text-[#f58220] group-hover:scale-105" // Destaque de preço com micro-interação
+          )}>
             {formatCurrency(option.price)}
           </span>
         )}
@@ -90,11 +98,16 @@ export function ComponentSelector({
   );
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-4 w-full">
+    <div className="flex flex-col gap-3 sm:gap-4 w-full">
       {label && (
-        <div className="flex items-center gap-2">
-          <Server className="h-4 w-4 sm:h-5 sm:w-5 text-[#f58220]" />
-          <label className="text-sm sm:text-base font-medium text-white flex items-center gap-2">
+        <div className="flex items-center gap-3 p-1">
+          <div className={cn(
+            "p-2 rounded-lg bg-[#f58220]/10 transition-all duration-300",
+            "hover:bg-[#f58220]/20 hover:shadow-md" // Micro-interação no ícone
+          )}>
+            <Server className="h-5 w-5 sm:h-6 sm:w-6 text-[#f58220]" />
+          </div>
+          <label className="text-base sm:text-lg font-semibold text-white flex items-center gap-3">
             {label}
             {tooltip && (
               <HelpTooltip
@@ -108,16 +121,26 @@ export function ComponentSelector({
       )}
 
       <Select value={localValue} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
+        <SelectTrigger className={cn(
+          "w-full bg-[#1e1e1e] border-2 border-[#2a2a2a] text-white min-h-[48px] text-sm sm:text-base py-3 px-4",
+          "transition-all duration-300 hover:border-[#f58220] hover:shadow-lg hover:shadow-[#f58220]/20", // Micro-interação estratégica
+          "focus:border-[#f58220] focus:ring-2 focus:ring-[#f58220]/30" // Estados de foco consistentes
+        )}>
           <SelectValue placeholder={`Escolha o ${label?.toLowerCase() || 'componente'} ideal para você`} />
         </SelectTrigger>
         
-        <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] z-[1060] w-[var(--radix-select-trigger-width)] min-w-[200px] overflow-hidden">
-          <ScrollArea className="max-h-[280px] sm:max-h-[320px] overflow-y-auto">
+        <SelectContent className={cn(
+          "bg-[#1e1e1e] border-2 border-[#2a2a2a] z-[1060] w-[var(--radix-select-trigger-width)] min-w-[250px]",
+          "shadow-xl shadow-black/40 rounded-xl overflow-hidden" // Sombras consistentes
+        )}>
+          <ScrollArea className="max-h-[300px] sm:max-h-[350px] overflow-y-auto">
             {groupedOptions ? (
               groupedOptions.map((group) => (
-                <SelectGroup key={group.group} className="py-1">
-                  <SelectLabel className="flex items-center justify-between px-3 py-2 text-xs sm:text-sm">
+                <SelectGroup key={group.group} className="py-2">
+                  <SelectLabel className={cn(
+                    "flex items-center justify-between px-4 py-3 text-sm sm:text-base",
+                    "text-[#f58220] font-semibold border-b border-[#2a2a2a]" // Consistência na tipografia
+                  )}>
                     {group.group}
                     {group.tooltip && (
                       <HelpTooltip

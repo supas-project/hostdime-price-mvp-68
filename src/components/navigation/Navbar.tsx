@@ -19,23 +19,32 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
-      <div className="container flex h-14 items-center">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
+    <header className={cn(
+      "sticky top-0 z-40 w-full border-b-2 bg-background/95 backdrop-blur-md",
+      "border-b-[#2a2a2a] shadow-lg transition-all duration-300"
+    )}>
+      <div className="container flex h-16 items-center">
+        <div className="flex items-center space-x-6">
+          <div className={cn(
+            "flex items-center space-x-3 p-2 rounded-lg transition-all duration-300",
+            "hover:bg-[#f58220]/10 hover:shadow-md"
+          )}>
             <img 
               src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg"
               alt="HostDime Logo"
-              className="h-5 w-auto"
+              className="h-6 w-auto transition-transform duration-300 hover:scale-105"
             />
           </div>
           
           {isAuthenticated && (
-            <nav className="hidden md:flex items-center space-x-4 ml-4">
+            <nav className="hidden md:flex items-center space-x-2 ml-6">
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "text-muted-foreground hover:text-[#f58220] hover:bg-[#f58220]/10",
+                  "transition-all duration-300 hover:shadow-md"
+                )}
                 onClick={() => navigate("/configure")}
               >
                 Configurações
@@ -46,23 +55,29 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-primary hover:text-primary/80 flex items-center"
+                    className={cn(
+                      "text-[#f58220] hover:text-[#e55a00] hover:bg-[#f58220]/10 flex items-center",
+                      "transition-all duration-300 hover:shadow-md hover:scale-105"
+                    )}
                     onClick={() => navigate("/price-table")}
                   >
-                    <Database className="w-4 h-4 mr-1" />
+                    <Database className="w-4 h-4 mr-2" />
                     Tabela de Preços
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" />
                   </Button>
                   
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="text-primary hover:text-primary/80 flex items-center"
+                    className={cn(
+                      "text-[#f58220] hover:text-[#e55a00] hover:bg-[#f58220]/10 flex items-center",
+                      "transition-all duration-300 hover:shadow-md hover:scale-105"
+                    )}
                     onClick={() => navigate("/user-management")}
                   >
-                    <Users className="w-4 h-4 mr-1" />
+                    <Users className="w-4 h-4 mr-2" />
                     Gestão de Usuários
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" />
                   </Button>
                 </>
               )}
@@ -71,7 +86,14 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
         </div>
 
         <div className={cn("flex flex-1 items-center justify-end space-x-4")}>
-          {notifications && <div className="mr-2">{notifications}</div>}
+          {notifications && (
+            <div className={cn(
+              "mr-3 transition-all duration-300",
+              "hover:scale-105"
+            )}>
+              {notifications}
+            </div>
+          )}
           <LoginDialog />
         </div>
       </div>

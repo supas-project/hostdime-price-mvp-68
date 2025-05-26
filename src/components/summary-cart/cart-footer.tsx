@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface CartFooterProps {
   totalPrice: number;
@@ -21,14 +22,36 @@ export function CartFooter({
   };
   
   return (
-    <div className="p-4 border-t border-border mt-auto sticky bottom-0 bg-card rounded-b-2xl">
-      <div className="flex justify-between items-center mb-4">
-        <span className="font-medium">Total</span>
-        <span className="font-bold text-primary text-lg">{formatCurrency(totalPrice)}</span>
+    <div className={cn(
+      "p-6 border-t-2 border-[#f58220]/20 mt-auto sticky bottom-0",
+      "bg-gradient-to-r from-card to-card/95 backdrop-blur-sm rounded-b-2xl",
+      "shadow-lg shadow-black/20"
+    )}>
+      <div className={cn(
+        "flex justify-between items-center mb-6 p-4 rounded-xl",
+        "bg-[#f58220]/10 border border-[#f58220]/30 shadow-md",
+        "transition-all duration-300 hover:shadow-lg hover:shadow-[#f58220]/20"
+      )}>
+        <span className="font-semibold text-lg">Total Mensal</span>
+        <span className={cn(
+          "font-bold text-2xl text-[#f58220] transition-all duration-300",
+          "hover:scale-105 drop-shadow-sm"
+        )}>
+          {formatCurrency(totalPrice)}
+        </span>
       </div>
       
-      <Button variant="ghost" className="w-full" onClick={handleSave}>
-        <Save className="mr-2 h-4 w-4" /> Salvar Configuração
+      <Button 
+        variant="default" 
+        className={cn(
+          "w-full h-12 text-base font-semibold",
+          "bg-[#f58220] hover:bg-[#e55a00] shadow-lg hover:shadow-[#f58220]/40",
+          "transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+        )}
+        onClick={handleSave}
+      >
+        <Save className="mr-3 h-5 w-5 transition-transform duration-200 group-hover:rotate-12" />
+        Salvar Configuração
       </Button>
     </div>
   );
