@@ -3,6 +3,18 @@ import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { formatCurrency } from "@/utils/number-formatter";
 import { quoteStyles } from "./quote-styles";
 import { hostDimeSvgLogoUrl } from "../pdf-assets";
+import { ComponentOption } from "@/types/component";
+
+// Função para obter o texto da duração do contrato
+function getContractDurationText(contractComponent: ComponentOption): string {
+  const subtype = contractComponent.subtype || "0";
+  
+  if (subtype === "0") {
+    return "Sem contrato";
+  }
+  
+  return `${subtype} meses`;
+}
 
 // Função para gerar o template HTML da cotação
 export function generateQuoteTemplate(
@@ -12,13 +24,19 @@ export function generateQuoteTemplate(
   customServicesRows: string,
   total: number,
   margin: number,
-  quoteVariables?: Partial<QuoteVariables>
+  quoteVariables?: Partial<QuoteVariables>,
+  selectedComponents?: { [key: string]: ComponentOption }
 ): string {
   // Gerar número de cotação único
   const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
   
   // Obter a data atual formatada
   const currentDate = new Date().toLocaleDateString('pt-BR');
+
+  // Verificar se existe contrato selecionado
+  const contractComponent = selectedComponents?.contract || selectedComponents?.contrato;
+  const contractDuration = contractComponent ? getContractDurationText(contractComponent) : "Não especificado";
+  const contractDiscount = contractComponent?.metadata?.discount || 0;
 
   // Montar HTML completo
   return `
@@ -157,10 +175,10 @@ export function generateQuoteTemplate(
         </div>
         
         <div class="contract-info">
-          <h3>Contrato <span class="badge">Duração</span></h3>
-          <p>Contrato com desconto por fidelidade</p>
+          <h3>Contrato <span class="badge">${contractDuration}</span></h3>
+          <p>${contractComponent?.description || 'Contrato personalizado'}</p>
           <ul class="info-list">
-            <li><span class="check-icon">✓</span> Desconto de 15% incluído</li>
+            ${contractDiscount > 0 ? `<li><span class="check-icon">✓</span> Desconto de ${contractDiscount}% incluído</li>` : ''}
           </ul>
         </div>
         

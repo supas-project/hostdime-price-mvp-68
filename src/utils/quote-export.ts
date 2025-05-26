@@ -58,7 +58,8 @@ export const openQuoteInNewTab = (
       customServicesRows,
       total,
       margin,
-      quoteVariables
+      quoteVariables,
+      selectedComponents // CORREÇÃO: Passando os componentes selecionados
     );
     
     // Open in a new tab
