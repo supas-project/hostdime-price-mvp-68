@@ -1,46 +1,31 @@
 
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { HelpTooltip } from "@/components/help-tooltip";
-import { cn } from "@/lib/utils";
 
 interface PriceTableHeaderProps {
   showActions?: boolean;
-  className?: string;
+  showComparison?: boolean;
 }
 
-export function PriceTableHeader({ showActions = false, className }: PriceTableHeaderProps) {
+export function PriceTableHeader({ showActions = false, showComparison = false }: PriceTableHeaderProps) {
   return (
-    <TableHeader className={cn("bg-muted/20", className)}>
-      <TableRow className="h-10">
-        <TableHead className="w-[250px] py-2 px-4 align-middle">
-          <div className="flex items-center gap-1">
-            Nome
-            <HelpTooltip 
-              title="Nome do componente"
-              description="Identificação do item na tabela de preços"
-            />
+    <TableHeader>
+      <TableRow className="bg-muted/50 hover:bg-muted/70 transition-colors">
+        <TableHead className="w-[300px] px-3 sm:px-6 py-4 font-semibold text-foreground">
+          <div className="flex items-center gap-2">
+            {showComparison && (
+              <span className="text-xs text-muted-foreground hidden sm:inline">Compare</span>
+            )}
+            Produto
           </div>
         </TableHead>
-        <TableHead className="w-[400px] py-2 px-4 align-middle">
-          <div className="flex items-center gap-1">
-            Descrição
-            <HelpTooltip 
-              title="Descrição do componente"
-              description="Detalhes e especificações do item"
-            />
-          </div>
+        <TableHead className="px-3 sm:px-6 py-4 font-semibold text-foreground hidden md:table-cell">
+          Descrição
         </TableHead>
-        <TableHead className="py-2 px-4 text-right align-middle">
-          <div className="flex items-center gap-1 justify-end">
-            Preço
-            <HelpTooltip 
-              title="Preço base"
-              description="Valor base do componente sem descontos"
-            />
-          </div>
+        <TableHead className="text-right px-3 sm:px-6 py-4 font-semibold text-foreground">
+          Preço
         </TableHead>
         {showActions && (
-          <TableHead className="w-[100px] py-2 px-4 text-right align-middle">
+          <TableHead className="text-right px-3 sm:px-6 py-4 font-semibold text-foreground w-[100px]">
             Ações
           </TableHead>
         )}
