@@ -61,7 +61,9 @@ const responsiveCardVariants = cva(
 );
 
 export interface ResponsiveCardProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd'>,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 
+    'onAnimationStart' | 'onAnimationEnd' | 'onDragStart' | 'onDragEnd' | 
+    'onDrag' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'>,
     VariantProps<typeof responsiveCardVariants> {
   asChild?: boolean;
   // Acessibilidade
