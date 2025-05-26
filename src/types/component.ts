@@ -7,6 +7,7 @@ export interface ComponentOption {
   type: string;
   subtype?: string;
   isHardware?: boolean;
+  details?: string[]; // Added missing details property
   metadata?: {
     cores?: number;
     perCore?: boolean;
@@ -46,4 +47,20 @@ export interface CustomService {
     unitPrice?: number;
     unitInfo?: string;
   };
+}
+
+// Added missing ServerComponent interface
+export interface ServerComponent {
+  id: string;
+  type: string;
+  friendlyName: string;
+  description: string;
+  icon: string;
+  options: ComponentOption[];
+}
+
+// Added missing ServerConfiguration interface
+export interface ServerConfiguration {
+  categoria: string;
+  componentes: ServerComponent[];
 }
