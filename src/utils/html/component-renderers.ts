@@ -30,6 +30,17 @@ export function generateComponentsRows(selectedComponents: { [key: string]: Comp
         specsHtml += '</ul></div>';
       }
       
+      // NOVA LÓGICA: Adicionar informações especiais para licenciamento Windows Server
+      if (component.metadata?.perCore && component.type.toLowerCase().includes('sistema')) {
+        const unitPrice = component.metadata?.unitPrice || (component.price / Math.ceil((component.metadata?.cores || 1) / 2));
+        specsHtml = specsHtml || '<div class="specs-list"><ul>';
+        if (!specsHtml.includes('</ul>')) {
+          specsHtml = specsHtml.replace('</ul></div>', '');
+        }
+        specsHtml += `<li><span class="check-icon">✓</span> Preço base por licença: <span class="editable-field" contenteditable="true" data-field="unit-price-${component.id}">R$ ${unitPrice.toFixed(2)}</span></li>`;
+        specsHtml += '</ul></div>';
+      }
+      
       rows += `
         <tr>
           <td><span class="editable-field" contenteditable="true" data-field="type-${component.id}">${component.type}</span></td>

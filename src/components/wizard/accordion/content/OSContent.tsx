@@ -8,6 +8,7 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { useWizard } from "@/contexts/WizardContext";
 
 interface OSContentProps {
   // Make options optional by adding the ? modifier
@@ -23,8 +24,11 @@ export function OSContent({
 }: OSContentProps) {
   // Use propOptions if provided, otherwise fetch from the price service
   const { options, isLoading, error } = useComponentOptions('os');
+  const { selectedComponents } = useWizard();
   const [finalOptions, setFinalOptions] = useState<ComponentOption[]>([]);
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  
+  const processorInfo = selectedComponents["processador"];
   
   useEffect(() => {
     // Set final options based on propOptions or fetched options
@@ -61,11 +65,12 @@ export function OSContent({
     
     // Log information about options for debugging
     console.log("OSContent options from useComponentOptions:", finalOptions);
+    console.log("OSContent processor info:", processorInfo);
     
     if (finalOptions.length === 0 && !isLoading) {
       console.warn("Nenhuma opção de SO disponível. Verificando opções alternativas.");
     }
-  }, [finalOptions.length]);
+  }, [finalOptions.length, processorInfo]);
   
   // Synchronize local state with props when selectedOption changes
   useEffect(() => {

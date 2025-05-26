@@ -15,8 +15,11 @@ export const osComponents: ServerComponent = {
       price: 140.00,
       description: "Sistema operacional Windows Server com suporte completo",
       subtype: "windows",
+      metadata: {
+        perCore: true
+      },
       specs: [
-        "Licença mensal",
+        "Licença mensal por 2 cores",
         "Suporte incluído",
         "Atualizações automáticas"
       ]
