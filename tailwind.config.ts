@@ -1,5 +1,6 @@
 
 import { type Config } from "tailwindcss";
+import { colors, typography, spacing, breakpoints, shadows, borderRadius, transitions, zIndex, touchTargets } from "./src/styles/design-tokens";
 
 export default {
   darkMode: ["class"],
@@ -17,24 +18,10 @@ export default {
         sm: "1.5rem",
         lg: "2rem"
       },
-      screens: {
-        sm: "640px",
-        md: "768px",
-        lg: "1024px",
-        xl: "1280px",
-        "2xl": "1400px"
-      }
+      screens: breakpoints
     },
     extend: {
-      zIndex: {
-        'dropdown': 'var(--z-dropdown)',
-        'sticky': 'var(--z-sticky)',
-        'fixed': 'var(--z-fixed)',
-        'modal-backdrop': 'var(--z-modal-backdrop)',
-        'modal': 'var(--z-modal)',
-        'popover': 'var(--z-popover)',
-        'tooltip': 'var(--z-tooltip)'
-      },
+      // Design tokens integrados
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -44,7 +31,8 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           hover: "hsl(var(--primary-hover))",
-          foreground: "hsl(var(--primary-foreground))"
+          foreground: "hsl(var(--primary-foreground))",
+          ...colors.primary
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -70,27 +58,43 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
         },
-        hostdime: {
-          orange: "#FF6600", // Laranja HostDime
-          black: "#1E1E1E",
-          gray: {
-            100: "#F5F5F5",
-            200: "#E8E8E8",
-            300: "#D1D1D1",
-            400: "#B0B0B0",
-            500: "#8E8E8E",
-            600: "#6E6E6E",
-            700: "#525252",
-            800: "#3D3D3D",
-            900: "#2A2A2A"
-          }
-        }
+        // Tokens HostDime
+        neutral: colors.neutral,
+        semantic: colors.semantic,
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)"
+      
+      // Tipografia
+      fontSize: typography.fontSize,
+      fontWeight: typography.fontWeight,
+      lineHeight: typography.lineHeight,
+      
+      // Espaçamento
+      spacing: {
+        ...spacing,
+        // Touch targets para acessibilidade
+        'touch-sm': touchTargets.sm,
+        'touch-md': touchTargets.md,
+        'touch-lg': touchTargets.lg,
+        'touch-xl': touchTargets.xl,
       },
+      
+      // Breakpoints
+      screens: breakpoints,
+      
+      // Sombras
+      boxShadow: shadows,
+      
+      // Bordas
+      borderRadius: borderRadius,
+      
+      // Z-index
+      zIndex: zIndex,
+      
+      // Transições
+      transitionDuration: transitions.duration,
+      transitionTimingFunction: transitions.timing,
+      
+      // Keyframes para micro-interações
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -108,47 +112,87 @@ export default {
           "0%": { opacity: "1", transform: "translateY(0)" },
           "100%": { opacity: "0", transform: "translateY(8px)" }
         },
-        "pulse-orange": {
-          "0%, 100%": { 
-            opacity: "1",
-            transform: "scale(1)" 
-          },
-          "50%": { 
-            opacity: "0.8",
-            transform: "scale(1.05)" 
-          }
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" }
+        },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(100%)" }
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" }
+        },
+        "bounce": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" }
+        },
+        "shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-4px)" },
+          "75%": { transform: "translateX(4px)" }
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.8", transform: "scale(1.02)" }
         }
       },
+      
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out forwards",
-        "fade-out": "fade-out 0.3s ease-out forwards",
-        "pulse-orange": "pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+        "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "bounce": "bounce 0.3s ease-in-out",
+        "shake": "shake 0.4s ease-in-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite"
       },
-      width: {
-        'sidebar-expanded': '240px',
-        'sidebar-collapsed': '64px',
-      },
-      boxShadow: {
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        'card-active': '0 5px 10px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-        'dropdown': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'orange-glow': '0 0 15px rgba(255, 102, 0, 0.3)',
-        'orange-glow-lg': '0 0 25px rgba(255, 102, 0, 0.4)'
-      },
-      spacing: {
-        '4.5': '1.125rem',
-        '5.5': '1.375rem',
-        '6.5': '1.625rem',
-        '7.5': '1.875rem',
-        '8.5': '2.125rem',
-        '9.5': '2.375rem',
+      
+      // Utilitários para acessibilidade
+      aria: {
+        'current-page': 'page',
+        'current-step': 'step',
       }
     }
   },
   plugins: [
     require("tailwindcss-animate"),
-    require('tailwind-scrollbar')({ nocompatible: true })
+    require('tailwind-scrollbar')({ nocompatible: true }),
+    // Plugin customizado para acessibilidade
+    function({ addUtilities }) {
+      addUtilities({
+        '.sr-only': {
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: '0',
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: '0',
+        },
+        '.focus-ring': {
+          '&:focus-visible': {
+            outline: '2px solid hsl(var(--primary))',
+            outlineOffset: '2px',
+          }
+        },
+        '.touch-target': {
+          minHeight: touchTargets.md,
+          minWidth: touchTargets.md,
+        },
+        '.motion-reduce': {
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            transition: 'none',
+          }
+        }
+      });
+    }
   ]
 } satisfies Config;

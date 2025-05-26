@@ -2,30 +2,59 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.97] hover:shadow-lg",
+  // Base styles com tokens HostDime e acessibilidade WCAG AA
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold " +
+  "ring-offset-background transition-all duration-200 focus-visible:outline-none " +
+  "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 " +
+  "disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 " +
+  // Touch targets WCAG AA (44px mínimo)
+  "min-h-touch-md min-w-touch-md " +
+  // Micro-interações suaves
+  "hover:shadow-md active:scale-[0.98] active:duration-75",
   {
     variants: {
       variant: {
-        default: "bg-[#f58220] text-white hover:bg-[#e55a00] hover:shadow-[#f58220]/30 active:bg-[#cc5200] shadow-md",
+        default: 
+          "bg-primary-500 text-white shadow-sm " +
+          "hover:bg-primary-600 hover:shadow-primary " +
+          "focus-visible:bg-primary-600 " +
+          "active:bg-primary-700",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md hover:shadow-destructive/30",
+          "bg-semantic-error-DEFAULT text-white shadow-sm " +
+          "hover:bg-semantic-error-dark hover:shadow-md " +
+          "focus-visible:bg-semantic-error-dark " +
+          "active:bg-semantic-error-dark",
         outline:
-          "border-2 border-[#f58220] bg-transparent text-[#f58220] hover:bg-[#f58220] hover:text-white hover:shadow-[#f58220]/30",
+          "border-2 border-primary-500 bg-transparent text-primary-500 " +
+          "hover:bg-primary-50 hover:text-primary-600 " +
+          "focus-visible:bg-primary-50 focus-visible:text-primary-600 " +
+          "active:bg-primary-100",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md hover:shadow-secondary/20",
-        ghost: "hover:bg-[#f58220]/10 hover:text-[#f58220] transition-all duration-200",
-        link: "text-[#f58220] underline-offset-4 hover:underline hover:text-[#e55a00]",
+          "bg-neutral-100 text-neutral-900 shadow-sm " +
+          "hover:bg-neutral-200 hover:shadow-md " +
+          "focus-visible:bg-neutral-200 " +
+          "active:bg-neutral-300",
+        ghost: 
+          "text-primary-500 " +
+          "hover:bg-primary-50 hover:text-primary-600 " +
+          "focus-visible:bg-primary-50 focus-visible:text-primary-600 " +
+          "active:bg-primary-100",
+        link: 
+          "text-primary-500 underline-offset-4 " +
+          "hover:underline hover:text-primary-600 " +
+          "focus-visible:underline focus-visible:text-primary-600",
       },
       size: {
-        default: "h-11 px-6 py-3",
-        sm: "h-9 rounded-md px-4 py-2",
-        lg: "h-12 rounded-lg px-8 py-3 text-base",
-        icon: "h-11 w-11",
-        touch: "h-12 sm:h-11 px-6 py-3 text-base sm:text-sm min-w-[44px]",
+        sm: "h-9 px-3 text-xs min-w-[36px]",
+        default: "h-11 px-4 py-2",
+        lg: "h-12 px-6 py-3 text-base",
+        xl: "h-14 px-8 py-4 text-lg",
+        icon: "h-11 w-11 p-0",
+        "icon-sm": "h-9 w-9 p-0",
+        "icon-lg": "h-12 w-12 p-0",
       },
     },
     defaultVariants: {
