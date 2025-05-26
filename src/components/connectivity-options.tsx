@@ -171,7 +171,7 @@ export function ConnectivityOptions({
                 variant="outline"
                 size="icon" 
                 onClick={handleAddItem}
-                disabled={!selectedOption || (selectedOption && organizedOptions.find(opt => opt.id === selectedOption && isSectionHeader(opt)))}
+                disabled={!selectedOption || (selectedOption ? isSectionHeader(organizedOptions.find(opt => opt.id === selectedOption) || {} as ComponentOption) : false)}
               >
                 <Plus className="h-4 w-4" />
               </Button>
