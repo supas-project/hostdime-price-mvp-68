@@ -1,4 +1,6 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { WizardProvider } from '@/contexts/WizardContext';
 import Index from '@/pages/Index';
@@ -14,7 +16,8 @@ describe('Server Configuration Wizard', () => {
   };
 
   // Contract Selection Tests
-  test('Contract Selection Flow', () => {
+  test('Contract Selection Flow', async () => {
+    const user = userEvent.setup();
     renderWizard();
     
     // Test different contract durations
@@ -26,24 +29,25 @@ describe('Server Configuration Wizard', () => {
       'Sem contrato'
     ];
 
-    contractOptions.forEach(option => {
+    for (const option of contractOptions) {
       const contractButton = screen.getByText(option);
-      fireEvent.click(contractButton);
+      await user.click(contractButton);
       
       // Verify selection persists
       expect(contractButton.closest('div')).toHaveClass('border-primary');
-    });
+    }
   });
 
   // Memory Slider Tests
-  test('Memory Slider Functionality', () => {
+  test('Memory Slider Functionality', async () => {
+    const user = userEvent.setup();
     renderWizard();
     
     const memorySlider = screen.getByRole('slider');
     const memoryValues = [8, 16, 32, 64, 128, 256, 512, 1024];
 
-    memoryValues.forEach(value => {
-      fireEvent.change(memorySlider, { target: { value: memoryValues.indexOf(value) } });
+    for (const value of memoryValues) {
+      await user.type(memorySlider, memoryValues.indexOf(value).toString());
       
       // Check displayed value
       expect(screen.getByText(`${value}GB RAM`)).toBeInTheDocument();
@@ -51,69 +55,72 @@ describe('Server Configuration Wizard', () => {
       // Check price calculation
       const expectedPrice = value * 7.5;
       expect(screen.getByText(new RegExp(`R\\$\\s*${expectedPrice.toFixed(2)}`))).toBeInTheDocument();
-    });
+    }
   });
 
   // Processor Selection Tests
-  test('Processor Selection', () => {
+  test('Processor Selection', async () => {
+    const user = userEvent.setup();
     renderWizard();
     
     const processorOptions = serverData.componentes
       .find(c => c.type === 'Processador')?.options || [];
 
-    processorOptions.forEach(processor => {
+    for (const processor of processorOptions) {
       const processorOption = screen.getByText(processor.name);
-      fireEvent.click(processorOption);
+      await user.click(processorOption);
       
       // Verify selection
       expect(processorOption.closest('div')).toHaveClass('ring-1 ring-primary');
-    });
+    }
   });
 
   // Storage Configuration Tests
-  test('Storage Configuration', () => {
+  test('Storage Configuration', async () => {
+    const user = userEvent.setup();
     renderWizard();
     
     // Test Internal Storage
     const internalTab = screen.getByText('Discos Internos');
-    fireEvent.click(internalTab);
+    await user.click(internalTab);
     
     const diskTypes = ['NVMe', 'SSD', 'HDD'];
-    diskTypes.forEach(type => {
+    for (const type of diskTypes) {
       const diskTypeOption = screen.getByText(type);
-      fireEvent.click(diskTypeOption);
+      await user.click(diskTypeOption);
       
       const capacities = screen.getAllByText(/\d+GB/);
-      fireEvent.click(capacities[0]);
-    });
+      await user.click(capacities[0]);
+    }
 
     // Test External Storage
     const externalTab = screen.getByText('Storage Externo');
-    fireEvent.click(externalTab);
+    await user.click(externalTab);
     
     const storageTypes = ['Standard', 'SSD', 'Premium', 'NVMe'];
-    storageTypes.forEach(type => {
+    for (const type of storageTypes) {
       const storageTypeOption = screen.getByText(type);
-      fireEvent.click(storageTypeOption);
-    });
+      await user.click(storageTypeOption);
+    }
   });
 
   // Full Wizard Flow Test
-  test('Complete Wizard Flow', () => {
+  test('Complete Wizard Flow', async () => {
+    const user = userEvent.setup();
     renderWizard();
     
     // Simulate full wizard flow
     const steps = serverData.componentes;
-    steps.forEach((step, index) => {
+    for (const [index, step] of steps.entries()) {
       // Select first option for each step
       const firstOption = step.options[0];
       const optionElement = screen.getByText(firstOption.name);
-      fireEvent.click(optionElement);
+      await user.click(optionElement);
       
       // Move to next step
       const nextButton = screen.getByText('Próximo');
-      fireEvent.click(nextButton);
-    });
+      await user.click(nextButton);
+    }
 
     // Verify final summary
     expect(screen.getByText('Resumo do Seu Servidor')).toBeInTheDocument();
