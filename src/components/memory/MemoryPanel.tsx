@@ -42,6 +42,20 @@ export function MemoryPanel({
       frequency: "3200MHz",
       type: "DDR4",
       description: "Memória DDR4 de alta performance para aplicações que exigem maior velocidade."
+    },
+    "ddr5-standard": {
+      name: "DDR5 Standard",
+      pricePerGB: 12.0,
+      frequency: "4800MHz", 
+      type: "DDR5",
+      description: "Nova geração DDR5 com maior velocidade e eficiência energética."
+    },
+    "ddr5-performance": {
+      name: "DDR5 Performance",
+      pricePerGB: 15.0,
+      frequency: "6400MHz",
+      type: "DDR5", 
+      description: "DDR5 de alta performance para aplicações que exigem máxima velocidade."
     }
   }
 }: MemoryPanelProps) {
@@ -57,6 +71,12 @@ export function MemoryPanel({
   );
   const [totalPrice, setTotalPrice] = useState<number>(0);
 
+  // Debug log
+  useEffect(() => {
+    console.log("[MemoryPanel] Component mounted with memoryTypes:", memoryTypes);
+    console.log("[MemoryPanel] hasValidMemoryTypes:", hasValidMemoryTypes);
+  }, []);
+
   // Update selected type details when type changes
   useEffect(() => {
     if (hasValidMemoryTypes && memoryTypes[selectedType]) {
@@ -66,6 +86,7 @@ export function MemoryPanel({
       const pricePerGB = memoryTypes[selectedType].pricePerGB || 0;
       const newPrice = pricePerGB * capacity;
       setTotalPrice(newPrice);
+      console.log("[MemoryPanel] Updated type details:", memoryTypes[selectedType]);
     } else {
       setSelectedTypeDetails(null);
       setTotalPrice(0);
@@ -78,6 +99,7 @@ export function MemoryPanel({
       const pricePerGB = selectedTypeDetails.pricePerGB;
       const newPrice = pricePerGB * capacity;
       setTotalPrice(newPrice);
+      console.log("[MemoryPanel] Updated price:", newPrice, "for capacity:", capacity);
     }
   }, [capacity, selectedTypeDetails]);
 
@@ -105,49 +127,23 @@ export function MemoryPanel({
           `Frequência: ${selectedTypeDetails.frequency}`
         ]
       };
+      console.log("[MemoryPanel] Selecting memory option:", memoryOption);
       onSelectOption(memoryOption);
     }
   };
 
-  // Se não temos dados válidos, mostrar mensagem informativa
-  if (!hasValidMemoryTypes) {
-    return (
-      <Card className={cn(
-        "w-full border-[#2a2a2a]",
-        "shadow-md hover:shadow-lg transition-shadow duration-300"
-      )}>
-        <CardHeader className="pb-3 pt-4 px-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <MemoryStick className="h-5 w-5 text-primary" />
-            Memória RAM
-            <HelpTooltip
-              title="Memória RAM"
-              description="Configure a quantidade de memória RAM necessária para seu servidor."
-            />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-2 px-4">
-          <div className="p-6 border border-dashed rounded-lg text-center text-muted-foreground">
-            <p className="text-sm">Usando configuração padrão de memória.</p>
-            <p className="text-xs mt-2">Tipos de memória podem ser configurados na Tabela de Preços.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className={cn(
-      "w-full border-[#2a2a2a]",
+      "w-full border-[#2a2a2a] bg-[#1e1e1e]",
       "shadow-md hover:shadow-lg transition-shadow duration-300"
     )}>
       <CardHeader className="pb-3 pt-4 px-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MemoryStick className="h-5 w-5 text-primary" />
-          Memória RAM
+        <CardTitle className="flex items-center gap-2 text-lg text-white">
+          <MemoryStick className="h-5 w-5 text-[#f58220]" />
+          Configuração de Memória RAM
           <HelpTooltip
             title="Memória RAM"
-            description="Configure a quantidade de memória RAM necessária para seu servidor."
+            description="Configure a quantidade e tipo de memória RAM necessária para seu servidor."
           />
         </CardTitle>
       </CardHeader>
@@ -160,7 +156,13 @@ export function MemoryPanel({
         />
         
         {/* Capacity Selector */}
-        <MemoryCapacitySelector capacity={capacity} onCapacityChange={setCapacity} />
+        <MemoryCapacitySelector 
+          capacity={capacity} 
+          onCapacityChange={setCapacity}
+          min={8}
+          max={512}
+          step={8}
+        />
         
         {/* Memory Specs */}
         {selectedTypeDetails && (
@@ -175,11 +177,11 @@ export function MemoryPanel({
         )}
         
         {/* Price and Add Button */}
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-[#2a2a2a]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-muted-foreground">Preço mensal total</p>
-              <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</p>
+              <p className="text-2xl font-bold text-[#f58220]">{formatCurrency(totalPrice)}</p>
               {selectedTypeDetails && (
                 <p className="text-xs text-muted-foreground mt-1">
                   {formatCurrency(selectedTypeDetails.pricePerGB)}/GB × {capacity}GB
@@ -188,7 +190,7 @@ export function MemoryPanel({
             </div>
             <Button 
               onClick={handleAddMemory}
-              className="gap-2 min-w-[140px]"
+              className="gap-2 min-w-[140px] bg-[#f58220] hover:bg-[#e07420] text-white"
               size="default"
               disabled={!selectedTypeDetails}
             >

@@ -25,6 +25,12 @@ export function MemoryContent({
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   const [showAdvancedSelector, setShowAdvancedSelector] = useState(false);
 
+  // Debug logs
+  useEffect(() => {
+    console.log("[MemoryContent] Component mounted");
+    console.log("[MemoryContent] showAdvancedSelector:", showAdvancedSelector);
+  }, []);
+
   // Sync selectedOption with local state
   useEffect(() => {
     if (selectedOption) {
@@ -70,10 +76,15 @@ export function MemoryContent({
     }
   };
 
+  const handleToggleAdvanced = (isAdvanced: boolean) => {
+    console.log("[MemoryContent] Toggling to advanced mode:", isAdvanced);
+    setShowAdvancedSelector(isAdvanced);
+  };
+
   // Show loading state
   if (isLoading) {
     return (
-      <Card className="p-4 sm:p-6">
+      <Card className="p-4 sm:p-6 bg-[#1e1e1e]">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <MemoryStick className="h-5 w-5 text-[#f58220]" />
@@ -87,7 +98,7 @@ export function MemoryContent({
   }
 
   return (
-    <Card className="p-4 sm:p-6 overflow-hidden">
+    <Card className="p-4 sm:p-6 overflow-hidden bg-[#1e1e1e]">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <MemoryStick className="h-5 w-5 text-[#f58220]" />
@@ -104,21 +115,21 @@ export function MemoryContent({
         {/* Toggle between simple and advanced selector */}
         <div className="flex items-center gap-2 mb-4">
           <button
-            onClick={() => setShowAdvancedSelector(false)}
-            className={`px-3 py-1 text-xs rounded ${
+            onClick={() => handleToggleAdvanced(false)}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               !showAdvancedSelector 
-                ? 'bg-primary text-white' 
-                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white'
+                ? 'bg-[#f58220] text-white shadow-md' 
+                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white hover:bg-[#3a3a3a]'
             }`}
           >
             Seleção Rápida
           </button>
           <button
-            onClick={() => setShowAdvancedSelector(true)}
-            className={`px-3 py-1 text-xs rounded ${
+            onClick={() => handleToggleAdvanced(true)}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
               showAdvancedSelector 
-                ? 'bg-primary text-white' 
-                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white'
+                ? 'bg-[#f58220] text-white shadow-md' 
+                : 'bg-[#2a2a2a] text-muted-foreground hover:text-white hover:bg-[#3a3a3a]'
             }`}
           >
             Configuração Avançada
