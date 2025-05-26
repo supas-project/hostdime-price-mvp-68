@@ -42,9 +42,10 @@ export function useComponentOptions(componentType: string) {
               specs: item.specs || ["Memória RAM de alta performance"],
               metadata: item.metadata ? {
                 ...item.metadata,
-                cores: item.metadata.cores,
-                perCore: item.metadata.perCore,
-                licensesNeeded: item.metadata.licensesNeeded
+                // Safe access to potentially missing properties
+                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : {}),
+                ...(item.metadata && 'perCore' in item.metadata ? { perCore: item.metadata.perCore } : {}),
+                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: item.metadata.licensesNeeded } : {})
               } : undefined
             }));
           } else {
@@ -67,7 +68,8 @@ export function useComponentOptions(componentType: string) {
               type: 'processador',
               isHardware: true,
               metadata: {
-                cores: item.metadata?.cores || 1
+                // Safe access to potentially missing properties
+                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : { cores: 1 })
               },
               specs: item.specs || []
             }));
@@ -192,9 +194,10 @@ export function useComponentOptions(componentType: string) {
               isHardware: false,
               metadata: item.metadata ? {
                 ...item.metadata,
-                cores: item.metadata.cores,
-                perCore: item.metadata.perCore,
-                licensesNeeded: item.metadata.licensesNeeded
+                // Safe access to potentially missing properties
+                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : {}),
+                ...(item.metadata && 'perCore' in item.metadata ? { perCore: item.metadata.perCore } : {}),
+                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: item.metadata.licensesNeeded } : {})
               } : undefined,
               specs: item.specs || []
             }));
