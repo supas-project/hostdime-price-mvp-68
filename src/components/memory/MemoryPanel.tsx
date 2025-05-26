@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -136,7 +135,6 @@ export function MemoryPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 pt-2 px-4">
-        {/* Memory Type Selector */}
         {Object.keys(memoryTypes).length > 0 && (
           <MemoryTypeSelector
             memoryTypes={memoryTypes}
@@ -156,7 +154,7 @@ export function MemoryPanel({
           />
         )}
         
-        {/* Capacity Selector */}
+        {/* Capacity Selector - ajustado para ir até 2TB */}
         <MemoryCapacitySelector 
           capacity={capacity} 
           onCapacityChange={(newCapacity) => {
@@ -177,11 +175,10 @@ export function MemoryPanel({
             }
           }}
           min={8}
-          max={512}
+          max={2048}
           step={8}
         />
         
-        {/* Memory Specs */}
         {selectedTypeDetails && currentSelectedOption && (
           <MemorySpecs 
             frequency={selectedTypeDetails.frequency}

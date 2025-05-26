@@ -18,7 +18,7 @@ export function MemoryCapacitySelector({
   capacity, 
   onCapacityChange,
   min = 8,
-  max = 512,
+  max = 2048, // Alterado para 2TB
   step = 8
 }: MemoryCapacitySelectorProps) {
   const [inputValue, setInputValue] = useState<string>(capacity.toString());
@@ -62,14 +62,17 @@ export function MemoryCapacitySelector({
     }
   };
 
-  // Quick capacity options based on common usage patterns
+  // Quick capacity options based on common usage patterns - expandido para incluir opções até 2TB
   const quickCapacityOptions = [
     { value: 8, label: "8GB" },
     { value: 16, label: "16GB" },
     { value: 32, label: "32GB" },
     { value: 64, label: "64GB" },
     { value: 128, label: "128GB" },
-    { value: 256, label: "256GB" }
+    { value: 256, label: "256GB" },
+    { value: 512, label: "512GB" },
+    { value: 1024, label: "1TB" },
+    { value: 2048, label: "2TB" }
   ];
 
   return (
