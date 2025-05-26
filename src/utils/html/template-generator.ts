@@ -92,6 +92,20 @@ export function generateQuoteTemplate(
           box-shadow: 0 0 3px rgba(255, 102, 0, 0.3);
         }
         
+        /* Estilos específicos para descrições de componentes */
+        .component-description .editable-field {
+          display: block;
+          width: 100%;
+          min-height: 20px;
+          margin-top: 2px;
+        }
+        
+        /* Estilos para specs editáveis */
+        .specs-list .editable-field {
+          display: inline;
+          margin-left: 5px;
+        }
+        
         /* Controles de edição */
         .edit-controls {
           position: fixed;
