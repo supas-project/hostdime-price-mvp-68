@@ -1,9 +1,17 @@
-
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
 import { QuoteVariables } from './dynamic-variables';
 import { sanitizeText } from './drawing-utils';
+import { 
+  renderHeaderSection,
+  renderComponentsSection, 
+  renderStorageSection,
+  renderServicesSection,
+  renderFinancialSection,
+  renderTermsSection,
+  renderContractSection
+} from './section-renderers';
 
 export async function buildQuotePDF(
   selectedComponents: { [key: string]: ComponentOption },
@@ -29,142 +37,99 @@ export async function buildQuotePDF(
     
     // Definir margens
     const marginX = 50;
+    const marginRight = 50;
     
-    // Cabeçalho simples
-    page.drawText("HostDime Brasil", {
-      x: marginX,
-      y: height - 50,
-      size: 24,
-      font: helveticaBold,
-    });
+    // Render header section
+    let pageContext = renderHeaderSection(
+      pdfDoc,
+      { page, y: height - 50 },
+      quoteVariables,
+      width,
+      marginX,
+      marginRight,
+      helvetica,
+      helveticaBold
+    );
     
-    // Número da cotação simples
-    const quoteNumber = `HD-${Math.floor(Math.random() * 90000) + 10000}-${new Date().getFullYear()}`;
-    page.drawText(`Cotação #${quoteNumber}`, {
-      x: marginX,
-      y: height - 80,
-      size: 14,
-      font: helveticaBold,
-    });
+    // Render contract section (destacado conforme solicitado)
+    pageContext = renderContractSection(
+      pdfDoc,
+      pageContext,
+      selectedComponents,
+      width,
+      marginX,
+      marginRight,
+      helvetica,
+      helveticaBold
+    );
     
-    // Data da cotação
-    const today = new Date().toLocaleDateString('pt-BR');
-    page.drawText(`Data: ${today}`, {
-      x: marginX,
-      y: height - 100,
-      size: 12,
-      font: helvetica,
-    });
+    // Render components section
+    pageContext = renderComponentsSection(
+      pdfDoc,
+      pageContext,
+      selectedComponents,
+      width,
+      marginX,
+      marginRight,
+      helvetica,
+      helveticaBold
+    );
     
-    // Cliente
-    if (quoteVariables?.clientName) {
-      page.drawText(`Cliente: ${quoteVariables.clientName}`, {
-        x: marginX,
-        y: height - 120,
-        size: 12,
-        font: helvetica,
-      });
+    // Render storage section if exists
+    if (storageItems.internal.length > 0 || storageItems.external.length > 0) {
+      pageContext = renderStorageSection(
+        pdfDoc,
+        pageContext,
+        storageItems,
+        width,
+        marginX,
+        marginRight,
+        helvetica,
+        helveticaBold
+      );
     }
     
-    // Título de componentes
-    page.drawText("Componentes do Servidor", {
-      x: marginX,
-      y: height - 160,
-      size: 16,
-      font: helveticaBold,
-    });
-    
-    // Lista simples de componentes
-    let yPos = height - 190;
-    const componentKeys = Object.keys(selectedComponents).filter(key => selectedComponents[key] != null);
-    
-    for (const key of componentKeys) {
-      const component = selectedComponents[key];
-      if (component) {
-        page.drawText(`${component.name}: R$ ${component.price.toFixed(2).replace('.', ',')}`, {
-          x: marginX,
-          y: yPos,
-          size: 12,
-          font: helvetica,
-        });
-        yPos -= 20;
-      }
+    // Render custom services if exists
+    if (customServices.length > 0) {
+      pageContext = renderServicesSection(
+        pdfDoc,
+        pageContext,
+        customServices,
+        width,
+        marginX,
+        marginRight,
+        helvetica,
+        helveticaBold
+      );
     }
     
-    // Resumo financeiro simples
-    yPos -= 30;
-    page.drawText("Resumo Financeiro", {
-      x: marginX,
-      y: yPos,
-      size: 16,
-      font: helveticaBold,
-    });
+    // Render financial section
+    pageContext = renderFinancialSection(
+      pdfDoc,
+      pageContext,
+      selectedComponents,
+      storageItems,
+      customServices,
+      margin,
+      width,
+      marginX,
+      marginRight,
+      helvetica,
+      helveticaBold,
+      connectivityItems
+    );
     
-    yPos -= 30;
-    
-    // Calcular valor total
-    let total = 0;
-    for (const key of componentKeys) {
-      if (selectedComponents[key]) {
-        total += selectedComponents[key].price || 0;
-      }
-    }
-    
-    // Aplicar margem
-    if (margin > 0) {
-      total = total * (1 + (margin / 100));
-    }
-    
-    page.drawText(`Total Mensal: R$ ${total.toFixed(2).replace('.', ',')}`, {
-      x: marginX,
-      y: yPos,
-      size: 14,
-      font: helveticaBold,
-    });
-    
-    // Observações
-    if (quoteVariables?.observacoes) {
-      yPos -= 50;
-      page.drawText("Observações:", {
-        x: marginX,
-        y: yPos,
-        size: 14,
-        font: helveticaBold,
-      });
-      
-      yPos -= 20;
-      page.drawText(quoteVariables.observacoes, {
-        x: marginX,
-        y: yPos,
-        size: 12,
-        font: helvetica,
-      });
-    }
-    
-    // Contato
-    yPos -= 50;
-    page.drawText("Para mais informações:", {
-      x: marginX,
-      y: yPos,
-      size: 12,
-      font: helveticaBold,
-    });
-    
-    yPos -= 20;
-    page.drawText("Telefone: (11) 4766-4840", {
-      x: marginX,
-      y: yPos,
-      size: 12,
-      font: helvetica,
-    });
-    
-    yPos -= 20;
-    page.drawText("Email: vendas@hostdime.com.br", {
-      x: marginX,
-      y: yPos,
-      size: 12,
-      font: helvetica,
-    });
+    // Render terms section
+    renderTermsSection(
+      pdfDoc,
+      pageContext,
+      quoteVariables,
+      width,
+      marginX,
+      marginRight,
+      helvetica,
+      helveticaBold
+    );
     
     // Finalizar PDF
     return await pdfDoc.save();
