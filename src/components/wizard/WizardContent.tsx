@@ -1,4 +1,3 @@
-
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -14,8 +13,6 @@ import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
-import { useAutoProgression } from "@/hooks/use-auto-progression";
-import { AutoProgressionControls } from "./auto-progression-controls";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
@@ -98,31 +95,6 @@ export function WizardContent() {
 
   const currentComponent = serverData.componentes[currentStep];
 
-  // Auto-progression integration
-  const autoProgression = useAutoProgression({
-    currentStep,
-    totalSteps: serverData.componentes.length,
-    selectedComponents,
-    connectivityItems,
-    storageItems,
-    onNextStep: () => {
-      console.log(`[WizardContent] Avançando automaticamente do step ${currentStep} para ${currentStep + 1}`);
-      setCurrentStep(Math.min(serverData.componentes.length - 1, currentStep + 1));
-    },
-    componentType: currentComponent?.type || "",
-    isStepComplete,
-    onStepComplete: setStepComplete
-  });
-
-  console.log(`[WizardContent] Auto-progression state:`, {
-    enabled: autoProgression.config.enabled,
-    shouldProgress: autoProgression.shouldProgress,
-    countdownSeconds: autoProgression.countdownSeconds,
-    isSimpleCategory: autoProgression.isSimpleCategory,
-    isComplexCategoryReady: autoProgression.isComplexCategoryReady,
-    currentComponentType: currentComponent?.type
-  });
-
   if (isLoadingData) {
     return (
       <div className="space-y-4 w-full p-4 animate-pulse">
@@ -134,18 +106,6 @@ export function WizardContent() {
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
-      {/* Auto-progression Controls */}
-      <AutoProgressionControls
-        config={autoProgression.config}
-        onConfigChange={autoProgression.setConfig}
-        countdownSeconds={autoProgression.countdownSeconds}
-        shouldProgress={autoProgression.shouldProgress}
-        onCancelProgression={autoProgression.cancelProgression}
-        isSimpleCategory={autoProgression.isSimpleCategory}
-        isOptionalCategory={autoProgression.isOptionalCategory}
-        isComplexCategoryReady={autoProgression.isComplexCategoryReady}
-      />
-
       <div className="flex items-center justify-between mb-2 sm:mb-4">
         <Button
           variant="outline"

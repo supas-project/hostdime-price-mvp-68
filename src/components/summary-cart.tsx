@@ -16,6 +16,19 @@ interface SummaryCartProps {
   onPrevious: () => void;
   onNext: () => void;
   onComplete: () => void;
+  // Novos props para auto-progressão
+  autoProgressionConfig?: {
+    enabled: boolean;
+    fastMode: boolean;
+    delay: number;
+  };
+  onAutoProgressionConfigChange?: (config: any) => void;
+  countdownSeconds?: number | null;
+  shouldProgress?: boolean;
+  onCancelProgression?: () => void;
+  isSimpleCategory?: boolean;
+  isOptionalCategory?: boolean;
+  isComplexCategoryReady?: boolean;
 }
 
 export function SummaryCart({
@@ -24,7 +37,15 @@ export function SummaryCart({
   totalSteps,
   onPrevious,
   onNext,
-  onComplete
+  onComplete,
+  autoProgressionConfig,
+  onAutoProgressionConfigChange,
+  countdownSeconds,
+  shouldProgress,
+  onCancelProgression,
+  isSimpleCategory,
+  isOptionalCategory,
+  isComplexCategoryReady
 }: SummaryCartProps) {
   const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
 
@@ -34,18 +55,15 @@ export function SummaryCart({
     external: deduplicateStorageItems(storageItems.external)
   };
   
-  // Log para debug
   console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`);
   console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
   console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
   console.log(`[SummaryCart] Itens de conectividade:`, connectivityItems);
   
-  // CORREÇÃO: Log para debug dos componentes selecionados
   console.log("[SummaryCart] Todos os componentes selecionados:", selectedComponents);
   console.log("[SummaryCart] Data Center:", selectedComponents["datacenter"]);
   console.log("[SummaryCart] Contrato:", selectedComponents["contrato"]);
 
-  // Filter standard components (excluding DataCenter and Contract)
   const standardComponents = Object.values(selectedComponents).filter(
     component => {
       if (!component || component.type === "DataCenter" || component.type === "Contrato" || component.type === "Armazenamento") {
@@ -55,13 +73,11 @@ export function SummaryCart({
     }
   );
   
-  // Calcula preços excluindo DataCenter e Contract
   const standardComponentsPrice = standardComponents.reduce(
     (sum, component) => sum + (component.price || 0),
     0
   );
   
-  // CORREÇÃO: Usar os arrays deduplicados para calcular os preços
   const internalStoragePrice = uniqueStorageItems.internal
     .filter(disk => disk && disk.price > 0)
     .reduce((sum, disk) => sum + disk.price, 0);
@@ -80,7 +96,6 @@ export function SummaryCart({
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
   
-  // Verifica se há qualquer componente ou item selecionado usando os arrays deduplicados
   const hasItems = Boolean(
     Object.keys(selectedComponents).length || 
     uniqueStorageItems.internal.length || 
@@ -95,7 +110,6 @@ export function SummaryCart({
   const handleRemoveComponentWithFeedback = (type: string) => {
     console.log(`[SummaryCart] Removendo componente: ${type}`);
     
-    // CORREÇÃO CRÍTICA: Identificar corretamente os itens de conectividade para remoção adequada
     if (type.includes('network-') || type.includes('ip-')) {
       console.log(`[SummaryCart] Removendo item de conectividade: ${type}`);
     }
@@ -120,6 +134,14 @@ export function SummaryCart({
         onPrevious={onPrevious}
         onNext={onNext}
         onComplete={onComplete}
+        autoProgressionConfig={autoProgressionConfig}
+        onAutoProgressionConfigChange={onAutoProgressionConfigChange}
+        countdownSeconds={countdownSeconds}
+        shouldProgress={shouldProgress}
+        onCancelProgression={onCancelProgression}
+        isSimpleCategory={isSimpleCategory}
+        isOptionalCategory={isOptionalCategory}
+        isComplexCategoryReady={isComplexCategoryReady}
       />
       
       <CartContent 

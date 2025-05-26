@@ -1,7 +1,11 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, ClipboardCheck, Pause } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, Pause, Settings, Zap, Clock, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface CartNavigationProps {
   isFirstStep: boolean;
@@ -11,6 +15,19 @@ interface CartNavigationProps {
   onComplete: () => void;
   autoProgressionActive?: boolean;
   onPauseAutoProgression?: () => void;
+  // Novos props para controles de auto-progressão
+  autoProgressionConfig?: {
+    enabled: boolean;
+    fastMode: boolean;
+    delay: number;
+  };
+  onAutoProgressionConfigChange?: (config: any) => void;
+  countdownSeconds?: number | null;
+  shouldProgress?: boolean;
+  onCancelProgression?: () => void;
+  isSimpleCategory?: boolean;
+  isOptionalCategory?: boolean;
+  isComplexCategoryReady?: boolean;
 }
 
 export function CartNavigation({
@@ -20,9 +37,18 @@ export function CartNavigation({
   onNext,
   onComplete,
   autoProgressionActive = false,
-  onPauseAutoProgression
+  onPauseAutoProgression,
+  autoProgressionConfig,
+  onAutoProgressionConfigChange,
+  countdownSeconds,
+  shouldProgress,
+  onCancelProgression,
+  isSimpleCategory,
+  isOptionalCategory,
+  isComplexCategoryReady
 }: CartNavigationProps) {
   const [isNextAnimating, setIsNextAnimating] = useState(false);
+  const [showAutoSettings, setShowAutoSettings] = useState(false);
 
   const handleNextClick = () => {
     setIsNextAnimating(true);
@@ -31,17 +57,119 @@ export function CartNavigation({
       setIsNextAnimating(false);
     }, 300);
   };
+
+  const handleToggleEnabled = (enabled: boolean) => {
+    if (autoProgressionConfig && onAutoProgressionConfigChange) {
+      console.log(`[CartNavigation] Toggling auto-progression: ${enabled}`);
+      onAutoProgressionConfigChange({ ...autoProgressionConfig, enabled });
+    }
+  };
+
+  const handleToggleFastMode = (fastMode: boolean) => {
+    if (autoProgressionConfig && onAutoProgressionConfigChange) {
+      console.log(`[CartNavigation] Toggling fast mode: ${fastMode}`);
+      onAutoProgressionConfigChange({ ...autoProgressionConfig, fastMode });
+    }
+  };
   
   return (
     <div className="p-4 border-b border-border bg-card">
+      {/* Controles de Auto-progressão - Movidos para cá */}
+      {autoProgressionConfig && onAutoProgressionConfigChange && (
+        <div className="mb-3 space-y-2">
+          {/* Indicador de Progressão Ativa */}
+          {shouldProgress && countdownSeconds !== null && (
+            <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded text-xs">
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3 text-orange-600 animate-spin" />
+                <span className="text-orange-800 font-medium">
+                  Avançando em {countdownSeconds}s
+                </span>
+              </div>
+              {onCancelProgression && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCancelProgression}
+                  className="h-5 px-1 text-orange-600 hover:bg-orange-100"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Controles Principais */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="auto-progression-nav"
+                checked={autoProgressionConfig.enabled}
+                onCheckedChange={handleToggleEnabled}
+                className="scale-75"
+              />
+              <Label htmlFor="auto-progression-nav" className="text-xs font-medium">
+                Auto-avanço
+              </Label>
+              
+              {/* Status badges */}
+              {isSimpleCategory && autoProgressionConfig.enabled && (
+                <Badge variant="secondary" className="text-xs h-5">
+                  <Zap className="h-2 w-2 mr-1" />
+                  Ativo
+                </Badge>
+              )}
+              {isComplexCategoryReady && (
+                <Badge variant="default" className="text-xs h-5 bg-green-600">
+                  <CheckCircle className="h-2 w-2 mr-1" />
+                  Pronto
+                </Badge>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAutoSettings(!showAutoSettings)}
+              className="h-6 w-6 p-0"
+            >
+              <Settings className="h-3 w-3" />
+            </Button>
+          </div>
+
+          {/* Configurações Expandidas */}
+          {showAutoSettings && (
+            <div className="pt-2 border-t space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="fast-mode-nav" className="text-xs">
+                  Modo Rápido
+                </Label>
+                <Switch
+                  id="fast-mode-nav"
+                  checked={autoProgressionConfig.fastMode}
+                  onCheckedChange={handleToggleFastMode}
+                  disabled={!autoProgressionConfig.enabled}
+                  className="scale-75"
+                />
+              </div>
+              
+              <div className="text-xs text-muted-foreground">
+                {autoProgressionConfig.enabled ? "✅ Ativo" : "❌ Desativado"} • 
+                {autoProgressionConfig.fastMode ? " Rápido (800ms)" : ` Normal (${autoProgressionConfig.delay}ms)`}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {isLastStep ? (
         <Button className="w-full" onClick={onComplete}>
           <ClipboardCheck className="mr-2 h-4 w-4" /> Finalizar Pedido
         </Button>
       ) : (
         <div className="space-y-2">
-          {/* Indicador de Auto-progressão */}
-          {autoProgressionActive && (
+          {/* Indicador de Auto-progressão Original (mantido para compatibilidade) */}
+          {autoProgressionActive && !autoProgressionConfig && (
             <div className="flex items-center justify-center gap-2 text-xs text-orange-600 bg-orange-50 p-2 rounded">
               <span>Progressão automática ativa</span>
               {onPauseAutoProgression && (
