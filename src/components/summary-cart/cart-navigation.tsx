@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, ClipboardCheck, Pause, Settings, Zap, Clock, X, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, Pause, Settings, Zap, CheckCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -74,31 +74,9 @@ export function CartNavigation({
   
   return (
     <div className="p-4 border-b border-border bg-card">
-      {/* Controles de Auto-progressão - Movidos para cá */}
+      {/* Controles de Auto-progressão - Removida a notificação de countdown */}
       {autoProgressionConfig && onAutoProgressionConfigChange && (
         <div className="mb-3 space-y-2">
-          {/* Indicador de Progressão Ativa */}
-          {shouldProgress && countdownSeconds !== null && (
-            <div className="flex items-center justify-between p-2 bg-orange-50 border border-orange-200 rounded text-xs">
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3 text-orange-600 animate-spin" />
-                <span className="text-orange-800 font-medium">
-                  Avançando em {countdownSeconds}s
-                </span>
-              </div>
-              {onCancelProgression && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCancelProgression}
-                  className="h-5 px-1 text-orange-600 hover:bg-orange-100"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          )}
-
           {/* Controles Principais */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
