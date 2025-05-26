@@ -23,6 +23,9 @@ export interface ComponentOption {
   isHardware?: boolean;
   details?: string[];
   isHeader?: boolean; // Propriedade para cabeçalhos de seção
+  cores?: number;
+  perCore?: boolean;
+  licensesNeeded?: number;
   metadata?: {
     discount?: number;
     features?: string[];
