@@ -69,8 +69,9 @@ export function renderContractSection(
     color: COLOR.WHITE
   });
 
-  // Contract duration label
-  page.drawText("Duração", {
+  // Contract duration - Exibir a duração específica do contrato
+  const contractDuration = getContractDurationText(contractComponent);
+  page.drawText(contractDuration, {
     x: width - marginX - 100,
     y: y - 18,
     size: 10,
@@ -100,6 +101,16 @@ export function renderContractSection(
   }
 
   return { page, y: y - 110 };
+}
+
+function getContractDurationText(contractComponent: ComponentOption): string {
+  const subtype = contractComponent.subtype || "0";
+  
+  if (subtype === "0") {
+    return "Sem contrato";
+  }
+  
+  return `${subtype} meses`;
 }
 
 function getContractDescription(contractComponent: ComponentOption): string {
