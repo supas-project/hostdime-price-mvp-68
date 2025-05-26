@@ -1,66 +1,32 @@
 
-export interface RaidMetadata {
-  type: string;
-  description: string;
-  protection: string;
-  isHardware: boolean;
-  usableCapacity: number;
-  totalCapacity: number;
-  performance: {
-    read: string;
-    write: string;
-  };
-}
-
 export interface ComponentOption {
   id: string;
   name: string;
   description: string;
   price: number;
-  specs?: string[];
   type: string;
   subtype?: string;
   isHardware?: boolean;
-  details?: string[];
-  isHeader?: boolean; // Propriedade para cabeçalhos de seção
-  cores?: number;
-  perCore?: boolean;
-  licensesNeeded?: number;
   metadata?: {
+    cores?: number;
+    perCore?: boolean;
+    licensesNeeded?: number;
     discount?: number;
     features?: string[];
-    badge?: string;
-    location?: string;
-    perCore?: boolean;
-    cores?: number;
-    licensesNeeded?: number;
     quantity?: number;
     unitPrice?: number;
     unitInfo?: string;
-    raid?: RaidMetadata;
-  };
-}
-
-export interface DataCenterOption extends ComponentOption {
-  metadata: {
-    features?: string[];
-    badge?: string;
     location?: string;
+    badge?: string;
+    raid?: {
+      type: string;
+      description: string;
+      protection: string;
+      usableCapacity?: number;
+      isHardware?: boolean;
+    };
   };
-}
-
-export interface ServerComponent {
-  id: string;
-  type: string;
-  friendlyName: string;
-  description: string;
-  icon: string;
-  options: ComponentOption[];
-}
-
-export interface ServerConfiguration {
-  categoria: string;
-  componentes: ServerComponent[];
+  specs?: string[];
 }
 
 export interface StorageItems {
@@ -68,8 +34,16 @@ export interface StorageItems {
   external: ComponentOption[];
 }
 
-// Interface para melhorar a tipagem dos dados de conectividade
-export interface ConnectivityItems {
-  ports: ComponentOption[];
-  ips: ComponentOption[];
+export interface CustomService {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: string;
+  specs?: string[];
+  metadata?: {
+    quantity?: number;
+    unitPrice?: number;
+    unitInfo?: string;
+  };
 }

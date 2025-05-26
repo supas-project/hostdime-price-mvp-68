@@ -12,6 +12,11 @@ interface InternalStoragePanelProps {
   onSelectDisk?: (disk: PricedDiskOption, quantity: number) => void;
 }
 
+// Função para criar uma chave única de agrupamento baseada em tipo e capacidade
+const createDiskGroupKey = (disk: PricedDiskOption): string => {
+  return `${disk.type}-${disk.capacity}`;
+};
+
 export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps) {
   const [selectedDiskType, setSelectedDiskType] = useState<"nvme" | "ssd" | "hdd" | undefined>(undefined);
   const [selectedCapacity, setSelectedCapacity] = useState("");
@@ -143,8 +148,27 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     };
   }, []);
 
-  // Filter disks by currently selected type for display
-  const visibleDisks = selectedDisks.filter(
+  // CORREÇÃO: Função para agregar discos por tipo e capacidade
+  const getAggregatedDisks = () => {
+    const diskGroups: { [key: string]: { disk: PricedDiskOption, quantity: number } } = {};
+    
+    selectedDisks.forEach(item => {
+      const groupKey = createDiskGroupKey(item.disk);
+      
+      if (diskGroups[groupKey]) {
+        // Se já existe um grupo para este tipo/capacidade, soma a quantidade
+        diskGroups[groupKey].quantity += item.quantity;
+      } else {
+        // Senão, cria um novo grupo
+        diskGroups[groupKey] = { ...item };
+      }
+    });
+    
+    return Object.values(diskGroups);
+  };
+
+  // Filter disks by currently selected type for display - usando a versão agregada
+  const visibleDisks = getAggregatedDisks().filter(
     item => selectedDiskType ? item.disk.type === selectedDiskType : true
   );
 
@@ -174,12 +198,12 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
       {visibleDisks.length > 0 ? (
         <div className="space-y-4">
           {visibleDisks.map((item) => (
-            <div key={item.disk.id} className="animate-fade-in">
+            <div key={createDiskGroupKey(item.disk)} className="animate-fade-in">
               <SelectedDiskDisplay
                 disk={item.disk}
                 quantity={item.quantity}
-                onQuantityChange={(qty) => handleQuantityChange(item.disk.id, qty)}
-                onRemove={() => handleRemoveDisk(item.disk.id)}
+                onQuantityChange={(qty) => handleQuantityChange(item.disk, qty)}
+                onRemove={() => handleRemoveDisk(item.disk)}
               />
             </div>
           ))}
@@ -196,7 +220,7 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
           <p className="text-sm font-medium mb-2">Outros discos no seu servidor:</p>
           <div className="space-y-2">
             {Object.entries(
-              selectedDisks
+              getAggregatedDisks()
                 .filter(item => item.disk.type !== selectedDiskType)
                 .reduce((acc, curr) => {
                   const type = curr.disk.type;
@@ -229,26 +253,42 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     const disk = availableDisks.find(d => d.capacity === capacity);
     
     if (disk) {
-      // Check if this type and capacity already exist
-      const existingDisk = selectedDisks.find(
-        item => item.disk.type === disk.type && item.disk.capacity === capacity
+      // CORREÇÃO: Verificar se já existe um disco com o mesmo tipo e capacidade
+      const groupKey = createDiskGroupKey(disk);
+      const existingDiskIndex = selectedDisks.findIndex(
+        item => createDiskGroupKey(item.disk) === groupKey
       );
 
-      if (existingDisk) {
-        toast.error("Este tipo e capacidade de disco já está selecionado");
-        return;
-      }
-
-      const newDisk = { disk, quantity: 1 };
-      setSelectedDisks(prev => [...prev, newDisk]);
-      
-      if (onSelectDisk) {
-        onSelectDisk(disk, 1);
+      if (existingDiskIndex >= 0) {
+        // Se já existe, incrementa a quantidade
+        setSelectedDisks(prev => {
+          const updated = [...prev];
+          updated[existingDiskIndex] = {
+            ...updated[existingDiskIndex],
+            quantity: updated[existingDiskIndex].quantity + 1
+          };
+          return updated;
+        });
+        
+        if (onSelectDisk) {
+          onSelectDisk(disk, selectedDisks[existingDiskIndex].quantity + 1);
+        }
+        
+        toast.success("Quantidade do disco incrementada");
+      } else {
+        // Se não existe, adiciona novo
+        const newDisk = { disk, quantity: 1 };
+        setSelectedDisks(prev => [...prev, newDisk]);
+        
+        if (onSelectDisk) {
+          onSelectDisk(disk, 1);
+        }
+        
+        toast.success("Disco adicionado com sucesso");
       }
 
       // Reset capacity but keep disk type for additional selections
       setSelectedCapacity("");
-      toast.success("Disco adicionado com sucesso");
     }
   }
 
@@ -265,9 +305,11 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     }
   }
 
-  function handleQuantityChange(diskId: string, newQuantity: number) {
+  function handleQuantityChange(disk: PricedDiskOption, newQuantity: number) {
+    const groupKey = createDiskGroupKey(disk);
+    
     setSelectedDisks(prev => prev.map(item => {
-      if (item.disk.id === diskId) {
+      if (createDiskGroupKey(item.disk) === groupKey) {
         if (onSelectDisk) {
           onSelectDisk(item.disk, newQuantity);
         }
@@ -277,17 +319,18 @@ export function InternalStoragePanel({ onSelectDisk }: InternalStoragePanelProps
     }));
   }
 
-  function handleRemoveDisk(diskId: string) {
-    setSelectedDisks(prev => prev.filter(item => item.disk.id !== diskId));
+  function handleRemoveDisk(disk: PricedDiskOption) {
+    const groupKey = createDiskGroupKey(disk);
+    
+    setSelectedDisks(prev => prev.filter(item => createDiskGroupKey(item.disk) !== groupKey));
+    
     if (onSelectDisk) {
-      const diskToRemove = selectedDisks.find(item => item.disk.id === diskId);
-      if (diskToRemove) {
-        onSelectDisk({
-          ...diskToRemove.disk,
-          price: 0
-        }, 0);
-      }
+      onSelectDisk({
+        ...disk,
+        price: 0
+      }, 0);
     }
+    
     toast.success("Disco removido com sucesso");
   }
 }
