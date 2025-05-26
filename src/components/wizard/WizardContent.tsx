@@ -33,15 +33,13 @@ export function WizardContent() {
     categoriesLoaded
   } = useWizard();
 
-  // Adicionar sincronização com a tabela de preços
+  console.log(`[WizardContent] Current step: ${currentStep}, Selected components:`, selectedComponents);
+
   const refreshData = async () => {
     try {
       setIsLoadingData(true);
-      // First clean up duplicates
       await cleanupDuplicateCategories();
-      // Then refresh data
       await PriceService.forceRefreshFromLatestSource();
-      // Initialize server categories including connectivity ones
       await initializeServerCategories();
       
       toast.success("Dados sincronizados com sucesso!", {
@@ -57,7 +55,6 @@ export function WizardContent() {
     }
   };
 
-  // Carregar dados ao iniciar o componente
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -81,13 +78,10 @@ export function WizardContent() {
       return selectedComponents["storage_internal"] || selectedComponents["storage_external"];
     }
     
-    // Find the component using the normalized type
     for (const key of Object.keys(selectedComponents)) {
       if (normalizeComponentType(key) === normalizedType) {
         const selectedOption = selectedComponents[key];
         
-        // If we have options in this component and a selected option,
-        // try to find its matching representation in the options list
         if (component.options.length > 0 && selectedOption) {
           const matchingOption = findMatchingComponent(selectedOption, component.options);
           return matchingOption || selectedOption;
@@ -102,16 +96,27 @@ export function WizardContent() {
 
   const currentComponent = serverData.componentes[currentStep];
 
-  // Auto-progression integration
+  // Auto-progression integration com logs detalhados
   const autoProgression = useAutoProgression({
     currentStep,
     totalSteps: serverData.componentes.length,
     selectedComponents,
     connectivityItems,
     storageItems,
-    onNextStep: () => setCurrentStep(Math.min(serverData.componentes.length - 1, currentStep + 1)),
+    onNextStep: () => {
+      console.log(`[WizardContent] Avançando do step ${currentStep} para ${currentStep + 1}`);
+      setCurrentStep(Math.min(serverData.componentes.length - 1, currentStep + 1));
+    },
     componentType: currentComponent?.type || "",
     isStepComplete
+  });
+
+  console.log(`[WizardContent] Auto-progression state:`, {
+    enabled: autoProgression.config.enabled,
+    shouldProgress: autoProgression.shouldProgress,
+    countdownSeconds: autoProgression.countdownSeconds,
+    isSimpleCategory: autoProgression.isSimpleCategory,
+    currentComponentType: currentComponent?.type
   });
 
   if (isLoadingData) {

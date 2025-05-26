@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Zap, Clock, X } from "lucide-react";
+import { Settings, Zap, Clock, X, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface AutoProgressionControlsProps {
@@ -35,22 +35,24 @@ export function AutoProgressionControls({
   const [showSettings, setShowSettings] = React.useState(false);
 
   const handleToggleEnabled = (enabled: boolean) => {
+    console.log(`[AutoProgressionControls] Toggleing auto-progression: ${enabled}`);
     onConfigChange({ ...config, enabled });
   };
 
   const handleToggleFastMode = (fastMode: boolean) => {
+    console.log(`[AutoProgressionControls] Toggleing fast mode: ${fastMode}`);
     onConfigChange({ ...config, fastMode });
   };
 
   return (
     <div className="space-y-3">
-      {/* Indicador de Progressão */}
-      {shouldProgress && countdownSeconds && (
-        <Card className="border-orange-200 bg-orange-50">
+      {/* Indicador de Progressão Ativa */}
+      {shouldProgress && countdownSeconds !== null && (
+        <Card className="border-orange-200 bg-orange-50 animate-pulse">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-orange-600" />
+                <Clock className="h-4 w-4 text-orange-600 animate-spin" />
                 <span className="text-sm font-medium text-orange-800">
                   Avançando automaticamente em {countdownSeconds}s
                 </span>
@@ -70,75 +72,81 @@ export function AutoProgressionControls({
       )}
 
       {/* Status da Categoria */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm">
         {isSimpleCategory && (
           <Badge variant="secondary" className="text-xs">
             <Zap className="h-3 w-3 mr-1" />
-            Auto-avanço
+            Auto-avanço ativo
           </Badge>
         )}
         {isOptionalCategory && (
           <Badge variant="outline" className="text-xs">
-            Opcional
+            Categoria opcional
           </Badge>
         )}
         {isComplexCategoryReady && (
           <Badge variant="default" className="text-xs bg-green-600">
+            <CheckCircle className="h-3 w-3 mr-1" />
             Pronto para avançar
           </Badge>
         )}
       </div>
 
       {/* Controles de Configuração */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="auto-progression"
-            checked={config.enabled}
-            onCheckedChange={handleToggleEnabled}
-          />
-          <Label htmlFor="auto-progression" className="text-sm">
-            Progressão automática
-          </Label>
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Configurações Avançadas */}
-      {showSettings && (
-        <Card className="border-muted">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Configurações Avançadas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="fast-mode" className="text-sm">
-                Modo Rápido
-              </Label>
+      <Card className="border-muted">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
               <Switch
-                id="fast-mode"
-                checked={config.fastMode}
-                onCheckedChange={handleToggleFastMode}
-                disabled={!config.enabled}
+                id="auto-progression"
+                checked={config.enabled}
+                onCheckedChange={handleToggleEnabled}
               />
+              <Label htmlFor="auto-progression" className="text-sm font-medium">
+                Progressão automática
+              </Label>
             </div>
             
-            <div className="text-xs text-muted-foreground">
-              <p>• Modo Normal: {config.delay}ms de delay</p>
-              <p>• Modo Rápido: 500ms de delay</p>
-              <p>• Categorias opcionais: 3s sem interação</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Status atual */}
+          <div className="text-xs text-muted-foreground">
+            {config.enabled ? "✅ Ativo" : "❌ Desativado"} • 
+            {config.fastMode ? " Modo Rápido (800ms)" : ` Modo Normal (${config.delay}ms)`}
+          </div>
+
+          {/* Configurações Avançadas */}
+          {showSettings && (
+            <div className="mt-4 pt-3 border-t space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="fast-mode" className="text-sm">
+                  Modo Rápido
+                </Label>
+                <Switch
+                  id="fast-mode"
+                  checked={config.fastMode}
+                  onCheckedChange={handleToggleFastMode}
+                  disabled={!config.enabled}
+                />
+              </div>
+              
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• <strong>Categorias simples:</strong> Avançam automaticamente após seleção</p>
+                <p>• <strong>Categorias complexas:</strong> Avançam quando critérios são atendidos</p>
+                <p>• <strong>Categorias opcionais:</strong> 3s para interação, depois avançam</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
