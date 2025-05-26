@@ -60,11 +60,10 @@ export function MemoryPanel({
     }
   }, [memoryOptions, propSelectedOption]);
 
-  // Find the exact option that matches the selected capacity
-  // This ensures we use the SAME prices as the quick selection
+  // GARANTIR que usamos EXATAMENTE os mesmos preços da seleção rápida
   useEffect(() => {
     if (memoryOptions.length > 0) {
-      // Find the EXACT matching option based on capacity
+      // Buscar a opção EXATA que corresponde à capacidade selecionada
       const exactMatch = memoryOptions.find(option => {
         const optionCapacityMatch = option.name.match(/(\d+)GB/i);
         if (optionCapacityMatch) {
@@ -75,25 +74,26 @@ export function MemoryPanel({
       });
 
       if (exactMatch) {
-        // Use the EXACT option from quick selection - same price, same everything
+        // Usar a opção EXATA da seleção rápida - mesmo preço, tudo igual
         setCurrentSelectedOption(exactMatch);
         setSelectedType(exactMatch.id);
         console.log("[MemoryPanel] Using EXACT match from quick selection:", exactMatch);
       } else {
-        // If no exact match exists, calculate price based on available options
-        // Find the closest option to use as reference
-        const referenceOption = memoryOptions[0]; // Use first option as reference
+        // Se não existe uma opção exata, manter a funcionalidade existente
+        // mas garantir que o preço seja consistente
+        const referenceOption = memoryOptions[0];
         if (referenceOption) {
+          // Usar a primeira opção como referência para calcular preço por GB
           const refCapacityMatch = referenceOption.name.match(/(\d+)GB/i);
           const refCapacity = refCapacityMatch ? parseInt(refCapacityMatch[1]) : 64;
           const pricePerGB = referenceOption.price / refCapacity;
           
-          // Create a synthetic option with calculated price
+          // Criar uma opção sintética com preço calculado baseado na primeira opção
           const syntheticOption: ComponentOption = {
             id: `memory-${capacity}gb`,
             name: `${capacity}GB RAM`,
             description: referenceOption.description,
-            price: pricePerGB * capacity, // Calculate exact price based on capacity
+            price: Math.round(pricePerGB * capacity * 100) / 100, // Arredondar para 2 casas decimais
             type: referenceOption.type,
             isHardware: true,
             specs: referenceOption.specs
