@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import { ComponentOption } from "@/types/component";
 import { PriceService } from "@/services/price-service";
 import { memoryComponents } from "@/data/memory-components";
+import { cpuComponents } from "@/data/cpu-components";
+import { osComponents } from "@/data/os-components";
 
 export function useComponentOptions(componentType: string) {
   const [options, setOptions] = useState<ComponentOption[]>([]);
@@ -58,11 +60,14 @@ export function useComponentOptions(componentType: string) {
               price: item.price,
               type: 'processador',
               isHardware: true,
+              metadata: {
+                cores: item.metadata?.cores || 1
+              },
               specs: item.specs || []
             }));
           } else {
-            console.log('[useComponentOptions] Processador: Nenhum item encontrado na tabela de preços');
-            fetchedOptions = [];
+            console.log('[useComponentOptions] Processador: Usando dados estáticos como fallback');
+            fetchedOptions = cpuComponents.options;
           }
           break;
           
@@ -177,12 +182,14 @@ export function useComponentOptions(componentType: string) {
               description: item.description || '',
               price: item.price,
               type: 'os',
+              subtype: item.subtype,
               isHardware: false,
+              metadata: item.metadata,
               specs: item.specs || []
             }));
           } else {
-            console.log('[useComponentOptions] Sistema Operacional: Nenhum item encontrado na tabela de preços');
-            fetchedOptions = [];
+            console.log('[useComponentOptions] Sistema Operacional: Usando dados estáticos como fallback');
+            fetchedOptions = osComponents.options;
           }
           break;
           

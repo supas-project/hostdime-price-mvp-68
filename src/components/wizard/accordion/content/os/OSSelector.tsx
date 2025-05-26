@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { useWizard } from "@/contexts/WizardContext";
 import { findMatchingComponent } from "@/utils/component-matching";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface OSSelectorProps {
   options: ComponentOption[];
@@ -19,9 +19,8 @@ export function OSSelector({
   onSelectOption
 }: OSSelectorProps) {
   const { selectedComponents } = useWizard();
-  const { toast } = useToast();
   const processorInfo = selectedComponents["processador"];
-  const coreCount = processorInfo?.metadata?.cores || 1;
+  const coreCount = processorInfo?.metadata?.cores || 0;
   
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
   
@@ -30,6 +29,13 @@ export function OSSelector({
     console.log("OSSelector received options:", options);
     console.log("Current processor:", processorInfo);
     console.log("Core count:", coreCount);
+    
+    if (processorInfo?.metadata?.cores) {
+      console.log(`[OSSelector] Processador detectado com ${coreCount} cores`);
+    } else {
+      console.log("[OSSelector] Nenhum processador selecionado ou cores não definidos");
+    }
+    
     if (options.length === 0) {
       console.info("No operating system options available in OSSelector");
     } else {
@@ -63,21 +69,34 @@ export function OSSelector({
     const windowsOptions = options
       .filter(opt => opt.subtype === "windows")
       .map(opt => {
-        // NOVA LÓGICA: Calcular preço baseado nos cores para Windows Server
-        if (opt.metadata?.perCore && processorInfo?.metadata?.cores) {
+        // LÓGICA DE CÁLCULO: Calcular preço baseado nos cores para Windows Server
+        if (opt.metadata?.perCore && coreCount > 0) {
           const licensesNeeded = Math.ceil(coreCount / 2); // Windows Server licencia a cada 2 cores
-          const calculatedPrice = opt.price * licensesNeeded;
+          const basePrice = opt.price; // Preço base por licença
+          const calculatedPrice = basePrice * licensesNeeded;
           
-          console.log(`[OSSelector] Calculando preço Windows Server: ${opt.price} x ${licensesNeeded} licenças = ${calculatedPrice}`);
+          console.log(`[OSSelector] Calculando preço Windows Server:`);
+          console.log(`  - Produto: ${opt.name}`);
+          console.log(`  - Preço base por licença: R$ ${basePrice}`);
+          console.log(`  - Cores do processador: ${coreCount}`);
+          console.log(`  - Licenças necessárias: ${licensesNeeded}`);
+          console.log(`  - Preço total calculado: R$ ${calculatedPrice}`);
           
           return {
             ...opt,
             price: calculatedPrice,
             description: `${opt.description} (${licensesNeeded} licenças para ${coreCount} cores)`,
+            metadata: {
+              ...opt.metadata,
+              unitPrice: basePrice,
+              cores: coreCount,
+              licensesNeeded: licensesNeeded
+            },
             specs: [
               `Licenças necessárias: ${licensesNeeded} (a cada 2 cores)`,
               `Cores do processador: ${coreCount}`,
-              `Preço por licença: R$ ${opt.price.toFixed(2)}`,
+              `Preço por licença: R$ ${basePrice.toFixed(2)}`,
+              `Preço total: R$ ${calculatedPrice.toFixed(2)}`,
               ...(opt.specs?.slice(1) || [])
             ]
           };
@@ -93,7 +112,7 @@ export function OSSelector({
       {
         group: "Windows",
         options: windowsOptions,
-        tooltip: processorInfo?.metadata?.cores 
+        tooltip: coreCount > 0 
           ? `Licenças Windows são cobradas a cada 2 cores. Seu processador tem ${coreCount} cores, necessitando ${Math.ceil(coreCount / 2)} licenças.`
           : `Licenças Windows são cobradas a cada 2 cores. Selecione um processador primeiro para cálculo automático.`
       },
@@ -110,7 +129,7 @@ export function OSSelector({
         options: unixOptions
       }
     ].filter(group => group.options.length > 0);
-  }, [options, coreCount, processorInfo]);
+  }, [options, coreCount]);
 
   const handleValueChange = (value: string) => {
     setLocalSelectedId(value);
@@ -119,13 +138,19 @@ export function OSSelector({
       .find(opt => opt.id === value);
     
     if (option) {
+      console.log(`[OSSelector] Selecionando opção:`, option);
+      
       // Se for Windows Server com licenciamento por core, notificar sobre o cálculo
-      if (option.metadata?.perCore && processorInfo?.metadata?.cores) {
+      if (option.metadata?.perCore && coreCount > 0) {
         const licensesNeeded = Math.ceil(coreCount / 2);
+        const unitPrice = option.metadata?.unitPrice || option.price;
+        
         toast.success("Licenciamento Windows Server Calculado", {
-          description: `Calculado automaticamente: ${licensesNeeded} licenças para ${coreCount} cores (R$ ${option.price.toFixed(2)})`,
+          description: `${licensesNeeded} licenças para ${coreCount} cores (R$ ${option.price.toFixed(2)} total)`,
           duration: 4000,
         });
+        
+        console.log(`[OSSelector] Notificação exibida para licenciamento Windows Server`);
       }
       
       onSelectOption(option);
@@ -134,7 +159,7 @@ export function OSSelector({
 
   // Mostrar aviso se não há processador selecionado e há opções Windows
   const hasWindowsOptions = options.some(opt => opt.subtype === "windows" && opt.metadata?.perCore);
-  const showProcessorWarning = hasWindowsOptions && !processorInfo?.metadata?.cores;
+  const showProcessorWarning = hasWindowsOptions && coreCount === 0;
 
   return (
     <div className="flex flex-col gap-4">

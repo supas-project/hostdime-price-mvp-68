@@ -25,6 +25,38 @@ export const osComponents: ServerComponent = {
       ]
     },
     {
+      id: "os-1b",
+      type: "SistemaOperacional",
+      name: "Windows Server 2019 Standard",
+      price: 120.00,
+      description: "Sistema operacional Windows Server 2019 com suporte completo",
+      subtype: "windows",
+      metadata: {
+        perCore: true
+      },
+      specs: [
+        "Licença mensal por 2 cores",
+        "Suporte incluído",
+        "Atualizações automáticas"
+      ]
+    },
+    {
+      id: "os-1c",
+      type: "SistemaOperacional",
+      name: "Windows Server 2016 Standard",
+      price: 100.00,
+      description: "Sistema operacional Windows Server 2016 com suporte completo",
+      subtype: "windows",
+      metadata: {
+        perCore: true
+      },
+      specs: [
+        "Licença mensal por 2 cores",
+        "Suporte incluído",
+        "Atualizações automáticas"
+      ]
+    },
+    {
       id: "os-2",
       type: "SistemaOperacional",
       name: "Ubuntu Server 22.04 LTS",
