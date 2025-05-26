@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,11 @@ interface SectionHeader {
   price: number;
   isHeader: boolean;
 }
+
+// Type guard to check if an option is a section header
+const isSectionHeader = (option: ComponentOption | SectionHeader): option is SectionHeader => {
+  return 'isHeader' in option && option.isHeader === true;
+};
 
 export function ConnectivityOptions({ 
   options, 
@@ -144,7 +150,7 @@ export function ConnectivityOptions({
                 </SelectTrigger>
                 <SelectContent>
                   {organizedOptions.map((option) => (
-                    'isHeader' in option ? (
+                    isSectionHeader(option) ? (
                       <SelectItem key={option.id} value={option.id} disabled className="text-xs font-medium text-muted-foreground">
                         {option.name}
                       </SelectItem>
@@ -165,7 +171,7 @@ export function ConnectivityOptions({
                 variant="outline"
                 size="icon" 
                 onClick={handleAddItem}
-                disabled={!selectedOption || (selectedOption && organizedOptions.find(opt => opt.id === selectedOption)?.isHeader === true)}
+                disabled={!selectedOption || (selectedOption && organizedOptions.find(opt => opt.id === selectedOption && isSectionHeader(opt)))}
               >
                 <Plus className="h-4 w-4" />
               </Button>

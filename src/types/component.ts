@@ -1,5 +1,4 @@
 
-
 export interface ComponentOption {
   id: string;
   name: string;
@@ -8,7 +7,7 @@ export interface ComponentOption {
   type: string;
   subtype?: string;
   isHardware?: boolean;
-  details?: string[]; // Added missing details property
+  details?: string[];
   metadata?: {
     cores?: number;
     perCore?: boolean;
@@ -50,7 +49,6 @@ export interface CustomService {
   };
 }
 
-// Added missing ServerComponent interface
 export interface ServerComponent {
   id: string;
   type: string;
@@ -60,9 +58,7 @@ export interface ServerComponent {
   options: ComponentOption[];
 }
 
-// Added missing ServerConfiguration interface
 export interface ServerConfiguration {
   categoria: string;
   componentes: ServerComponent[];
 }
-
