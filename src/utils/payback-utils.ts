@@ -29,3 +29,10 @@ export function getPayBackValue(
   
   return PAYBACK_FACTORS[duration as keyof typeof PAYBACK_FACTORS];
 }
+
+/**
+ * Formata o valor PayBack para exibição
+ */
+export function formatPayBack(value: number): string {
+  return `${value}x`;
+}

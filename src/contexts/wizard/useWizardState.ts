@@ -1,402 +1,178 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ComponentOption } from "@/types/component";
-import { serverData } from "@/data/server-components";
-import { syncDiskDataWithPriceService, initExternalStorageData, syncConnectivityData } from "@/services/component-sync";
-import { ConnectivityItemsMap } from "@/types/wizard";
-import { normalizeComponentType } from "@/hooks/use-component-selection";
+import { StorageItems } from "./types";
 
 export function useWizardState() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedComponents, setSelectedComponents] = useState<{
-    [key: string]: ComponentOption;
-  }>({});
-  const [showFinalSummary, setShowFinalSummary] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<boolean[]>(
-    new Array(serverData.componentes.length).fill(false)
-  );
-  const [beginnerMode, setBeginnerMode] = useState(true);
-  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
-  
-  const [storageItems, setStorageItems] = useState<{
-    internal: ComponentOption[];
-    external: ComponentOption[];
-  }>({
+  const [selectedComponents, setSelectedComponents] = useState<{ [key: string]: ComponentOption }>({});
+  const [selectedContractOption, setSelectedContractOption] = useState<ComponentOption | null>(null);
+  const [storageItems, setStorageItems] = useState<StorageItems>({
     internal: [],
     external: []
   });
-  
-  const [connectivityItems, setConnectivityItems] = useState<ConnectivityItemsMap>({});
+  const [connectivityItems, setConnectivityItems] = useState<{ [key: string]: { option: ComponentOption; quantity: number } }>({});
   const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
+  const [beginnerMode, setBeginnerMode] = useState(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
-  // CORREÇÃO: Log para debug do estado inicial
-  useEffect(() => {
-    console.log("[useWizardState] Estado inicial de componentes selecionados:", selectedComponents);
-  }, []);
+  const totalSteps = 8; // Adjust based on your wizard steps
 
-  // Função para selecionar um componente
-  const selectComponent = useCallback((
-    componentType: string,
-    option: ComponentOption,
-    quantity: number
-  ) => {
-    // CORREÇÃO: Log de debug para a seleção de componentes
-    console.log(`[selectComponent] Selecionando componente tipo: ${componentType}, opção:`, option);
-    
-    // CORREÇÃO: Garantir que estamos usando a chave correta para salvar no estado
-    let normalizedType = componentType.toLowerCase();
-    
-    // Ajustes específicos para DataCenter e Contrato
-    if (normalizedType === "datacenter") {
-      normalizedType = "datacenter";
-    } else if (normalizedType === "contrato") {
-      normalizedType = "contrato";
-    }
-    
-    // Atualizar o estado com a nova seleção
-    setSelectedComponents((prevComponents) => {
-      const newComponents = {
-        ...prevComponents,
-        [normalizedType]: option,
-      };
-      
-      console.log(`[selectComponent] Componentes atualizados:`, newComponents);
-      return newComponents;
-    });
-  }, []);
-
-  // Wrapper para selectComponent com quantidade padrão 1
   const handleSelectOption = useCallback((option: ComponentOption) => {
-    // CORREÇÃO: Log para debug
-    console.log(`[handleSelectOption] Selecionando opção:`, option);
+    console.log(`[WizardState] Selecting option: ${option.name} of type: ${option.type}`);
     
-    // Garantir que estamos usando o tipo correto
-    const normalizedType = option.type.toLowerCase();
-    selectComponent(normalizedType, option, 1);
-  }, [selectComponent]);
-
-  // Função para selecionar itens de armazenamento
-  const handleSelectStorageItem = useCallback((option: ComponentOption, storageType: 'internal' | 'external') => {
-    const key = storageType === 'internal' ? 'storage_internal' : 'storage_external';
-    setStorageItems(prev => {
-      const updatedItems = { ...prev };
-      if (storageType === 'internal') {
-        updatedItems.internal = [...updatedItems.internal, option];
-      } else {
-        updatedItems.external = [...updatedItems.external, option];
-      }
-      return updatedItems;
-    });
-    selectComponent(key, option, 1);
-  }, [selectComponent]);
-
-  // Função para atualizar quantidade de componentes
-  const updateComponentQuantity = useCallback((
-    componentType: string,
-    optionId: string,
-    quantity: number
-  ) => {
-    // Implementação existente (mantida vazia neste exemplo)
+    const componentType = option.type.toLowerCase();
+    
+    // Special handling for contract options
+    if (componentType === "contrato" || componentType === "contract") {
+      console.log(`[WizardState] Setting contract option:`, option);
+      setSelectedContractOption(option);
+      setSelectedComponents(prev => ({
+        ...prev,
+        ["contrato"]: option
+      }));
+      return;
+    }
+    
+    setSelectedComponents(prev => ({
+      ...prev,
+      [componentType]: option
+    }));
   }, []);
 
-  // CORREÇÃO PRINCIPAL: Reimplementação completa do handleRemoveComponent para garantir remoção robusta
-  const handleRemoveComponent = useCallback((componentId: string, componentType?: string) => {
-    console.log(`[handleRemoveComponent] Removendo componente: ID=${componentId}, Tipo=${componentType || 'não especificado'}`);
+  const handleSelectStorageItem = useCallback((storageOption: ComponentOption, storageType: 'internal' | 'external') => {
+    console.log(`[WizardState] Adding ${storageType} storage:`, storageOption);
     
-    // NOVA CORREÇÃO: Verificar se é um item de conectividade para remover corretamente da lista
-    if (componentId.startsWith('network-') || componentId.startsWith('ip-')) {
-      console.log(`[handleRemoveComponent] Removendo item de conectividade: ${componentId}`);
+    setStorageItems(prev => ({
+      ...prev,
+      [storageType]: [...prev[storageType], storageOption]
+    }));
+  }, []);
+
+  const handleRemoveComponent = useCallback((id: string, type?: string) => {
+    console.log(`[WizardState] Removing component: ${id}, type: ${type}`);
+    
+    // Handle storage removal
+    if (id.includes('internal-storage') || id.includes('external-storage')) {
+      const storageType = id.includes('internal') ? 'internal' : 'external';
+      const index = parseInt(id.split('-').pop() || '0');
       
+      setStorageItems(prev => ({
+        ...prev,
+        [storageType]: prev[storageType].filter((_, i) => i !== index)
+      }));
+      return;
+    }
+    
+    // Handle connectivity removal
+    if (id.includes('network-') || id.includes('ip-')) {
       setConnectivityItems(prev => {
-        const newItems = { ...prev };
-        if (newItems[componentId]) {
-          delete newItems[componentId];
-          console.log(`[handleRemoveComponent] Item de conectividade removido: ${componentId}`);
-        } else {
-          // Busca avançada por ID parcial
-          const keyToRemove = Object.keys(newItems).find(k => 
-            k.includes(componentId) || componentId.includes(k)
-          );
-          
-          if (keyToRemove) {
-            delete newItems[keyToRemove];
-            console.log(`[handleRemoveComponent] Item de conectividade removido via busca parcial: ${keyToRemove}`);
-          }
-        }
-        return newItems;
+        const updated = { ...prev };
+        delete updated[id];
+        return updated;
       });
-      
-      return; // Termina aqui para itens de conectividade
+      return;
     }
     
-    // Verificar se o componentId é um disco interno específico
-    if (componentId.startsWith('internal-disk-')) {
-      console.log(`[handleRemoveComponent] Removendo disco interno: ${componentId}`);
-      
-      // CORREÇÃO CRÍTICA: Corrigir imutabilidade para garantir atualização de UI
-      setStorageItems(prev => {
-        // Encontra e remove o disco pelo ID exato
-        const updatedInternal = prev.internal.filter(disk => disk.id !== componentId);
-        console.log(`[handleRemoveComponent] Discos antes: ${prev.internal.length}, depois: ${updatedInternal.length}`);
-        
-        // Se nenhum disco foi removido, tentar buscar por substrings ou padrões no ID
-        if (updatedInternal.length === prev.internal.length) {
-          console.log(`[handleRemoveComponent] Tentando remoção alternativa para: ${componentId}`);
-          
-          // Tenta encontrar correspondências parciais
-          const diskToRemove = prev.internal.find(disk => 
-            disk.id.includes(componentId) || componentId.includes(disk.id)
-          );
-          
-          if (diskToRemove) {
-            console.log(`[handleRemoveComponent] Encontrado disco por correspondência parcial: ${diskToRemove.id}`);
-            return {
-              ...prev,
-              internal: prev.internal.filter(disk => disk.id !== diskToRemove.id)
-            };
-          }
-        }
-        
-        return {
-          ...prev,
-          internal: updatedInternal
-        };
-      });
-      
-      // CORREÇÃO: Também atualizar o selectedComponents para manter consistência
+    // Handle custom services removal
+    if (customServices.find(service => service.id === id)) {
+      removeCustomService(id);
+      return;
+    }
+    
+    // Handle contract removal
+    if (type === "contrato" || type === "contract") {
+      setSelectedContractOption(null);
       setSelectedComponents(prev => {
-        const newComponents = { ...prev };
-        if (newComponents['storage_internal'] && 
-            newComponents['storage_internal'].id === componentId) {
-          delete newComponents['storage_internal'];
-        }
-        return newComponents;
+        const updated = { ...prev };
+        delete updated["contrato"];
+        return updated;
       });
-      
-      return; // Termina aqui se for um disco interno
+      return;
     }
     
-    // Verificar se o componentId é um disco externo específico
-    if (componentId.startsWith('external-storage-')) {
-      console.log(`[handleRemoveComponent] Removendo storage externo: ${componentId}`);
-      
-      setStorageItems(prev => {
-        const updatedExternal = prev.external.filter(storage => storage.id !== componentId);
-        return {
-          ...prev,
-          external: updatedExternal
-        };
-      });
-      
-      // Atualizar selectedComponents para manter consistência
-      setSelectedComponents(prev => {
-        const newComponents = { ...prev };
-        if (newComponents['storage_external'] && 
-            newComponents['storage_external'].id === componentId) {
-          delete newComponents['storage_external'];
-        }
-        return newComponents;
-      });
-      
-      return; // Termina aqui se for um storage externo
-    }
-    
-    // Caso seja um componente regular com tipo especificado
-    if (componentType) {
-      console.log(`[handleRemoveComponent] Removendo componente regular: ${componentType}, ID: ${componentId}`);
-      
-      // Normaliza o tipo para consistência
-      const normalizedType = componentType.toLowerCase();
-      
-      setSelectedComponents(prev => {
-        const newComponents = { ...prev };
-        
-        // Se o componente existir e tiver o ID especificado, remover
-        if (newComponents[normalizedType] && 
-            newComponents[normalizedType].id === componentId) {
-          console.log(`[handleRemoveComponent] Removido componente: ${normalizedType}`);
-          delete newComponents[normalizedType];
-        } 
-        // Se não encontrar pelo tipo+id, tentar apenas pelo ID
-        else if (Object.values(newComponents).some(comp => comp.id === componentId)) {
-          // Encontrar a chave do componente pelo ID
-          const keyToRemove = Object.keys(newComponents).find(
-            key => newComponents[key].id === componentId
-          );
-          
-          if (keyToRemove) {
-            console.log(`[handleRemoveComponent] Removido componente pela chave: ${keyToRemove}`);
-            delete newComponents[keyToRemove];
-          }
-        }
-        
-        return newComponents;
-      });
-      
-      return; // Termina aqui se for um componente regular
-    }
-    
-    // Se chegarmos aqui, tenta remover usando o ID como tipo (último recurso)
-    console.log(`[handleRemoveComponent] Tentando remoção pelo ID como tipo: ${componentId}`);
-    
+    // Handle standard component removal
     setSelectedComponents(prev => {
-      const newComponents = { ...prev };
-      
-      // Caso 1: ID é uma chave direta
-      if (newComponents[componentId]) {
-        console.log(`[handleRemoveComponent] Removido componente com ID como chave: ${componentId}`);
-        delete newComponents[componentId];
-        return newComponents;
+      const updated = { ...prev };
+      if (type) {
+        delete updated[type.toLowerCase()];
+      } else {
+        // Try to find by ID if type not provided
+        Object.keys(updated).forEach(key => {
+          if (updated[key]?.id === id) {
+            delete updated[key];
+          }
+        });
       }
-      
-      // Caso 2: Procurar componente com este ID
-      const keyWithId = Object.keys(newComponents).find(
-        key => newComponents[key].id === componentId
-      );
-      
-      if (keyWithId) {
-        console.log(`[handleRemoveComponent] Encontrado e removido pelo ID: ${componentId}, chave: ${keyWithId}`);
-        delete newComponents[keyWithId];
-      }
-      
-      return newComponents;
+      return updated;
     });
-  }, [setStorageItems, setSelectedComponents, setConnectivityItems]);
+  }, [customServices]);
 
-  // Verifica se um componente está selecionado
-  const isComponentSelected = useCallback((componentType: string, optionId: string) => {
-    const component = selectedComponents[componentType];
-    return component ? component.id === optionId : false;
-  }, [selectedComponents]);
-
-  // Retorna a quantidade de um componente
-  const getComponentQuantity = useCallback((componentType: string, optionId: string) => {
-    const component = selectedComponents[componentType];
-    return component ? 1 : 0;
-  }, [selectedComponents]);
-
-  // CORREÇÃO: Verifica se um passo está completo - função melhorada
-  const isStepComplete = useCallback((stepIndex: number) => {
-    const component = serverData.componentes[stepIndex];
-    if (!component) return false;
-
-    const normalizedType = normalizeComponentType(component.type);
-    
-    console.log(`[isStepComplete] Verificando etapa ${stepIndex}, tipo: ${component.type}, normalizado: ${normalizedType}`);
-    console.log(`[isStepComplete] Componentes selecionados:`, selectedComponents);
-
-    // Serviços Personalizados é o único passo opcional
-    if (normalizedType === "servicospersonalizados") {
-      return true; // Sempre considerado completo, já que é opcional
-    }
-    
-    // Para categorias simples, verificar se há um componente selecionado
-    if (["datacenter", "contrato", "processador", "memoria", "sistemaoperacional"].includes(normalizedType)) {
-      const hasSelection = Object.keys(selectedComponents).some(key => {
-        const keyNormalized = normalizeComponentType(key);
-        const matches = keyNormalized === normalizedType;
-        console.log(`[isStepComplete] Comparando chave '${key}' (${keyNormalized}) com tipo '${normalizedType}': ${matches}`);
-        return matches;
-      });
-      console.log(`[isStepComplete] Categoria '${normalizedType}' tem seleção: ${hasSelection}`);
-      return hasSelection;
-    }
-    
-    // Para conectividade, verificar porta + IP
-    if (normalizedType === "conectividade") {
-      const hasPort = Object.values(connectivityItems).some(
-        item => item.option.subtype === "porta"
-      );
-      const hasIp = Object.values(connectivityItems).some(
-        item => item.option.subtype === "ip"
-      );
-      const complete = hasPort && hasIp;
-      console.log(`[isStepComplete] Conectividade completa: ${complete}, porta: ${hasPort}, IP: ${hasIp}`);
-      return complete;
-    }
-    
-    // Para armazenamento, verificar se há pelo menos um disco interno
-    if (normalizedType === "armazenamento") {
-      const complete = storageItems.internal.length > 0;
-      console.log(`[isStepComplete] Armazenamento completo: ${complete}, discos internos: ${storageItems.internal.length}`);
-      return complete;
-    }
-    
-    return false;
-  }, [selectedComponents, connectivityItems, storageItems]);
-
-  // Define se um passo está completo
-  const setStepComplete = useCallback((stepIndex: number, complete: boolean) => {
-    setCompletedSteps((prev) => {
-      const newCompletedSteps = [...prev];
-      newCompletedSteps[stepIndex] = complete;
-      return newCompletedSteps;
-    });
+  const addCustomService = useCallback((service: ComponentOption) => {
+    setCustomServices(prev => [...prev, service]);
   }, []);
 
-  // Reinicia o wizard
+  const removeCustomService = useCallback((id: string) => {
+    setCustomServices(prev => prev.filter(service => service.id !== id));
+  }, []);
+
   const handleRestart = useCallback(() => {
     setCurrentStep(0);
     setSelectedComponents({});
-    setShowFinalSummary(false);
-    setCompletedSteps(new Array(serverData.componentes.length).fill(false));
+    setSelectedContractOption(null);
     setStorageItems({ internal: [], external: [] });
     setConnectivityItems({});
     setCustomServices([]);
+    setShowFinalSummary(false);
   }, []);
 
-  // Funções para serviços personalizados
-  const addCustomService = useCallback((option: ComponentOption) => {
-    setCustomServices(prev => [...prev, option]);
-  }, []);
-
-  const removeCustomService = useCallback((optionId: string) => {
-    setCustomServices(prev => prev.filter(service => service.id !== optionId));
-  }, []);
-
-  // Sincroniza dados na inicialização
-  useEffect(() => {
-    // Initialize data from PriceService
-    syncDiskDataWithPriceService();
-
-    // Initialize external storage data
-    initExternalStorageData();
-    
-    // Sincronizar dados de conectividade
-    syncConnectivityData().then(() => {
-      setCategoriesLoaded(true);
-    });
-  
-  }, []); // dependencies array
+  const isStepComplete = useCallback((stepIndex: number) => {
+    // Implement step completion logic based on your requirements
+    switch (stepIndex) {
+      case 0: // DataCenter
+        return !!selectedComponents["datacenter"];
+      case 1: // Contract
+        return !!selectedContractOption;
+      case 2: // Processor
+        return !!selectedComponents["processador"];
+      case 3: // Memory
+        return !!selectedComponents["memoria"];
+      case 4: // OS
+        return !!selectedComponents["sistemaoperacional"];
+      case 5: // Storage
+        return storageItems.internal.length > 0 || storageItems.external.length > 0;
+      case 6: // Connectivity
+        return Object.keys(connectivityItems).length > 0;
+      default:
+        return false;
+    }
+  }, [selectedComponents, selectedContractOption, storageItems, connectivityItems]);
 
   return {
     currentStep,
     setCurrentStep,
+    totalSteps,
     selectedComponents,
-    setSelectedComponents, // Garantir que isso é explicitamente incluído no valor de retorno
-    selectComponent,
-    updateComponentQuantity,
-    handleRemoveComponent,
-    removeComponent: handleRemoveComponent, // Alias para manter compatibilidade
-    isComponentSelected,
-    getComponentQuantity,
+    setSelectedComponents,
+    selectedContractOption,
+    setSelectedContractOption,
+    storageItems,
+    setStorageItems,
+    connectivityItems,
+    setConnectivityItems,
+    customServices,
     showFinalSummary,
     setShowFinalSummary,
-    isStepComplete,
-    setStepComplete,
-    completedSteps,
-    handleRestart,
-    storageItems,
-    connectivityItems,
-    customServices,
-    handleSelectOption,
-    setConnectivityItems,
-    handleSelectStorageItem,
-    categoriesLoaded,
     beginnerMode,
     setBeginnerMode,
+    categoriesLoaded,
+    handleSelectOption,
+    handleSelectStorageItem,
+    handleRemoveComponent,
     addCustomService,
     removeCustomService,
-    setStorageItems
+    handleRestart,
+    isStepComplete
   };
 }
