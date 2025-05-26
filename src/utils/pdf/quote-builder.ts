@@ -1,3 +1,4 @@
+
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { ComponentOption } from "@/types/component";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ export async function buildQuotePDF(
     const marginRight = 50;
     
     // Render header section
-    let pageContext = renderHeaderSection(
+    let pageContext = await renderHeaderSection(
       pdfDoc,
       { page, y: height - 50 },
       quoteVariables,
