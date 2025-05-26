@@ -42,10 +42,10 @@ export function useComponentOptions(componentType: string) {
               specs: item.specs || ["Memória RAM de alta performance"],
               metadata: item.metadata ? {
                 ...item.metadata,
-                // Safe access to potentially missing properties
-                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : {}),
-                ...(item.metadata && 'perCore' in item.metadata ? { perCore: item.metadata.perCore } : {}),
-                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: item.metadata.licensesNeeded } : {})
+                // Safe access with proper type casting
+                ...(item.metadata && 'cores' in item.metadata ? { cores: Number(item.metadata.cores) || 1 } : {}),
+                ...(item.metadata && 'perCore' in item.metadata ? { perCore: Boolean(item.metadata.perCore) } : {}),
+                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: Number(item.metadata.licensesNeeded) || 1 } : {})
               } : undefined
             }));
           } else {
@@ -68,8 +68,8 @@ export function useComponentOptions(componentType: string) {
               type: 'processador',
               isHardware: true,
               metadata: {
-                // Safe access to potentially missing properties
-                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : { cores: 1 })
+                // Safe access with proper type casting and default value
+                cores: item.metadata && 'cores' in item.metadata ? Number(item.metadata.cores) || 1 : 1
               },
               specs: item.specs || []
             }));
@@ -194,10 +194,10 @@ export function useComponentOptions(componentType: string) {
               isHardware: false,
               metadata: item.metadata ? {
                 ...item.metadata,
-                // Safe access to potentially missing properties
-                ...(item.metadata && 'cores' in item.metadata ? { cores: item.metadata.cores } : {}),
-                ...(item.metadata && 'perCore' in item.metadata ? { perCore: item.metadata.perCore } : {}),
-                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: item.metadata.licensesNeeded } : {})
+                // Safe access with proper type casting
+                ...(item.metadata && 'cores' in item.metadata ? { cores: Number(item.metadata.cores) || 1 } : {}),
+                ...(item.metadata && 'perCore' in item.metadata ? { perCore: Boolean(item.metadata.perCore) } : {}),
+                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: Number(item.metadata.licensesNeeded) || 1 } : {})
               } : undefined,
               specs: item.specs || []
             }));
