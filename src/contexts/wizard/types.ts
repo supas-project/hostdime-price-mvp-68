@@ -23,6 +23,7 @@ export interface WizardContextProps {
   handleSelectOption: (option: ComponentOption) => void;
   handleRestart: () => void;
   isStepComplete: (stepIndex: number) => boolean;
+  setStepComplete: (stepIndex: number, complete: boolean) => void;
   handleSelectStorageItem: (storageOption: ComponentOption, storageType: 'internal' | 'external') => void;
   handleRemoveComponent: (id: string, type?: string) => void;
   customServices: ComponentOption[];
