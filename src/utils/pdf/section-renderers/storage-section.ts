@@ -14,8 +14,7 @@ export function renderStorageSection(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  helveticaOblique: PDFFont,
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -49,8 +48,7 @@ export function renderStorageSection(
       marginX,
       marginRight,
       helvetica,
-      helveticaBold,
-      helveticaOblique
+      helveticaBold
     );
     
     page = internalResult.page;
@@ -67,8 +65,7 @@ export function renderStorageSection(
       marginX,
       marginRight,
       helvetica,
-      helveticaBold,
-      helveticaOblique
+      helveticaBold
     );
     
     page = externalResult.page;

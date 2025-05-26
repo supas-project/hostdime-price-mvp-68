@@ -14,8 +14,7 @@ export function renderServicesSection(
   marginX: number,
   marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  helveticaOblique: PDFFont,
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y: currentY } = pageContext;
   
@@ -75,7 +74,7 @@ export function renderServicesSection(
         x: marginX + 15,
         y: currentY,
         size: 10,
-        font: helveticaOblique,
+        font: helvetica,
         color: COLOR.TEXT_LIGHT
       });
       currentY -= 15;

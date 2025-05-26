@@ -3,14 +3,17 @@ import { PDFDocument, PDFFont } from "pdf-lib";
 import { COLOR } from "../colors";
 import { PageContext } from "../types";
 import { checkAndCreateNewPage, drawSectionHeader } from "../drawing-utils";
+import { QuoteVariables } from "../dynamic-variables";
 
 export function renderTermsSection(
   pdfDoc: PDFDocument,
   pageContext: PageContext,
+  quoteVariables: Partial<QuoteVariables> | undefined,
+  width: number,
   marginX: number,
+  marginRight: number,
   helvetica: PDFFont,
-  helveticaBold: PDFFont,
-  observacoes?: string
+  helveticaBold: PDFFont
 ): PageContext {
   let { page, y } = pageContext;
 
@@ -61,6 +64,7 @@ export function renderTermsSection(
   }
   
   // Adicionar observações se fornecidas
+  const observacoes = quoteVariables?.observacoes;
   if (observacoes && observacoes.trim().length > 0) {
     y -= 10;
     
