@@ -1,80 +1,57 @@
 
 import { ComponentOption } from "@/types/component";
-import { 
-  calculateMonthlyCost, 
-  calculateContractTotalValue, 
-  enrichComponentWithPayBack,
-  calculateTotalMonthlyCostWithPayBack,
-  isCategoryEligibleForPayBack,
-  formatBRL
-} from "@/utils/payback-calculator";
+import { getPayBackValue } from "@/utils/payback-utils";
 
 /**
  * Custom hook for handling PayBack calculations in price summaries
  */
 export function usePayBackCalculation() {
   /**
-   * Calcula o custo mensal com PayBack aplicado
+   * Calculates the final price with PayBack applied
+   * 
+   * @param component The hardware component
+   * @param contractDuration The contract duration in months
+   * @returns The calculated price with PayBack applied
    */
-  const calculateMonthlyCostWithPayBack = (
+  const calculatePriceWithPayBack = (
     component: ComponentOption | null,
     contractDuration: string | number
   ): number => {
     if (!component) return 0;
-    return calculateMonthlyCost(component, contractDuration);
+    
+    // Only apply PayBack to hardware components
+    if (component.isHardware) {
+      const payback = getPayBackValue(component, contractDuration);
+      
+      if (payback && component.price > 0) {
+        // If component has a price and valid payback, divide by payback
+        return component.price / payback;
+      }
+    }
+    
+    // Return original price if no PayBack applies
+    return component.price;
   };
 
   /**
-   * Calcula o valor total do contrato
+   * Get the monthly price with PayBack applied
+   * 
+   * @param components List of components
+   * @param contractDuration Contract duration
+   * @returns Total monthly price with PayBack applied to hardware components
    */
-  const calculateContractTotal = (
-    component: ComponentOption | null,
-    contractDuration: string | number
-  ): number => {
-    if (!component) return 0;
-    return calculateContractTotalValue(component, contractDuration);
-  };
-
-  /**
-   * Enriquece um componente com dados de PayBack
-   */
-  const enrichWithPayBack = (
-    component: ComponentOption,
-    contractDuration: string | number
-  ): ComponentOption => {
-    return enrichComponentWithPayBack(component, contractDuration);
-  };
-
-  /**
-   * Calcula o total mensal de uma lista de componentes
-   */
-  const getTotalMonthlyCost = (
+  const getMonthlyPriceWithPayBack = (
     components: ComponentOption[],
     contractDuration: string | number
   ): number => {
-    return calculateTotalMonthlyCostWithPayBack(components, contractDuration);
-  };
-
-  /**
-   * Verifica se um componente é elegível para PayBack
-   */
-  const isEligibleForPayBack = (component: ComponentOption): boolean => {
-    return isCategoryEligibleForPayBack(component.type);
-  };
-
-  /**
-   * Formata valores em Real brasileiro
-   */
-  const formatCurrency = (value: number): string => {
-    return formatBRL(value);
+    return components.reduce((total, component) => {
+      const priceWithPayBack = calculatePriceWithPayBack(component, contractDuration);
+      return total + priceWithPayBack;
+    }, 0);
   };
 
   return {
-    calculateMonthlyCostWithPayBack,
-    calculateContractTotal,
-    enrichWithPayBack,
-    getTotalMonthlyCost,
-    isEligibleForPayBack,
-    formatCurrency
+    calculatePriceWithPayBack,
+    getMonthlyPriceWithPayBack
   };
 }

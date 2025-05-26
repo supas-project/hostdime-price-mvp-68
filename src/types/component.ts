@@ -19,10 +19,6 @@ export interface ComponentOption {
     unitInfo?: string;
     location?: string;
     badge?: string;
-    // Novas propriedades para PayBack
-    custoMensal?: number;
-    valorTotalContrato?: number;
-    paybackApplicable?: boolean;
     raid?: {
       type: string;
       description: string;

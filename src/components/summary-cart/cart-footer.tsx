@@ -5,8 +5,6 @@ import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { usePayBackCalculation } from "@/hooks/usePayBackCalculation";
-import { useWizard } from "@/contexts/WizardContext";
 
 interface CartFooterProps {
   totalPrice: number;
@@ -16,64 +14,6 @@ export function CartFooter({
   totalPrice
 }: CartFooterProps) {
   const { toast } = useToast();
-  const { selectedComponents, storageItems, connectivityItems, selectedContractOption } = useWizard();
-  const { 
-    calculateMonthlyCostWithPayBack, 
-    isEligibleForPayBack 
-  } = usePayBackCalculation();
-
-  // Get contract duration from selected contract option
-  const contractDuration = selectedContractOption?.id === "contrato-indeterminado" 
-    ? "0" 
-    : selectedContractOption?.id?.replace("contrato-", "") || "0";
-
-  // Calculate total with PayBack applied
-  const calculateTotalWithPayBack = () => {
-    let total = 0;
-
-    // Standard components
-    Object.values(selectedComponents).forEach(component => {
-      if (component && !['DataCenter', 'Contrato', 'Armazenamento'].includes(component.type)) {
-        if (isEligibleForPayBack(component)) {
-          total += calculateMonthlyCostWithPayBack(component, contractDuration);
-        } else {
-          total += component.price || 0;
-        }
-      }
-    });
-
-    // Internal storage (PayBack eligible)
-    storageItems.internal.forEach(item => {
-      if (item && item.price > 0) {
-        const storageComponent = { ...item, type: 'Armazenamento Interno' };
-        if (isEligibleForPayBack(storageComponent)) {
-          total += calculateMonthlyCostWithPayBack(storageComponent, contractDuration);
-        } else {
-          total += item.price;
-        }
-      }
-    });
-
-    // External storage (not PayBack eligible)
-    storageItems.external.forEach(item => {
-      if (item && item.price > 0) {
-        total += item.price;
-      }
-    });
-
-    // Connectivity items (not PayBack eligible)
-    Object.values(connectivityItems).forEach(({ option, quantity }) => {
-      if (option && option.price) {
-        total += option.price * quantity;
-      }
-    });
-
-    return total;
-  };
-
-  const displayTotal = calculateTotalWithPayBack();
-
-  console.log("[CartFooter] Total with PayBack applied:", displayTotal);
 
   const handleSave = () => {
     toast.success("Configuração salva", {
@@ -97,7 +37,7 @@ export function CartFooter({
           "font-bold text-2xl text-[#f58220] transition-all duration-300",
           "hover:scale-105 drop-shadow-sm"
         )}>
-          {formatCurrency(displayTotal)}
+          {formatCurrency(totalPrice)}
         </span>
       </div>
       

@@ -42,10 +42,9 @@ export function useComponentOptions(componentType: string) {
               specs: item.specs || ["Memória RAM de alta performance"],
               metadata: item.metadata ? {
                 ...item.metadata,
-                // Safe access with proper type casting
-                ...(item.metadata && 'cores' in item.metadata ? { cores: Number(item.metadata.cores) || 1 } : {}),
-                ...(item.metadata && 'perCore' in item.metadata ? { perCore: Boolean(item.metadata.perCore) } : {}),
-                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: Number(item.metadata.licensesNeeded) || 1 } : {})
+                cores: item.metadata.cores,
+                perCore: item.metadata.perCore,
+                licensesNeeded: item.metadata.licensesNeeded
               } : undefined
             }));
           } else {
@@ -68,8 +67,7 @@ export function useComponentOptions(componentType: string) {
               type: 'processador',
               isHardware: true,
               metadata: {
-                // Safe access with proper type casting and default value
-                cores: item.metadata && 'cores' in item.metadata ? Number(item.metadata.cores) || 1 : 1
+                cores: item.metadata?.cores || 1
               },
               specs: item.specs || []
             }));
@@ -194,10 +192,9 @@ export function useComponentOptions(componentType: string) {
               isHardware: false,
               metadata: item.metadata ? {
                 ...item.metadata,
-                // Safe access with proper type casting
-                ...(item.metadata && 'cores' in item.metadata ? { cores: Number(item.metadata.cores) || 1 } : {}),
-                ...(item.metadata && 'perCore' in item.metadata ? { perCore: Boolean(item.metadata.perCore) } : {}),
-                ...(item.metadata && 'licensesNeeded' in item.metadata ? { licensesNeeded: Number(item.metadata.licensesNeeded) || 1 } : {})
+                cores: item.metadata.cores,
+                perCore: item.metadata.perCore,
+                licensesNeeded: item.metadata.licensesNeeded
               } : undefined,
               specs: item.specs || []
             }));
