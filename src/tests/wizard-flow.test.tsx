@@ -1,6 +1,4 @@
-
-import { render } from '@testing-library/react';
-import { fireEvent, screen } from '@testing-library/dom';
+import { render, fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { WizardProvider } from '@/contexts/WizardContext';
 import Index from '@/pages/Index';
