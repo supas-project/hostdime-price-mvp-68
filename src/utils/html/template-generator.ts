@@ -1,4 +1,3 @@
-
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { formatCurrency } from "@/utils/number-formatter";
 import { quoteStyles } from "./quote-styles";
