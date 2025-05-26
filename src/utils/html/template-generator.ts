@@ -1,3 +1,4 @@
+
 import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
 import { formatCurrency } from "@/utils/number-formatter";
 import { quoteStyles } from "./quote-styles";
@@ -47,7 +48,122 @@ export function generateQuoteTemplate(
       <title>Cotação HostDime #${quoteNumber}</title>
       <style>
         ${quoteStyles}
-        /* Estilos adicionais para specs */
+        
+        /* Estilos para campos editáveis */
+        .editable-field {
+          border: 1px solid transparent;
+          padding: 2px 4px;
+          border-radius: 3px;
+          transition: all 0.2s ease;
+          cursor: pointer;
+          display: inline-block;
+          min-width: 60px;
+        }
+        .editable-field:hover {
+          background-color: #f0f8ff;
+          border-color: #FF6600;
+        }
+        .editable-field:focus {
+          outline: none;
+          background-color: white;
+          border-color: #FF6600;
+          box-shadow: 0 0 3px rgba(255, 102, 0, 0.3);
+        }
+        .editable-textarea {
+          border: 1px solid transparent;
+          padding: 4px 6px;
+          border-radius: 3px;
+          transition: all 0.2s ease;
+          cursor: pointer;
+          width: 100%;
+          min-height: 60px;
+          resize: vertical;
+          font-family: inherit;
+          font-size: inherit;
+        }
+        .editable-textarea:hover {
+          background-color: #f0f8ff;
+          border-color: #FF6600;
+        }
+        .editable-textarea:focus {
+          outline: none;
+          background-color: white;
+          border-color: #FF6600;
+          box-shadow: 0 0 3px rgba(255, 102, 0, 0.3);
+        }
+        
+        /* Controles de edição */
+        .edit-controls {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: white;
+          border: 2px solid #FF6600;
+          border-radius: 8px;
+          padding: 15px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 1000;
+          max-width: 300px;
+        }
+        .edit-controls h4 {
+          margin: 0 0 10px 0;
+          color: #FF6600;
+          font-size: 14px;
+          font-weight: bold;
+        }
+        .edit-controls p {
+          margin: 0 0 10px 0;
+          font-size: 12px;
+          color: #666;
+          line-height: 1.4;
+        }
+        .edit-controls button {
+          background: #FF6600;
+          color: white;
+          border: none;
+          padding: 8px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          margin-right: 8px;
+        }
+        .edit-controls button:hover {
+          background: #e55a00;
+        }
+        .margin-control {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #eee;
+        }
+        .margin-control label {
+          font-size: 12px;
+          color: #333;
+          display: block;
+          margin-bottom: 5px;
+        }
+        .margin-control input[type="range"] {
+          width: 100%;
+          margin-bottom: 5px;
+        }
+        .margin-display {
+          font-size: 11px;
+          color: #666;
+          text-align: center;
+        }
+        
+        /* Estilos de impressão - ocultar controles */
+        @media print {
+          .edit-controls {
+            display: none !important;
+          }
+          .editable-field, .editable-textarea {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+          }
+        }
+        
+        /* Estilos adicionais existentes */
         .specs-list {
           margin-top: 5px;
         }
@@ -126,106 +242,6 @@ export function generateQuoteTemplate(
           height: auto;
           margin-bottom: 10px;
         }
-        
-        /* Estilos para campos editáveis */
-        .editable-field {
-          border: 1px solid transparent;
-          padding: 2px 4px;
-          border-radius: 3px;
-          transition: all 0.2s ease;
-          cursor: pointer;
-          display: inline-block;
-          min-width: 60px;
-        }
-        .editable-field:hover {
-          background-color: #f0f8ff;
-          border-color: #FF6600;
-        }
-        .editable-field:focus {
-          outline: none;
-          background-color: white;
-          border-color: #FF6600;
-          box-shadow: 0 0 3px rgba(255, 102, 0, 0.3);
-        }
-        .edit-controls {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: white;
-          border: 2px solid #FF6600;
-          border-radius: 8px;
-          padding: 15px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          z-index: 1000;
-          max-width: 300px;
-        }
-        .edit-controls h4 {
-          margin: 0 0 10px 0;
-          color: #FF6600;
-          font-size: 14px;
-          font-weight: bold;
-        }
-        .edit-controls p {
-          margin: 0 0 10px 0;
-          font-size: 12px;
-          color: #666;
-          line-height: 1.4;
-        }
-        .edit-controls button {
-          background: #FF6600;
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-          margin-right: 8px;
-        }
-        .edit-controls button:hover {
-          background: #e55a00;
-        }
-        .margin-control {
-          margin-top: 10px;
-          padding-top: 10px;
-          border-top: 1px solid #eee;
-        }
-        .margin-control label {
-          font-size: 12px;
-          color: #333;
-          display: block;
-          margin-bottom: 5px;
-        }
-        .margin-control input[type="range"] {
-          width: 100%;
-          margin-bottom: 5px;
-        }
-        .margin-display {
-          font-size: 11px;
-          color: #666;
-          text-align: center;
-        }
-        .editable-textarea {
-          border: 1px solid transparent;
-          padding: 4px 6px;
-          border-radius: 3px;
-          transition: all 0.2s ease;
-          cursor: pointer;
-          width: 100%;
-          min-height: 60px;
-          resize: vertical;
-          font-family: inherit;
-          font-size: inherit;
-        }
-        .editable-textarea:hover {
-          background-color: #f0f8ff;
-          border-color: #FF6600;
-        }
-        .editable-textarea:focus {
-          outline: none;
-          background-color: white;
-          border-color: #FF6600;
-          box-shadow: 0 0 3px rgba(255, 102, 0, 0.3);
-        }
       </style>
     </head>
     <body>
@@ -246,8 +262,8 @@ export function generateQuoteTemplate(
       <div class="container">
         <div class="header">
           <img src="${hostDimeSvgLogoUrl}" alt="HostDime logo">
-          <h1>Proposta Comercial</h1>
-          <p>Cotação #${quoteNumber}</p>
+          <h1><span class="editable-field" contenteditable="true" data-field="titulo">Proposta Comercial</span></h1>
+          <p>Cotação #<span class="editable-field" contenteditable="true" data-field="numeroQuote">${quoteNumber}</span></p>
         </div>
         
         <div class="quote-info">
@@ -272,36 +288,34 @@ export function generateQuoteTemplate(
           </div>
         </div>
         
-        <h2>Resumo Executivo</h2>
-        <p>Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir 
-        uma proposta personalizada para atender às suas necessidades de infraestrutura, com servidores 
-        de alta performance e total suporte técnico.</p>
+        <h2><span class="editable-field" contenteditable="true" data-field="tituloResumo">Resumo Executivo</span></h2>
+        <p><span class="editable-textarea" contenteditable="true" data-field="resumoExecutivo">Agradecemos seu interesse nos serviços da HostDime Brasil. Apresentamos a seguir uma proposta personalizada para atender às suas necessidades de infraestrutura, com servidores de alta performance e total suporte técnico.</span></p>
         
         <div class="datacenter-info">
-          <h3>Data Center <span class="badge">Localização</span></h3>
-          <p>Data center localizado no Nordeste do Brasil</p>
+          <h3><span class="editable-field" contenteditable="true" data-field="datacentertitulo">Data Center</span> <span class="badge">Localização</span></h3>
+          <p><span class="editable-field" contenteditable="true" data-field="datacenterDescricao">Data center localizado no Nordeste do Brasil</span></p>
           <ul class="info-list">
-            <li><span class="check-icon">✓</span> Certificação Tier III</li>
-            <li><span class="check-icon">✓</span> Green Data Center</li>
-            <li><span class="check-icon">✓</span> Baixa latência regional</li>
+            <li><span class="check-icon">✓</span> <span class="editable-field" contenteditable="true" data-field="datacenterItem1">Certificação Tier III</span></li>
+            <li><span class="check-icon">✓</span> <span class="editable-field" contenteditable="true" data-field="datacenterItem2">Green Data Center</span></li>
+            <li><span class="check-icon">✓</span> <span class="editable-field" contenteditable="true" data-field="datacenterItem3">Baixa latência regional</span></li>
           </ul>
         </div>
         
         <div class="contract-info">
-          <h3>Contrato <span class="badge">${contractDuration}</span></h3>
-          <p>${contractComponent?.description || 'Contrato personalizado'}</p>
+          <h3><span class="editable-field" contenteditable="true" data-field="contratoTitulo">Contrato</span> <span class="badge">${contractDuration}</span></h3>
+          <p><span class="editable-field" contenteditable="true" data-field="contratoDescricao">${contractComponent?.description || 'Contrato personalizado'}</span></p>
           <ul class="info-list">
-            ${contractDiscount > 0 ? `<li><span class="check-icon">✓</span> Desconto de ${contractDiscount}% incluído</li>` : ''}
+            ${contractDiscount > 0 ? `<li><span class="check-icon">✓</span> <span class="editable-field" contenteditable="true" data-field="contratoDesconto">Desconto de ${contractDiscount}% incluído</span></li>` : ''}
           </ul>
         </div>
         
-        <h2>Componentes do Servidor</h2>
+        <h2><span class="editable-field" contenteditable="true" data-field="tituloComponentes">Componentes do Servidor</span></h2>
         <table class="table">
           <thead>
             <tr>
-              <th>Tipo</th>
-              <th>Descrição</th>
-              <th>Preço</th>
+              <th><span class="editable-field" contenteditable="true" data-field="colunaTipo">Tipo</span></th>
+              <th><span class="editable-field" contenteditable="true" data-field="colunaDescricao">Descrição</span></th>
+              <th><span class="editable-field" contenteditable="true" data-field="colunaPreco">Preço</span></th>
             </tr>
           </thead>
           <tbody>
@@ -313,21 +327,21 @@ export function generateQuoteTemplate(
         </table>
         
         <div class="total-section">
-          <h2>Resumo Financeiro</h2>
+          <h2><span class="editable-field" contenteditable="true" data-field="tituloFinanceiro">Resumo Financeiro</span></h2>
           <p class="total" id="totalPrice">Total Mensal: ${formatCurrency(total)}</p>
           <p id="marginInfo">${margin > 0 ? `*Incluindo ${margin}% de margem` : ''}</p>
         </div>
         
         <div style="margin-top: 30px;">
-          <h3>Observações</h3>
+          <h3><span class="editable-field" contenteditable="true" data-field="tituloObservacoes">Observações</span></h3>
           <textarea class="editable-textarea" data-field="observacoes" placeholder="Clique aqui para adicionar observações personalizadas...">${quoteVariables?.observacoes || ''}</textarea>
         </div>
         
         <div class="footer">
-          <p>Para mais informações entre em contato:</p>
+          <p><span class="editable-field" contenteditable="true" data-field="textoContato">Para mais informações entre em contato:</span></p>
           <p>Telefone: <span class="editable-field" contenteditable="true" data-field="numeroContato">${quoteVariables?.numeroContato || '(11) 4766-4840'}</span></p>
           <p>Email: <span class="editable-field" contenteditable="true" data-field="emailContato">${quoteVariables?.emailContato || 'vendas@hostdime.com.br'}</span></p>
-          <p>&copy; ${new Date().getFullYear()} HostDime Brasil - Todos os direitos reservados</p>
+          <p><span class="editable-field" contenteditable="true" data-field="copyright">&copy; ${new Date().getFullYear()} HostDime Brasil - Todos os direitos reservados</span></p>
         </div>
       </div>
 
