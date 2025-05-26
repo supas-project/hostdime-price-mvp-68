@@ -18,6 +18,7 @@ interface UseAutoProgressionProps {
   onNextStep: () => void;
   componentType: string;
   isStepComplete: (stepIndex: number) => boolean;
+  onStepComplete: (stepIndex: number, complete: boolean) => void;
 }
 
 export function useAutoProgression({
@@ -28,14 +29,15 @@ export function useAutoProgression({
   storageItems,
   onNextStep,
   componentType,
-  isStepComplete
+  isStepComplete,
+  onStepComplete
 }: UseAutoProgressionProps) {
   const [config, setConfig] = useState<AutoProgressionConfig>(() => {
     const saved = localStorage.getItem('wizard-auto-progression');
     return saved ? JSON.parse(saved) : {
       enabled: true,
       fastMode: false,
-      delay: 1500
+      delay: 2000
     };
   });
 
@@ -43,13 +45,15 @@ export function useAutoProgression({
   const [shouldProgress, setShouldProgress] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastStepRef = useRef<number>(-1);
+  const lastComponentStateRef = useRef<string>("");
 
-  // Salvar configurações no localStorage
+  // Salvar configurações
   useEffect(() => {
     localStorage.setItem('wizard-auto-progression', JSON.stringify(config));
   }, [config]);
 
-  // Limpar timeouts ao desmontar o componente
+  // Limpar timeouts
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -57,38 +61,24 @@ export function useAutoProgression({
     };
   }, []);
 
-  // Determinar se é uma categoria simples - SEMPRE definido, não condicional
+  // Categorias que avançam automaticamente após seleção
   const isSimpleCategory = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
-    console.log(`[isSimpleCategory] Verificando tipo: ${type}, normalizado: ${normalizedType}`);
-    
-    const simpleCategories = [
-      "datacenter",
-      "contrato", 
-      "processador",
-      "memoria",
-      "sistemaoperacional"
-    ];
-    
-    const isSimple = simpleCategories.includes(normalizedType);
-    console.log(`[isSimpleCategory] ${normalizedType} é simples: ${isSimple}`);
-    return isSimple;
+    return ["datacenter", "contrato", "processador", "memoria", "sistemaoperacional"].includes(normalizedType);
   }, []);
 
-  // Determinar se é uma categoria opcional - SEMPRE definido
+  // Categorias opcionais (podem ser puladas)
   const isOptionalCategory = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
     return normalizedType === "servicospersonalizados";
   }, []);
 
-  // Verificar se categoria complexa está pronta - SEMPRE definido
-  const isComplexCategoryReady = useCallback((type: string): boolean => {
+  // Verificar se categoria complexa tem requisitos mínimos
+  const hasComplexCategoryMinimums = useCallback((type: string): boolean => {
     const normalizedType = normalizeComponentType(type);
     
     if (normalizedType === "armazenamento") {
-      const ready = storageItems.internal.length > 0;
-      console.log(`[isComplexCategoryReady] Armazenamento pronto: ${ready}, discos internos: ${storageItems.internal.length}`);
-      return ready;
+      return storageItems.internal.length > 0;
     }
     
     if (normalizedType === "conectividade") {
@@ -98,17 +88,15 @@ export function useAutoProgression({
       const hasIp = Object.values(connectivityItems).some(
         item => item.option.subtype === "ip"
       );
-      const ready = hasPort && hasIp;
-      console.log(`[isComplexCategoryReady] Conectividade pronto: ${ready}, porta: ${hasPort}, IP: ${hasIp}`);
-      return ready;
+      return hasPort && hasIp;
     }
     
     return false;
   }, [connectivityItems, storageItems]);
 
-  // Cancelar progressão automática - SEMPRE definido
+  // Cancelar progressão
   const cancelProgression = useCallback(() => {
-    console.log("[cancelProgression] Cancelando progressão automática");
+    console.log("[AutoProgression] Cancelando progressão automática");
     setShouldProgress(false);
     setCountdownSeconds(null);
     if (timeoutRef.current) {
@@ -121,45 +109,46 @@ export function useAutoProgression({
     }
   }, []);
 
-  // Verificar se step atual está completo - função melhorada
-  const checkStepComplete = useCallback((): boolean => {
+  // Verificar se o step atual está completo
+  const checkCurrentStepComplete = useCallback((): boolean => {
     const normalizedType = normalizeComponentType(componentType);
-    console.log(`[checkStepComplete] Verificando step ${currentStep}, tipo: ${componentType}, normalizado: ${normalizedType}`);
-    console.log(`[checkStepComplete] Componentes selecionados:`, selectedComponents);
-
-    // Para categorias simples, verificar se há um componente selecionado do tipo correto
+    
+    console.log(`[AutoProgression] Verificando completude do step ${currentStep}, tipo: ${normalizedType}`);
+    
+    // Para categorias simples, verificar se há seleção
     if (isSimpleCategory(componentType)) {
       const hasSelection = Object.keys(selectedComponents).some(key => {
         const keyNormalized = normalizeComponentType(key);
-        const matches = keyNormalized === normalizedType;
-        console.log(`[checkStepComplete] Comparando chave '${key}' (${keyNormalized}) com tipo '${normalizedType}': ${matches}`);
-        return matches;
+        return keyNormalized === normalizedType;
       });
-      console.log(`[checkStepComplete] Categoria simples '${normalizedType}' tem seleção: ${hasSelection}`);
+      console.log(`[AutoProgression] Categoria simples '${normalizedType}' completa: ${hasSelection}`);
       return hasSelection;
     }
 
-    // Para categorias complexas, usar a lógica específica
-    if (normalizedType === "armazenamento") {
-      return storageItems.internal.length > 0;
-    }
-    
-    if (normalizedType === "conectividade") {
-      return isComplexCategoryReady(componentType);
+    // Para categorias complexas, verificar requisitos mínimos
+    if (["armazenamento", "conectividade"].includes(normalizedType)) {
+      const isComplete = hasComplexCategoryMinimums(componentType);
+      console.log(`[AutoProgression] Categoria complexa '${normalizedType}' completa: ${isComplete}`);
+      return isComplete;
     }
 
-    // Para outras categorias, usar o isStepComplete original
+    // Para outras categorias, usar a função padrão
     return isStepComplete(currentStep);
-  }, [componentType, currentStep, selectedComponents, storageItems, connectivityItems, isStepComplete, isSimpleCategory, isComplexCategoryReady]);
+  }, [componentType, currentStep, selectedComponents, isStepComplete, isSimpleCategory, hasComplexCategoryMinimums]);
 
-  // Iniciar countdown para progressão automática - SEMPRE definido
+  // Iniciar countdown
   const startCountdown = useCallback(() => {
     if (!config.enabled) {
-      console.log("[startCountdown] Progressão automática desabilitada");
+      console.log("[AutoProgression] Progressão desabilitada");
       return;
     }
     
-    console.log("[startCountdown] Iniciando countdown para progressão automática");
+    if (currentStep >= totalSteps - 1) {
+      console.log("[AutoProgression] Último step, não avançar");
+      return;
+    }
+
+    console.log("[AutoProgression] Iniciando countdown");
     
     const delay = config.fastMode ? 800 : config.delay;
     const countdownTime = Math.ceil(delay / 1000);
@@ -187,71 +176,100 @@ export function useAutoProgression({
 
     // Timeout para progressão
     timeoutRef.current = setTimeout(() => {
-      console.log("[startCountdown] Executando progressão automática");
-      if (currentStep < totalSteps - 1) {
-        onNextStep();
-      }
+      console.log("[AutoProgression] Executando progressão automática");
+      
+      // Marcar step atual como completo antes de avançar
+      onStepComplete(currentStep, true);
+      
+      // Avançar para próximo step
+      onNextStep();
+      
+      // Limpar estados
       setShouldProgress(false);
       setCountdownSeconds(null);
       timeoutRef.current = null;
     }, delay);
-  }, [config, currentStep, totalSteps, onNextStep]);
+  }, [config, currentStep, totalSteps, onNextStep, onStepComplete]);
 
-  // Efeito principal para gerenciar progressão automática
+  // Efeito principal para gerenciar auto-progressão
   useEffect(() => {
-    console.log(`[useAutoProgression] Efeito executado - step: ${currentStep}, type: ${componentType}, enabled: ${config.enabled}`);
-    
-    if (!config.enabled || currentStep >= totalSteps - 1) {
-      console.log("[useAutoProgression] Progressão desabilitada ou último passo");
+    if (!config.enabled) return;
+
+    // Criar hash do estado atual para detectar mudanças
+    const currentStateHash = JSON.stringify({
+      step: currentStep,
+      components: selectedComponents,
+      connectivity: Object.keys(connectivityItems).length,
+      storage: storageItems.internal.length + storageItems.external.length
+    });
+
+    // Se mudou de step, cancelar progressão anterior
+    if (lastStepRef.current !== currentStep) {
+      console.log(`[AutoProgression] Mudança de step: ${lastStepRef.current} -> ${currentStep}`);
+      cancelProgression();
+      lastStepRef.current = currentStep;
+      lastComponentStateRef.current = currentStateHash;
       return;
     }
 
-    const normalizedType = normalizeComponentType(componentType);
-    console.log(`[useAutoProgression] Tipo normalizado: ${normalizedType}`);
-    
-    // Categoria simples: progressão imediata após seleção
-    if (isSimpleCategory(componentType)) {
-      const stepComplete = checkStepComplete();
-      console.log(`[useAutoProgression] Categoria simples - step complete: ${stepComplete}`);
+    // Se o estado dos componentes mudou
+    if (lastComponentStateRef.current !== currentStateHash) {
+      console.log("[AutoProgression] Estado dos componentes mudou");
+      lastComponentStateRef.current = currentStateHash;
+      
+      // Cancelar progressão anterior
+      cancelProgression();
+      
+      // Verificar se o step está completo
+      const stepComplete = checkCurrentStepComplete();
       
       if (stepComplete) {
-        console.log("[useAutoProgression] Iniciando progressão para categoria simples");
-        startCountdown();
+        // Marcar step como completo
+        onStepComplete(currentStep, true);
+        
+        const normalizedType = normalizeComponentType(componentType);
+        
+        // Para categorias simples, iniciar progressão imediatamente
+        if (isSimpleCategory(componentType)) {
+          console.log("[AutoProgression] Categoria simples completa, iniciando progressão");
+          startCountdown();
+        }
+        // Para categorias complexas, NÃO avançar automaticamente
+        // Apenas marcar como completo para permitir avanço manual
+        else if (["armazenamento", "conectividade"].includes(normalizedType)) {
+          console.log("[AutoProgression] Categoria complexa completa, aguardando avanço manual");
+        }
+      } else {
+        // Marcar step como incompleto
+        onStepComplete(currentStep, false);
       }
-      return;
     }
-    
-    // Categoria complexa: progressão quando critérios são atendidos
-    if (["armazenamento", "conectividade"].includes(normalizedType)) {
-      if (isComplexCategoryReady(componentType)) {
-        console.log("[useAutoProgression] Iniciando progressão para categoria complexa");
+
+    // Para categoria opcional, iniciar timer após 5 segundos sem interação
+    const normalizedType = normalizeComponentType(componentType);
+    if (isOptionalCategory(componentType) && !shouldProgress) {
+      const optionalTimer = setTimeout(() => {
+        console.log("[AutoProgression] Categoria opcional, iniciando progressão após timeout");
+        onStepComplete(currentStep, true);
         startCountdown();
-      }
-      return;
-    }
-    
-    // Categoria opcional: progressão após delay sem interação
-    if (isOptionalCategory(componentType)) {
-      console.log("[useAutoProgression] Iniciando progressão para categoria opcional");
-      const optionalTimeout = setTimeout(() => {
-        startCountdown();
-      }, 3000);
+      }, 5000);
       
-      return () => clearTimeout(optionalTimeout);
+      return () => clearTimeout(optionalTimer);
     }
   }, [
     config.enabled,
     currentStep,
-    totalSteps,
     componentType,
     selectedComponents,
     connectivityItems,
     storageItems,
-    checkStepComplete,
+    shouldProgress,
+    checkCurrentStepComplete,
     isSimpleCategory,
-    isComplexCategoryReady,
     isOptionalCategory,
-    startCountdown
+    startCountdown,
+    cancelProgression,
+    onStepComplete
   ]);
 
   return {
@@ -262,6 +280,6 @@ export function useAutoProgression({
     cancelProgression,
     isSimpleCategory: isSimpleCategory(componentType),
     isOptionalCategory: isOptionalCategory(componentType),
-    isComplexCategoryReady: isComplexCategoryReady(componentType)
+    isComplexCategoryReady: hasComplexCategoryMinimums(componentType)
   };
 }

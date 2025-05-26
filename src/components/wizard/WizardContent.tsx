@@ -1,3 +1,4 @@
+
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -28,6 +29,7 @@ export function WizardContent() {
     storageItems,
     handleSelectOption,
     isStepComplete,
+    setStepComplete,
     setConnectivityItems,
     handleSelectStorageItem,
     categoriesLoaded
@@ -96,7 +98,7 @@ export function WizardContent() {
 
   const currentComponent = serverData.componentes[currentStep];
 
-  // Auto-progression integration com logs detalhados
+  // Auto-progression integration
   const autoProgression = useAutoProgression({
     currentStep,
     totalSteps: serverData.componentes.length,
@@ -104,11 +106,12 @@ export function WizardContent() {
     connectivityItems,
     storageItems,
     onNextStep: () => {
-      console.log(`[WizardContent] Avançando do step ${currentStep} para ${currentStep + 1}`);
+      console.log(`[WizardContent] Avançando automaticamente do step ${currentStep} para ${currentStep + 1}`);
       setCurrentStep(Math.min(serverData.componentes.length - 1, currentStep + 1));
     },
     componentType: currentComponent?.type || "",
-    isStepComplete
+    isStepComplete,
+    onStepComplete: setStepComplete
   });
 
   console.log(`[WizardContent] Auto-progression state:`, {
@@ -116,6 +119,7 @@ export function WizardContent() {
     shouldProgress: autoProgression.shouldProgress,
     countdownSeconds: autoProgression.countdownSeconds,
     isSimpleCategory: autoProgression.isSimpleCategory,
+    isComplexCategoryReady: autoProgression.isComplexCategoryReady,
     currentComponentType: currentComponent?.type
   });
 

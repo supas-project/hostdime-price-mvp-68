@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Zap, Clock, X, CheckCircle } from "lucide-react";
+import { Settings, Zap, Clock, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface AutoProgressionControlsProps {
@@ -35,12 +35,12 @@ export function AutoProgressionControls({
   const [showSettings, setShowSettings] = React.useState(false);
 
   const handleToggleEnabled = (enabled: boolean) => {
-    console.log(`[AutoProgressionControls] Toggleing auto-progression: ${enabled}`);
+    console.log(`[AutoProgressionControls] Toggling auto-progression: ${enabled}`);
     onConfigChange({ ...config, enabled });
   };
 
   const handleToggleFastMode = (fastMode: boolean) => {
-    console.log(`[AutoProgressionControls] Toggleing fast mode: ${fastMode}`);
+    console.log(`[AutoProgressionControls] Toggling fast mode: ${fastMode}`);
     onConfigChange({ ...config, fastMode });
   };
 
@@ -72,7 +72,7 @@ export function AutoProgressionControls({
       )}
 
       {/* Status da Categoria */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm flex-wrap">
         {isSimpleCategory && (
           <Badge variant="secondary" className="text-xs">
             <Zap className="h-3 w-3 mr-1" />
@@ -88,6 +88,12 @@ export function AutoProgressionControls({
           <Badge variant="default" className="text-xs bg-green-600">
             <CheckCircle className="h-3 w-3 mr-1" />
             Pronto para avançar
+          </Badge>
+        )}
+        {!isSimpleCategory && !isOptionalCategory && !isComplexCategoryReady && (
+          <Badge variant="outline" className="text-xs">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Avanço manual
           </Badge>
         )}
       </div>
@@ -140,8 +146,8 @@ export function AutoProgressionControls({
               
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>• <strong>Categorias simples:</strong> Avançam automaticamente após seleção</p>
-                <p>• <strong>Categorias complexas:</strong> Avançam quando critérios são atendidos</p>
-                <p>• <strong>Categorias opcionais:</strong> 3s para interação, depois avançam</p>
+                <p>• <strong>Categorias complexas:</strong> Marcadas como prontas, avanço manual</p>
+                <p>• <strong>Categorias opcionais:</strong> 5s para interação, depois avançam</p>
               </div>
             </div>
           )}
