@@ -1,5 +1,4 @@
 
-
 export interface RaidMetadata {
   type: string;
   description: string;
