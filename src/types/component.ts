@@ -30,6 +30,7 @@ export interface ComponentOption {
     location?: string;
     perCore?: boolean;
     cores?: number;
+    licensesNeeded?: number;
     raid?: RaidMetadata;
     quantity?: number;
     unitPrice?: number;
