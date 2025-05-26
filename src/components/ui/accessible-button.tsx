@@ -1,4 +1,3 @@
-
 /**
  * Botão acessível com WCAG 2.1 AA compliance
  * Melhorias de acessibilidade e micro-interações
@@ -76,7 +75,7 @@ const accessibleButtonVariants = cva(
 );
 
 export interface AccessibleButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart' | 'onAnimationEnd'>,
     VariantProps<typeof accessibleButtonVariants> {
   asChild?: boolean;
   loading?: boolean;
@@ -108,7 +107,7 @@ export const AccessibleButton = forwardRef<HTMLButtonElement, AccessibleButtonPr
     return (
       <MotionWrapper
         variant="scale"
-        transition="smooth"
+        motionTransition="smooth"
         className="inline-block"
       >
         <Comp

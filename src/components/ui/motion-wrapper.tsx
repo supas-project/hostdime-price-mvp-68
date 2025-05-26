@@ -1,4 +1,3 @@
-
 /**
  * Wrapper de animações com Framer Motion
  * Componente reutilizável para micro-interações consistentes
@@ -39,12 +38,14 @@ export const animationVariants: Record<string, Variants> = {
     exit: { y: 20, opacity: 0 },
   },
   
+  // Slide para esquerda
   slideLeft: {
     initial: { x: 20, opacity: 0 },
     animate: { x: 0, opacity: 1 },
     exit: { x: -20, opacity: 0 },
   },
   
+  // Slide para direita
   slideRight: {
     initial: { x: -20, opacity: 0 },
     animate: { x: 0, opacity: 1 },
@@ -100,11 +101,11 @@ export const defaultTransitions = {
   }
 } as const;
 
-interface MotionWrapperProps extends MotionProps {
+interface MotionWrapperProps extends Omit<MotionProps, 'transition'> {
   children: ReactNode;
   variant?: keyof typeof animationVariants;
   className?: string;
-  transition?: keyof typeof defaultTransitions;
+  motionTransition?: keyof typeof defaultTransitions;
   // Accessibility props
   'aria-live'?: 'polite' | 'assertive' | 'off';
   role?: string;
@@ -114,13 +115,13 @@ export const MotionWrapper = forwardRef<HTMLDivElement, MotionWrapperProps>(({
   children,
   variant = 'fade',
   className,
-  transition = 'smooth',
+  motionTransition = 'smooth',
   'aria-live': ariaLive,
   role,
   ...motionProps
 }, ref) => {
   const selectedVariant = animationVariants[variant];
-  const selectedTransition = defaultTransitions[transition];
+  const selectedTransition = defaultTransitions[motionTransition];
 
   return (
     <motion.div

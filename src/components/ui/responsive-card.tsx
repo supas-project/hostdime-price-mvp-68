@@ -1,4 +1,3 @@
-
 /**
  * Card responsivo com micro-interações e acessibilidade
  * Mobile-first design com breakpoints semânticos
@@ -62,7 +61,7 @@ const responsiveCardVariants = cva(
 );
 
 export interface ResponsiveCardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd'>,
     VariantProps<typeof responsiveCardVariants> {
   asChild?: boolean;
   // Acessibilidade
@@ -86,7 +85,7 @@ export const ResponsiveCard = forwardRef<HTMLDivElement, ResponsiveCardProps>(
     return (
       <MotionWrapper
         variant={variant === 'interactive' ? 'scale' : 'fade'}
-        transition="smooth"
+        motionTransition="smooth"
         className={cn(responsiveCardVariants({ variant, spacing, size }), className)}
         ref={ref}
         aria-label={ariaLabel}
