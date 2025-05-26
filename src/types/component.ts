@@ -1,4 +1,5 @@
 
+
 export interface ComponentOption {
   id: string;
   name: string;
@@ -64,3 +65,4 @@ export interface ServerConfiguration {
   categoria: string;
   componentes: ServerComponent[];
 }
+

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,7 +120,6 @@ export function ConnectivityOptions({
     ...otherOptions
   ];
   
-  // O resto da função permanece igual...
   return (
     <Card className="p-4">
       <CardHeader className="p-2">
