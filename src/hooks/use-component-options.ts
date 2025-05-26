@@ -184,7 +184,12 @@ export function useComponentOptions(componentType: string) {
               type: 'os',
               subtype: item.subtype,
               isHardware: false,
-              metadata: item.metadata,
+              metadata: {
+                ...item.metadata,
+                cores: item.metadata?.cores,
+                perCore: item.metadata?.perCore,
+                licensesNeeded: item.metadata?.licensesNeeded
+              },
               specs: item.specs || []
             }));
           } else {
