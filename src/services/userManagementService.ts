@@ -1,3 +1,4 @@
+
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { NewUserForm, EditUserForm } from '@/types/userManagement';
@@ -22,7 +23,6 @@ export class UserManagementService {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
           }
-          // Não enviar body nem Content-Type para GET
         });
 
         console.log('Admin function response (GET):', { data, error });
@@ -34,21 +34,21 @@ export class UserManagementService {
 
         return data;
       } else {
-        // Para POST, PUT, DELETE, enviar dados no body
-        const requestBody = {
+        // Para POST, PUT, DELETE, estruturar dados corretamente
+        const requestData = {
           method,
-          ...(userId && { userId }),
+          userId,
           ...userData
         };
 
-        console.log('Sending request body:', requestBody);
+        console.log('Sending request data:', requestData);
 
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: requestBody
+          body: requestData
         });
 
         console.log('Admin function response:', { data, error });
@@ -98,7 +98,7 @@ export class UserManagementService {
 
   static async deleteUser(session: Session, userId: string) {
     console.log('Deleting user:', userId);
-    await this.callAdminFunction('DELETE', session, userId);
+    await this.callAdminFunction('DELETE', session, userId, {});
   }
 
   static async sendPasswordReset(email: string) {
