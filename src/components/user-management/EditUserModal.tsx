@@ -22,7 +22,7 @@ export function EditUserModal({
   onUpdateUser, 
   loading 
 }: EditUserModalProps) {
-  const [editForm, setEditForm] = useState<EditUserForm>({
+  const [form, setForm] = useState<EditUserForm>({
     email: '',
     nome_completo: '',
     tipo: 'user'
@@ -30,10 +30,10 @@ export function EditUserModal({
 
   useEffect(() => {
     if (user) {
-      setEditForm({
+      setForm({
         email: user.email,
-        nome_completo: user.profile?.nome_completo || '',
-        tipo: user.profile?.tipo || 'user'
+        nome_completo: user.user_metadata?.nome_completo || '',
+        tipo: user.user_metadata?.tipo || 'user'
       });
     }
   }, [user]);
@@ -42,7 +42,7 @@ export function EditUserModal({
     e.preventDefault();
     if (!user) return;
 
-    await onUpdateUser(user.id, editForm);
+    await onUpdateUser(user.id, form);
     onClose();
   };
 
@@ -62,23 +62,23 @@ export function EditUserModal({
               <Input
                 id="edit_email"
                 type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                value={form.email}
+                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_nome">Nome Completo</Label>
               <Input
                 id="edit_nome"
-                value={editForm.nome_completo}
-                onChange={(e) => setEditForm(prev => ({ ...prev, nome_completo: e.target.value }))}
+                value={form.nome_completo}
+                onChange={(e) => setForm(prev => ({ ...prev, nome_completo: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_tipo">Tipo</Label>
               <Select 
-                value={editForm.tipo} 
-                onValueChange={(value) => setEditForm(prev => ({ ...prev, tipo: value }))}
+                value={form.tipo} 
+                onValueChange={(value) => setForm(prev => ({ ...prev, tipo: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />

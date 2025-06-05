@@ -39,7 +39,7 @@ export function UsersList({
       <CardHeader>
         <CardTitle>Usuários Cadastrados</CardTitle>
         <CardDescription>
-          Lista de todos os usuários do sistema
+          Lista de todos os usuários do sistema ({users.length} usuários)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -65,16 +65,16 @@ export function UsersList({
                 users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
-                      {user.profile?.nome_completo || 'Não informado'}
+                      {user.user_metadata?.nome_completo || 'Não informado'}
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.profile?.tipo === 'admin' 
+                        user.user_metadata?.tipo === 'admin' 
                           ? 'bg-red-100 text-red-800' 
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {user.profile?.tipo === 'admin' ? 'Administrador' : 'Usuário'}
+                        {user.user_metadata?.tipo === 'admin' ? 'Administrador' : 'Usuário'}
                       </span>
                     </TableCell>
                     <TableCell>

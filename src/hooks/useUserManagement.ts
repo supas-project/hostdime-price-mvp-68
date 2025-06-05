@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { toast } from 'sonner';
 import { UserProfile, NewUserForm, EditUserForm } from '@/types/userManagement';
 import { UserManagementService } from '@/services/userManagementService';
+import { toast } from '@/utils/toast-utils';
 
 export function useUserManagement(user: User | null, session: Session | null) {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -34,9 +34,8 @@ export function useUserManagement(user: User | null, session: Session | null) {
     try {
       setLoading(true);
       await UserManagementService.createUser(session, userForm);
-      
       toast.success('Usuário criado com sucesso');
-      loadUsers();
+      await loadUsers();
     } catch (error) {
       console.error('Error creating user:', error);
       toast.error('Erro ao criar usuário', {
@@ -53,9 +52,8 @@ export function useUserManagement(user: User | null, session: Session | null) {
     try {
       setLoading(true);
       await UserManagementService.updateUser(session, userId, editForm);
-      
       toast.success('Usuário atualizado com sucesso');
-      loadUsers();
+      await loadUsers();
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error('Erro ao atualizar usuário', {
@@ -72,9 +70,8 @@ export function useUserManagement(user: User | null, session: Session | null) {
     try {
       setLoading(true);
       await UserManagementService.deleteUser(session, userId);
-      
       toast.success('Usuário removido com sucesso');
-      loadUsers();
+      await loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
       toast.error('Erro ao remover usuário', {
@@ -99,7 +96,7 @@ export function useUserManagement(user: User | null, session: Session | null) {
 
   useEffect(() => {
     if (isAdmin && session?.access_token) {
-      console.log('Component mounted, loading users...');
+      console.log('Loading users on mount...');
       loadUsers();
     }
   }, [isAdmin, session?.access_token]);
@@ -115,5 +112,3 @@ export function useUserManagement(user: User | null, session: Session | null) {
     loadUsers
   };
 }
-
-export type { UserProfile, NewUserForm, EditUserForm };

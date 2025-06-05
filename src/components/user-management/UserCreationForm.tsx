@@ -14,7 +14,7 @@ interface UserCreationFormProps {
 }
 
 export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProps) {
-  const [newUserForm, setNewUserForm] = useState<NewUserForm>({
+  const [form, setForm] = useState<NewUserForm>({
     email: '',
     password: '',
     nome_completo: '',
@@ -23,8 +23,8 @@ export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onCreateUser(newUserForm);
-    setNewUserForm({ email: '', password: '', nome_completo: '', tipo: 'user' });
+    await onCreateUser(form);
+    setForm({ email: '', password: '', nome_completo: '', tipo: 'user' });
   };
 
   return (
@@ -47,8 +47,8 @@ export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProp
                 id="email"
                 type="email"
                 required
-                value={newUserForm.email}
-                onChange={(e) => setNewUserForm(prev => ({ ...prev, email: e.target.value }))}
+                value={form.email}
+                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="usuario@hostdime.com.br"
               />
             </div>
@@ -59,8 +59,8 @@ export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProp
                 id="password"
                 type="password"
                 required
-                value={newUserForm.password}
-                onChange={(e) => setNewUserForm(prev => ({ ...prev, password: e.target.value }))}
+                value={form.password}
+                onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
                 placeholder="Senha do usuário"
               />
             </div>
@@ -69,8 +69,8 @@ export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProp
               <Label htmlFor="nome_completo">Nome Completo</Label>
               <Input
                 id="nome_completo"
-                value={newUserForm.nome_completo}
-                onChange={(e) => setNewUserForm(prev => ({ ...prev, nome_completo: e.target.value }))}
+                value={form.nome_completo}
+                onChange={(e) => setForm(prev => ({ ...prev, nome_completo: e.target.value }))}
                 placeholder="Nome completo do usuário"
               />
             </div>
@@ -78,8 +78,8 @@ export function UserCreationForm({ onCreateUser, loading }: UserCreationFormProp
             <div className="space-y-2">
               <Label htmlFor="tipo">Tipo de Usuário</Label>
               <Select 
-                value={newUserForm.tipo} 
-                onValueChange={(value) => setNewUserForm(prev => ({ ...prev, tipo: value }))}
+                value={form.tipo} 
+                onValueChange={(value) => setForm(prev => ({ ...prev, tipo: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />

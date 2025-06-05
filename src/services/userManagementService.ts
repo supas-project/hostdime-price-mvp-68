@@ -4,101 +4,97 @@ import { supabase } from '@/lib/supabaseClient';
 import { NewUserForm, EditUserForm } from '@/types/userManagement';
 
 export class UserManagementService {
-  private static async callAdminFunction(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    session: Session,
-    userId?: string,
-    userData?: any
-  ) {
-    if (!session?.access_token) {
-      throw new Error('No access token available');
-    }
-
-    console.log('Calling admin function with:', { method, userId, userData });
-
-    try {
-      if (method === 'GET') {
-        // Para GET requests, não enviar body nem Content-Type
-        const { data, error } = await supabase.functions.invoke('admin-users', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          }
-        });
-
-        console.log('Admin function response (GET):', { data, error });
-
-        if (error) {
-          console.error('Function invocation error:', error);
-          throw new Error(error.message || 'Request failed');
-        }
-
-        return data;
-      } else {
-        // Para POST, PUT, DELETE, estruturar dados corretamente
-        const requestData = {
-          method,
-          userId,
-          ...userData
-        };
-
-        console.log('Sending request data:', requestData);
-
-        const { data, error } = await supabase.functions.invoke('admin-users', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: requestData
-        });
-
-        console.log('Admin function response:', { data, error });
-
-        if (error) {
-          console.error('Function invocation error:', error);
-          throw new Error(error.message || 'Request failed');
-        }
-
-        return data;
-      }
-    } catch (err) {
-      console.error('Call admin function error:', err);
-      throw err;
-    }
-  }
-
+  
   static async loadUsers(session: Session) {
     console.log('Loading users...');
-    const data = await this.callAdminFunction('GET', session);
-    console.log('Users loaded:', data);
-    return data.users || [];
+    
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      }
+    });
+
+    if (error) {
+      console.error('Error loading users:', error);
+      throw new Error(error.message || 'Failed to load users');
+    }
+
+    console.log('Users loaded successfully:', data?.users?.length);
+    return data?.users || [];
   }
 
   static async createUser(session: Session, userForm: NewUserForm) {
-    console.log('Creating user:', userForm);
-    await this.callAdminFunction('POST', session, undefined, {
-      email: userForm.email,
-      password: userForm.password,
-      user_metadata: { 
-        nome_completo: userForm.nome_completo, 
-        tipo: userForm.tipo 
+    console.log('Creating user:', userForm.email);
+    
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        email: userForm.email,
+        password: userForm.password,
+        user_metadata: { 
+          nome_completo: userForm.nome_completo, 
+          tipo: userForm.tipo 
+        }
       }
     });
+
+    if (error) {
+      console.error('Error creating user:', error);
+      throw new Error(error.message || 'Failed to create user');
+    }
+
+    console.log('User created successfully');
+    return data;
   }
 
   static async updateUser(session: Session, userId: string, editForm: EditUserForm) {
-    console.log('Updating user:', userId, editForm);
-    await this.callAdminFunction('PUT', session, userId, {
-      email: editForm.email,
-      user_metadata: {
-        nome_completo: editForm.nome_completo,
-        tipo: editForm.tipo
+    console.log('Updating user:', userId);
+    
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        userId,
+        email: editForm.email,
+        user_metadata: {
+          nome_completo: editForm.nome_completo,
+          tipo: editForm.tipo
+        }
       }
     });
+
+    if (error) {
+      console.error('Error updating user:', error);
+      throw new Error(error.message || 'Failed to update user');
+    }
+
+    console.log('User updated successfully');
+    return data;
   }
 
   static async deleteUser(session: Session, userId: string) {
     console.log('Deleting user:', userId);
-    await this.callAdminFunction('DELETE', session, userId, {});
+    
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: { userId }
+    });
+
+    if (error) {
+      console.error('Error deleting user:', error);
+      throw new Error(error.message || 'Failed to delete user');
+    }
+
+    console.log('User deleted successfully');
+    return data;
   }
 
   static async sendPasswordReset(email: string) {

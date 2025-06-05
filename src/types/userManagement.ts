@@ -3,9 +3,9 @@ export interface UserProfile {
   id: string;
   email: string;
   created_at: string;
-  profile: {
-    nome_completo: string;
-    tipo: string;
+  user_metadata: {
+    nome_completo?: string;
+    tipo?: string;
   };
 }
 
