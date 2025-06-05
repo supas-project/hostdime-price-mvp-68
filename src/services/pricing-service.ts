@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { PaybackRule, PriceCalculationRequest, PriceCalculationResponse, PriceBreakdown, MemoryScalingRule } from "@/types/pricing";
 import { PriceService } from "./price-service";
@@ -17,6 +16,16 @@ const MEMORY_SCALING_RULES: MemoryScalingRule[] = [
   { min_gb: 257, max_gb: 768, increment_gb: 32, price_per_gb: 11.00 },
   { min_gb: 769, max_gb: 2048, increment_gb: 64, price_per_gb: 9.50 }
 ];
+
+// Define proper type for connectivity items
+interface ConnectivityItem {
+  option: ComponentOption;
+  quantity: number;
+}
+
+interface ConnectivityConfig {
+  [key: string]: ConnectivityItem;
+}
 
 export class PricingService {
   private static instance: PricingService;
@@ -80,8 +89,9 @@ export class PricingService {
       services_cost += storage.price;
     }
 
-    // Conectividade
-    for (const [_, connectivityItem] of Object.entries(configuration.connectivity || {})) {
+    // Conectividade - Fix the type issue here
+    const connectivityConfig = configuration.connectivity as ConnectivityConfig || {};
+    for (const [_, connectivityItem] of Object.entries(connectivityConfig)) {
       const totalPrice = connectivityItem.option.price * connectivityItem.quantity;
       services_cost += totalPrice;
     }
