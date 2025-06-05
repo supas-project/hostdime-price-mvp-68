@@ -124,34 +124,18 @@ serve(async (req) => {
       )
     }
 
-    // Parse request body for non-GET requests only
+    // Parse request body for non-GET requests
     let body;
     
     try {
-      const contentType = req.headers.get('content-type')
-      console.log('📝 Content-Type:', contentType)
-      
-      if (contentType?.includes('application/json')) {
-        const rawBody = await req.text()
-        console.log('📝 Raw body received:', rawBody)
-        
-        if (!rawBody || rawBody.trim() === '') {
-          throw new Error('Empty request body')
-        }
-        
-        body = JSON.parse(rawBody)
-      } else {
-        // Se não é JSON, tenta ler como objeto direto (via supabase.functions.invoke)
-        body = await req.json()
-      }
-      
-      console.log('🚀 RECEBIDO NA FUNÇÃO:', JSON.stringify(body))
+      // Para requisições vindas do supabase.functions.invoke, usar req.json() diretamente
+      body = await req.json()
+      console.log('🚀 BODY RECEBIDO:', JSON.stringify(body))
       console.log('🔍 Body keys:', Object.keys(body))
-      console.log('🔢 Body object size:', Object.keys(body).length)
     } catch (parseError) {
-      console.error('❌ FALHA NO PARSE:', parseError.message)
+      console.error('❌ ERRO AO PARSEAR BODY:', parseError.message)
       return new Response(
-        JSON.stringify({ error: 'Invalid or missing JSON body' }),
+        JSON.stringify({ error: 'Invalid JSON body' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
