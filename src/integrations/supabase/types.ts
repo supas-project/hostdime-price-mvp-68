@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contracts: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          discount_percentage: number
+          duration_months: number
+          id: string
+          min_commitment: number | null
+          payback_factor: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          duration_months: number
+          id?: string
+          min_commitment?: number | null
+          payback_factor: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          duration_months?: number
+          id?: string
+          min_commitment?: number | null
+          payback_factor?: number
+        }
+        Relationships: []
+      }
       price_data: {
         Row: {
           created_at: string | null
@@ -54,6 +87,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_rules: {
+        Row: {
+          active: boolean
+          conditions: Json
+          created_at: string
+          factor: number
+          id: string
+          name: string
+          priority: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          conditions: Json
+          created_at?: string
+          factor: number
+          id?: string
+          name: string
+          priority?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          conditions?: Json
+          created_at?: string
+          factor?: number
+          id?: string
+          name?: string
+          priority?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -78,6 +147,170 @@ export type Database = {
           nome_completo?: string | null
           tipo?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quote_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          item_id: string
+          item_type: string
+          name: string
+          payback_applied: boolean
+          payback_factor: number | null
+          quantity: number
+          quote_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id: string
+          item_type: string
+          name: string
+          payback_applied?: boolean
+          payback_factor?: number | null
+          quantity?: number
+          quote_id: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string
+          item_type?: string
+          name?: string
+          payback_applied?: boolean
+          payback_factor?: number | null
+          quantity?: number
+          quote_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_templates: {
+        Row: {
+          company_logo: string | null
+          created_at: string
+          description: string | null
+          footer_text: string | null
+          header_text: string | null
+          id: string
+          name: string
+          show_breakdown: boolean
+          show_payback: boolean
+          terms_conditions: string | null
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          company_logo?: string | null
+          created_at?: string
+          description?: string | null
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          name: string
+          show_breakdown?: boolean
+          show_payback?: boolean
+          terms_conditions?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          company_logo?: string | null
+          created_at?: string
+          description?: string | null
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          name?: string
+          show_breakdown?: boolean
+          show_payback?: boolean
+          terms_conditions?: string | null
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          approved_at: string | null
+          configuration: Json
+          contract_duration: number
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          data_center_id: string
+          discounts: number
+          expires_at: string
+          id: string
+          margin_percentage: number | null
+          notes: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number
+          taxes: number
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          configuration: Json
+          contract_duration?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          data_center_id: string
+          discounts?: number
+          expires_at: string
+          id?: string
+          margin_percentage?: number | null
+          notes?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          taxes?: number
+          total_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          configuration?: Json
+          contract_duration?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          data_center_id?: string
+          discounts?: number
+          expires_at?: string
+          id?: string
+          margin_percentage?: number | null
+          notes?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          taxes?: number
+          total_price?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
