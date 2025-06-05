@@ -87,9 +87,10 @@ serve(async (req) => {
 
     console.log('✅ Supabase admin client created')
 
-    // Handle GET requests separately (no body)
+    // Handle GET requests separately (no body parsing needed)
     if (req.method === 'GET') {
       console.log('📋 Fetching users list...')
+      
       // List all users
       const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers()
       
@@ -124,11 +125,10 @@ serve(async (req) => {
       )
     }
 
-    // Parse request body for non-GET requests
+    // Parse request body ONLY for non-GET requests
     let body = {};
     
     try {
-      // Para requisições que não são GET, sempre tentar parsear o body
       const bodyText = await req.text()
       console.log('📄 Raw body text length:', bodyText.length)
       
