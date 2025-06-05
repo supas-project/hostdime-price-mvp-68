@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
@@ -10,6 +9,8 @@ import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { usePaybackPricing } from "@/hooks/usePaybackPricing";
+import { Badge } from "@/components/ui/badge";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -22,6 +23,7 @@ export function MemoryContent({
 }: MemoryContentProps) {
   const { options, isLoading, error, refreshOptions } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  const { calculatePriceWithPayback, getPaybackInfo, hasActiveContract } = usePaybackPricing();
 
   // Debug logs
   useEffect(() => {
@@ -73,7 +75,6 @@ export function MemoryContent({
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <Card className="p-4 sm:p-6 bg-[#1e1e1e]">
@@ -113,32 +114,62 @@ export function MemoryContent({
               <SelectValue placeholder="Escolha a memória ideal para você" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
-              {options.map((option) => (
-                <SelectItem
-                  key={option.id}
-                  value={option.id}
-                  className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
-                >
-                  <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-xs sm:text-sm">{option.name}</span>
-                      {option.specs && (
-                        <HelpTooltip
-                          title={option.name}
-                          description={option.specs.join('\n')}
-                          iconOnly
-                        />
-                      )}
+              {options.map((option) => {
+                const paybackInfo = getPaybackInfo(option);
+                const displayPrice = calculatePriceWithPayback(option);
+                
+                return (
+                  <SelectItem
+                    key={option.id}
+                    value={option.id}
+                    className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
+                  >
+                    <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-xs sm:text-sm">{option.name}</span>
+                        {option.specs && (
+                          <HelpTooltip
+                            title={option.name}
+                            description={option.specs.join('\n')}
+                            iconOnly
+                          />
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1">
+                        {paybackInfo?.hasPayback ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-xs text-gray-400 line-through">
+                              {formatCurrency(paybackInfo.originalPrice)}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-green-400 font-medium text-xs sm:text-sm">
+                                {formatCurrency(displayPrice)}
+                              </span>
+                              <Badge variant="secondary" className="text-xs bg-green-600 text-white">
+                                {paybackInfo.paybackValue}x
+                              </Badge>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
+                            {formatCurrency(displayPrice)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
-                      {formatCurrency(option.price)}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
+
+        {hasActiveContract && (
+          <div className="text-xs text-gray-400 bg-[#2a2a2a] p-2 rounded">
+            💡 Preços de hardware já incluem desconto PayBack do contrato selecionado
+          </div>
+        )}
       </div>
     </Card>
   );

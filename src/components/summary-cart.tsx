@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ComponentOption } from "@/types/component";
 import { useWizard } from "@/contexts/WizardContext";
@@ -8,6 +7,7 @@ import { CartFooter } from "./summary-cart/cart-footer";
 import { CartNavigation } from "./summary-cart/cart-navigation";
 import { cn } from "@/lib/utils";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
+import { usePaybackPricing } from "@/hooks/usePaybackPricing";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -16,7 +16,6 @@ interface SummaryCartProps {
   onPrevious: () => void;
   onNext: () => void;
   onComplete: () => void;
-  // Novos props para auto-progressão
   autoProgressionConfig?: {
     enabled: boolean;
     fastMode: boolean;
@@ -48,21 +47,14 @@ export function SummaryCart({
   isComplexCategoryReady
 }: SummaryCartProps) {
   const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
+  const { calculatePriceWithPayback } = usePaybackPricing();
 
-  // CORREÇÃO: Dedupliação mais agressiva com nova lógica melhorada
   const uniqueStorageItems = {
     internal: deduplicateStorageItems(storageItems.internal),
     external: deduplicateStorageItems(storageItems.external)
   };
   
-  console.log(`[SummaryCart] Cálculo de preço com itens deduplicados`);
-  console.log(`[SummaryCart] Discos internos originais: ${storageItems.internal.length}, únicos: ${uniqueStorageItems.internal.length}`);
-  console.log(`[SummaryCart] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
-  console.log(`[SummaryCart] Itens de conectividade:`, connectivityItems);
-  
-  console.log("[SummaryCart] Todos os componentes selecionados:", selectedComponents);
-  console.log("[SummaryCart] Data Center:", selectedComponents["datacenter"]);
-  console.log("[SummaryCart] Contrato:", selectedComponents["contrato"]);
+  console.log(`[SummaryCart] Cálculo de preço com Payback aplicado`);
 
   const standardComponents = Object.values(selectedComponents).filter(
     component => {
@@ -73,25 +65,29 @@ export function SummaryCart({
     }
   );
   
+  // Aplicar payback aos componentes padrão
   const standardComponentsPrice = standardComponents.reduce(
-    (sum, component) => sum + (component.price || 0),
+    (sum, component) => sum + calculatePriceWithPayback(component),
     0
   );
   
+  // Aplicar payback ao storage interno (é hardware)
   const internalStoragePrice = uniqueStorageItems.internal
     .filter(disk => disk && disk.price > 0)
-    .reduce((sum, disk) => sum + disk.price, 0);
+    .reduce((sum, disk) => sum + calculatePriceWithPayback(disk), 0);
   
+  // Storage externo não tem payback
   const externalStoragePrice = uniqueStorageItems.external
     .filter(storage => storage && storage.price > 0)
     .reduce((sum, storage) => sum + storage.price, 0);
 
+  // Conectividade não tem payback
   const connectivityPrice = Object.values(connectivityItems)
     .filter(item => item && item.option)
     .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
 
   const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice + connectivityPrice;
-  console.log(`[SummaryCart] Total calculado: ${totalPrice}`);
+  console.log(`[SummaryCart] Total com Payback aplicado: ${totalPrice}`);
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;

@@ -1,14 +1,13 @@
-
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { Server } from "lucide-react";
-import { HelpTooltip } from "@/components/help-tooltip";
 import { ComponentSelector } from "@/components/component-selector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PriceService } from "@/services/price-service";
+import { usePaybackPricing } from "@/hooks/usePaybackPricing";
 
 interface ProcessorContentProps {
   selectedOption: ComponentOption | null;
@@ -26,8 +25,8 @@ export function ProcessorContent({
     refreshOptions
   } = useComponentOptions('cpu');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  const { calculatePriceWithPayback, getPaybackInfo, hasActiveContract } = usePaybackPricing();
 
-  // Listen for price data changes
   useEffect(() => {
     // Add listener for price data changes to trigger a refresh
     PriceService.addDataChangeListener(() => {
@@ -55,7 +54,6 @@ export function ProcessorContent({
     }
   }, [error]);
 
-  // Handle selection change
   const handleSelectionChange = (value: string) => {
     const option = options.find(opt => opt.id === value);
     setLocalSelectedId(value);
@@ -64,7 +62,6 @@ export function ProcessorContent({
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return <Card className="p-4 sm:p-6">
         <div className="flex flex-col gap-4">
@@ -80,7 +77,14 @@ export function ProcessorContent({
   return <Card className="p-4 sm:p-6">
       <div className="flex flex-col gap-4">
         <div className="w-full">
-          <ComponentSelector label="Processador" options={options} value={localSelectedId} onChange={handleSelectionChange} tooltip="Escolha o processador que melhor atenda às suas necessidades computacionais." highlightSelection={true} />
+          <ComponentSelector 
+            label="Processador" 
+            options={options} 
+            value={localSelectedId} 
+            onChange={handleSelectionChange} 
+            tooltip="Escolha o processador que melhor atenda às suas necessidades computacionais." 
+            highlightSelection={true} 
+          />
         </div>
       </div>
     </Card>;
