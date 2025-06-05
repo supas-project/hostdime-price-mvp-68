@@ -17,13 +17,12 @@ export class UserManagementService {
 
     try {
       if (method === 'GET') {
-        // Para GET requests, não enviar body
+        // Para GET requests, não enviar body nem Content-Type
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
           }
-          // Não enviar body para GET
+          // Não enviar body nem Content-Type para GET
         });
 
         console.log('Admin function response (GET):', { data, error });
