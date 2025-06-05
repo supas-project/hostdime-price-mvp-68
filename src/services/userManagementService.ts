@@ -18,7 +18,7 @@ export class UserManagementService {
 
     try {
       if (method === 'GET') {
-        // Para GET requests, usar supabase.functions.invoke
+        // Para GET requests, usar supabase.functions.invoke sem body
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -35,7 +35,7 @@ export class UserManagementService {
 
         return data;
       } else {
-        // Para POST, PUT, DELETE, usar supabase.functions.invoke com body
+        // Para POST, PUT, DELETE, enviar dados no body como JSON string
         const requestBody = {
           method,
           ...(userId && { userId }),
@@ -49,7 +49,7 @@ export class UserManagementService {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: requestBody
+          body: JSON.stringify(requestBody) // Enviar como string JSON
         });
 
         console.log('Admin function response:', { data, error });
