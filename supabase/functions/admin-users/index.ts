@@ -124,13 +124,23 @@ serve(async (req) => {
       )
     }
 
-    // Parse request body for non-GET requests
-    let body;
+    // Parse request body for non-GET requests - only if there's content
+    let body = {};
     
     try {
-      body = await req.json()
-      console.log('🚀 BODY RECEBIDO:', JSON.stringify(body))
-      console.log('🔍 Body keys:', Object.keys(body))
+      const contentType = req.headers.get('content-type')
+      const contentLength = req.headers.get('content-length')
+      
+      console.log('📦 Content-Type:', contentType, 'Content-Length:', contentLength)
+      
+      // Only try to parse JSON if there's actual content
+      if (contentLength && parseInt(contentLength) > 0) {
+        body = await req.json()
+        console.log('🚀 BODY RECEBIDO:', JSON.stringify(body))
+        console.log('🔍 Body keys:', Object.keys(body))
+      } else {
+        console.log('📭 No body content to parse')
+      }
     } catch (parseError) {
       console.error('❌ ERRO AO PARSEAR BODY:', parseError.message)
       return new Response(
