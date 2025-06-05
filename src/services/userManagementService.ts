@@ -17,12 +17,13 @@ export class UserManagementService {
 
     try {
       if (method === 'GET') {
-        // Para GET requests, usar supabase.functions.invoke sem body
+        // Para GET requests, não enviar body
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           }
+          // Não enviar body para GET
         });
 
         console.log('Admin function response (GET):', { data, error });
@@ -46,8 +47,9 @@ export class UserManagementService {
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
           },
-          body: requestBody // Enviar como objeto, não como string
+          body: requestBody
         });
 
         console.log('Admin function response:', { data, error });

@@ -128,7 +128,6 @@ serve(async (req) => {
     let body;
     
     try {
-      // Para requisições vindas do supabase.functions.invoke, usar req.json() diretamente
       body = await req.json()
       console.log('🚀 BODY RECEBIDO:', JSON.stringify(body))
       console.log('🔍 Body keys:', Object.keys(body))
