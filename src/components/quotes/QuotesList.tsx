@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useQuoteManagement } from '@/hooks/useQuoteManagement';
 import { Quote, QuoteStatus } from '@/types/quote';
 import { formatCurrency } from '@/utils/number-formatter';
+import { toast } from '@/hooks/use-toast';
 import { 
   Eye, 
   Copy, 
