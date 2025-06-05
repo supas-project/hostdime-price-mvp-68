@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const statusColors = {
   [QuoteStatus.DRAFT]: 'bg-gray-500',
@@ -48,11 +48,18 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
     deleteQuote 
   } = useQuoteManagement();
 
+  const permissions = usePermissions();
+
   useEffect(() => {
     loadQuotes();
   }, [loadQuotes]);
 
   const handleDuplicate = async (quoteId: string) => {
+    if (!permissions.canCreateQuotes) {
+      toast.error("Você não tem permissão para duplicar cotações");
+      return;
+    }
+    
     const newQuote = await duplicateQuote(quoteId);
     if (newQuote && onViewQuote) {
       onViewQuote(newQuote);
@@ -60,6 +67,11 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
   };
 
   const handleDelete = async (quoteId: string) => {
+    if (!permissions.canDeleteQuotes) {
+      toast.error("Você não tem permissão para excluir cotações");
+      return;
+    }
+    
     if (confirm('Tem certeza que deseja excluir esta cotação?')) {
       await deleteQuote(quoteId);
     }
@@ -77,7 +89,7 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Minhas Cotações</h2>
-        {onCreateNew && (
+        {onCreateNew && permissions.canCreateQuotes && (
           <Button onClick={onCreateNew} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nova Cotação
@@ -93,7 +105,7 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
             <p className="text-muted-foreground text-center mb-4">
               Você ainda não criou nenhuma cotação. Comece criando sua primeira cotação.
             </p>
-            {onCreateNew && (
+            {onCreateNew && permissions.canCreateQuotes && (
               <Button onClick={onCreateNew}>
                 Criar primeira cotação
               </Button>
@@ -156,7 +168,7 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
                 )}
 
                 <div className="flex gap-2 flex-wrap">
-                  {onViewQuote && (
+                  {onViewQuote && permissions.canViewQuotes && (
                     <Button 
                       size="sm" 
                       variant="outline"
@@ -167,36 +179,44 @@ export function QuotesList({ onCreateNew, onViewQuote }: QuotesListProps) {
                     </Button>
                   )}
                   
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleDuplicate(quote.id)}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Duplicar
-                  </Button>
+                  {permissions.canCreateQuotes && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleDuplicate(quote.id)}
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicar
+                    </Button>
+                  )}
                   
-                  <Button size="sm" variant="outline">
-                    <Download className="h-4 w-4 mr-1" />
-                    PDF
-                  </Button>
+                  {permissions.canDownloadPDF && (
+                    <Button size="sm" variant="outline">
+                      <Download className="h-4 w-4 mr-1" />
+                      PDF
+                    </Button>
+                  )}
                   
                   {quote.status === QuoteStatus.DRAFT && (
                     <>
-                      <Button size="sm" variant="outline">
-                        <Mail className="h-4 w-4 mr-1" />
-                        Enviar
-                      </Button>
+                      {permissions.canSendEmails && (
+                        <Button size="sm" variant="outline">
+                          <Mail className="h-4 w-4 mr-1" />
+                          Enviar
+                        </Button>
+                      )}
                       
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleDelete(quote.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Excluir
-                      </Button>
+                      {permissions.canDeleteQuotes && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDelete(quote.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Excluir
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>

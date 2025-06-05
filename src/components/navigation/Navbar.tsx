@@ -49,6 +49,18 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
               >
                 Configurações
               </Button>
+
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className={cn(
+                  "text-muted-foreground hover:text-[#f58220] hover:bg-[#f58220]/10",
+                  "transition-all duration-300 hover:shadow-md"
+                )}
+                onClick={() => navigate("/quotes")}
+              >
+                Cotações
+              </Button>
               
               {isAdminAccess && (
                 <>

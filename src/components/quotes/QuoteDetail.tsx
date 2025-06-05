@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface QuoteDetailProps {
   quote: Quote;
@@ -44,6 +44,7 @@ const statusLabels = {
 
 export function QuoteDetail({ quote, onEdit, onSendEmail, onDownloadPDF }: QuoteDetailProps) {
   const configuration = quote.configuration;
+  const permissions = usePermissions();
 
   return (
     <div className="space-y-6">
@@ -80,19 +81,19 @@ export function QuoteDetail({ quote, onEdit, onSendEmail, onDownloadPDF }: Quote
         
         <CardContent>
           <div className="flex gap-2">
-            {onEdit && quote.status === QuoteStatus.DRAFT && (
+            {onEdit && quote.status === QuoteStatus.DRAFT && permissions.canEditQuotes && (
               <Button onClick={onEdit}>
                 <FileText className="h-4 w-4 mr-2" />
                 Editar
               </Button>
             )}
-            {onDownloadPDF && (
+            {onDownloadPDF && permissions.canDownloadPDF && (
               <Button variant="outline" onClick={onDownloadPDF}>
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
             )}
-            {onSendEmail && quote.status === QuoteStatus.DRAFT && (
+            {onSendEmail && quote.status === QuoteStatus.DRAFT && permissions.canSendEmails && (
               <Button variant="outline" onClick={onSendEmail}>
                 <Send className="h-4 w-4 mr-2" />
                 Enviar por Email
