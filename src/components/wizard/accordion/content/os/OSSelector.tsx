@@ -40,37 +40,12 @@ export function OSSelector({
       return [];
     }
     
-    // Separar opções por subtipo
-    const windowsOptions = options.filter(opt => opt.subtype === "windows");
-    const linuxOptions = options.filter(opt => opt.subtype === "linux");
-    const virtualizationOptions = options.filter(opt => opt.subtype === "virtualization");
-    const unixOptions = options.filter(opt => opt.subtype === "unix");
-
-    return [
-      {
-        group: "Windows",
-        options: windowsOptions,
-        tooltip: "Windows Server com licenciamento por cores. Selecione e configure a quantidade de cores necessárias."
-      },
-      {
-        group: "Linux",
-        options: linuxOptions
-      },
-      {
-        group: "Virtualização",
-        options: virtualizationOptions
-      },
-      {
-        group: "Unix e Outros",
-        options: unixOptions
-      }
-    ].filter(group => group.options.length > 0);
+    // Return all options as a flat array since ComponentSelector doesn't support groups
+    return options;
   }, [options]);
 
   const handleValueChange = (value: string) => {
-    const option = formattedOptions
-      .flatMap(group => group.options)
-      .find(opt => opt.id === value);
+    const option = options.find(opt => opt.id === value);
     
     if (option) {
       setLocalSelectedId(value);
@@ -186,12 +161,11 @@ export function OSSelector({
         <>
           <ComponentSelector
             label="Sistema Operacional"
-            options={formattedOptions.flatMap(group => group.options)}
+            options={formattedOptions}
             value={localSelectedId}
             onChange={handleValueChange}
             tooltip="Escolha o sistema operacional ideal para seu servidor"
             highlightSelection={true}
-            groupedOptions={formattedOptions}
           />
           
           {/* Lista de licenças Windows configuradas */}
