@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -127,12 +128,23 @@ serve(async (req) => {
     let body;
     
     try {
-      const rawBody = await req.text()
-      if (!rawBody || rawBody.trim() === '') {
-        throw new Error('Empty request body')
+      const contentType = req.headers.get('content-type')
+      console.log('📝 Content-Type:', contentType)
+      
+      if (contentType?.includes('application/json')) {
+        const rawBody = await req.text()
+        console.log('📝 Raw body received:', rawBody)
+        
+        if (!rawBody || rawBody.trim() === '') {
+          throw new Error('Empty request body')
+        }
+        
+        body = JSON.parse(rawBody)
+      } else {
+        // Se não é JSON, tenta ler como objeto direto (via supabase.functions.invoke)
+        body = await req.json()
       }
       
-      body = JSON.parse(rawBody)
       console.log('🚀 RECEBIDO NA FUNÇÃO:', JSON.stringify(body))
       console.log('🔍 Body keys:', Object.keys(body))
       console.log('🔢 Body object size:', Object.keys(body).length)

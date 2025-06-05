@@ -1,4 +1,3 @@
-
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { NewUserForm, EditUserForm } from '@/types/userManagement';
@@ -35,7 +34,7 @@ export class UserManagementService {
 
         return data;
       } else {
-        // Para POST, PUT, DELETE, enviar dados no body como JSON string
+        // Para POST, PUT, DELETE, enviar dados no body
         const requestBody = {
           method,
           ...(userId && { userId }),
@@ -47,9 +46,8 @@ export class UserManagementService {
         const { data, error } = await supabase.functions.invoke('admin-users', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody) // Enviar como string JSON
+          body: requestBody // Enviar como objeto, não como string
         });
 
         console.log('Admin function response:', { data, error });
