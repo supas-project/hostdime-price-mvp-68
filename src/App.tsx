@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
+import SystemComponents from "./pages/SystemComponents";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -54,6 +56,12 @@ const App = () => (
               <Route path="price-table" element={
                 <AdminProtectedRoute>
                   <PriceTable />
+                </AdminProtectedRoute>
+              } />
+              
+              <Route path="system-components" element={
+                <AdminProtectedRoute>
+                  <SystemComponents />
                 </AdminProtectedRoute>
               } />
               
