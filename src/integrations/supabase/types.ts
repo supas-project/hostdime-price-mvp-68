@@ -345,7 +345,10 @@ export type Database = {
           expires_at: string
           id: string
           margin_percentage: number | null
+          monthly_total: number | null
           notes: string | null
+          payback_total: number | null
+          quote_number: string | null
           sent_at: string | null
           status: string
           subtotal: number
@@ -366,7 +369,10 @@ export type Database = {
           expires_at: string
           id?: string
           margin_percentage?: number | null
+          monthly_total?: number | null
           notes?: string | null
+          payback_total?: number | null
+          quote_number?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number
@@ -387,7 +393,10 @@ export type Database = {
           expires_at?: string
           id?: string
           margin_percentage?: number | null
+          monthly_total?: number | null
           notes?: string | null
+          payback_total?: number | null
+          quote_number?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number
@@ -395,6 +404,51 @@ export type Database = {
           total_price?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      storage_items: {
+        Row: {
+          capacity_gb: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          item_type: string
+          metadata: Json | null
+          name: string
+          price: number
+          specs: Json | null
+          storage_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity_gb?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_type: string
+          metadata?: Json | null
+          name: string
+          price?: number
+          specs?: Json | null
+          storage_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity_gb?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_type?: string
+          metadata?: Json | null
+          name?: string
+          price?: number
+          specs?: Json | null
+          storage_type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -446,12 +500,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_quote_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

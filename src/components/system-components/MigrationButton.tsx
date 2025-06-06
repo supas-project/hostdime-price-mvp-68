@@ -2,20 +2,17 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Database, Play, CheckCircle } from 'lucide-react';
-import { DataMigrationService } from '@/services/data-migration-service';
+import { Database, Play, CheckCircle, AlertTriangle } from 'lucide-react';
+import { CoreMigrationService, MigrationStatus } from '@/services/data-migration/core-migration-service';
 import { toast } from 'sonner';
 
 export function MigrationButton() {
   const [isRunning, setIsRunning] = useState(false);
-  const [migrationStatus, setMigrationStatus] = useState<{
-    needed: boolean;
-    summary: string;
-  } | null>(null);
+  const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
 
   const checkStatus = async () => {
     try {
-      const status = await DataMigrationService.checkMigrationStatus();
+      const status = await CoreMigrationService.checkMigrationStatus();
       setMigrationStatus(status);
     } catch (error) {
       console.error('Error checking migration status:', error);
@@ -26,7 +23,7 @@ export function MigrationButton() {
   const runMigration = async () => {
     setIsRunning(true);
     try {
-      await DataMigrationService.runCompleteMigration();
+      await CoreMigrationService.runProductionMigration();
       await checkStatus(); // Update status after migration
     } catch (error) {
       console.error('Migration failed:', error);
@@ -44,7 +41,7 @@ export function MigrationButton() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="h-5 w-5" />
-          Migração de Dados Estáticos
+          Migração de Dados para Produção
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -53,14 +50,24 @@ export function MigrationButton() {
             <div>
               <p><strong>Status:</strong> {migrationStatus.summary}</p>
               {migrationStatus.needed ? (
-                <p className="text-amber-600 mt-1">
-                  ⚠️ Migração necessária - Banco de dados vazio
-                </p>
+                <div className="flex items-center gap-2 mt-2 text-amber-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Migração necessária - {migrationStatus.totalMissing} itens faltando</span>
+                </div>
               ) : (
-                <p className="text-green-600 mt-1 flex items-center gap-1">
+                <div className="flex items-center gap-2 mt-2 text-green-600">
                   <CheckCircle className="h-4 w-4" />
-                  Dados já migrados
-                </p>
+                  <span>Todos os dados migrados para produção</span>
+                </div>
+              )}
+              
+              {migrationStatus.totalMissing > 0 && (
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>CPUs: {migrationStatus.details.cpu}</div>
+                  <div>Memória: {migrationStatus.details.memory}</div>
+                  <div>Storage: {migrationStatus.details.storage}</div>
+                  <div>DCs: {migrationStatus.details.datacenters}</div>
+                </div>
               )}
             </div>
           ) : (
@@ -76,7 +83,7 @@ export function MigrationButton() {
             className="gap-2"
           >
             <Play className="h-4 w-4" />
-            {isRunning ? 'Migrando...' : 'Executar Migração'}
+            {isRunning ? 'Migrando para Produção...' : 'Executar Migração Completa'}
           </Button>
           
           <Button
@@ -89,8 +96,8 @@ export function MigrationButton() {
         </div>
         
         <p className="text-xs text-muted-foreground">
-          Esta migração copia todos os dados estáticos (CPUs, memória, OS, conectividade, data centers e contratos) 
-          para o banco de dados, permitindo que sejam gerenciados através da interface administrativa.
+          Esta migração prepara todos os dados para produção, incluindo componentes do sistema, 
+          storage, data centers, contratos e configurações otimizadas para ambiente de produção.
         </p>
       </CardContent>
     </Card>
