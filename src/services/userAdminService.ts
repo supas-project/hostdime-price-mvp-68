@@ -1,5 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 
 export interface UserProfile {
@@ -26,6 +25,7 @@ export interface UpdateUserData {
 }
 
 const FUNCTION_URL = 'https://nglwjdpocxelvarqjgts.supabase.co/functions/v1/user-admin';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nbHdqZHBvY3hlbHZhcnFqZ3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4NTE3OTMsImV4cCI6MjA2MTQyNzc5M30.8xCetXorVi2SehrE_Tfgf-I_96o75alWXTMSHZLNh7s';
 
 export class UserAdminService {
   static async listUsers(session: Session): Promise<UserProfile[]> {
@@ -36,7 +36,7 @@ export class UserAdminService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
           'x-client-info': 'supabase-js-web/2.49.8'
         }
@@ -68,7 +68,7 @@ export class UserAdminService {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
           'x-client-info': 'supabase-js-web/2.49.8'
         },
@@ -99,7 +99,7 @@ export class UserAdminService {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
           'x-client-info': 'supabase-js-web/2.49.8'
         },
@@ -130,7 +130,7 @@ export class UserAdminService {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
-          'apikey': supabase.supabaseKey,
+          'apikey': SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
           'x-client-info': 'supabase-js-web/2.49.8'
         },
@@ -154,6 +154,7 @@ export class UserAdminService {
   }
 
   static async sendPasswordReset(email: string): Promise<void> {
+    const { supabase } = await import('@/integrations/supabase/client');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
