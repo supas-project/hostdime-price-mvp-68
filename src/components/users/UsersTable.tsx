@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, Key } from 'lucide-react';
-import { UserProfile } from '@/types/user';
+import { UserProfile } from '@/services/userAdminService';
 
 interface UsersTableProps {
   users: UserProfile[];

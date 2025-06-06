@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users } from 'lucide-react';
-import { useUsers } from '@/hooks/useUsers';
+import { useUserAdmin } from '@/hooks/useUserAdmin';
 import { CreateUserForm } from '@/components/users/CreateUserForm';
 import { UsersTable } from '@/components/users/UsersTable';
 import { EditUserDialog } from '@/components/users/EditUserDialog';
 import { DeleteUserDialog } from '@/components/users/DeleteUserDialog';
-import { UserProfile } from '@/types/user';
+import { UserProfile } from '@/services/userAdminService';
 
 export default function UserManagement() {
   const { user, session } = useAuth();
@@ -25,7 +25,7 @@ export default function UserManagement() {
     updateUser,
     deleteUser,
     sendPasswordReset
-  } = useUsers(user, session);
+  } = useUserAdmin(user, session);
 
   const openEditDialog = (user: UserProfile) => {
     console.log('✏️ Opening edit dialog for user:', user.email);
