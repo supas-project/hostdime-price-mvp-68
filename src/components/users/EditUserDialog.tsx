@@ -5,24 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserProfile, EditUserForm } from '@/types/userManagement';
+import { UserProfile, UpdateUserData } from '@/types/user';
 
-interface EditUserModalProps {
+interface EditUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserProfile | null;
-  onUpdateUser: (userId: string, editForm: EditUserForm) => Promise<void>;
+  onUpdateUser: (userId: string, userData: UpdateUserData) => Promise<void>;
   loading: boolean;
 }
 
-export function EditUserModal({ 
+export function EditUserDialog({ 
   isOpen, 
   onClose, 
   user, 
   onUpdateUser, 
   loading 
-}: EditUserModalProps) {
-  const [form, setForm] = useState<EditUserForm>({
+}: EditUserDialogProps) {
+  const [formData, setFormData] = useState<UpdateUserData>({
     email: '',
     nome_completo: '',
     tipo: 'user'
@@ -30,7 +30,7 @@ export function EditUserModal({
 
   useEffect(() => {
     if (user) {
-      setForm({
+      setFormData({
         email: user.email,
         nome_completo: user.user_metadata?.nome_completo || '',
         tipo: user.user_metadata?.tipo || 'user'
@@ -42,7 +42,8 @@ export function EditUserModal({
     e.preventDefault();
     if (!user) return;
 
-    await onUpdateUser(user.id, form);
+    console.log('📝 Submitting edit user form');
+    await onUpdateUser(user.id, formData);
     onClose();
   };
 
@@ -62,23 +63,23 @@ export function EditUserModal({
               <Input
                 id="edit_email"
                 type="email"
-                value={form.email}
-                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_nome">Nome Completo</Label>
               <Input
                 id="edit_nome"
-                value={form.nome_completo}
-                onChange={(e) => setForm(prev => ({ ...prev, nome_completo: e.target.value }))}
+                value={formData.nome_completo}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_completo: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit_tipo">Tipo</Label>
               <Select 
-                value={form.tipo} 
-                onValueChange={(value) => setForm(prev => ({ ...prev, tipo: value }))}
+                value={formData.tipo} 
+                onValueChange={(value: 'user' | 'admin') => setFormData(prev => ({ ...prev, tipo: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />

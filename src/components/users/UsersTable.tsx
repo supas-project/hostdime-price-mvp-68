@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, Key } from 'lucide-react';
-import { UserProfile } from '@/types/userManagement';
+import { UserProfile } from '@/types/user';
 
-interface UsersListProps {
+interface UsersTableProps {
   users: UserProfile[];
   loading: boolean;
   onEditUser: (user: UserProfile) => void;
@@ -14,13 +14,13 @@ interface UsersListProps {
   onSendPasswordReset: (email: string) => void;
 }
 
-export function UsersList({ 
+export function UsersTable({ 
   users, 
   loading, 
   onEditUser, 
   onDeleteUser, 
   onSendPasswordReset 
-}: UsersListProps) {
+}: UsersTableProps) {
   if (loading) {
     return (
       <Card>

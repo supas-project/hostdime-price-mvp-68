@@ -2,9 +2,9 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/types/userManagement';
+import { UserProfile } from '@/types/user';
 
-interface DeleteUserModalProps {
+interface DeleteUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserProfile | null;
@@ -12,15 +12,16 @@ interface DeleteUserModalProps {
   loading: boolean;
 }
 
-export function DeleteUserModal({ 
+export function DeleteUserDialog({ 
   isOpen, 
   onClose, 
   user, 
   onDeleteUser, 
   loading 
-}: DeleteUserModalProps) {
+}: DeleteUserDialogProps) {
   const handleDelete = async () => {
     if (!user) return;
+    console.log('🗑️ Confirming user deletion');
     await onDeleteUser(user.id);
     onClose();
   };

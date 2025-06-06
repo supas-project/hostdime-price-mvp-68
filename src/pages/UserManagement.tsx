@@ -4,17 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { Users } from 'lucide-react';
-import { useUserManagement } from '@/hooks/useUserManagement';
-import { UserCreationForm } from '@/components/user-management/UserCreationForm';
-import { UsersList } from '@/components/user-management/UsersList';
-import { EditUserModal } from '@/components/user-management/EditUserModal';
-import { DeleteUserModal } from '@/components/user-management/DeleteUserModal';
-import { UserProfile } from '@/types/userManagement';
+import { useUsers } from '@/hooks/useUsers';
+import { CreateUserForm } from '@/components/users/CreateUserForm';
+import { UsersTable } from '@/components/users/UsersTable';
+import { EditUserDialog } from '@/components/users/EditUserDialog';
+import { DeleteUserDialog } from '@/components/users/DeleteUserDialog';
+import { UserProfile } from '@/types/user';
 
 export default function UserManagement() {
   const { user, session } = useAuth();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   const {
@@ -25,25 +25,27 @@ export default function UserManagement() {
     updateUser,
     deleteUser,
     sendPasswordReset
-  } = useUserManagement(user, session);
+  } = useUsers(user, session);
 
-  const openEditModal = (user: UserProfile) => {
+  const openEditDialog = (user: UserProfile) => {
+    console.log('✏️ Opening edit dialog for user:', user.email);
     setSelectedUser(user);
-    setIsEditModalOpen(true);
+    setIsEditDialogOpen(true);
   };
 
-  const openDeleteModal = (user: UserProfile) => {
+  const openDeleteDialog = (user: UserProfile) => {
+    console.log('🗑️ Opening delete dialog for user:', user.email);
     setSelectedUser(user);
-    setIsDeleteModalOpen(true);
+    setIsDeleteDialogOpen(true);
   };
 
-  const closeEditModal = () => {
-    setIsEditModalOpen(false);
+  const closeEditDialog = () => {
+    setIsEditDialogOpen(false);
     setSelectedUser(null);
   };
 
-  const closeDeleteModal = () => {
-    setIsDeleteModalOpen(false);
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
     setSelectedUser(null);
   };
 
@@ -83,31 +85,31 @@ export default function UserManagement() {
         </TabsList>
 
         <TabsContent value="create">
-          <UserCreationForm onCreateUser={createUser} loading={loading} />
+          <CreateUserForm onCreateUser={createUser} loading={loading} />
         </TabsContent>
 
         <TabsContent value="list">
-          <UsersList
+          <UsersTable
             users={users}
             loading={loading}
-            onEditUser={openEditModal}
-            onDeleteUser={openDeleteModal}
+            onEditUser={openEditDialog}
+            onDeleteUser={openDeleteDialog}
             onSendPasswordReset={sendPasswordReset}
           />
         </TabsContent>
       </Tabs>
 
-      <EditUserModal
-        isOpen={isEditModalOpen}
-        onClose={closeEditModal}
+      <EditUserDialog
+        isOpen={isEditDialogOpen}
+        onClose={closeEditDialog}
         user={selectedUser}
         onUpdateUser={updateUser}
         loading={loading}
       />
 
-      <DeleteUserModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
+      <DeleteUserDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
         user={selectedUser}
         onDeleteUser={deleteUser}
         loading={loading}

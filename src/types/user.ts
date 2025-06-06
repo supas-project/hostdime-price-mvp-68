@@ -5,19 +5,19 @@ export interface UserProfile {
   created_at: string;
   user_metadata: {
     nome_completo?: string;
-    tipo?: string;
+    tipo?: 'user' | 'admin';
   };
 }
 
-export interface NewUserForm {
+export interface CreateUserData {
   email: string;
   password: string;
   nome_completo: string;
-  tipo: string;
+  tipo: 'user' | 'admin';
 }
 
-export interface EditUserForm {
+export interface UpdateUserData {
   email: string;
   nome_completo: string;
-  tipo: string;
+  tipo: 'user' | 'admin';
 }
