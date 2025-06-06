@@ -43,8 +43,12 @@ export function EditUserDialog({
     if (!user) return;
 
     console.log('📝 Submitting edit user form');
-    await onUpdateUser(user.id, formData);
-    onClose();
+    try {
+      await onUpdateUser(user.id, formData);
+      onClose();
+    } catch (error) {
+      console.error('❌ Edit form submission error:', error);
+    }
   };
 
   return (

@@ -22,8 +22,12 @@ export function DeleteUserDialog({
   const handleDelete = async () => {
     if (!user) return;
     console.log('🗑️ Confirming user deletion');
-    await onDeleteUser(user.id);
-    onClose();
+    try {
+      await onDeleteUser(user.id);
+      onClose();
+    } catch (error) {
+      console.error('❌ Delete confirmation error:', error);
+    }
   };
 
   return (

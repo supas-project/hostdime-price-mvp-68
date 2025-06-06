@@ -24,8 +24,13 @@ export function CreateUserForm({ onCreateUser, loading }: CreateUserFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('📝 Submitting create user form');
-    await onCreateUser(formData);
-    setFormData({ email: '', password: '', nome_completo: '', tipo: 'user' });
+    
+    try {
+      await onCreateUser(formData);
+      setFormData({ email: '', password: '', nome_completo: '', tipo: 'user' });
+    } catch (error) {
+      console.error('❌ Form submission error:', error);
+    }
   };
 
   return (

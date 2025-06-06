@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, CreateUserData, UpdateUserData } from '@/types/user';
-import { UserService } from '@/services/userService';
+import { UserProfile, CreateUserData, UpdateUserData, UserService } from '@/services/userService';
 import { toast } from 'sonner';
 
 export function useUsers(user: User | null, session: Session | null) {
@@ -44,6 +43,7 @@ export function useUsers(user: User | null, session: Session | null) {
       toast.error('Erro ao criar usuário', {
         description: error instanceof Error ? error.message : 'Erro desconhecido'
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -63,6 +63,7 @@ export function useUsers(user: User | null, session: Session | null) {
       toast.error('Erro ao atualizar usuário', {
         description: error instanceof Error ? error.message : 'Erro desconhecido'
       });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -82,6 +83,7 @@ export function useUsers(user: User | null, session: Session | null) {
       toast.error('Erro ao remover usuário', {
         description: error instanceof Error ? error.message : 'Erro desconhecido'
       });
+      throw error;
     } finally {
       setLoading(false);
     }
