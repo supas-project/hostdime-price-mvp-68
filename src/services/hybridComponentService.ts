@@ -2,12 +2,12 @@
 import { ComponentOption } from '@/types/component';
 import { SystemComponentsService } from '@/services/systemComponentsService';
 import { ComponentDataAdapter } from '@/services/componentDataAdapter';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import static data as fallback
 import { cpuComponents } from '@/data/cpu-components';
 import { memoryComponents } from '@/data/memory-components';
-import { datacenterComponents } from '@/data/datacenter-components';
+import { dataCenterComponents } from '@/data/datacenter-components';
 import { contractComponents } from '@/data/contract-components';
 import { osComponents } from '@/data/os-components';
 import { connectivityComponents } from '@/data/connectivity-components';
@@ -21,7 +21,7 @@ export class HybridComponentService {
       console.log(`[HybridComponentService] Loading ${type} components from database...`);
       
       // Check if user is authenticated
-      const { data: session } = await SystemComponentsService.supabase.auth.getSession();
+      const { data: session } = await supabase.auth.getSession();
       
       if (!session.session) {
         console.log(`[HybridComponentService] Not authenticated, using static data for ${type}`);
@@ -50,11 +50,11 @@ export class HybridComponentService {
       console.log('[HybridComponentService] Loading data centers from database...');
       
       // Check authentication
-      const { data: session } = await SystemComponentsService.supabase.auth.getSession();
+      const { data: session } = await supabase.auth.getSession();
       
       if (!session.session) {
         console.log('[HybridComponentService] Not authenticated, using static data centers');
-        return datacenterComponents.options;
+        return dataCenterComponents.options;
       }
 
       const dataCenters = await SystemComponentsService.getAllDataCenters();
@@ -64,11 +64,11 @@ export class HybridComponentService {
         return ComponentDataAdapter.convertDataCentersToOptions(dataCenters);
       } else {
         console.log('[HybridComponentService] No data centers in database, using static data');
-        return datacenterComponents.options;
+        return dataCenterComponents.options;
       }
     } catch (error) {
       console.error('[HybridComponentService] Error loading data centers from database:', error);
-      return datacenterComponents.options;
+      return dataCenterComponents.options;
     }
   }
 
@@ -77,7 +77,7 @@ export class HybridComponentService {
       console.log('[HybridComponentService] Loading contract types from database...');
       
       // Check authentication
-      const { data: session } = await SystemComponentsService.supabase.auth.getSession();
+      const { data: session } = await supabase.auth.getSession();
       
       if (!session.session) {
         console.log('[HybridComponentService] Not authenticated, using static contract types');

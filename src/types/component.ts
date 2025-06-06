@@ -18,7 +18,9 @@ export interface ComponentOption {
     unitPrice?: number;
     unitInfo?: string;
     location?: string;
+    region?: string;
     badge?: string;
+    duration?: number;
     raid?: {
       type: string;
       description: string;

@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Database, HardDrive, Cpu, Memory, Globe, Server, Smartphone } from 'lucide-react';
+import { Plus, Database, HardDrive, Cpu, MemoryStick, Globe, Server, Smartphone } from 'lucide-react';
 import { useSystemComponents } from '@/hooks/useSystemComponents';
 import { SystemComponentsTable } from './SystemComponentsTable';
 import { CreateComponentDialog } from './CreateComponentDialog';
 
 const componentTypes = [
   { id: 'cpu', name: 'Processadores', icon: Cpu },
-  { id: 'memory', name: 'Memória', icon: Memory },
+  { id: 'memory', name: 'Memória', icon: MemoryStick },
   { id: 'storage', name: 'Armazenamento', icon: HardDrive },
   { id: 'os', name: 'Sistemas Operacionais', icon: Server },
   { id: 'connectivity', name: 'Conectividade', icon: Globe }

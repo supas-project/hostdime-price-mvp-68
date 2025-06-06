@@ -46,6 +46,8 @@ export interface ContractType {
 }
 
 export class SystemComponentsService {
+  static supabase = supabase;
+
   static async getComponentsByType(componentType: string): Promise<SystemComponent[]> {
     console.log(`[SystemComponentsService] Getting components for type: ${componentType}`);
     
@@ -63,7 +65,15 @@ export class SystemComponentsService {
       }
 
       console.log(`[SystemComponentsService] Found ${data?.length || 0} ${componentType} components`);
-      return data || [];
+      
+      // Convert Json fields to proper types
+      const typedData = (data || []).map(item => ({
+        ...item,
+        specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+        metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
+      }));
+      
+      return typedData;
     } catch (error) {
       console.error(`[SystemComponentsService] Error in getComponentsByType:`, error);
       throw error;
@@ -86,7 +96,15 @@ export class SystemComponentsService {
       }
 
       console.log(`[SystemComponentsService] Found ${data?.length || 0} data centers`);
-      return data || [];
+      
+      // Convert Json fields to proper types
+      const typedData = (data || []).map(item => ({
+        ...item,
+        features: Array.isArray(item.features) ? item.features as string[] : [],
+        certifications: Array.isArray(item.certifications) ? item.certifications as string[] : []
+      }));
+      
+      return typedData;
     } catch (error) {
       console.error('[SystemComponentsService] Error in getAllDataCenters:', error);
       throw error;
@@ -132,7 +150,15 @@ export class SystemComponentsService {
       }
 
       console.log('[SystemComponentsService] Component created successfully:', data.id);
-      return data;
+      
+      // Convert Json fields to proper types
+      const typedData = {
+        ...data,
+        specs: Array.isArray(data.specs) ? data.specs as string[] : [],
+        metadata: typeof data.metadata === 'object' ? data.metadata as Record<string, any> : {}
+      };
+      
+      return typedData;
     } catch (error) {
       console.error('[SystemComponentsService] Error in createComponent:', error);
       throw error;
@@ -156,7 +182,15 @@ export class SystemComponentsService {
       }
 
       console.log('[SystemComponentsService] Component updated successfully');
-      return data;
+      
+      // Convert Json fields to proper types
+      const typedData = {
+        ...data,
+        specs: Array.isArray(data.specs) ? data.specs as string[] : [],
+        metadata: typeof data.metadata === 'object' ? data.metadata as Record<string, any> : {}
+      };
+      
+      return typedData;
     } catch (error) {
       console.error('[SystemComponentsService] Error in updateComponent:', error);
       throw error;
