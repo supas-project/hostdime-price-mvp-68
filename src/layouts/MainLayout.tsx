@@ -1,6 +1,6 @@
 
 import { Outlet } from "react-router-dom";
-import Navbar from "../components/navigation/Navbar";
+import { Navbar } from "../components/navigation/Navbar";
 import { cn } from "@/lib/utils";
 import { NotificationCenter } from "@/components/notification-center";
 
