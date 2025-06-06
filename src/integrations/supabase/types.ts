@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contract_types: {
+        Row: {
+          contract_id: string
+          created_at: string
+          description: string | null
+          discount_percentage: number
+          duration_months: number
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          duration_months: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          duration_months?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           active: boolean
@@ -39,6 +75,54 @@ export type Database = {
           id?: string
           min_commitment?: number | null
           payback_factor?: number
+        }
+        Relationships: []
+      }
+      datacenters: {
+        Row: {
+          badge: string | null
+          certifications: Json | null
+          created_at: string
+          datacenter_id: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          location: string
+          name: string
+          price: number | null
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          badge?: string | null
+          certifications?: Json | null
+          created_at?: string
+          datacenter_id: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          location: string
+          name: string
+          price?: number | null
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          badge?: string | null
+          certifications?: Json | null
+          created_at?: string
+          datacenter_id?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          location?: string
+          name?: string
+          price?: number | null
+          region?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -311,6 +395,54 @@ export type Database = {
           total_price?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_components: {
+        Row: {
+          component_id: string
+          component_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_hardware: boolean | null
+          metadata: Json | null
+          name: string
+          price: number
+          specs: Json | null
+          subtype: string | null
+          updated_at: string
+        }
+        Insert: {
+          component_id: string
+          component_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          metadata?: Json | null
+          name: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
+        }
+        Update: {
+          component_id?: string
+          component_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
