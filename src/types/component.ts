@@ -21,6 +21,7 @@ export interface ComponentOption {
     region?: string;
     badge?: string;
     duration?: number;
+    certifications?: string[];
     raid?: {
       type: string;
       description: string;
