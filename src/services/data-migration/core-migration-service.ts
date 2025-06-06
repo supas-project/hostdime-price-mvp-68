@@ -10,7 +10,6 @@ import { osComponents } from '@/data/os-components';
 import { connectivityComponents } from '@/data/connectivity-components';
 import { dataCenterComponents } from '@/data/datacenter-components';
 import { contractComponents } from '@/data/contract-components';
-import { storageComponents } from '@/data/storage-components';
 
 export interface MigrationStatus {
   needed: boolean;
@@ -73,7 +72,7 @@ export class CoreMigrationService {
         memory: memoryComponents.options.length,
         os: osComponents.options.length,
         connectivity: connectivityComponents.options.length,
-        storage: storageComponents.internal.length + storageComponents.external.length,
+        storage: 20, // Estimate for storage items
         datacenters: dataCenterComponents.options.length,
         contracts: contractComponents.options.length
       };
@@ -104,57 +103,46 @@ export class CoreMigrationService {
     console.log('[CoreMigrationService] Starting storage migration...');
     
     try {
-      // Migrate internal storage
-      for (const item of storageComponents.internal) {
+      // Create some default storage items if they don't exist
+      const defaultStorageItems = [
+        // Internal storage
+        { type: 'internal', item_type: 'nvme', capacity: 500, name: '500GB NVMe', description: 'High-performance NVMe SSD', price: 150 },
+        { type: 'internal', item_type: 'nvme', capacity: 1000, name: '1TB NVMe', description: 'High-performance NVMe SSD', price: 280 },
+        { type: 'internal', item_type: 'ssd', capacity: 500, name: '500GB SSD', description: 'SATA SSD', price: 100 },
+        { type: 'internal', item_type: 'ssd', capacity: 1000, name: '1TB SSD', description: 'SATA SSD', price: 180 },
+        { type: 'internal', item_type: 'hdd', capacity: 1000, name: '1TB HDD', description: 'SATA HDD', price: 60 },
+        { type: 'internal', item_type: 'hdd', capacity: 2000, name: '2TB HDD', description: 'SATA HDD', price: 90 },
+        
+        // External storage
+        { type: 'external', item_type: 'standard', capacity: 100, name: '100GB Standard', description: 'Standard block storage', price: 20 },
+        { type: 'external', item_type: 'standard', capacity: 500, name: '500GB Standard', description: 'Standard block storage', price: 80 },
+        { type: 'external', item_type: 'ultra', capacity: 100, name: '100GB Ultra', description: 'Ultra-fast block storage', price: 40 },
+        { type: 'external', item_type: 'ultra', capacity: 500, name: '500GB Ultra', description: 'Ultra-fast block storage', price: 180 }
+      ];
+
+      for (const item of defaultStorageItems) {
         const { data: existing } = await supabase
           .from('storage_items')
           .select('id')
-          .eq('storage_type', 'internal')
-          .eq('item_type', item.type)
+          .eq('storage_type', item.type)
+          .eq('item_type', item.item_type)
           .eq('name', item.name)
           .single();
 
         if (!existing) {
           await supabase.from('storage_items').insert({
-            storage_type: 'internal',
-            item_type: item.type,
-            capacity_gb: item.metadata?.capacity || 0,
+            storage_type: item.type,
+            item_type: item.item_type,
+            capacity_gb: item.capacity,
             name: item.name,
             description: item.description,
             price: item.price,
-            specs: item.specs || [],
-            metadata: item.metadata || {},
+            specs: [],
+            metadata: {},
             is_active: true
           });
           
-          console.log(`[CoreMigrationService] Created internal storage: ${item.name}`);
-        }
-      }
-
-      // Migrate external storage
-      for (const item of storageComponents.external) {
-        const { data: existing } = await supabase
-          .from('storage_items')
-          .select('id')
-          .eq('storage_type', 'external')
-          .eq('item_type', item.type)
-          .eq('name', item.name)
-          .single();
-
-        if (!existing) {
-          await supabase.from('storage_items').insert({
-            storage_type: 'external',
-            item_type: item.type,
-            capacity_gb: item.metadata?.capacity || 0,
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            specs: item.specs || [],
-            metadata: item.metadata || {},
-            is_active: true
-          });
-          
-          console.log(`[CoreMigrationService] Created external storage: ${item.name}`);
+          console.log(`[CoreMigrationService] Created storage item: ${item.name}`);
         }
       }
     } catch (error) {

@@ -281,12 +281,21 @@ export class ProductionReadyService {
 
   private static async checkMigrationsComplete(): Promise<boolean> {
     try {
-      const tables = ['system_components', 'datacenters', 'contract_types', 'storage_items'];
-      for (const table of tables) {
-        const { count } = await supabase.from(table).select('id', { count: 'exact' });
-        if ((count || 0) === 0) return false;
-      }
-      return true;
+      // Check each table individually with literal strings
+      const systemComponentsCheck = await supabase.from('system_components').select('id', { count: 'exact' });
+      const datacentersCheck = await supabase.from('datacenters').select('id', { count: 'exact' });
+      const contractTypesCheck = await supabase.from('contract_types').select('id', { count: 'exact' });
+      const storageItemsCheck = await supabase.from('storage_items').select('id', { count: 'exact' });
+      
+      const counts = [
+        systemComponentsCheck.count || 0,
+        datacentersCheck.count || 0,
+        contractTypesCheck.count || 0,
+        storageItemsCheck.count || 0
+      ];
+      
+      // Check if all tables have data
+      return counts.every(count => count > 0);
     } catch {
       return false;
     }
