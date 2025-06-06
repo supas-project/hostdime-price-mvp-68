@@ -7,6 +7,7 @@ import { Plus, Database, HardDrive, Cpu, MemoryStick, Globe, Server, Smartphone 
 import { useSystemComponents } from '@/hooks/useSystemComponents';
 import { SystemComponentsTable } from './SystemComponentsTable';
 import { CreateComponentDialog } from './CreateComponentDialog';
+import { MigrationButton } from './MigrationButton';
 
 const componentTypes = [
   { id: 'cpu', name: 'Processadores', icon: Cpu },
@@ -48,6 +49,8 @@ export function SystemComponentsManager() {
           Novo Componente
         </Button>
       </div>
+
+      <MigrationButton />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-5 w-full">
