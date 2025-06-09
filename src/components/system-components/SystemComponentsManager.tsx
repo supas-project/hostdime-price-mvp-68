@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, Database, HardDrive, Cpu, MemoryStick, Globe, Server, Smartphone, Settings } from 'lucide-react';
-import { useSystemComponents } from '@/hooks/useSystemComponents';
+import { Plus, Database, HardDrive, Cpu, MemoryStick, Globe, Server, Settings } from 'lucide-react';
+import { useUnifiedData } from '@/hooks/useUnifiedData';
 import { SystemComponentsTable } from './SystemComponentsTable';
 import { CreateComponentDialog } from './CreateComponentDialog';
 import { MigrationButton } from './MigrationButton';
@@ -23,15 +23,44 @@ export function SystemComponentsManager() {
   const [componentTab, setComponentTab] = useState('cpu');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
-  const { components, loading, refetch } = useSystemComponents(componentTab);
+  const { 
+    loading,
+    cpuComponents,
+    memoryComponents,
+    osComponents,
+    connectivityComponents,
+    storageItems,
+    loadComponentsByType,
+    loadAllData
+  } = useUnifiedData();
+
+  // Get current components based on selected tab
+  const getCurrentComponents = () => {
+    switch (componentTab) {
+      case 'cpu': return cpuComponents;
+      case 'memory': return memoryComponents;
+      case 'os': return osComponents;
+      case 'connectivity': return connectivityComponents;
+      case 'storage': return storageItems;
+      default: return [];
+    }
+  };
 
   const handleCreateComponent = () => {
     setIsCreateDialogOpen(true);
   };
 
   const handleComponentCreated = () => {
-    refetch();
+    loadComponentsByType(componentTab);
     setIsCreateDialogOpen(false);
+  };
+
+  const handleRefetch = () => {
+    if (componentTab === 'storage') {
+      loadAllData();
+    } else {
+      loadComponentsByType(componentTab);
+    }
   };
 
   return (
@@ -43,7 +72,7 @@ export function SystemComponentsManager() {
             Gestão do Sistema
           </h2>
           <p className="text-muted-foreground">
-            Administração completa do sistema e preparação para produção
+            Sistema unificado de gestão de dados e preparação para produção
           </p>
         </div>
         {activeTab === 'components' && (
@@ -62,7 +91,7 @@ export function SystemComponentsManager() {
           </TabsTrigger>
           <TabsTrigger value="migration" className="gap-2">
             <Database className="h-4 w-4" />
-            Migração de Dados
+            Consolidação de Dados
           </TabsTrigger>
           <TabsTrigger value="components" className="gap-2">
             <Server className="h-4 w-4" />
@@ -79,12 +108,12 @@ export function SystemComponentsManager() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Informações de Migração</CardTitle>
+              <CardTitle>Sobre a Consolidação de Dados</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">O que será migrado:</h4>
+                  <h4 className="font-medium mb-2">Dados consolidados:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Processadores (CPUs/GPUs)</li>
                     <li>• Memória RAM</li>
@@ -97,12 +126,13 @@ export function SystemComponentsManager() {
                 </div>
                 
                 <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Benefícios da Migração:</h4>
+                  <h4 className="font-medium mb-2">Benefícios da Consolidação:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Dados centralizados no banco</li>
-                    <li>• Gestão via interface admin</li>
+                    <li>• Fonte única de verdade</li>
+                    <li>• Eliminação de dados estáticos</li>
+                    <li>• Gestão centralizada</li>
                     <li>• Performance otimizada</li>
-                    <li>• Escalabilidade melhorada</li>
+                    <li>• Escalabilidade garantida</li>
                     <li>• Preparação para APIs</li>
                   </ul>
                 </div>
@@ -136,9 +166,9 @@ export function SystemComponentsManager() {
                   </CardHeader>
                   <CardContent>
                     <SystemComponentsTable
-                      components={components}
+                      components={getCurrentComponents()}
                       loading={loading}
-                      onRefetch={refetch}
+                      onRefetch={handleRefetch}
                     />
                   </CardContent>
                 </Card>

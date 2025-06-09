@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      consolidated_data: {
+        Row: {
+          created_at: string | null
+          data: Json
+          data_type: string
+          id: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string | null
+          data: Json
+          data_type: string
+          id?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          data_type?: string
+          id?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       contract_types: {
         Row: {
           contract_id: string
