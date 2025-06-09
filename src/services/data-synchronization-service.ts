@@ -1,160 +1,113 @@
 
 import { PriceService } from './price-service';
-import { UnifiedDataService } from './unified-data-service';
 import { ComponentService } from './component-service-refactored';
 import { toast } from '@/utils/toast-utils';
 
 /**
- * Service responsible for synchronizing data between configuration and price table
+ * Unified Data Synchronization Service
+ * Ensures data consistency between ComponentService (unified data) and PriceService
  */
 export class DataSynchronizationService {
   
   /**
-   * Synchronize all categories between configuration and price table
+   * Synchronize all data between unified source and price table
    */
-  static async synchronizeAllCategories(): Promise<boolean> {
+  static async synchronizeAllData(): Promise<boolean> {
     try {
-      console.log('[DataSync] Starting full synchronization...');
+      console.log('[DataSync] Starting unified data synchronization...');
+      
+      // Ensure data is consolidated first
+      await ComponentService.ensureDataConsolidation();
+      
+      // Get standardized data from unified source
+      const unifiedCategories = await ComponentService.getAllComponentsByCategory();
       
       // Get current price data
       const priceData = await PriceService.getAllData();
       const priceCategories = Object.keys(priceData);
       
-      // Get component categories from unified service
-      const componentCategories = await ComponentService.getAllComponentsByCategory();
-      const configCategories = Object.keys(componentCategories);
-      
+      console.log('[DataSync] Unified categories:', Object.keys(unifiedCategories));
       console.log('[DataSync] Price categories:', priceCategories);
-      console.log('[DataSync] Config categories:', configCategories);
       
-      // Find missing categories in price table
-      const missingInPrice = configCategories.filter(cat => !priceCategories.includes(cat));
-      const extraInPrice = priceCategories.filter(cat => !configCategories.includes(cat));
+      // Use standard category mapping
+      const standardCategories = ['cpu', 'memory', 'os', 'connectivity', 'storage', 'datacenter', 'contract'];
       
-      console.log('[DataSync] Missing in price table:', missingInPrice);
-      console.log('[DataSync] Extra in price table:', extraInPrice);
-      
-      // Add missing categories to price table
-      for (const categoryId of missingInPrice) {
-        await this.addCategoryToPriceTable(categoryId, componentCategories[categoryId]);
-      }
-      
-      // Sync items for existing categories
-      for (const categoryId of configCategories) {
-        if (priceCategories.includes(categoryId)) {
-          await this.syncCategoryItems(categoryId, componentCategories[categoryId]);
+      // Synchronize each standard category
+      for (const categoryId of standardCategories) {
+        const unifiedItems = unifiedCategories[categoryId] || [];
+        
+        if (unifiedItems.length > 0) {
+          await this.syncCategory(categoryId, unifiedItems);
         }
       }
       
-      toast.success('Sincronização concluída', {
-        description: `${missingInPrice.length} categorias adicionadas, ${configCategories.length} categorias sincronizadas`
+      toast.success('Sincronização unificada concluída', {
+        description: `${standardCategories.length} categorias sincronizadas com dados unificados`
       });
       
       return true;
     } catch (error) {
-      console.error('[DataSync] Error during synchronization:', error);
-      toast.error('Erro na sincronização', {
-        description: 'Falha ao sincronizar dados entre configuração e tabela de preços'
+      console.error('[DataSync] Error during unified synchronization:', error);
+      toast.error('Erro na sincronização unificada', {
+        description: 'Falha ao sincronizar dados unificados com tabela de preços'
       });
       return false;
     }
   }
   
   /**
-   * Add a category to the price table
+   * Sync a category with unified data
    */
-  private static async addCategoryToPriceTable(categoryId: string, components: any[]): Promise<void> {
+  private static async syncCategory(categoryId: string, unifiedItems: any[]): Promise<void> {
     try {
-      console.log(`[DataSync] Adding category ${categoryId} to price table`);
+      console.log(`[DataSync] Syncing category ${categoryId} with ${unifiedItems.length} items`);
       
-      const categoryName = this.getCategoryDisplayName(categoryId);
+      // Check if category exists in price table
+      const existingCategory = await PriceService.getCategory(categoryId);
       
-      // Convert components to price items
-      const items = components.map(component => ({
-        id: component.id,
-        name: component.name,
-        description: component.description || '',
-        price: component.price || 0,
-        type: categoryId,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: component.metadata || {}
-      }));
-      
-      // Create category with proper structure
-      const categoryData = {
-        id: categoryId,
-        name: categoryName
-      };
-      
-      await PriceService.addCategory(categoryData);
-      
-      // Add items to the category
-      for (const item of items) {
-        await PriceService.addItem(categoryId, item);
-      }
-      
-      console.log(`[DataSync] Category ${categoryId} added with ${items.length} items`);
-    } catch (error) {
-      console.error(`[DataSync] Error adding category ${categoryId}:`, error);
-    }
-  }
-  
-  /**
-   * Sync items between configuration and price table for a specific category
-   */
-  private static async syncCategoryItems(categoryId: string, configComponents: any[]): Promise<void> {
-    try {
-      console.log(`[DataSync] Syncing items for category ${categoryId}`);
-      
-      const priceCategory = await PriceService.getCategory(categoryId);
-      if (!priceCategory) return;
-      
-      const priceItems = priceCategory.items || [];
-      const priceItemIds = priceItems.map(item => item.id);
-      const configItemIds = configComponents.map(comp => comp.id);
-      
-      // Find missing items in price table
-      const missingItems = configComponents.filter(comp => !priceItemIds.includes(comp.id));
-      
-      // Add missing items
-      for (const component of missingItems) {
-        const itemData = {
-          name: component.name,
-          description: component.description || '',
-          price: component.price || 0,
-          type: categoryId,
-          specs: Array.isArray(component.specs) ? component.specs : [],
-          metadata: component.metadata || {}
+      if (!existingCategory) {
+        // Create category
+        const categoryData = {
+          id: categoryId,
+          name: this.getCategoryDisplayName(categoryId)
         };
         
-        await PriceService.addItem(categoryId, itemData);
-        console.log(`[DataSync] Added item ${component.name} to ${categoryId}`);
+        await PriceService.addCategory(categoryData);
+        console.log(`[DataSync] Created category ${categoryId}`);
       }
       
-      // Update existing items with latest data
-      for (const component of configComponents) {
-        if (priceItemIds.includes(component.id)) {
-          const itemData = {
-            name: component.name,
-            description: component.description || '',
-            price: component.price || 0,
-            type: categoryId,
-            specs: Array.isArray(component.specs) ? component.specs : [],
-            metadata: component.metadata || {}
-          };
-          
-          await PriceService.updateItem(categoryId, component.id, itemData);
+      // Sync all items
+      for (const item of unifiedItems) {
+        const itemData = {
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          price: item.price || 0,
+          type: categoryId,
+          specs: Array.isArray(item.specs) ? item.specs : [],
+          metadata: item.metadata || {}
+        };
+        
+        // Check if item exists
+        const existingItem = await PriceService.getItem(categoryId, item.id);
+        
+        if (existingItem) {
+          // Update existing item
+          await PriceService.updateItem(categoryId, item.id, itemData);
+        } else {
+          // Add new item
+          await PriceService.addItem(categoryId, itemData);
         }
       }
       
-      console.log(`[DataSync] Synced ${configComponents.length} items for ${categoryId}`);
+      console.log(`[DataSync] Successfully synced category ${categoryId}`);
     } catch (error) {
-      console.error(`[DataSync] Error syncing items for ${categoryId}:`, error);
+      console.error(`[DataSync] Error syncing category ${categoryId}:`, error);
     }
   }
   
   /**
-   * Get display name for category
+   * Get standardized display name for category
    */
   private static getCategoryDisplayName(categoryId: string): string {
     const displayNames: Record<string, string> = {
@@ -171,7 +124,7 @@ export class DataSynchronizationService {
   }
   
   /**
-   * Check for data inconsistencies
+   * Check for data consistency between unified source and price table
    */
   static async checkDataConsistency(): Promise<{
     missingInPrice: string[];
@@ -179,34 +132,36 @@ export class DataSynchronizationService {
     itemMismatches: Record<string, { missing: number; extra: number }>;
   }> {
     try {
-      const priceData = await PriceService.getAllData();
-      const componentCategories = await ComponentService.getAllComponentsByCategory();
+      // Get data from both sources
+      const [unifiedCategories, priceData] = await Promise.all([
+        ComponentService.getAllComponentsByCategory(),
+        PriceService.getAllData()
+      ]);
       
+      const standardCategories = ['cpu', 'memory', 'os', 'connectivity', 'storage', 'datacenter', 'contract'];
       const priceCategories = Object.keys(priceData);
-      const configCategories = Object.keys(componentCategories);
       
-      const missingInPrice = configCategories.filter(cat => !priceCategories.includes(cat));
-      const extraInPrice = priceCategories.filter(cat => !configCategories.includes(cat));
+      const missingInPrice = standardCategories.filter(cat => !priceCategories.includes(cat));
+      const extraInPrice = priceCategories.filter(cat => !standardCategories.includes(cat));
       
       const itemMismatches: Record<string, { missing: number; extra: number }> = {};
       
-      for (const categoryId of configCategories) {
-        if (priceCategories.includes(categoryId)) {
-          const priceItems = priceData[categoryId]?.items || [];
-          const configItems = componentCategories[categoryId] || [];
-          
-          const priceItemIds = priceItems.map(item => item.id);
-          const configItemIds = configItems.map(comp => comp.id);
-          
-          const missingItems = configItems.filter(comp => !priceItemIds.includes(comp.id));
-          const extraItems = priceItems.filter(item => !configItemIds.includes(item.id));
-          
-          if (missingItems.length > 0 || extraItems.length > 0) {
-            itemMismatches[categoryId] = {
-              missing: missingItems.length,
-              extra: extraItems.length
-            };
-          }
+      // Check item consistency for standard categories
+      for (const categoryId of standardCategories) {
+        const unifiedItems = unifiedCategories[categoryId] || [];
+        const priceItems = priceData[categoryId]?.items || [];
+        
+        const unifiedItemIds = unifiedItems.map(item => item.id);
+        const priceItemIds = priceItems.map(item => item.id);
+        
+        const missingItems = unifiedItems.filter(item => !priceItemIds.includes(item.id));
+        const extraItems = priceItems.filter(item => !unifiedItemIds.includes(item.id));
+        
+        if (missingItems.length > 0 || extraItems.length > 0) {
+          itemMismatches[categoryId] = {
+            missing: missingItems.length,
+            extra: extraItems.length
+          };
         }
       }
       

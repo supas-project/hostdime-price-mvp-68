@@ -4,30 +4,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useDataSynchronization } from '@/hooks/useDataSynchronization';
-import { RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { DataSynchronizationService } from '@/services/data-synchronization-service';
+import { RefreshCw, AlertTriangle, CheckCircle, Clock, Database } from 'lucide-react';
 
 export function DataSyncPanel() {
-  const { isSyncing, lastSyncTime, synchronizeData, checkConsistency } = useDataSynchronization();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [consistencyReport, setConsistencyReport] = useState<any>(null);
   const [showReport, setShowReport] = useState(false);
   
   useEffect(() => {
     // Check consistency on mount
     const loadConsistency = async () => {
-      const report = await checkConsistency();
+      const report = await DataSynchronizationService.checkDataConsistency();
       setConsistencyReport(report);
     };
     
     loadConsistency();
-  }, [checkConsistency]);
+  }, []);
   
   const handleSynchronize = async () => {
-    const success = await synchronizeData();
-    if (success) {
-      // Refresh consistency report
-      const report = await checkConsistency();
-      setConsistencyReport(report);
+    setIsSyncing(true);
+    try {
+      console.log('[DataSyncPanel] Starting unified data synchronization...');
+      
+      const success = await DataSynchronizationService.synchronizeAllData();
+      
+      if (success) {
+        setLastSyncTime(new Date());
+        // Refresh consistency report
+        const report = await DataSynchronizationService.checkDataConsistency();
+        setConsistencyReport(report);
+      }
+    } catch (error) {
+      console.error('[DataSyncPanel] Synchronization error:', error);
+    } finally {
+      setIsSyncing(false);
     }
   };
   
@@ -41,11 +53,11 @@ export function DataSyncPanel() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <RefreshCw className="w-5 h-5" />
-          Sincronização de Dados
+          <Database className="w-5 h-5" />
+          Sincronização de Dados Unificados
         </CardTitle>
         <CardDescription>
-          Mantenha a configuração e tabela de preços sincronizadas
+          Sincronize os dados unificados com a tabela de preços para garantir consistência
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -60,7 +72,7 @@ export function DataSyncPanel() {
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm">Dados sincronizados</span>
+                <span className="text-sm">Dados unificados sincronizados</span>
               </>
             )}
           </div>
@@ -81,12 +93,12 @@ export function DataSyncPanel() {
               <div className="space-y-2">
                 {consistencyReport.missingInPrice.length > 0 && (
                   <p>
-                    <strong>{consistencyReport.missingInPrice.length}</strong> categorias ausentes na tabela de preços
+                    <strong>{consistencyReport.missingInPrice.length}</strong> categorias padrão ausentes na tabela de preços
                   </p>
                 )}
                 {consistencyReport.extraInPrice.length > 0 && (
                   <p>
-                    <strong>{consistencyReport.extraInPrice.length}</strong> categorias extras na tabela de preços
+                    <strong>{consistencyReport.extraInPrice.length}</strong> categorias não-padrão na tabela de preços
                   </p>
                 )}
                 {Object.keys(consistencyReport.itemMismatches).length > 0 && (
@@ -109,12 +121,12 @@ export function DataSyncPanel() {
             {isSyncing ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Sincronizando...
+                Sincronizando dados unificados...
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {hasIssues ? 'Corrigir Divergências' : 'Verificar Novamente'}
+                {hasIssues ? 'Corrigir Divergências' : 'Verificar Sincronização'}
               </>
             )}
           </Button>
@@ -135,7 +147,7 @@ export function DataSyncPanel() {
           <div className="space-y-3 p-3 bg-muted rounded-lg">
             {consistencyReport.missingInPrice.length > 0 && (
               <div>
-                <h4 className="font-medium text-sm mb-2">Categorias ausentes na tabela de preços:</h4>
+                <h4 className="font-medium text-sm mb-2">Categorias padrão ausentes na tabela de preços:</h4>
                 <div className="flex flex-wrap gap-1">
                   {consistencyReport.missingInPrice.map((cat: string) => (
                     <Badge key={cat} variant="destructive">{cat}</Badge>
@@ -146,7 +158,7 @@ export function DataSyncPanel() {
             
             {consistencyReport.extraInPrice.length > 0 && (
               <div>
-                <h4 className="font-medium text-sm mb-2">Categorias extras na tabela de preços:</h4>
+                <h4 className="font-medium text-sm mb-2">Categorias não-padrão na tabela de preços:</h4>
                 <div className="flex flex-wrap gap-1">
                   {consistencyReport.extraInPrice.map((cat: string) => (
                     <Badge key={cat} variant="secondary">{cat}</Badge>
@@ -157,7 +169,7 @@ export function DataSyncPanel() {
             
             {Object.keys(consistencyReport.itemMismatches).length > 0 && (
               <div>
-                <h4 className="font-medium text-sm mb-2">Divergências de itens:</h4>
+                <h4 className="font-medium text-sm mb-2">Divergências de itens por categoria:</h4>
                 <div className="space-y-1">
                   {Object.entries(consistencyReport.itemMismatches).map(([cat, mismatch]: [string, any]) => (
                     <div key={cat} className="flex items-center justify-between text-xs">
@@ -165,12 +177,12 @@ export function DataSyncPanel() {
                       <div className="flex gap-2">
                         {mismatch.missing > 0 && (
                           <Badge variant="destructive" className="text-xs">
-                            -{mismatch.missing}
+                            -{mismatch.missing} ausentes
                           </Badge>
                         )}
                         {mismatch.extra > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            +{mismatch.extra}
+                            +{mismatch.extra} extras
                           </Badge>
                         )}
                       </div>
@@ -181,6 +193,13 @@ export function DataSyncPanel() {
             )}
           </div>
         )}
+        
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-700">
+            <strong>Fonte Única:</strong> Todos os dados agora vêm do UnifiedDataService, 
+            garantindo consistência entre configurações e tabela de preços.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

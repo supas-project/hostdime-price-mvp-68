@@ -8,6 +8,7 @@ import {
   UnifiedStorageItem,
   ConsolidatedDataStatus 
 } from '@/services/unified-data-service';
+import { ComponentService } from '@/services/component-service-refactored';
 import { useAuth } from '@/hooks/auth';
 import { toast } from 'sonner';
 
@@ -40,33 +41,42 @@ export function useUnifiedData() {
   };
 
   /**
-   * Run data consolidation
+   * Run data consolidation and ensure unified data
    */
   const consolidateData = async () => {
     setLoading(true);
     try {
-      await UnifiedDataService.consolidateAllData();
+      console.log('[useUnifiedData] Starting data consolidation...');
+      
+      // Consolidate data through ComponentService
+      await ComponentService.ensureDataConsolidation();
+      
+      // Reload status and data
       await loadConsolidationStatus();
       await loadAllData();
+      
+      toast.success('Dados unificados consolidados com sucesso');
     } catch (error) {
-      console.error('Error consolidating data:', error);
-      toast.error('Erro na consolidação de dados');
+      console.error('Error consolidating unified data:', error);
+      toast.error('Erro na consolidação de dados unificados');
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Load all data from database
+   * Load all data from unified service
    */
   const loadAllData = async () => {
     if (!isAuthenticated) {
-      console.log('User not authenticated, skipping data load');
+      console.log('User not authenticated, skipping unified data load');
       return;
     }
 
     setLoading(true);
     try {
+      console.log('[useUnifiedData] Loading all unified data...');
+      
       const [
         cpuData,
         memoryData,
@@ -93,10 +103,10 @@ export function useUnifiedData() {
       setContractTypes(contractData);
       setStorageItems(storageData);
 
-      console.log('[useUnifiedData] All data loaded successfully');
+      console.log('[useUnifiedData] All unified data loaded successfully');
     } catch (error) {
       console.error('Error loading unified data:', error);
-      toast.error('Erro ao carregar dados do sistema');
+      toast.error('Erro ao carregar dados unificados do sistema');
     } finally {
       setLoading(false);
     }
@@ -132,7 +142,7 @@ export function useUnifiedData() {
     }
   };
 
-  // Load data on authentication change
+  // Auto-load data on authentication
   useEffect(() => {
     if (isAuthenticated) {
       loadConsolidationStatus();

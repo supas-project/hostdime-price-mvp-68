@@ -3,8 +3,8 @@ import { ComponentOption } from '@/types/component';
 import { UnifiedDataService } from './unified-data-service';
 
 /**
- * Refactored Component Service - Clean interface using UnifiedDataService
- * Replaces the old HybridComponentService and ComponentService
+ * Unified Component Service - Single source of truth using UnifiedDataService
+ * All data now comes from the database through UnifiedDataService
  */
 export class ComponentService {
   
@@ -56,8 +56,9 @@ export class ComponentService {
       specs: Array.isArray(item.specs) ? item.specs : [],
       metadata: {
         ...item.metadata,
-        // Add storage-specific metadata that fits ComponentOption interface
-        quantity: 1,
+        storage_type: item.storage_type,
+        item_type: item.item_type,
+        capacity_gb: item.capacity_gb,
         unitInfo: `${item.capacity_gb}GB ${item.item_type.toUpperCase()}`,
         features: Array.isArray(item.specs) ? item.specs : []
       }
@@ -110,10 +111,12 @@ export class ComponentService {
   }
 
   /**
-   * Get all components by category
+   * Get all components by category with standardized category IDs
    */
   static async getAllComponentsByCategory(): Promise<{ [key: string]: ComponentOption[] }> {
     try {
+      console.log('[ComponentService] Loading all components from unified data service...');
+      
       const [
         cpuComponents,
         memoryComponents,
@@ -132,15 +135,25 @@ export class ComponentService {
         this.getContractTypes()
       ]);
 
-      return {
+      // Use standardized category IDs to match price table
+      const standardizedCategories = {
+        // Standard category mappings
         cpu: cpuComponents,
         memory: memoryComponents,
         os: osComponents,
         connectivity: connectivityComponents,
         storage: storageComponents,
         datacenter: dataCenters,
-        contract: contractTypes
+        contract: contractTypes,
+        
+        // Alternative mappings for price table compatibility
+        processor: cpuComponents, // Maps to cpu
+        memoria: memoryComponents, // Maps to memory
+        sistemaoperacional: osComponents // Maps to os
       };
+
+      console.log('[ComponentService] Categories loaded:', Object.keys(standardizedCategories));
+      return standardizedCategories;
     } catch (error) {
       console.error('[ComponentService] Error loading all components:', error);
       throw error;
@@ -162,5 +175,24 @@ export class ComponentService {
       specs: Array.isArray(component.specs) ? component.specs : [],
       metadata: component.metadata || {}
     }));
+  }
+
+  /**
+   * Trigger data consolidation if needed
+   */
+  static async ensureDataConsolidation(): Promise<void> {
+    try {
+      const status = await UnifiedDataService.getConsolidationStatus();
+      
+      if (status.phase !== 'completed') {
+        console.log('[ComponentService] Data consolidation needed, triggering...');
+        await UnifiedDataService.consolidateAllData();
+      } else {
+        console.log('[ComponentService] Data already consolidated');
+      }
+    } catch (error) {
+      console.error('[ComponentService] Error ensuring data consolidation:', error);
+      // Don't throw here, let the app continue with existing data
+    }
   }
 }
