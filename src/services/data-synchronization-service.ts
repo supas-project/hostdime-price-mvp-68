@@ -57,7 +57,7 @@ export class DataSynchronizationService {
         contracts: contractTypes.length
       });
       
-      // Build unified price data structure
+      // Build unified price data structure with compatible metadata
       const unifiedPriceData = {
         cpu: {
           id: 'cpu',
@@ -69,7 +69,11 @@ export class DataSynchronizationService {
             price: comp.price,
             type: 'cpu',
             specs: comp.specs,
-            metadata: comp.metadata
+            metadata: {
+              cores: comp.metadata?.cores,
+              features: Array.isArray(comp.specs) ? comp.specs : [],
+              ...comp.metadata
+            }
           }))
         },
         memory: {
@@ -82,7 +86,10 @@ export class DataSynchronizationService {
             price: comp.price,
             type: 'memory',
             specs: comp.specs,
-            metadata: comp.metadata
+            metadata: {
+              features: Array.isArray(comp.specs) ? comp.specs : [],
+              ...comp.metadata
+            }
           }))
         },
         os: {
@@ -95,7 +102,10 @@ export class DataSynchronizationService {
             price: comp.price,
             type: 'os',
             specs: comp.specs,
-            metadata: comp.metadata
+            metadata: {
+              features: Array.isArray(comp.specs) ? comp.specs : [],
+              ...comp.metadata
+            }
           }))
         },
         connectivity: {
@@ -108,7 +118,10 @@ export class DataSynchronizationService {
             price: comp.price,
             type: 'connectivity',
             specs: comp.specs,
-            metadata: comp.metadata
+            metadata: {
+              features: Array.isArray(comp.specs) ? comp.specs : [],
+              ...comp.metadata
+            }
           }))
         },
         storage: {
@@ -122,9 +135,8 @@ export class DataSynchronizationService {
             type: 'storage',
             specs: item.specs,
             metadata: {
-              capacity_gb: item.capacity_gb,
-              storage_type: item.storage_type,
-              item_type: item.item_type
+              features: Array.isArray(item.specs) ? item.specs : [],
+              unitInfo: `${item.capacity_gb}GB ${item.item_type.toUpperCase()}`
             }
           }))
         },
@@ -140,8 +152,8 @@ export class DataSynchronizationService {
             specs: dc.features,
             metadata: {
               location: dc.location,
-              region: dc.region,
-              badge: dc.badge
+              badge: dc.badge,
+              features: dc.features
             }
           }))
         },
@@ -156,25 +168,22 @@ export class DataSynchronizationService {
             type: 'contract',
             specs: [`${contract.duration_months} meses`, `${contract.discount_percentage}% desconto`],
             metadata: {
-              duration: contract.duration_months,
-              discount: contract.discount_percentage
+              discount: contract.discount_percentage,
+              features: [`${contract.duration_months} meses`, `${contract.discount_percentage}% desconto`]
             }
           }))
         }
       };
       
       // Save to price service
-      const saved = await PriceService.saveData(unifiedPriceData);
+      await PriceService.saveData(unifiedPriceData);
       
-      if (saved) {
-        console.log('[DataSync] Successfully synchronized unified data to price table');
-        toast.success('Sincronização concluída', {
-          description: 'Dados unificados sincronizados com a tabela de preços'
-        });
-        return true;
-      }
+      console.log('[DataSync] Successfully synchronized unified data to price table');
+      toast.success('Sincronização concluída', {
+        description: 'Dados unificados sincronizados com a tabela de preços'
+      });
+      return true;
       
-      return false;
     } catch (error) {
       console.error('[DataSync] Error during unified synchronization:', error);
       toast.error('Erro na sincronização unificada', {

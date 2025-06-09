@@ -27,12 +27,12 @@ export function MigrationButton() {
 
   const isCompleted = consolidationStatus?.phase === 'completed';
   const isError = consolidationStatus?.phase === 'error';
-  const isMigrating = consolidationStatus?.phase === 'migrating';
+  const isConsolidating = consolidationStatus?.phase === 'consolidating';
   
   const getStatusColor = () => {
     if (isCompleted) return 'text-green-600';
     if (isError) return 'text-red-600';
-    if (isMigrating) return 'text-blue-600';
+    if (isConsolidating) return 'text-blue-600';
     return 'text-amber-600';
   };
 
@@ -57,36 +57,21 @@ export function MigrationButton() {
               {getStatusIcon()}
               <span className="font-medium">
                 Status: {consolidationStatus.phase === 'completed' ? 'Completa' :
-                        consolidationStatus.phase === 'migrating' ? 'Em andamento' :
+                        consolidationStatus.phase === 'consolidating' ? 'Em andamento' :
                         consolidationStatus.phase === 'error' ? 'Erro' : 'Pendente'}
               </span>
             </div>
             
-            {consolidationStatus.total_items > 0 && (
+            {(consolidationStatus.components_count > 0 || consolidationStatus.datacenters_count > 0) && (
               <div className="mt-2">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Progresso: {consolidationStatus.migrated_items}/{consolidationStatus.total_items}</span>
-                  <span>{Math.round((consolidationStatus.migrated_items / consolidationStatus.total_items) * 100)}%</span>
+                  <span>Dados consolidados:</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(consolidationStatus.migrated_items / consolidationStatus.total_items) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {consolidationStatus.completed_steps.length > 0 && (
-              <div className="mt-3">
-                <p className="text-sm font-medium">Etapas concluídas:</p>
-                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground mt-1">
-                  {consolidationStatus.completed_steps.map(step => (
-                    <div key={step} className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3 text-green-600" />
-                      {step.replace('_', ' ')}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-1">
+                  <div>Componentes: {consolidationStatus.components_count}</div>
+                  <div>Data Centers: {consolidationStatus.datacenters_count}</div>
+                  <div>Contratos: {consolidationStatus.contracts_count}</div>
+                  <div>Storage: {consolidationStatus.storage_count}</div>
                 </div>
               </div>
             )}
@@ -111,12 +96,12 @@ export function MigrationButton() {
         <div className="flex gap-2">
           <Button
             onClick={handleConsolidateData}
-            disabled={loading || isMigrating}
+            disabled={loading || isConsolidating}
             variant={isCompleted ? "outline" : "default"}
             className="gap-2"
           >
             <Play className="h-4 w-4" />
-            {loading || isMigrating ? 'Consolidando...' : 
+            {loading || isConsolidating ? 'Consolidando...' : 
              isCompleted ? 'Reconsolidar Dados' : 'Consolidar Dados'}
           </Button>
           

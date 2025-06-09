@@ -12,7 +12,7 @@ export class LegacyServiceWrapper {
   /**
    * @deprecated Use UnifiedDataService.consolidateAllData()
    */
-  static async runProductionMigration(): Promise<void> {
+  static async runProductionMigration(): Promise<boolean> {
     console.warn('[LegacyServiceWrapper] runProductionMigration is deprecated, use UnifiedDataService.consolidateAllData()');
     return UnifiedDataService.consolidateAllData();
   }
@@ -25,7 +25,7 @@ export class LegacyServiceWrapper {
     const status = await UnifiedDataService.getConsolidationStatus();
     return {
       needed: status.phase !== 'completed',
-      summary: `Consolidação ${status.phase}: ${status.migrated_items}/${status.total_items} itens`
+      summary: `Consolidação ${status.phase}: ${status.components_count + status.datacenters_count + status.contracts_count + status.storage_count} itens`
     };
   }
 
