@@ -18,10 +18,8 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
         setActiveTab(newActiveTab);
       } else if (categoryIds.length === 0) {
         console.log(`[useCategoryManagement] Nenhuma categoria disponível`);
-        // If no categories available, clear active tab
         setActiveTab("");
       } else if (!activeTab && categoryIds.length > 0) {
-        // If no active tab but categories exist, set first one as active
         console.log(`[useCategoryManagement] Nenhuma categoria ativa, definindo primeira categoria como ativa: ${categoryIds[0]}`);
         setActiveTab(categoryIds[0]);
       }
@@ -35,12 +33,10 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       const success = await onDeleteCategory(categoryId);
       
       if (success) {
-        console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso pelo hook`);
+        console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso`);
         
-        // The state should already be updated by the delete hook, 
-        // but we'll handle tab switching as a safety measure
+        // Handle tab switching immediately if the deleted category was active
         if (categoryId === activeTab) {
-          // Calculate remaining categories based on current priceData
           const currentCategories = Object.keys(priceData || {});
           const remainingCategories = currentCategories.filter(id => id !== categoryId);
           
@@ -55,7 +51,7 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
         
         return true;
       } else {
-        console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId} - hook retornou false`);
+        console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId}`);
         return false;
       }
     } catch (error) {
