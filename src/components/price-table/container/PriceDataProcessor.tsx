@@ -1,63 +1,82 @@
 
 import { useEffect } from "react";
+import { PriceData } from "@/types/pricing";
 
 interface PriceDataProcessorProps {
-  priceData: any;
-  setPriceData: (data: any) => void;
+  priceData: PriceData;
+  setPriceData: (data: PriceData) => void;
 }
 
 export function PriceDataProcessor({ priceData, setPriceData }: PriceDataProcessorProps) {
-  // Effect para garantir que o priceData seja processado após ser carregado
   useEffect(() => {
-    if (priceData) {
-      console.log("PriceDataProcessor: Processing loaded price data");
-      
-      // Verificar todas as categorias para garantir que os items são arrays
-      const fixedData = {...priceData};
-      let needsUpdate = false;
-      
-      Object.keys(fixedData).forEach(key => {
-        if (!fixedData[key]) {
-          console.warn(`PriceDataProcessor: Category ${key} is undefined, removing it`);
-          delete fixedData[key];
-          needsUpdate = true;
-          return;
-        }
-        
-        if (!fixedData[key].items) {
-          console.warn(`PriceDataProcessor: Category ${key} has no items property, adding empty array`);
-          fixedData[key].items = [];
-          needsUpdate = true;
-        } else if (!Array.isArray(fixedData[key].items)) {
-          console.warn(`PriceDataProcessor: Items is not an array for category ${key}, fixing...`);
-          fixedData[key].items = Array.isArray(fixedData[key].items) ? fixedData[key].items : [];
-          needsUpdate = true;
-        }
-        
-        // Verificar se há itens undefined na array de items
-        if (Array.isArray(fixedData[key].items)) {
-          const filteredItems = fixedData[key].items.filter(item => item !== undefined && item !== null);
-          if (filteredItems.length !== fixedData[key].items.length) {
-            console.warn(`PriceDataProcessor: Found undefined/null items in category ${key}, removing them`);
-            fixedData[key].items = filteredItems;
-            needsUpdate = true;
-          }
-        }
-      });
-      
-      // Forçar atualização do estado apenas se necessário
-      if (needsUpdate) {
-        console.log("PriceDataProcessor: Updating price data with fixed arrays");
-        setPriceData({...fixedData});
+    if (!priceData || typeof priceData !== 'object') {
+      return;
+    }
+
+    // Filtrar categorias vazias ou inválidas
+    const filteredData: PriceData = {};
+    let hasChanges = false;
+
+    for (const [categoryId, categoryData] of Object.entries(priceData)) {
+      if (!categoryData || typeof categoryData !== 'object') {
+        console.warn(`[PriceDataProcessor] Removing invalid category: ${categoryId}`);
+        hasChanges = true;
+        continue;
       }
+
+      const category = categoryData as any;
       
-      // Verificar se temos dados em storage e external_storage
-      if (fixedData.storage && fixedData.storage.items.length === 0 && 
-          fixedData.external_storage && fixedData.external_storage.items.length === 0) {
-        console.warn("PriceDataProcessor: Both storage categories are empty, consider refreshing data");
+      // Verificar se a categoria tem itens válidos
+      if (!category.items || !Array.isArray(category.items)) {
+        console.warn(`[PriceDataProcessor] Category ${categoryId} has no valid items array`);
+        
+        // Apenas manter categorias essenciais mesmo sem itens
+        const essentialCategories = ['memory', 'processor', 'contract', 'datacenter', 'sistemaoperacional'];
+        if (essentialCategories.includes(categoryId)) {
+          filteredData[categoryId] = {
+            ...category,
+            items: []
+          };
+        } else {
+          hasChanges = true;
+        }
+        continue;
       }
+
+      // Filtrar itens válidos
+      const validItems = category.items.filter((item: any) => 
+        item && 
+        typeof item === 'object' && 
+        item.name && 
+        typeof item.name === 'string' && 
+        item.name.trim() !== '' &&
+        (item.price !== undefined && item.price !== null)
+      );
+
+      // Verificar se houve mudança nos itens
+      if (validItems.length !== category.items.length) {
+        hasChanges = true;
+      }
+
+      // Manter categorias essenciais mesmo vazias, outras apenas se tiverem itens
+      const essentialCategories = ['memory', 'processor', 'contract', 'datacenter', 'sistemaoperacional'];
+      if (validItems.length > 0 || essentialCategories.includes(categoryId)) {
+        filteredData[categoryId] = {
+          ...category,
+          items: validItems
+        };
+      } else {
+        console.warn(`[PriceDataProcessor] Removing empty category: ${categoryId}`);
+        hasChanges = true;
+      }
+    }
+
+    // Se houve mudanças, atualizar o estado
+    if (hasChanges) {
+      console.log("[PriceDataProcessor] Updating price data to remove empty categories");
+      setPriceData(filteredData);
     }
   }, [priceData, setPriceData]);
 
-  return null; // This is a logic-only component
+  return null;
 }

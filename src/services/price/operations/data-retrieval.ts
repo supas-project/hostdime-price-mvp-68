@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { PriceData } from '@/types/pricing';
 import { PRICE_DATA_TABLE } from '../constants';
@@ -61,78 +62,69 @@ export async function getAllData(): Promise<PriceData> {
       return {};
     }
     
-    // Garantir que todas as categorias tenham um array de itens
+    // Garantir que todas as categorias tenham um array de itens válido
     const processedData = {...jsonData};
     
-    // Lista de todas as categorias esperadas no sistema
-    const expectedCategories = [
-      'storage', 'external_storage', 'disk', 'memory', 'processor', 
-      'contract', 'connectivity', 'port_speed', 'datacenter', 
-      'sistemaoperacional', 'ip_blocks', 'serviçospersonalizados'
+    // Remove categorias vazias ou com poucos itens válidos
+    const filteredData = {};
+    
+    for (const [categoryId, categoryData] of Object.entries(processedData)) {
+      if (!categoryData || typeof categoryData !== 'object') {
+        console.warn(`[PriceService] Skipping invalid category ${categoryId}`);
+        continue;
+      }
+      
+      const category = categoryData as any;
+      
+      // Verificar se a categoria tem itens válidos
+      if (!category.items || !Array.isArray(category.items)) {
+        console.warn(`[PriceService] Category ${categoryId} has no valid items array, skipping`);
+        continue;
+      }
+      
+      // Filtrar itens válidos (que tenham pelo menos nome e preço)
+      const validItems = category.items.filter(item => 
+        item && 
+        typeof item === 'object' && 
+        item.name && 
+        typeof item.name === 'string' && 
+        item.name.trim() !== '' &&
+        (item.price !== undefined && item.price !== null)
+      );
+      
+      // Só incluir categorias que tenham pelo menos 1 item válido
+      if (validItems.length > 0) {
+        filteredData[categoryId] = {
+          ...category,
+          items: validItems
+        };
+        console.log(`[PriceService] Category ${categoryId} has ${validItems.length} valid items`);
+      } else {
+        console.warn(`[PriceService] Category ${categoryId} has no valid items, excluding from data`);
+      }
+    }
+    
+    // Lista de categorias essenciais que devem sempre existir (mesmo vazias)
+    const essentialCategories = [
+      'memory', 'processor', 'contract', 'datacenter', 'sistemaoperacional'
     ];
     
-    // Verificar e criar categorias faltantes
-    for (const categoryId of expectedCategories) {
-      if (!processedData[categoryId]) {
-        console.log(`[PriceService] Creating missing category: ${categoryId}`);
-        processedData[categoryId] = {
+    // Garantir que categorias essenciais existam
+    for (const categoryId of essentialCategories) {
+      if (!filteredData[categoryId]) {
+        console.log(`[PriceService] Creating essential category: ${categoryId}`);
+        filteredData[categoryId] = {
           id: categoryId,
           name: getCategoryFriendlyName(categoryId),
           items: []
         };
       }
-      
-      // Garantir que cada categoria tenha um array de itens válido
-      if (!processedData[categoryId].items) {
-        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
-        processedData[categoryId].items = [];
-      } else if (!Array.isArray(processedData[categoryId].items)) {
-        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
-        processedData[categoryId].items = [];
-      }
     }
     
-    // Processamento especial para storage e external_storage
-    handleStorageCategories(processedData);
+    console.log(`[PriceService] Final filtered data has ${Object.keys(filteredData).length} categories:`, 
+      Object.keys(filteredData).join(', '));
     
-    // Processamento especial para categorias de conectividade
-    handleConnectivityCategories(processedData);
-    
-    // Verificar e corrigir todas as categorias
-    for (const categoryId of Object.keys(processedData)) {
-      if (!processedData[categoryId]) {
-        console.warn(`[PriceService] Category ${categoryId} is undefined, skipping`);
-        continue;
-      }
-      
-      if (!processedData[categoryId].items) {
-        console.warn(`[PriceService] Category ${categoryId} has no items property, adding empty array`);
-        processedData[categoryId].items = [];
-      } else if (!Array.isArray(processedData[categoryId].items)) {
-        console.warn(`[PriceService] Items for category ${categoryId} is not an array, fixing`);
-        processedData[categoryId].items = Array.isArray(processedData[categoryId].items) ? 
-          processedData[categoryId].items : [];
-      }
-      
-      console.log(`[PriceService] Category ${categoryId} has ${processedData[categoryId].items.length} items`);
-      
-      // Log detalhes para categorias de interesse
-      if (categoryId === 'storage' || categoryId === 'external_storage' || 
-          categoryId === 'disk' || categoryId === 'processor' || 
-          categoryId === 'memory' || categoryId === 'connectivity' ||
-          categoryId === 'port_speed' || categoryId === 'ip_blocks') {
-        if (processedData[categoryId].items.length > 0) {
-          console.log(`[PriceService] ${categoryId} items:`, 
-            processedData[categoryId].items.map(item => 
-              `${item.id}: ${item.name} (${item.type || 'unknown'}/${item.subtype || 'unknown'})`
-            ).join(', '));
-        } else {
-          console.warn(`[PriceService] ${categoryId} has no items, check if this is expected`);
-        }
-      }
-    }
-    
-    return processedData as unknown as PriceData;
+    return filteredData as unknown as PriceData;
   } catch (err: any) {
     console.error("[PriceService] Error in getAllData:", err);
     throw new Error(err.message || "Failed to retrieve price data.");
@@ -140,282 +132,15 @@ export async function getAllData(): Promise<PriceData> {
 }
 
 /**
- * Helper function to handle special processing for storage categories
- */
-function handleStorageCategories(processedData: any) {
-  // Verificar se há categoria 'disk' com itens e 'storage'/'external_storage' sem itens
-  if (processedData.disk?.items?.length > 0 && 
-      (processedData.storage?.items?.length === 0 || 
-      processedData.external_storage?.items?.length === 0)) {
-    console.log("[PriceService] Detected disk items but incomplete storage items, creating missing storage items");
-    
-    // Garantir que os items sejam arrays
-    if (!Array.isArray(processedData.storage.items)) {
-      processedData.storage.items = [];
-    }
-    
-    if (!Array.isArray(processedData.external_storage.items)) {
-      processedData.external_storage.items = [];
-    }
-    
-    // Converter itens do disk para storage e external_storage se ainda não existirem
-    const diskItems = processedData.disk.items || [];
-    
-    // Itens para storage (armazenamento interno)
-    if (processedData.storage.items.length === 0) {
-      const internalItems = diskItems
-        .filter(item => item.type === 'internal' || !item.type)
-        .map(item => ({
-          ...item,
-          id: `storage-${item.id}`,
-          type: 'storage',
-          subtype: item.subtype || 'block',
-          description: item.description || `${item.name} - Armazenamento interno`
-        }));
-        
-      if (internalItems.length > 0) {
-        processedData.storage.items = internalItems;
-        console.log(`[PriceService] Added ${internalItems.length} internal storage items`);
-      }
-    }
-        
-    // Itens para external_storage
-    if (processedData.external_storage.items.length === 0) {
-      const externalItems = diskItems
-        .filter(item => item.type === 'external' || item.subtype === 'external')
-        .map(item => ({
-          ...item,
-          id: `external-${item.id}`,
-          type: 'storage',
-          subtype: 'external',
-          description: item.description || `${item.name} - Armazenamento externo`
-        }));
-        
-      // Se não houver itens específicos para external, criar alguns exemplos
-      if (externalItems.length === 0) {
-        console.log("[PriceService] No external storage items found, creating example items");
-        
-        // Criar itens de exemplo para external_storage
-        const exampleExternalItems = [
-          {
-            id: `external-storage-standard`,
-            name: "Standard Block Storage",
-            description: "Storage externo de baixo custo para dados acessados com pouca frequência",
-            price: 0.05, // por GB
-            type: 'storage',
-            subtype: 'external',
-            specs: [
-              "IOPS: 1500",
-              "Throughput: 60 MB/s",
-              "Ideal para backups"
-            ],
-            isHardware: true
-          },
-          {
-            id: `external-storage-performance`,
-            name: "Performance Block Storage",
-            description: "Storage externo balanceado com boa performance e custo",
-            price: 0.10, // por GB
-            type: 'storage',
-            subtype: 'external',
-            specs: [
-              "IOPS: 3000",
-              "Throughput: 150 MB/s",
-              "Bom para aplicações gerais"
-            ],
-            isHardware: true
-          },
-          {
-            id: `external-storage-premium`,
-            name: "Premium Block Storage",
-            description: "Storage externo de alto desempenho para cargas críticas",
-            price: 0.20, // por GB
-            type: 'storage',
-            subtype: 'external',
-            specs: [
-              "IOPS: 6000",
-              "Throughput: 300 MB/s",
-              "Para bancos de dados e aplicações críticas"
-            ],
-            isHardware: true
-          }
-        ];
-        
-        processedData.external_storage.items = exampleExternalItems;
-        console.log(`[PriceService] Created ${exampleExternalItems.length} example external storage items`);
-      } else {
-        processedData.external_storage.items = externalItems;
-        console.log(`[PriceService] Added ${externalItems.length} external storage items`);
-      }
-    }
-  }
-}
-
-/**
- * Helper function to handle special processing for connectivity categories
- */
-function handleConnectivityCategories(processedData: any) {
-  // Verificar se há categorias vazias de port_speed ou ip_blocks
-  const connectivityIsEmpty = !processedData.connectivity || processedData.connectivity.items.length === 0;
-  const portSpeedIsEmpty = !processedData.port_speed || processedData.port_speed.items.length === 0;
-  const ipBlocksIsEmpty = !processedData.ip_blocks || processedData.ip_blocks.items.length === 0;
-  
-  // Importar dados de conectividade do arquivo estático
-  if (connectivityIsEmpty || portSpeedIsEmpty || ipBlocksIsEmpty) {
-    try {
-      // Importar dados de componentes de conectividade
-      const defaultConnectivityData = connectivityComponents;
-      
-      if (!defaultConnectivityData || !defaultConnectivityData.options || defaultConnectivityData.options.length === 0) {
-        console.warn("[PriceService] No default connectivity data available");
-        return;
-      }
-      
-      console.log("[PriceService] Found default connectivity components:", defaultConnectivityData.options.length);
-      
-      // Separar itens por subtipo
-      const portItems = defaultConnectivityData.options
-        .filter(option => option.subtype === "porta")
-        .map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Velocidade de porta`,
-          price: option.price,
-          type: 'network',
-          subtype: 'porta',
-          isHardware: true
-        }));
-      
-      const ipItems = defaultConnectivityData.options
-        .filter(option => option.subtype === "ip")
-        .map(option => ({
-          id: option.id,
-          name: option.name,
-          description: option.description || `${option.name} - Bloco de IPs`,
-          price: option.price,
-          type: 'network',
-          subtype: 'ip',
-          isHardware: true
-        }));
-      
-      // Atualizar categoria de conectividade geral
-      if (connectivityIsEmpty && (portItems.length > 0 || ipItems.length > 0)) {
-        processedData.connectivity = {
-          id: 'connectivity',
-          name: 'Conectividade',
-          items: [...portItems, ...ipItems]
-        };
-        console.log(`[PriceService] Created connectivity category with ${processedData.connectivity.items.length} items`);
-      }
-      
-      // Atualizar categoria de velocidade de porta
-      if (portSpeedIsEmpty && portItems.length > 0) {
-        processedData.port_speed = {
-          id: 'port_speed',
-          name: 'Velocidade de Porta',
-          items: portItems
-        };
-        console.log(`[PriceService] Created port_speed category with ${portItems.length} items`);
-      }
-      
-      // Atualizar categoria de blocos de IP
-      if (ipBlocksIsEmpty && ipItems.length > 0) {
-        processedData.ip_blocks = {
-          id: 'ip_blocks',
-          name: 'Blocos de IP',
-          items: ipItems
-        };
-        console.log(`[PriceService] Created ip_blocks category with ${ipItems.length} items`);
-      }
-    } catch (error) {
-      console.error("[PriceService] Error setting up connectivity categories:", error);
-    }
-  }
-  
-  // Sincronizar categorias para garantir que todos tenham os mesmos itens
-  syncConnectivityCategories(processedData);
-}
-
-/**
- * Sincroniza as categorias de conectividade para garantir consistência
- */
-function syncConnectivityCategories(data: any) {
-  // Se houver dados em connectivity mas não em port_speed/ip_blocks, distribua
-  if (data.connectivity?.items?.length > 0) {
-    const connectivityItems = data.connectivity.items;
-    
-    // Separar itens por subtipo
-    const portItems = connectivityItems.filter(item => item.subtype === 'porta');
-    const ipItems = connectivityItems.filter(item => item.subtype === 'ip');
-    
-    // Atualizar port_speed se necessário
-    if (data.port_speed?.items?.length === 0 && portItems.length > 0) {
-      data.port_speed.items = portItems;
-      console.log(`[PriceService] Synchronized ${portItems.length} port items to port_speed category`);
-    }
-    
-    // Atualizar ip_blocks se necessário
-    if (data.ip_blocks?.items?.length === 0 && ipItems.length > 0) {
-      data.ip_blocks.items = ipItems;
-      console.log(`[PriceService] Synchronized ${ipItems.length} IP items to ip_blocks category`);
-    }
-  }
-  
-  // Se houver dados em port_speed/ip_blocks mas não em connectivity, combine
-  if (data.connectivity?.items?.length === 0 && 
-      (data.port_speed?.items?.length > 0 || data.ip_blocks?.items?.length > 0)) {
-    
-    const allItems = [
-      ...(data.port_speed?.items || []),
-      ...(data.ip_blocks?.items || [])
-    ];
-    
-    if (allItems.length > 0) {
-      data.connectivity.items = allItems;
-      console.log(`[PriceService] Combined ${allItems.length} items into connectivity category`);
-    }
-  }
-  
-  // Garantir que alterações feitas em categorias específicas sejam propagadas
-  // Propagação de port_speed para connectivity
-  if (data.port_speed?.items?.length > 0 && data.connectivity?.items) {
-    // Remover itens antigos de porta na conectividade
-    data.connectivity.items = data.connectivity.items.filter(item => item.subtype !== 'porta');
-    // Adicionar os itens atualizados de port_speed
-    data.connectivity.items.push(...data.port_speed.items);
-    console.log(`[PriceService] Updated connectivity with ${data.port_speed.items.length} port items`);
-  }
-  
-  // Propagação de ip_blocks para connectivity
-  if (data.ip_blocks?.items?.length > 0 && data.connectivity?.items) {
-    // Remover itens antigos de IP na conectividade
-    data.connectivity.items = data.connectivity.items.filter(item => item.subtype !== 'ip');
-    // Adicionar os itens atualizados de ip_blocks
-    data.connectivity.items.push(...data.ip_blocks.items);
-    console.log(`[PriceService] Updated connectivity with ${data.ip_blocks.items.length} IP items`);
-  }
-  
-  // Log para debugging
-  console.log(`[PriceService] After sync: connectivity=${data.connectivity?.items?.length || 0}, port_speed=${data.port_speed?.items?.length || 0}, ip_blocks=${data.ip_blocks?.items?.length || 0}`);
-}
-
-/**
  * Helper function to get friendly names for categories
  */
 function getCategoryFriendlyName(categoryId: string): string {
   const categoryNames: Record<string, string> = {
-    'storage': 'Armazenamento',
-    'external_storage': 'Storage Externo',
-    'disk': 'Discos',
     'memory': 'Memória',
     'processor': 'Processadores',
     'contract': 'Contratos',
-    'connectivity': 'Conectividade',
-    'port_speed': 'Velocidade de Porta',
     'datacenter': 'Data Center',
-    'sistemaoperacional': 'Sistema Operacional',
-    'ip_blocks': 'Blocos de IP',
-    'serviçospersonalizados': 'Serviços Personalizados'
+    'sistemaoperacional': 'Sistema Operacional'
   };
   
   return categoryNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);

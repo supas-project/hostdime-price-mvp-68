@@ -18,8 +18,18 @@ export function useDataLoader() {
     setIsLoading(true);
     try {
       console.log("DataLoader: Attempting to load all price data");
-      const data = await PriceService.getAllData();
-      console.log("DataLoader: Price data loaded successfully");
+      
+      // Forçar refresh dos dados do banco
+      const data = await PriceService.forceRefreshFromLatestSource();
+      
+      if (!data || Object.keys(data).length === 0) {
+        console.log("DataLoader: No data from force refresh, trying regular getAllData");
+        const fallbackData = await PriceService.getAllData();
+        console.log("DataLoader: Fallback data loaded successfully");
+        return fallbackData;
+      }
+      
+      console.log("DataLoader: Fresh data loaded successfully");
       return data;
     } catch (error) {
       console.error("DataLoader: Error loading price data:", error);
