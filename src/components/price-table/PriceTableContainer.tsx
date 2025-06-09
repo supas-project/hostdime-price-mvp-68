@@ -85,10 +85,29 @@ export default function PriceTableContainer() {
     }
   };
 
-  // Show loading state only when actually loading and not yet initialized
-  const shouldShowLoading = (isLoading || !isInitialized) && !initializationStarted.current;
-  
-  if (shouldShowLoading) {
+  // Show loading state only during actual initialization
+  if (!isInitialized && !initializationStarted.current) {
+    initializationStarted.current = true;
+    return (
+      <PriceTableErrorBoundary>
+        <PriceTableInitializer
+          isAuthenticated={isAuthenticated}
+          loadPriceData={loadPriceData}
+          priceData={priceData}
+          setIsInitialized={setIsInitialized}
+          checkForConflicts={checkForConflicts}
+          setLoadingState={setLoadingState}
+        />
+        <PriceTableLoadingState 
+          loadingState={currentState}
+          message={loadingMessage}
+        />
+      </PriceTableErrorBoundary>
+    );
+  }
+
+  // Show loading only when actually loading
+  if (isLoading && currentState !== 'idle') {
     return (
       <PriceTableErrorBoundary>
         <PriceTableLoadingState 
@@ -108,20 +127,6 @@ export default function PriceTableContainer() {
   return (
     <PriceTableErrorBoundary>
       {/* Logic-only components for data management */}
-      {!initializationStarted.current && (
-        <PriceTableInitializer
-          isAuthenticated={isAuthenticated}
-          loadPriceData={loadPriceData}
-          priceData={priceData}
-          setIsInitialized={(initialized) => {
-            setIsInitialized(initialized);
-            if (initialized) initializationStarted.current = true;
-          }}
-          checkForConflicts={checkForConflicts}
-          setLoadingState={setLoadingState}
-        />
-      )}
-      
       <PriceDataProcessor
         priceData={priceData}
         setPriceData={setPriceData}

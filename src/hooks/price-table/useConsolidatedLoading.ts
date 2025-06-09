@@ -14,7 +14,7 @@ export interface ConsolidatedLoadingState {
 
 export function useConsolidatedLoading(): ConsolidatedLoadingState {
   const [currentState, setCurrentState] = useState<LoadingState>('idle');
-  const isLoadingRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const getLoadingMessage = useCallback((state: LoadingState): string => {
     switch (state) {
@@ -37,32 +37,49 @@ export function useConsolidatedLoading(): ConsolidatedLoadingState {
 
   const setLoadingState = useCallback((state: LoadingState) => {
     console.log(`[ConsolidatedLoading] Setting state: ${state}`);
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     setCurrentState(state);
-    isLoadingRef.current = state !== 'idle';
+    
+    // Auto-reset to idle after a timeout for non-idle states to prevent infinite loading
+    if (state !== 'idle') {
+      timeoutRef.current = setTimeout(() => {
+        console.log(`[ConsolidatedLoading] Auto-resetting from ${state} to idle after timeout`);
+        setCurrentState('idle');
+      }, 30000); // 30 seconds timeout
+    }
   }, []);
 
   const setFileLoading = useCallback((loading: boolean) => {
     console.log(`[ConsolidatedLoading] File loading: ${loading}`);
     if (loading) {
       setLoadingState('uploading-file');
-    } else if (currentState === 'uploading-file') {
+    } else {
       setLoadingState('idle');
     }
-  }, [currentState, setLoadingState]);
+  }, [setLoadingState]);
 
   const setRefreshing = useCallback((refreshing: boolean) => {
     console.log(`[ConsolidatedLoading] Refreshing: ${refreshing}`);
     if (refreshing) {
       setLoadingState('refreshing');
-    } else if (currentState === 'refreshing') {
+    } else {
       setLoadingState('idle');
     }
-  }, [currentState, setLoadingState]);
+  }, [setLoadingState]);
 
   const reset = useCallback(() => {
     console.log(`[ConsolidatedLoading] Resetting state`);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     setCurrentState('idle');
-    isLoadingRef.current = false;
   }, []);
 
   const isLoading = currentState !== 'idle';

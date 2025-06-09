@@ -29,12 +29,10 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       setIsDeleting(true);
       console.log(`[CategoryDelete] Iniciando exclusão da categoria ${categoryId}`);
       
-      // Get category name before deleting for message
+      // Get current data before deletion
       const allData = await PriceService.getAllData();
       const category = allData[categoryId];
-      const categoryName = category?.name || categoryId;
       
-      // Check if category exists and is empty or can be deleted
       if (!category) {
         console.warn(`[CategoryDelete] Categoria ${categoryId} não encontrada`);
         toast.error("Categoria não encontrada", {
@@ -43,18 +41,13 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
         return false;
       }
       
-      // Allow deletion of empty categories or all categories if admin
-      const canDelete = !category.items || category.items.length === 0 || isAdminAccess;
+      const categoryName = category?.name || categoryId;
       
-      if (!canDelete) {
-        toast.error("Categoria não pode ser excluída", {
-          description: "Apenas categorias vazias podem ser excluídas."
-        });
-        return false;
-      }
+      // Allow deletion of any category for admin users
+      // No restrictions on category items for admin access
+      console.log(`[CategoryDelete] Admin deletando categoria ${categoryId} com ${category.items?.length || 0} itens`);
       
       // Execute category deletion
-      console.log(`[CategoryDelete] Executando exclusão da categoria ${categoryId}`);
       const success = await PriceService.deleteCategory(categoryId);
       
       if (!success) {

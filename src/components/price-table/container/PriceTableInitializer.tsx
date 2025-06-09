@@ -41,18 +41,20 @@ export function PriceTableInitializer({
           await InitService.initializeData();
           
           setLoadingState('loading-data');
-          await loadPriceData();
+          const data = await loadPriceData();
           
           console.log("PriceTableInitializer: Data loaded successfully");
           setLoadingState('idle');
           setIsInitialized(true);
           
-          // Set up conflict checking interval
-          const intervalId = setInterval(() => {
-            checkForConflicts();
-          }, 30000);
-          
-          return () => clearInterval(intervalId);
+          // Set up conflict checking interval only after successful initialization
+          if (data) {
+            const intervalId = setInterval(() => {
+              checkForConflicts();
+            }, 30000);
+            
+            return () => clearInterval(intervalId);
+          }
         } catch (error) {
           console.error("PriceTableInitializer: Error initializing price table:", error);
           setLoadingState('idle');
@@ -63,6 +65,7 @@ export function PriceTableInitializer({
               icon: <AlertCircle className="h-5 w-5" />
             });
           }
+          // Set as initialized even on error to prevent infinite loading
           setIsInitialized(true);
         }
       } else {
@@ -72,8 +75,11 @@ export function PriceTableInitializer({
       }
     }
     
-    initialize();
-  }, [isAuthenticated]); // Remove other dependencies to prevent loops
+    // Only run if not already initialized
+    if (!initializationRef.current) {
+      initialize();
+    }
+  }, [isAuthenticated, loadPriceData, setIsInitialized, checkForConflicts, setLoadingState]);
 
   return null;
 }
