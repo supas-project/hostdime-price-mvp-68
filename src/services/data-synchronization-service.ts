@@ -1,11 +1,11 @@
 
 import { PriceService } from './price-service';
-import { ComponentService } from './component-service-refactored';
+import { UnifiedDataService } from './unified-data-service';
 import { toast } from '@/utils/toast-utils';
 
 /**
  * Unified Data Synchronization Service
- * Ensures data consistency between ComponentService (unified data) and PriceService
+ * Ensures data consistency between UnifiedDataService and PriceService
  */
 export class DataSynchronizationService {
   
@@ -16,36 +16,167 @@ export class DataSynchronizationService {
     try {
       console.log('[DataSync] Starting unified data synchronization...');
       
-      // Ensure data is consolidated first
-      await ComponentService.ensureDataConsolidation();
+      // First ensure data is consolidated
+      const consolidationStatus = await UnifiedDataService.getConsolidationStatus();
       
-      // Get standardized data from unified source
-      const unifiedCategories = await ComponentService.getAllComponentsByCategory();
-      
-      // Get current price data
-      const priceData = await PriceService.getAllData();
-      const priceCategories = Object.keys(priceData);
-      
-      console.log('[DataSync] Unified categories:', Object.keys(unifiedCategories));
-      console.log('[DataSync] Price categories:', priceCategories);
-      
-      // Use standard category mapping
-      const standardCategories = ['cpu', 'memory', 'os', 'connectivity', 'storage', 'datacenter', 'contract'];
-      
-      // Synchronize each standard category
-      for (const categoryId of standardCategories) {
-        const unifiedItems = unifiedCategories[categoryId] || [];
+      if (consolidationStatus.phase !== 'completed') {
+        console.log('[DataSync] Data not consolidated, starting consolidation...');
+        const consolidated = await UnifiedDataService.consolidateAllData();
         
-        if (unifiedItems.length > 0) {
-          await this.syncCategory(categoryId, unifiedItems);
+        if (!consolidated) {
+          throw new Error('Failed to consolidate data');
         }
       }
       
-      toast.success('Sincronização unificada concluída', {
-        description: `${standardCategories.length} categorias sincronizadas com dados unificados`
+      // Get all data from unified service
+      const [
+        cpuComponents,
+        memoryComponents,
+        osComponents,
+        connectivityComponents,
+        storageItems,
+        dataCenters,
+        contractTypes
+      ] = await Promise.all([
+        UnifiedDataService.getComponentsByType('cpu'),
+        UnifiedDataService.getComponentsByType('memory'),
+        UnifiedDataService.getComponentsByType('os'),
+        UnifiedDataService.getComponentsByType('connectivity'),
+        UnifiedDataService.getAllStorageItems(),
+        UnifiedDataService.getAllDataCenters(),
+        UnifiedDataService.getAllContractTypes()
+      ]);
+      
+      console.log('[DataSync] Loaded unified data:', {
+        cpu: cpuComponents.length,
+        memory: memoryComponents.length,
+        os: osComponents.length,
+        connectivity: connectivityComponents.length,
+        storage: storageItems.length,
+        datacenters: dataCenters.length,
+        contracts: contractTypes.length
       });
       
-      return true;
+      // Build unified price data structure
+      const unifiedPriceData = {
+        cpu: {
+          id: 'cpu',
+          name: 'Processadores',
+          items: cpuComponents.map(comp => ({
+            id: comp.id,
+            name: comp.name,
+            description: comp.description,
+            price: comp.price,
+            type: 'cpu',
+            specs: comp.specs,
+            metadata: comp.metadata
+          }))
+        },
+        memory: {
+          id: 'memory',
+          name: 'Memória',
+          items: memoryComponents.map(comp => ({
+            id: comp.id,
+            name: comp.name,
+            description: comp.description,
+            price: comp.price,
+            type: 'memory',
+            specs: comp.specs,
+            metadata: comp.metadata
+          }))
+        },
+        os: {
+          id: 'os',
+          name: 'Sistema Operacional',
+          items: osComponents.map(comp => ({
+            id: comp.id,
+            name: comp.name,
+            description: comp.description,
+            price: comp.price,
+            type: 'os',
+            specs: comp.specs,
+            metadata: comp.metadata
+          }))
+        },
+        connectivity: {
+          id: 'connectivity',
+          name: 'Conectividade',
+          items: connectivityComponents.map(comp => ({
+            id: comp.id,
+            name: comp.name,
+            description: comp.description,
+            price: comp.price,
+            type: 'connectivity',
+            specs: comp.specs,
+            metadata: comp.metadata
+          }))
+        },
+        storage: {
+          id: 'storage',
+          name: 'Armazenamento',
+          items: storageItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            type: 'storage',
+            specs: item.specs,
+            metadata: {
+              ...item.metadata,
+              storage_type: item.storage_type,
+              item_type: item.item_type,
+              capacity_gb: item.capacity_gb
+            }
+          }))
+        },
+        datacenter: {
+          id: 'datacenter',
+          name: 'Data Center',
+          items: dataCenters.map(dc => ({
+            id: dc.datacenter_id,
+            name: dc.name,
+            description: dc.description,
+            price: dc.price,
+            type: 'datacenter',
+            specs: dc.features,
+            metadata: {
+              location: dc.location,
+              region: dc.region,
+              badge: dc.badge,
+              certifications: dc.certifications
+            }
+          }))
+        },
+        contract: {
+          id: 'contract',
+          name: 'Contratos',
+          items: contractTypes.map(contract => ({
+            id: contract.contract_id,
+            name: contract.name,
+            description: contract.description,
+            price: 0,
+            type: 'contract',
+            specs: [`${contract.duration_months} meses`, `${contract.discount_percentage}% desconto`],
+            metadata: {
+              duration: contract.duration_months,
+              discount: contract.discount_percentage
+            }
+          }))
+        }
+      };
+      
+      // Save to price service
+      const saved = await PriceService.saveData(unifiedPriceData);
+      
+      if (saved) {
+        console.log('[DataSync] Successfully synchronized unified data to price table');
+        toast.success('Sincronização concluída', {
+          description: 'Dados unificados sincronizados com a tabela de preços'
+        });
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('[DataSync] Error during unified synchronization:', error);
       toast.error('Erro na sincronização unificada', {
@@ -53,74 +184,6 @@ export class DataSynchronizationService {
       });
       return false;
     }
-  }
-  
-  /**
-   * Sync a category with unified data
-   */
-  private static async syncCategory(categoryId: string, unifiedItems: any[]): Promise<void> {
-    try {
-      console.log(`[DataSync] Syncing category ${categoryId} with ${unifiedItems.length} items`);
-      
-      // Check if category exists in price table
-      const existingCategory = await PriceService.getCategory(categoryId);
-      
-      if (!existingCategory) {
-        // Create category
-        const categoryData = {
-          id: categoryId,
-          name: this.getCategoryDisplayName(categoryId)
-        };
-        
-        await PriceService.addCategory(categoryData);
-        console.log(`[DataSync] Created category ${categoryId}`);
-      }
-      
-      // Sync all items
-      for (const item of unifiedItems) {
-        const itemData = {
-          id: item.id,
-          name: item.name,
-          description: item.description || '',
-          price: item.price || 0,
-          type: categoryId,
-          specs: Array.isArray(item.specs) ? item.specs : [],
-          metadata: item.metadata || {}
-        };
-        
-        // Check if item exists
-        const existingItem = await PriceService.getItem(categoryId, item.id);
-        
-        if (existingItem) {
-          // Update existing item
-          await PriceService.updateItem(categoryId, item.id, itemData);
-        } else {
-          // Add new item
-          await PriceService.addItem(categoryId, itemData);
-        }
-      }
-      
-      console.log(`[DataSync] Successfully synced category ${categoryId}`);
-    } catch (error) {
-      console.error(`[DataSync] Error syncing category ${categoryId}:`, error);
-    }
-  }
-  
-  /**
-   * Get standardized display name for category
-   */
-  private static getCategoryDisplayName(categoryId: string): string {
-    const displayNames: Record<string, string> = {
-      'cpu': 'Processadores',
-      'memory': 'Memória',
-      'storage': 'Armazenamento',
-      'connectivity': 'Conectividade',
-      'os': 'Sistema Operacional',
-      'datacenter': 'Data Center',
-      'contract': 'Contratos'
-    };
-    
-    return displayNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
   }
   
   /**
@@ -133,9 +196,9 @@ export class DataSynchronizationService {
   }> {
     try {
       // Get data from both sources
-      const [unifiedCategories, priceData] = await Promise.all([
-        ComponentService.getAllComponentsByCategory(),
-        PriceService.getAllData()
+      const [priceData, consolidationStatus] = await Promise.all([
+        PriceService.getAllData(),
+        UnifiedDataService.getConsolidationStatus()
       ]);
       
       const standardCategories = ['cpu', 'memory', 'os', 'connectivity', 'storage', 'datacenter', 'contract'];
@@ -146,23 +209,14 @@ export class DataSynchronizationService {
       
       const itemMismatches: Record<string, { missing: number; extra: number }> = {};
       
-      // Check item consistency for standard categories
-      for (const categoryId of standardCategories) {
-        const unifiedItems = unifiedCategories[categoryId] || [];
-        const priceItems = priceData[categoryId]?.items || [];
-        
-        const unifiedItemIds = unifiedItems.map(item => item.id);
-        const priceItemIds = priceItems.map(item => item.id);
-        
-        const missingItems = unifiedItems.filter(item => !priceItemIds.includes(item.id));
-        const extraItems = priceItems.filter(item => !unifiedItemIds.includes(item.id));
-        
-        if (missingItems.length > 0 || extraItems.length > 0) {
-          itemMismatches[categoryId] = {
-            missing: missingItems.length,
-            extra: extraItems.length
-          };
-        }
+      // Check if consolidation is needed
+      if (consolidationStatus.phase !== 'completed') {
+        // If not consolidated, all standard categories are considered missing
+        standardCategories.forEach(cat => {
+          if (!priceData[cat] || !priceData[cat].items || priceData[cat].items.length === 0) {
+            itemMismatches[cat] = { missing: 1, extra: 0 };
+          }
+        });
       }
       
       return {

@@ -4,50 +4,83 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DataSynchronizationService } from '@/services/data-synchronization-service';
-import { RefreshCw, AlertTriangle, CheckCircle, Clock, Database } from 'lucide-react';
+import { useDataSynchronization } from '@/hooks/useDataSynchronization';
+import { UnifiedDataService } from '@/services/unified-data-service';
+import { RefreshCw, AlertTriangle, CheckCircle, Clock, Database, Info } from 'lucide-react';
 
 export function DataSyncPanel() {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const { isSyncing, lastSyncTime, synchronizeData, checkConsistency } = useDataSynchronization();
   const [consistencyReport, setConsistencyReport] = useState<any>(null);
+  const [consolidationStatus, setConsolidationStatus] = useState<any>(null);
   const [showReport, setShowReport] = useState(false);
   
   useEffect(() => {
-    // Check consistency on mount
-    const loadConsistency = async () => {
-      const report = await DataSynchronizationService.checkDataConsistency();
+    const loadStatus = async () => {
+      const [report, status] = await Promise.all([
+        checkConsistency(),
+        UnifiedDataService.getConsolidationStatus()
+      ]);
+      
       setConsistencyReport(report);
+      setConsolidationStatus(status);
     };
     
-    loadConsistency();
-  }, []);
+    loadStatus();
+  }, [checkConsistency]);
   
   const handleSynchronize = async () => {
-    setIsSyncing(true);
     try {
       console.log('[DataSyncPanel] Starting unified data synchronization...');
       
-      const success = await DataSynchronizationService.synchronizeAllData();
+      const success = await synchronizeData();
       
       if (success) {
-        setLastSyncTime(new Date());
-        // Refresh consistency report
-        const report = await DataSynchronizationService.checkDataConsistency();
+        // Refresh status after sync
+        const [report, status] = await Promise.all([
+          checkConsistency(),
+          UnifiedDataService.getConsolidationStatus()
+        ]);
+        
         setConsistencyReport(report);
+        setConsolidationStatus(status);
       }
     } catch (error) {
       console.error('[DataSyncPanel] Synchronization error:', error);
-    } finally {
-      setIsSyncing(false);
     }
   };
   
+  const needsConsolidation = consolidationStatus?.phase !== 'completed';
   const hasIssues = consistencyReport && (
     consistencyReport.missingInPrice.length > 0 ||
     consistencyReport.extraInPrice.length > 0 ||
     Object.keys(consistencyReport.itemMismatches).length > 0
   );
+  
+  const getStatusInfo = () => {
+    if (needsConsolidation) {
+      return {
+        icon: <Info className="w-4 h-4 text-blue-500" />,
+        message: 'Dados precisam ser consolidados',
+        variant: 'default'
+      };
+    }
+    
+    if (hasIssues) {
+      return {
+        icon: <AlertTriangle className="w-4 h-4 text-destructive" />,
+        message: 'Divergências detectadas',
+        variant: 'destructive'
+      };
+    }
+    
+    return {
+      icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+      message: 'Dados unificados sincronizados',
+      variant: 'success'
+    };
+  };
+  
+  const statusInfo = getStatusInfo();
   
   return (
     <Card>
@@ -61,20 +94,29 @@ export function DataSyncPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Consolidation Status */}
+        {consolidationStatus && (
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-blue-900">Status da Consolidação</span>
+              <Badge variant={consolidationStatus.phase === 'completed' ? 'default' : 'secondary'}>
+                {consolidationStatus.phase}
+              </Badge>
+            </div>
+            <div className="text-sm text-blue-700">
+              <p>Componentes: {consolidationStatus.components_count}</p>
+              <p>Storage: {consolidationStatus.storage_count}</p>
+              <p>Data Centers: {consolidationStatus.datacenters_count}</p>
+              <p>Contratos: {consolidationStatus.contracts_count}</p>
+            </div>
+          </div>
+        )}
+        
         {/* Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {hasIssues ? (
-              <>
-                <AlertTriangle className="w-4 h-4 text-destructive" />
-                <span className="text-sm">Divergências detectadas</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm">Dados unificados sincronizados</span>
-              </>
-            )}
+            {statusInfo.icon}
+            <span className="text-sm">{statusInfo.message}</span>
           </div>
           
           {lastSyncTime && (
@@ -116,17 +158,17 @@ export function DataSyncPanel() {
           <Button 
             onClick={handleSynchronize}
             disabled={isSyncing}
-            variant={hasIssues ? "default" : "outline"}
+            variant={needsConsolidation || hasIssues ? "default" : "outline"}
           >
             {isSyncing ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Sincronizando dados unificados...
+                {needsConsolidation ? 'Consolidando e sincronizando...' : 'Sincronizando dados unificados...'}
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {hasIssues ? 'Corrigir Divergências' : 'Verificar Sincronização'}
+                {needsConsolidation ? 'Consolidar e Sincronizar' : hasIssues ? 'Corrigir Divergências' : 'Verificar Sincronização'}
               </>
             )}
           </Button>
@@ -194,8 +236,8 @@ export function DataSyncPanel() {
           </div>
         )}
         
-        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-700">
+        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-sm text-green-700">
             <strong>Fonte Única:</strong> Todos os dados agora vêm do UnifiedDataService, 
             garantindo consistência entre configurações e tabela de preços.
           </p>

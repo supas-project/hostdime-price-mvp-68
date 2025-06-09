@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { DataSynchronizationService } from '@/services/data-synchronization-service';
+import { UnifiedDataService } from '@/services/unified-data-service';
 import { toast } from '@/utils/toast-utils';
 
 export function useDataSynchronization() {
@@ -14,7 +15,30 @@ export function useDataSynchronization() {
     try {
       console.log('[useDataSynchronization] Starting unified data synchronization...');
       
-      // Check consistency first
+      // Check if data needs consolidation first
+      const consolidationStatus = await UnifiedDataService.getConsolidationStatus();
+      
+      if (consolidationStatus.phase !== 'completed') {
+        console.log('[useDataSynchronization] Data needs consolidation...');
+        toast.info('Preparando dados', {
+          description: 'Consolidando dados estáticos no sistema unificado...'
+        });
+        
+        const consolidated = await UnifiedDataService.consolidateAllData();
+        
+        if (!consolidated) {
+          toast.error('Erro na consolidação', {
+            description: 'Falha ao consolidar dados estáticos'
+          });
+          return false;
+        }
+        
+        toast.success('Dados consolidados', {
+          description: 'Dados estáticos consolidados com sucesso'
+        });
+      }
+      
+      // Check consistency 
       const consistency = await DataSynchronizationService.checkDataConsistency();
       
       console.log('[useDataSynchronization] Consistency check:', consistency);
