@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 import { Users } from 'lucide-react';
 import { useUserAdmin } from '@/hooks/useUserAdmin';
 import { CreateUserForm } from '@/components/users/CreateUserForm';

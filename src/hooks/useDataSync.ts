@@ -1,5 +1,5 @@
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 import { useInitSync } from './data-sync/useInitSync';
 import { useUpdateCheck } from './data-sync/useUpdateCheck';
 import { useNotifications } from './data-sync/useNotifications';

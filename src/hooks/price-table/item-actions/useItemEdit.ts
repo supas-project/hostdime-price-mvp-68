@@ -1,54 +1,15 @@
-
 import { useState } from "react";
-import { PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 import { toast } from "@/utils/toast-utils";
-import { parseBRLToFloat } from "@/utils/number-formatter";
 
-export function useItemEdit(
-  activeTab: string,
-  setPriceData: (data: any) => void
-) {
-  const [openEditItem, setOpenEditItem] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<PriceItem | undefined>(undefined);
-  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
+export function useItemEdit(setPriceData: (data: any) => void) {
+  const [isEditing, setIsEditing] = useState(false);
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
-
-  const handleInitiateEdit = (item: PriceItem) => {
-    if (!isAuthenticated) {
-      toast.error("Você precisa estar autenticado", {
-        description: "Faça login para editar itens."
-      });
-      return;
-    }
-    
-    if (!isAdminAccess) {
-      toast.error("Permissão negada", {
-        description: "Apenas administradores podem editar itens."
-      });
-      return;
-    }
-    
-    console.log("[useItemEdit] Initiating edit for item:", item);
-    console.log("[useItemEdit] Item price:", item.price, "Type:", typeof item.price);
-    setItemToEdit(item);
-    setOpenEditItem(true);
-  };
-
-  // Função para garantir que o preço é um número válido
-  const validatePrice = (price: any): number => {
-    // Log do valor original para debug
-    console.log("[useItemEdit] validatePrice received:", price, "Type:", typeof price);
-    
-    // Usar a função centralizada para converter
-    return parseBRLToFloat(price);
-  };
-
-  const handleEditItem = async (values: any, itemId?: string) => {
-    // Check authentication
+  
+  const handleEditItem = async (categoryId: string, itemId: string, values: any) => {
     if (!isAuthenticated) {
       toast.error("Você precisa estar autenticado", {
         description: "Faça login para editar itens."
@@ -56,91 +17,64 @@ export function useItemEdit(
       return false;
     }
     
-    // Check admin permission
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem editar itens."
-      });
-      return false;
-    }
-    
-    if (!activeTab || !itemId) {
-      toast.error("Erro ao editar item", {
-        description: "Nenhuma categoria ou item selecionado."
       });
       return false;
     }
     
     try {
-      setIsSubmittingItem(true);
+      setIsEditing(true);
       
-      console.log("[useItemEdit] Editing item with values:", values);
-      console.log("[useItemEdit] Item ID:", itemId);
-      console.log("[useItemEdit] Original price value:", values.price, "Type:", typeof values.price);
+      // Get item name before editing for message
+      const item = await PriceService.getItem(categoryId, itemId);
+      const itemName = item?.name || itemId;
       
-      // Garantir que o preço está corretamente formatado
-      const price = validatePrice(values.price);
-      console.log("[useItemEdit] Validated price:", price);
-      
-      const updatedItemData = {
+      // Only pass the allowed properties to editItem
+      const itemData = {
         name: values.name,
         description: values.description,
-        price: price,
-        type: values.type,
-        subtype: values.subtype,
-        specs: Array.isArray(values.specs) ? values.specs : [],
-        tags: Array.isArray(values.tags) ? values.tags : [],
-        // Update isHardware based on tags for backwards compatibility
-        isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
+        price: values.price,
+        specs: values.specs,
+        tags: values.tags,
+        isHardware: values.isHardware
       };
       
-      console.log("[useItemEdit] Prepared update data:", updatedItemData);
+      // Execute item editing
+      const success = await PriceService.editItem(categoryId, itemId, itemData);
       
-      // Update item using existing method
-      const updated = await PriceService.updateItem(activeTab, itemId, updatedItemData);
-      
-      if (!updated) {
-        throw new Error("Falha ao atualizar o item. Verifique os logs para mais detalhes.");
+      if (!success) {
+        throw new Error("Falha ao editar o item. Tente novamente.");
       }
       
-      console.log("[useItemEdit] Item updated successfully:", updated);
-      
-      // Get fresh data
+      // Get updated data after editing
       const updatedData = await PriceService.getAllData();
+      
+      // Importante: Atualizar o estado com os dados atualizados
       setPriceData(updatedData);
       
-      // Get category for notification
-      const category = await PriceService.getCategory(activeTab);
       // Register change for notification
-      await registerAdminChange("edit_item", `Item "${values.name}" atualizado na categoria ${category?.name || activeTab}`);
+      await registerAdminChange("edit_item", `Item "${itemName}" editado na categoria "${categoryId}"`);
       
-      // Close edit dialog and reset state
-      setOpenEditItem(false);
-      setItemToEdit(undefined);
-      
-      toast.success("Item atualizado", {
-        description: `O item ${values.name} foi atualizado com sucesso.`
+      toast.success("Item editado", {
+        description: "O item foi editado com sucesso."
       });
       
       return true;
     } catch (error) {
-      console.error("[useItemEdit] Error updating item:", error);
+      console.error("[ItemEdit] Erro ao editar item:", error);
       toast.error("Erro ao editar item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });
       return false;
     } finally {
-      setIsSubmittingItem(false);
+      setIsEditing(false);
     }
   };
 
   return {
-    openEditItem,
-    setOpenEditItem,
-    itemToEdit,
-    setItemToEdit,
-    isSubmittingItem,
-    handleInitiateEdit,
+    isEditing,
     handleEditItem
   };
 }

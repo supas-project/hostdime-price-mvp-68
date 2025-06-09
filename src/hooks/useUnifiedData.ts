@@ -8,7 +8,7 @@ import {
   UnifiedStorageItem,
   ConsolidatedDataStatus 
 } from '@/services/unified-data-service';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 import { toast } from 'sonner';
 
 export function useUnifiedData() {

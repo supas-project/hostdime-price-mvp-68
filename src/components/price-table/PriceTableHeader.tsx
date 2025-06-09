@@ -1,9 +1,8 @@
-
 import { HardDrive } from "lucide-react";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 import { useDataSync } from "@/hooks/useDataSync";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 
 interface PriceTableHeaderProps {
   lastSyncTime: Date | null;

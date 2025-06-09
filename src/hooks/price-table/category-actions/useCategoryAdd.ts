@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 import { toast } from "@/utils/toast-utils";
 
 export function useCategoryAdd(setPriceData: (data: any) => void) {

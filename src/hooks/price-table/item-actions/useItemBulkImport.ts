@@ -1,160 +1,70 @@
-
 import { useState } from "react";
-import { PriceItem } from "@/types/pricing";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 import { toast } from "@/utils/toast-utils";
 
-export function useItemBulkImport(
-  activeTab: string,
-  setPriceData: (data: any) => void
-) {
+export function useItemBulkImport(setPriceData: (data: any) => void) {
   const [isImporting, setIsImporting] = useState(false);
-  const [openBulkImport, setOpenBulkImport] = useState(false);
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
 
-  const handleBulkImport = async (items: PriceItem[]): Promise<{
-    success: boolean;
-    message: string;
-    importedCount: number;
-  }> => {
-    // Check authentication
+  const handleBulkImport = async (categoryId: string, items: any[]) => {
     if (!isAuthenticated) {
-      return {
-        success: false,
-        message: "Você precisa estar autenticado para adicionar itens.",
-        importedCount: 0
-      };
+      toast.error("Você precisa estar autenticado", {
+        description: "Faça login para importar itens."
+      });
+      return false;
     }
     
-    // Check admin permission
     if (!isAdminAccess) {
-      return {
-        success: false,
-        message: "Permissão negada. Apenas administradores podem adicionar itens.",
-        importedCount: 0
-      };
-    }
-    
-    // Avoid multiple submissions
-    if (isImporting) {
-      return {
-        success: false,
-        message: "Uma importação já está em andamento.",
-        importedCount: 0
-      };
-    }
-    
-    if (!activeTab) {
-      return {
-        success: false,
-        message: "Nenhuma categoria selecionada.",
-        importedCount: 0
-      };
+      toast.error("Permissão negada", {
+        description: "Apenas administradores podem importar itens."
+      });
+      return false;
     }
     
     try {
       setIsImporting(true);
       
-      if (!items.length) {
-        return {
-          success: false,
-          message: "Nenhum item para importar.",
-          importedCount: 0
-        };
+      // Validate items before importing
+      if (!items || !Array.isArray(items)) {
+        throw new Error("Dados inválidos para importação. Verifique o arquivo.");
       }
       
-      console.log(`[useItemBulkImport] Importing ${items.length} items to category ${activeTab}`);
-      
-      // Prepare items for import, ensuring required fields
-      const preparedItems = items.map(item => ({
+      // Add category ID to each item
+      const itemsWithCategory = items.map(item => ({
         ...item,
-        // Ensure these fields are present and properly formatted
-        name: item.name,
-        description: item.description || "",
-        price: typeof item.price === 'number' ? item.price : parseFloat(String(item.price)),
-        type: item.type || activeTab,
-        subtype: item.subtype || "",
-        specs: Array.isArray(item.specs) ? item.specs : [],
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        // Set isHardware based on tags for backwards compatibility
-        isHardware: Array.isArray(item.tags) ? item.tags.includes("Hardware") : !!item.isHardware,
-        metadata: item.metadata || {}
+        category_id: categoryId
       }));
       
-      // Import each item
-      const importResults = await Promise.all(
-        preparedItems.map(async (itemData) => {
-          try {
-            const result = await PriceService.addItem(activeTab, itemData);
-            return { success: !!result, item: itemData };
-          } catch (error) {
-            console.error(`Error importing item ${itemData.name}:`, error);
-            return { success: false, item: itemData, error };
-          }
-        })
-      );
+      // Bulk import items
+      const importedItems = await PriceService.addItems(itemsWithCategory);
       
-      // Count successful imports
-      const successCount = importResults.filter(r => r.success).length;
-      
-      // Reload data for consistency
+      // Get updated data after import
       const updatedData = await PriceService.getAllData();
       setPriceData(updatedData);
       
-      // Close modal (handled by parent component)
-      
-      // Get the category name for the notification
-      const category = await PriceService.getCategory(activeTab);
-      
       // Register change for notification
-      if (successCount > 0) {
-        await registerAdminChange(
-          "bulk_import", 
-          `${successCount} itens importados na categoria ${category?.name || activeTab}`
-        );
-      }
+      await registerAdminChange("bulk_import", `Importação em massa de ${items.length} itens para a categoria ${categoryId}`);
       
-      // Prepare result message
-      if (successCount === items.length) {
-        return {
-          success: true,
-          message: `Todos os ${successCount} itens foram importados com sucesso.`,
-          importedCount: successCount
-        };
-      } else if (successCount > 0) {
-        return {
-          success: true,
-          message: `${successCount} de ${items.length} itens foram importados com sucesso.`,
-          importedCount: successCount
-        };
-      } else {
-        return {
-          success: false,
-          message: "Não foi possível importar nenhum item. Verifique o formato e tente novamente.",
-          importedCount: 0
-        };
-      }
+      toast.success("Itens importados", {
+        description: `${items.length} itens foram importados com sucesso.`
+      });
+      
+      return true;
     } catch (error) {
-      console.error("[useItemBulkImport] Error in bulk import:", error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        importedCount: 0
-      };
+      console.error("Erro ao importar itens em massa:", error);
+      toast.error("Erro ao importar itens em massa", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
+      });
+      return false;
     } finally {
-      // Reset state after a period
-      setTimeout(() => {
-        setIsImporting(false);
-      }, 500);
+      setIsImporting(false);
     }
   };
 
   return {
-    openBulkImport,
-    setOpenBulkImport,
     isImporting,
     handleBulkImport
   };

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SystemComponentsManager } from '@/components/system-components/SystemComponentsManager';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SystemComponents() {

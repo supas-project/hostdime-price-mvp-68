@@ -1,78 +1,63 @@
-
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 import { toast } from "@/utils/toast-utils";
 
-export function useItemDelete(
-  activeTab: string,
-  setPriceData: (data: any) => void
-) {
+export function useItemDelete(setPriceData: (data: any) => void) {
   const [isDeleting, setIsDeleting] = useState(false);
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
 
-  const handleDeleteItem = async (itemId: string) => {
-    // Check authentication
+  const handleDeleteItem = async (categoryId: string, itemId: string) => {
     if (!isAuthenticated) {
       toast.error("Você precisa estar autenticado", {
         description: "Faça login para excluir itens."
       });
       return false;
     }
-    
-    // Check admin permission
+
     if (!isAdminAccess) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem excluir itens."
       });
       return false;
     }
-    
-    if (!activeTab) return false;
-    
+
     try {
       setIsDeleting(true);
-      console.log(`[useItemDelete] Deletando item ${itemId} da categoria ${activeTab}`);
-      
+
       // Get item name before deleting for message
-      const category = await PriceService.getCategory(activeTab);
-      const itemToDelete = category?.items.find(item => item.id === itemId);
-      
-      if (!itemToDelete) {
-        console.warn(`[useItemDelete] Item ${itemId} não encontrado na categoria ${activeTab}`);
-        toast.error("Item não encontrado", {
-          description: "O item que você está tentando excluir não foi encontrado."
-        });
-        return false;
-      }
-      
-      // Chamar deleteItem com ID correto
-      const success = await PriceService.deleteItem(activeTab, itemId);
-      
+      const item = await PriceService.getItem(categoryId, itemId);
+      const itemName = item?.name || itemId;
+
+      // Execute item deletion
+      const success = await PriceService.deleteItem(categoryId, itemId);
+
       if (!success) {
-        console.error(`[useItemDelete] Falha ao excluir o item ${itemId}`);
-        toast.error("Erro ao excluir item", {
-          description: "Ocorreu um erro ao excluir o item. Tente novamente."
-        });
-        return false;
+        throw new Error("Falha ao excluir o item. Tente novamente.");
       }
-      
-      // Get fresh data
+
+      // Get updated data after deletion
       const updatedData = await PriceService.getAllData();
+
+      // Log para debug - verificar se o item foi removido dos dados
+      console.log(`[ItemDelete] Item ${itemId} removido da categoria ${categoryId}. Itens restantes:`,
+        updatedData[categoryId]?.items?.map((item: any) => item.id).join(", "));
+
+      // Importante: Atualizar o estado com os dados atualizados
       setPriceData(updatedData);
-      
+
       // Register change for notification
-      await registerAdminChange("delete_item", `Item "${itemToDelete?.name || itemId}" excluído da categoria ${category?.name || activeTab}`);
-      
+      await registerAdminChange("delete_item", `Item "${itemName}" excluído da categoria "${categoryId}"`);
+
       toast.success("Item excluído", {
         description: "O item foi excluído com sucesso."
       });
-      
+
       return true;
     } catch (error) {
-      console.error("[useItemDelete] Erro ao excluir item:", error);
+      console.error("[ItemDelete] Erro ao excluir item:", error);
       toast.error("Erro ao excluir item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });

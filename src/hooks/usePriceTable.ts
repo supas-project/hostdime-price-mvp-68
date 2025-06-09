@@ -4,7 +4,7 @@ import { useDataLoader } from './price-table/useDataLoader';
 import { useItemFilter } from './price-table/useItemFilter';
 import { useSyncData } from './price-table/useSyncData';
 import { usePriceTableActions } from './price-table/usePriceTableActions';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 import { useMemo } from 'react';
 
 export function usePriceTable() {
