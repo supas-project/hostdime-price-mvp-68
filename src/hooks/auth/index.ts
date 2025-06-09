@@ -1,5 +1,5 @@
 
-export { useAuth } from "./useAuth";
-export { useAuthState } from "./useAuthState";
-export { useAuthActions } from "./useAuthActions";
-export { useLoginRedirect } from "./useLoginRedirect";
+// Unified auth exports - single entry point
+export { useAuth } from "../contexts/auth/UnifiedAuthContext";
+export { UnifiedAuthProvider as AuthProvider } from "../contexts/auth/UnifiedAuthContext";
+export { useUnifiedAuth } from "./useUnifiedAuth";
