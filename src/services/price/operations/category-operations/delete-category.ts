@@ -20,21 +20,31 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
     }
     
     console.log(`[PriceService] Category ${categoryId} found, proceeding with deletion`);
+    console.log(`[PriceService] Current categories before deletion:`, Object.keys(allData).join(", "));
     
     // Create updated data without the category
     const updatedData = { ...allData };
     delete updatedData[categoryId];
     
     console.log(`[PriceService] Category ${categoryId} removed from data structure`);
-    console.log(`[PriceService] Remaining categories:`, Object.keys(updatedData).join(", "));
+    console.log(`[PriceService] Categories after deletion:`, Object.keys(updatedData).join(", "));
     
     // Save the updated data
     await saveData(updatedData);
     
     console.log(`[PriceService] Updated data saved successfully after deleting category ${categoryId}`);
     
-    // Notify listeners of the change
-    notifyListeners(updatedData);
+    // Verify deletion by fetching fresh data
+    const freshData = await getAllData();
+    if (freshData[categoryId]) {
+      console.error(`[PriceService] Category ${categoryId} still exists after deletion - operation failed`);
+      return false;
+    }
+    
+    console.log(`[PriceService] Deletion verified - category ${categoryId} successfully removed`);
+    
+    // Notify listeners of the change with fresh data
+    notifyListeners(freshData);
     
     return true;
   } catch (err: any) {

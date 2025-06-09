@@ -36,6 +36,19 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       
       if (success) {
         console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso`);
+        
+        // Force immediate tab change if we deleted the active category
+        if (categoryId === activeTab) {
+          const remainingCategories = Object.keys(priceData || {}).filter(id => id !== categoryId);
+          if (remainingCategories.length > 0) {
+            console.log(`[useCategoryManagement] Mudando aba ativa de ${categoryId} para ${remainingCategories[0]}`);
+            setActiveTab(remainingCategories[0]);
+          } else {
+            console.log(`[useCategoryManagement] Nenhuma categoria restante, limpando aba ativa`);
+            setActiveTab("");
+          }
+        }
+        
         return true;
       } else {
         console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId}`);

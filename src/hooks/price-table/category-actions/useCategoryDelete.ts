@@ -29,9 +29,9 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       setIsDeleting(true);
       console.log(`[CategoryDelete] Iniciando exclusão da categoria ${categoryId}`);
       
-      // Get current data before deletion
-      const allData = await PriceService.getAllData();
-      const category = allData[categoryId];
+      // Get current data before deletion for category name
+      const beforeData = await PriceService.getAllData();
+      const category = beforeData[categoryId];
       
       if (!category) {
         console.warn(`[CategoryDelete] Categoria ${categoryId} não encontrada`);
@@ -42,25 +42,31 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       }
       
       const categoryName = category?.name || categoryId;
-      
-      console.log(`[CategoryDelete] Deletando categoria ${categoryId} com ${category.items?.length || 0} itens`);
+      console.log(`[CategoryDelete] Deletando categoria "${categoryName}" (${categoryId}) com ${category.items?.length || 0} itens`);
       
       // Execute category deletion
       const success = await PriceService.deleteCategory(categoryId);
       
       if (!success) {
+        console.error(`[CategoryDelete] Falha na exclusão da categoria ${categoryId}`);
         throw new Error("Falha na operação de exclusão no servidor.");
       }
       
       console.log(`[CategoryDelete] Categoria ${categoryId} removida com sucesso pelo serviço`);
       
-      // Get fresh data after deletion
-      const updatedData = await PriceService.getAllData();
-      console.log(`[CategoryDelete] Dados atualizados após exclusão. Categorias restantes:`, 
-        Object.keys(updatedData).join(", "));
+      // Force refresh data from server to ensure UI sync
+      const freshData = await PriceService.getAllData();
+      console.log(`[CategoryDelete] Dados atualizados após exclusão:`, Object.keys(freshData).join(", "));
       
-      // Update local state immediately
-      setPriceData(updatedData);
+      // Verify category was actually deleted
+      if (freshData[categoryId]) {
+        console.error(`[CategoryDelete] ERRO: Categoria ${categoryId} ainda existe após exclusão!`);
+        throw new Error("A categoria não foi completamente removida.");
+      }
+      
+      // Update local state with fresh data
+      setPriceData(freshData);
+      console.log(`[CategoryDelete] Estado local atualizado - categoria ${categoryId} removida`);
       
       // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);

@@ -77,75 +77,100 @@ export function PriceTableContent({
   }
 
   const wrappedDeleteCategory = async (categoryId: string) => {
+    console.log(`[PriceTableContent] Iniciando exclusão da categoria ${categoryId}`);
+    
     const result = await handleDeleteCategory(categoryId, onDeleteCategory);
-    // Force a re-render by ensuring the active tab is valid
-    const remainingCategories = Object.keys(priceData).filter(id => id !== categoryId);
-    if (categoryId === activeTab && remainingCategories.length > 0) {
-      setActiveTab(remainingCategories[0]);
-    } else if (remainingCategories.length === 0) {
-      setActiveTab("");
+    
+    if (result) {
+      console.log(`[PriceTableContent] Categoria ${categoryId} excluída com sucesso`);
+      
+      // Force immediate UI update by checking current categories
+      const currentCategories = Object.keys(priceData);
+      console.log(`[PriceTableContent] Categorias atuais antes da atualização:`, currentCategories.join(", "));
+      
+      // If we deleted the active category, switch to another one or clear
+      if (categoryId === activeTab) {
+        const remainingCategories = currentCategories.filter(id => id !== categoryId);
+        if (remainingCategories.length > 0) {
+          console.log(`[PriceTableContent] Alterando aba ativa para ${remainingCategories[0]}`);
+          setActiveTab(remainingCategories[0]);
+        } else {
+          console.log(`[PriceTableContent] Nenhuma categoria restante, limpando aba ativa`);
+          setActiveTab("");
+        }
+      }
+    } else {
+      console.error(`[PriceTableContent] Falha ao excluir categoria ${categoryId}`);
     }
+    
     return result;
   };
 
   return (
     <DataProcessor priceData={priceData}>
-      {(processedPriceData) => (
-        <div className="space-y-4">
-          {/* Product Comparison Section */}
-          {currentComparisonMode && (
-            <div className="animate-fade-in">
-              <ProductComparison
-                items={comparisonItems}
-                onRemoveItem={removeFromComparison}
-                onClear={clearComparison}
-                onClose={currentToggleComparison}
+      {(processedPriceData) => {
+        // Filter out deleted categories from processed data
+        const availableCategories = Object.values(processedPriceData);
+        console.log(`[PriceTableContent] Categorias disponíveis para renderização:`, 
+          availableCategories.map(cat => cat.id).join(", "));
+        
+        return (
+          <div className="space-y-4">
+            {/* Product Comparison Section */}
+            {currentComparisonMode && (
+              <div className="animate-fade-in">
+                <ProductComparison
+                  items={comparisonItems}
+                  onRemoveItem={removeFromComparison}
+                  onClear={clearComparison}
+                  onClose={currentToggleComparison}
+                />
+              </div>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <CategoryTabs
+                categories={availableCategories}
+                isAdmin={isAdmin}
+                onDeleteCategory={wrappedDeleteCategory}
               />
-            </div>
-          )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <CategoryTabs
-              categories={Object.values(processedPriceData)}
-              isAdmin={isAdmin}
-              onDeleteCategory={wrappedDeleteCategory}
-            />
-
-            <div className="mt-4 space-y-3 animate-fade-in">
-              {Object.values(processedPriceData).map((category) => {
-                if (!Array.isArray(category.items)) {
-                  console.warn(`PriceTableContent: Category ${category.id} items is not an array:`, category.items);
-                  category.items = [];
-                }
-                
-                const filteredItems = filterItems(category.items, searchTerm, sortOrder);
-                const isCollapsed = collapsedCategories[category.id] || false;
-                
-                return (
-                  <CategoryTabContent
-                    key={category.id}
-                    category={category}
-                    filteredItems={filteredItems}
-                    isCollapsed={isCollapsed}
-                    onToggleCollapse={() => toggleCategoryCollapse(category.id)}
-                    displayMode={displayMode}
-                    sortOrder={sortOrder}
-                    contractDuration={contractDuration}
-                    isComparisonMode={currentComparisonMode}
-                    onAddToComparison={addToComparison}
-                    isItemInComparison={isItemInComparison}
-                    canAddMoreToComparison={canAddMore}
-                    searchTerm={searchTerm}
-                    isAdmin={isAdmin}
-                    onDeleteItem={onDeleteItem}
-                    onEditItem={onEditItem}
-                  />
-                );
-              })}
-            </div>
-          </Tabs>
-        </div>
-      )}
+              <div className="mt-4 space-y-3 animate-fade-in">
+                {availableCategories.map((category) => {
+                  if (!Array.isArray(category.items)) {
+                    console.warn(`PriceTableContent: Category ${category.id} items is not an array:`, category.items);
+                    category.items = [];
+                  }
+                  
+                  const filteredItems = filterItems(category.items, searchTerm, sortOrder);
+                  const isCollapsed = collapsedCategories[category.id] || false;
+                  
+                  return (
+                    <CategoryTabContent
+                      key={category.id}
+                      category={category}
+                      filteredItems={filteredItems}
+                      isCollapsed={isCollapsed}
+                      onToggleCollapse={() => toggleCategoryCollapse(category.id)}
+                      displayMode={displayMode}
+                      sortOrder={sortOrder}
+                      contractDuration={contractDuration}
+                      isComparisonMode={currentComparisonMode}
+                      onAddToComparison={addToComparison}
+                      isItemInComparison={isItemInComparison}
+                      canAddMoreToComparison={canAddMore}
+                      searchTerm={searchTerm}
+                      isAdmin={isAdmin}
+                      onDeleteItem={onDeleteItem}
+                      onEditItem={onEditItem}
+                    />
+                  );
+                })}
+              </div>
+            </Tabs>
+          </div>
+        );
+      }}
     </DataProcessor>
   );
 }
