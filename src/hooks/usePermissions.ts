@@ -1,5 +1,5 @@
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/auth';
 
 export interface Permissions {
   canViewQuotes: boolean;
@@ -13,14 +13,17 @@ export interface Permissions {
   canDownloadPDF: boolean;
 }
 
+/**
+ * Centralized permissions hook using unified auth
+ */
 export function usePermissions(): Permissions {
   const { user, isAdmin } = useAuth();
   
-  // Verificação explícita para administrador
+  // Consistent admin check using centralized logic
   const isAdminUser = isAdmin || user?.email === "admin@hostdime.com.br";
   
   return {
-    // Permissões para usuários autenticados
+    // Permissions for authenticated users
     canViewQuotes: !!user,
     canCreateQuotes: !!user,
     canEditQuotes: !!user,
@@ -28,7 +31,7 @@ export function usePermissions(): Permissions {
     canSendEmails: !!user,
     canDownloadPDF: !!user,
     
-    // Permissões apenas para administradores
+    // Admin-only permissions
     canManagePrices: isAdminUser,
     canManageUsers: isAdminUser,
     canViewAnalytics: isAdminUser,

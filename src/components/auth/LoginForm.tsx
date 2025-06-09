@@ -17,7 +17,7 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      console.log("🔐 Attempting login with:", email);
+      console.log("🔐 LoginForm: Attempting login with:", email);
       const success = await login(email, password);
       
       if (success) {
@@ -31,7 +31,7 @@ export function LoginForm() {
         });
       }
     } catch (error) {
-      console.error("❌ Login error:", error);
+      console.error("❌ LoginForm: Login error:", error);
       toast.error("Falha no login", {
         description: "Verifique suas credenciais e tente novamente."
       });

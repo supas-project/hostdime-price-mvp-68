@@ -1,11 +1,13 @@
 
 import { useAuthState } from "./useAuthState";
 import { useAuthActions } from "./useAuthActions";
+import { AuthContextType } from "@/types/auth-interfaces";
 
 /**
- * Hook principal de autenticação que combina estado e ações
+ * Unified auth hook - combines state and actions
+ * Single entry point for all auth-related functionality
  */
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const authState = useAuthState();
   const authActions = useAuthActions();
 

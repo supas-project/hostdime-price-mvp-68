@@ -1,21 +1,14 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { AuthContextType } from "@/types/auth-interfaces";
 import { useAuth } from "@/hooks/auth/useAuth";
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  user: User | null;
-  session: Session | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  loading: boolean;
-  isSupabaseReady: boolean;
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Simplified AuthProvider using the unified useAuth hook
+ * Single source of truth for auth context
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const authState = useAuth();
   

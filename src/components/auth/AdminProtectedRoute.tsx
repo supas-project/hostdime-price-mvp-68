@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/auth";
 import { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -8,6 +8,9 @@ interface AdminProtectedRouteProps {
   children: ReactNode;
 }
 
+/**
+ * Unified admin protected route using centralized auth
+ */
 export default function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
   const { isAuthenticated, isAdmin, user, loading } = useAuth();
   const location = useLocation();
@@ -31,20 +34,17 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
   }
 
   if (!isAuthenticated) {
-    // Redirect to login if not authenticated
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Verificação explícita se o email do usuário é admin@hostdime.com.br
+  // Consistent admin check using centralized logic
   const isAdminEmail = user?.email === "admin@hostdime.com.br";
   
   if (!isAdmin && !isAdminEmail) {
-    // Mostrar toast de erro e redirecionar
     toast.error("Acesso negado", {
       description: "Você não tem permissão para acessar esta página."
     });
     
-    // Redirect to home if authenticated but not admin
     return <Navigate to="/configure" replace />;
   }
 

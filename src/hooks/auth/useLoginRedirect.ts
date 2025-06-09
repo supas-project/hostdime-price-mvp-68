@@ -11,7 +11,8 @@ interface UseLoginRedirectProps {
 }
 
 /**
- * Hook para gerenciar redirecionamento após login
+ * Centralized login redirect logic
+ * Handles post-authentication navigation
  */
 export function useLoginRedirect({ 
   isAuthenticated, 
@@ -23,7 +24,7 @@ export function useLoginRedirect({
   const location = useLocation();
 
   useEffect(() => {
-    console.log("Login redirect check - Auth state:", { 
+    console.log("🔄 LoginRedirect: Checking redirect conditions", { 
       isAuthenticated, 
       loading, 
       isSupabaseReady,
@@ -31,24 +32,22 @@ export function useLoginRedirect({
     });
     
     if (isSupabaseReady && isAuthenticated && !loading && user) {
-      console.log("Usuário autenticado, redirecionando...");
+      console.log("✅ LoginRedirect: User authenticated, redirecting...");
       
-      // If admin, redirect to price table
-      const isAdminEmail = user.email === "admin@hostdime.com.br";
-      const redirectTo = isAdminEmail ? "/price-table" : "/configure";
+      // Determine redirect destination based on user role
+      const isAdminUser = user.email === "admin@hostdime.com.br";
+      const defaultRedirect = isAdminUser ? "/price-table" : "/configure";
       
-      // Use the from if it exists, otherwise use the default redirectTo
+      // Use saved location or default
       const from = location.state && (location.state as any).from?.pathname 
         ? (location.state as any).from?.pathname 
-        : redirectTo;
+        : defaultRedirect;
       
-      console.log("Redirecionando para:", from);
+      console.log("🔄 LoginRedirect: Redirecting to:", from);
       
-      // Use timeout to ensure state updates are completed
+      // Timeout ensures state updates are completed
       setTimeout(() => {
-        navigate(from, {
-          replace: true
-        });
+        navigate(from, { replace: true });
       }, 100);
     }
   }, [isAuthenticated, loading, user, navigate, location.state, isSupabaseReady]);

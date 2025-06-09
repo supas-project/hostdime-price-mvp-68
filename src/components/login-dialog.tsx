@@ -17,7 +17,7 @@ export function LoginDialog() {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Verificação explícita para acesso de administrador
+  // Consistent admin check using centralized logic
   const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
   
   if (loading) {
@@ -57,7 +57,7 @@ export function LoginDialog() {
                 await logout();
                 navigate("/login");
               } catch (error) {
-                console.error("Erro ao fazer logout via botão:", error);
+                console.error("❌ LoginDialog: Logout error:", error);
               } finally {
                 setIsLoggingOut(false);
               }

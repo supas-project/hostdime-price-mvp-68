@@ -1,12 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { authService } from "@/services/auth-service-refactored";
+import { authRepository } from "@/services/auth/AuthRepository";
+import { AuthState } from "@/types/auth-interfaces";
 
 /**
- * Hook para gerenciar o estado de autenticação
+ * Centralized auth state management
+ * Single source of truth for authentication state
  */
-export function useAuthState() {
+export function useAuthState(): AuthState {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -15,14 +17,14 @@ export function useAuthState() {
   const [isSupabaseReady, setIsSupabaseReady] = useState(false);
 
   useEffect(() => {
-    console.log("🔄 Initializing auth state hook");
+    console.log("🔄 AuthState: Initializing");
     
     let mounted = true;
     
     // Set up auth state listener first
-    const { data: { subscription } } = authService.onAuthStateChange(
+    const { data: { subscription } } = authRepository.onAuthStateChange(
       (event, currentSession) => {
-        console.log("🔄 Auth state changed:", event, currentSession?.user?.email);
+        console.log("🔄 AuthState: Auth changed:", event, currentSession?.user?.email);
         
         if (!mounted) return;
         
@@ -30,9 +32,9 @@ export function useAuthState() {
           setSession(currentSession);
           setUser(currentSession.user);
           setIsAuthenticated(true);
-          setIsAdmin(authService.isAdmin(currentSession.user));
+          setIsAdmin(authRepository.isAdmin(currentSession.user));
         } else if (event === 'SIGNED_OUT') {
-          console.log("🚪 User signed out");
+          console.log("🚪 AuthState: User signed out");
           setIsAuthenticated(false);
           setIsAdmin(false);
           setUser(null);
@@ -44,23 +46,23 @@ export function useAuthState() {
     // Then check for existing session
     async function initializeAuth() {
       try {
-        console.log("🔍 Checking existing session");
-        const { user: currentUser, session: currentSession } = await authService.getCurrentSession();
+        console.log("🔍 AuthState: Checking existing session");
+        const { user: currentUser, session: currentSession } = await authRepository.getCurrentSession();
         
         if (!mounted) return;
         
         if (currentSession && currentUser) {
-          console.log("✅ Session found:", currentUser.email);
+          console.log("✅ AuthState: Session found:", currentUser.email);
           setSession(currentSession);
           setUser(currentUser);
           setIsAuthenticated(true);
-          setIsAdmin(authService.isAdmin(currentUser));
+          setIsAdmin(authRepository.isAdmin(currentUser));
         } else {
-          console.log("ℹ️ No active session found");
+          console.log("ℹ️ AuthState: No active session found");
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error("❌ Auth initialization error:", error);
+        console.error("❌ AuthState: Initialization error:", error);
       } finally {
         if (mounted) {
           setLoading(false);
