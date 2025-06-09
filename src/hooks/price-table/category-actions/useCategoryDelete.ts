@@ -43,9 +43,7 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       
       const categoryName = category?.name || categoryId;
       
-      // Allow deletion of any category for admin users
-      // No restrictions on category items for admin access
-      console.log(`[CategoryDelete] Admin deletando categoria ${categoryId} com ${category.items?.length || 0} itens`);
+      console.log(`[CategoryDelete] Deletando categoria ${categoryId} com ${category.items?.length || 0} itens`);
       
       // Execute category deletion
       const success = await PriceService.deleteCategory(categoryId);
@@ -54,16 +52,13 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
         throw new Error("Falha na operação de exclusão no servidor.");
       }
       
-      // Get updated data after deletion to ensure consistency
+      console.log(`[CategoryDelete] Categoria ${categoryId} removida com sucesso pelo serviço`);
+      
+      // Get updated data after deletion - wait a bit for database consistency
+      await new Promise(resolve => setTimeout(resolve, 100));
       const updatedData = await PriceService.getAllData();
       
-      // Verify deletion was successful
-      if (updatedData[categoryId]) {
-        console.error(`[CategoryDelete] Categoria ${categoryId} ainda existe após exclusão`);
-        throw new Error("A categoria não foi completamente removida.");
-      }
-      
-      console.log(`[CategoryDelete] Categoria ${categoryId} removida com sucesso. Categorias restantes:`, 
+      console.log(`[CategoryDelete] Dados atualizados após exclusão. Categorias restantes:`, 
         Object.keys(updatedData).join(", "));
       
       // Update state with the fresh data from server

@@ -16,6 +16,8 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
         const newActiveTab = categoryIds[0];
         console.log(`[useCategoryManagement] Categoria ativa ${activeTab} não existe mais, alterando para ${newActiveTab}`);
         setActiveTab(newActiveTab);
+      } else if (categoryIds.length === 0) {
+        console.log(`[useCategoryManagement] Nenhuma categoria disponível`);
       }
     }
   }, [priceData, activeTab, setActiveTab]);
@@ -29,20 +31,8 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       if (success) {
         console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso`);
         
-        // Update available categories immediately
-        const updatedCategories = availableCategories.filter(id => id !== categoryId);
-        setAvailableCategories(updatedCategories);
-        
-        // If deleted category was the active one, switch to another category
-        if (categoryId === activeTab) {
-          if (updatedCategories.length > 0) {
-            const newActiveTab = updatedCategories[0];
-            console.log(`[useCategoryManagement] Alterando categoria ativa para ${newActiveTab}`);
-            setActiveTab(newActiveTab);
-          } else {
-            console.log(`[useCategoryManagement] Nenhuma categoria restante, mantendo tab ativa`);
-          }
-        }
+        // The priceData will be updated by the parent component after successful deletion
+        // No need to manually update availableCategories here as useEffect will handle it
         
         return true;
       } else {

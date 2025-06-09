@@ -19,21 +19,20 @@ export async function deleteCategory(categoryId: string): Promise<boolean> {
       return false;
     }
     
-    // Remove the category
-    const { [categoryId]: removed, ...updatedData } = allData;
-    console.log(`[PriceService] Category ${categoryId} removed, saving updated data`);
+    console.log(`[PriceService] Category ${categoryId} found, proceeding with deletion`);
     
-    // Verificação adicional para garantir que a categoria foi removida
-    if (updatedData[categoryId]) {
-      console.error(`[PriceService] Failed to remove category ${categoryId} from data`);
-      return false;
-    }
+    // Remove the category using destructuring
+    const { [categoryId]: removedCategory, ...updatedData } = allData;
+    
+    console.log(`[PriceService] Category ${categoryId} removed from data structure`);
+    console.log(`[PriceService] Remaining categories:`, Object.keys(updatedData).join(", "));
     
     // Save the updated data
     await saveData(updatedData);
     
+    console.log(`[PriceService] Updated data saved successfully after deleting category ${categoryId}`);
+    
     // Notify listeners of the change
-    console.log(`[PriceService] Notifying listeners about category ${categoryId} deletion`);
     notifyListeners(updatedData);
     
     return true;
