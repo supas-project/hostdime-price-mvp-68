@@ -95,7 +95,7 @@ export class UnifiedDataService {
         .single();
 
       if (data?.value && typeof data.value === 'object') {
-        return data.value as ConsolidatedDataStatus;
+        return data.value as unknown as ConsolidatedDataStatus;
       }
 
       return {
