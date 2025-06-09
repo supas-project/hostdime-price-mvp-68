@@ -12,7 +12,7 @@ export function useDataSynchronization() {
     
     setIsSyncing(true);
     try {
-      console.log('[useDataSynchronization] Starting data synchronization...');
+      console.log('[useDataSynchronization] Starting unified data synchronization...');
       
       // Check consistency first
       const consistency = await DataSynchronizationService.checkDataConsistency();
@@ -29,13 +29,13 @@ export function useDataSynchronization() {
         return true;
       }
       
-      // Perform synchronization
-      const success = await DataSynchronizationService.synchronizeAllCategories();
+      // Perform synchronization using the correct method
+      const success = await DataSynchronizationService.synchronizeAllData();
       
       if (success) {
         setLastSyncTime(new Date());
         toast.success('Sincronização concluída', {
-          description: 'Dados sincronizados com sucesso'
+          description: 'Dados unificados sincronizados com sucesso'
         });
       }
       
@@ -43,7 +43,7 @@ export function useDataSynchronization() {
     } catch (error) {
       console.error('[useDataSynchronization] Synchronization error:', error);
       toast.error('Erro na sincronização', {
-        description: 'Falha ao sincronizar dados'
+        description: 'Falha ao sincronizar dados unificados'
       });
       return false;
     } finally {
