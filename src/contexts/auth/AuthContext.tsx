@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
 import { AuthContextType } from "@/types/auth-interfaces";
-import { useAuth } from "@/hooks/auth/useAuth";
+import { useUnifiedAuth } from "@/hooks/auth/useUnifiedAuth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -10,7 +10,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * Single source of truth for auth context
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const authState = useAuth();
+  const authState = useUnifiedAuth();
   
   return (
     <AuthContext.Provider value={authState}>
