@@ -1,14 +1,15 @@
 
+import { useState } from "react";
 import { useAuth } from "@/hooks/auth";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
-import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
-import { InitService } from "@/services/init-service";
-import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { PriceTableInitializer } from "./container/PriceTableInitializer";
+import { PriceDataProcessor } from "./container/PriceDataProcessor";
+import { UpdatesHandler } from "./container/UpdatesHandler";
+import { DataValidator } from "./container/DataValidator";
 
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -52,183 +53,52 @@ export default function PriceTableContainer() {
   const handleRefreshData = async () => {
     await handleSyncData();
     await loadPriceData();
-    
-    // Also call the original refresh function
     await originalHandleRefreshData();
   };
 
   // Combined loading indicator
   const isLoading = dataLoading || fileLoading || isRefreshing || !isInitialized;
 
-  // Effect to force update when hasUpdates is true
-  useEffect(() => {
-    if (hasUpdates) {
-      console.log("PriceTableContainer: Updates detected, refreshing data");
-      handleRefreshData();
-    }
-  }, [hasUpdates]);
-
-  // Ensure data is loaded when component mounts
-  useEffect(() => {
-    async function initialize() {
-      if (isAuthenticated) {
-        try {
-          console.log("PriceTableContainer: Authenticated user, attempting to initialize data");
-          
-          // Initialize data if needed
-          await InitService.initializeData();
-          
-          // Then load price data
-          await loadPriceData();
-          
-          console.log("PriceTableContainer: Data loaded successfully");
-          
-          // Log all categories for debug
-          if (priceData) {
-            console.log("PriceTableContainer: Available categories:", Object.keys(priceData).join(", "));
-            
-            // Verificar todas as categorias para garantir que estão estruturadas corretamente
-            Object.keys(priceData).forEach(cat => {
-              const category = priceData[cat];
-              if (!category) {
-                console.error(`PriceTableContainer: Category ${cat} is undefined`);
-                return;
-              }
-              
-              if (!Array.isArray(category.items)) {
-                console.error(`PriceTableContainer: Category ${cat} has invalid items property:`, category.items);
-                // Corrigir imediatamente
-                priceData[cat].items = priceData[cat].items || [];
-              } else {
-                console.log(`PriceTableContainer: Category ${cat} has ${category.items.length} items`);
-              }
-            });
-            
-            // Verificar storage e external_storage especificamente
-            if (priceData.storage) {
-              if (Array.isArray(priceData.storage.items)) {
-                console.log("PriceTableContainer: Storage category items:", priceData.storage.items.length);
-                if (priceData.storage.items.length > 0) {
-                  console.log("Storage items:", priceData.storage.items.map(item => `${item.id}: ${item.name}`).join(', '));
-                }
-              } else {
-                console.error("PriceTableContainer: Storage category items is not an array:", priceData.storage.items);
-                priceData.storage.items = [];
-              }
-            } else {
-              console.log("PriceTableContainer: Storage category not found");
-            }
-            
-            if (priceData.external_storage) {
-              if (Array.isArray(priceData.external_storage.items)) {
-                console.log("PriceTableContainer: External storage category items:", priceData.external_storage.items.length);
-                if (priceData.external_storage.items.length > 0) {
-                  console.log("External Storage items:", priceData.external_storage.items.map(item => `${item.id}: ${item.name}`).join(', '));
-                }
-              } else {
-                console.error("PriceTableContainer: External storage category items is not an array:", priceData.external_storage.items);
-                priceData.external_storage.items = [];
-              }
-            } else {
-              console.log("PriceTableContainer: External storage category not found");
-            }
-          }
-          
-          setIsInitialized(true);
-        } catch (error) {
-          console.error("PriceTableContainer: Error initializing price table:", error);
-          if (error instanceof Error && !error.message.includes("Authentication")) {
-            toast.error("Erro ao inicializar tabela", {
-              description: "Por favor, tente novamente ou contate o suporte.",
-              icon: <AlertCircle className="h-5 w-5" />
-            });
-          }
-          setIsInitialized(true); // Still mark as initialized to avoid loading forever
-        }
-        
-        // Set up periodic conflict checks
-        const intervalId = setInterval(() => {
-          checkForConflicts();
-        }, 30000); // Check every 30 seconds
-        
-        return () => clearInterval(intervalId);
-      } else {
-        console.log("PriceTableContainer: User not authenticated, skipping initialization");
-        setIsInitialized(true);
-      }
-    }
-    
-    initialize();
-  }, [isAuthenticated]);
-
-  // Effect para garantir que o priceData seja processado após ser carregado
-  useEffect(() => {
-    if (priceData) {
-      console.log("PriceTableContainer: Processing loaded price data");
-      
-      // Verificar todas as categorias para garantir que os items são arrays
-      const fixedData = {...priceData};
-      let needsUpdate = false;
-      
-      Object.keys(fixedData).forEach(key => {
-        if (!fixedData[key]) {
-          console.warn(`PriceTableContainer: Category ${key} is undefined, removing it`);
-          delete fixedData[key];
-          needsUpdate = true;
-          return;
-        }
-        
-        if (!fixedData[key].items) {
-          console.warn(`PriceTableContainer: Category ${key} has no items property, adding empty array`);
-          fixedData[key].items = [];
-          needsUpdate = true;
-        } else if (!Array.isArray(fixedData[key].items)) {
-          console.warn(`PriceTableContainer: Items is not an array for category ${key}, fixing...`);
-          fixedData[key].items = Array.isArray(fixedData[key].items) ? fixedData[key].items : [];
-          needsUpdate = true;
-        }
-        
-        // Verificar se há itens undefined na array de items
-        if (Array.isArray(fixedData[key].items)) {
-          const filteredItems = fixedData[key].items.filter(item => item !== undefined && item !== null);
-          if (filteredItems.length !== fixedData[key].items.length) {
-            console.warn(`PriceTableContainer: Found undefined/null items in category ${key}, removing them`);
-            fixedData[key].items = filteredItems;
-            needsUpdate = true;
-          }
-        }
-      });
-      
-      // Forçar atualização do estado apenas se necessário
-      if (needsUpdate) {
-        console.log("PriceTableContainer: Updating price data with fixed arrays");
-        setPriceData({...fixedData});
-      }
-      
-      // Verificar se temos dados em storage e external_storage
-      if (fixedData.storage && fixedData.storage.items.length === 0 && 
-          fixedData.external_storage && fixedData.external_storage.items.length === 0) {
-        console.warn("PriceTableContainer: Both storage categories are empty, consider refreshing data");
-      }
-    }
-  }, [priceData, setPriceData]);
-
-  // Filter categories to remove contract category (mas não storage ou external_storage)
+  // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};
   if (filteredPriceData?.contract) {
     delete filteredPriceData.contract;
   }
 
   return (
-    <PriceTablePage 
-      priceTableState={priceTableState}
-      filteredPriceData={filteredPriceData}
-      fileInputRef={fileInputRef}
-      handleFileUpload={handleFileUpload}
-      handleRefreshData={handleRefreshData}
-      hasConflicts={hasConflicts}
-      isLoading={isLoading}
-      isRefreshing={isRefreshing}
-    />
+    <>
+      {/* Logic-only components for data management */}
+      <PriceTableInitializer
+        isAuthenticated={isAuthenticated}
+        loadPriceData={loadPriceData}
+        priceData={priceData}
+        setIsInitialized={setIsInitialized}
+        checkForConflicts={checkForConflicts}
+      />
+      
+      <PriceDataProcessor
+        priceData={priceData}
+        setPriceData={setPriceData}
+      />
+      
+      <UpdatesHandler
+        hasUpdates={hasUpdates}
+        handleRefreshData={handleRefreshData}
+      />
+      
+      <DataValidator priceData={priceData} />
+
+      {/* Main UI component */}
+      <PriceTablePage 
+        priceTableState={priceTableState}
+        filteredPriceData={filteredPriceData}
+        fileInputRef={fileInputRef}
+        handleFileUpload={handleFileUpload}
+        handleRefreshData={handleRefreshData}
+        hasConflicts={hasConflicts}
+        isLoading={isLoading}
+        isRefreshing={isRefreshing}
+      />
+    </>
   );
 }
