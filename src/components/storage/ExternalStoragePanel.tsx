@@ -1,195 +1,147 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StorageTier } from "@/types/storage";
-import { formatCurrency } from "@/lib/utils";
-import { CapacitySlider } from "./external/CapacitySlider";
-import { StorageTypeSelector } from "./external/StorageTypeSelector";
-import { StorageSpecs } from "./external/StorageSpecs";
-import { HardDrive } from "lucide-react";
-import { HelpTooltip } from "@/components/help-tooltip";
-import { cn } from "@/lib/utils";
+import React, { useState, useCallback, useMemo } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus } from 'lucide-react';
 
-interface ExternalStoragePanelProps {
-  onSelect?: (option: StorageTier) => void;
-  selectedTier?: string;
-  onSelectStorage?: (type: string, capacity: number, price: number) => void;
-  storageTypes?: {
-    [key: string]: { 
-      name: string;
-      pricePerGB: number;
-      iops: string;
-      throughput: string;
-      description: string;
-      throughputAdd?: number;
-      maxThroughput?: string;
-    }
-  };
+interface ExternalStorageType {
+  name: string;
+  pricePerGB: number;
+  iops: string;
+  throughput: string;
+  description: string;
 }
 
-export function ExternalStoragePanel({ 
-  onSelect, 
-  selectedTier,
-  onSelectStorage,
-  storageTypes = {}
-}: ExternalStoragePanelProps) {
-  // Default storage types if none provided through props
-  const defaultStorageTypes = {
-    standard: { 
-      name: "Standard", 
-      pricePerGB: 0.80, 
-      iops: "Até 3.000 IOPS", 
-      throughput: "125 MB/s",
-      description: "Econômico para armazenamento geral e backups"
-    },
-    performance: { 
-      name: "Performance", 
-      pricePerGB: 0.95, 
-      iops: "Até 6.000 IOPS", 
-      throughput: "250 MB/s",
-      description: "Recomendado para sites e aplicações de média demanda"
-    },
-    premium: { 
-      name: "Premium", 
-      pricePerGB: 1.20, 
-      iops: "Até 16.000 IOPS", 
-      throughput: "500 MB/s",
-      description: "Para aplicações intensivas que precisam de alta velocidade"
-    }
-  };
-  
-  // Use provided storage types or defaults
-  const availableStorageTypes = Object.keys(storageTypes).length > 0 ? storageTypes : defaultStorageTypes;
-  
-  const [selectedType, setSelectedType] = useState<string>(Object.keys(availableStorageTypes)[0]);
+interface ExternalStoragePanelProps {
+  onSelectStorage: (type: string, capacity: number, price: number) => void;
+  storageTypes: { [key: string]: ExternalStorageType };
+}
+
+export function ExternalStoragePanel({ onSelectStorage, storageTypes }: ExternalStoragePanelProps) {
+  const [selectedType, setSelectedType] = useState<string>('');
   const [capacity, setCapacity] = useState<number>(100);
-  const [selectedTypeDetails, setSelectedTypeDetails] = useState(availableStorageTypes[selectedType]);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
-
-  // Update selected type details when type changes
-  useEffect(() => {
-    if (availableStorageTypes[selectedType]) {
-      setSelectedTypeDetails(availableStorageTypes[selectedType]);
-      
-      // Verificar e garantir que o preço por GB é um valor numérico válido
-      const pricePerGB = typeof availableStorageTypes[selectedType].pricePerGB === 'number' && 
-                        !isNaN(availableStorageTypes[selectedType].pricePerGB) 
-                        ? availableStorageTypes[selectedType].pricePerGB 
-                        : 0;
-      
-      // Calcular preço total (preço por GB × capacidade)
-      const newPrice = pricePerGB * capacity;
-      setTotalPrice(newPrice);
-      
-      console.log(`[ExternalStoragePanel] Type changed: ${selectedType}, price per GB: ${pricePerGB}, capacity: ${capacity}, total: ${newPrice}`);
-    }
-  }, [selectedType, availableStorageTypes]);
-
-  // Atualiza o preço quando a capacidade muda
-  useEffect(() => {
-    // Verificar e garantir que o preço por GB é um valor numérico válido
-    const pricePerGB = typeof selectedTypeDetails?.pricePerGB === 'number' && 
-                      !isNaN(selectedTypeDetails?.pricePerGB) 
-                      ? selectedTypeDetails?.pricePerGB 
-                      : 0;
+  
+  // Memoize storage types list to prevent unnecessary re-renders
+  const storageTypesList = useMemo(() => {
+    return Object.entries(storageTypes);
+  }, [storageTypes]);
+  
+  // Memoize the selected storage type to prevent recalculation
+  const selectedStorageType = useMemo(() => {
+    return selectedType && storageTypes[selectedType] ? storageTypes[selectedType] : null;
+  }, [selectedType, storageTypes]);
+  
+  // Memoize total price calculation
+  const totalPrice = useMemo(() => {
+    if (!selectedStorageType) return 0;
+    return capacity * selectedStorageType.pricePerGB;
+  }, [capacity, selectedStorageType]);
+  
+  const handleTypeChange = useCallback((value: string) => {
+    console.log(`[ExternalStoragePanel] Type changed: ${value}`);
+    setSelectedType(value);
+  }, []);
+  
+  const handleCapacityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCapacity = parseInt(e.target.value) || 100;
+    console.log(`[ExternalStoragePanel] Capacity changed: ${newCapacity}`);
+    setCapacity(newCapacity);
+  }, []);
+  
+  const handleAddStorage = useCallback(() => {
+    if (!selectedStorageType || !selectedType) return;
     
-    // Calcular preço total de forma explícita
-    const newPrice = pricePerGB * capacity;
-    setTotalPrice(newPrice);
-    
-    console.log(`[ExternalStoragePanel] Capacity changed: ${capacity}, price per GB: ${pricePerGB}, total: ${newPrice}`);
-  }, [capacity, selectedTypeDetails]);
-
-  // Calcular o preço total multiplicando o preço por GB pela capacidade selecionada
-  const calculatePrice = (pricePerGB: number = 0, storageCapacity: number = 0): number => {
-    if (typeof pricePerGB !== 'number' || isNaN(pricePerGB)) {
-      console.error('[ExternalStoragePanel] Preço por GB inválido:', pricePerGB);
-      return 0;
-    }
-    
-    const calculatedPrice = pricePerGB * storageCapacity;
-    console.log(`[ExternalStoragePanel] PRICE CALCULATION: ${pricePerGB} × ${storageCapacity} = ${calculatedPrice}`);
-    return calculatedPrice;
-  };
-
-  // Handle the add storage button click
-  const handleAddStorage = () => {
-    // Garantir que estamos usando o preço por GB correto
-    const pricePerGB = typeof selectedTypeDetails?.pricePerGB === 'number' && !isNaN(selectedTypeDetails?.pricePerGB) 
-                      ? selectedTypeDetails.pricePerGB 
-                      : 0;
-    
-    // Recalcular o preço total para garantir precisão
-    const finalPrice = pricePerGB * capacity;
-    
-    console.log(`[ExternalStoragePanel] Adding storage: ${selectedTypeDetails.name}, ${capacity}GB, Price per GB: ${pricePerGB}, Total: ${finalPrice}`);
-    
-    if (onSelectStorage) {
-      // Enviar o preço total calculado (preço por GB × capacidade)
-      onSelectStorage(selectedTypeDetails.name, capacity, finalPrice);
-    }
-    
-    if (onSelect) {
-      const tier: StorageTier = {
-        name: `${selectedTypeDetails.name} ${capacity}GB`,
-        price: finalPrice,
-        iops: selectedTypeDetails.iops,
-        throughput: selectedTypeDetails.throughput,
-        description: selectedTypeDetails.description
-      };
-      onSelect(tier);
-    }
-  };
-
+    console.log(`[ExternalStoragePanel] Adding storage: ${selectedType}, ${capacity}GB, R$ ${totalPrice}`);
+    onSelectStorage(selectedType, capacity, totalPrice);
+  }, [selectedStorageType, selectedType, capacity, totalPrice, onSelectStorage]);
+  
+  if (storageTypesList.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Storage Externo</CardTitle>
+          <CardDescription>
+            Nenhum tipo de storage externo disponível no momento.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+  
   return (
-    <Card className={cn(
-      "w-full border-[#2a2a2a]",
-      "shadow-md hover:shadow-lg transition-shadow duration-300"
-    )}>
-      <CardHeader className="pb-2 pt-3 px-3 sm:pb-2 sm:pt-4 sm:px-4">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <HardDrive className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          Storage Externo
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 sm:space-y-5 pt-2 px-3 sm:pt-2 sm:px-4">
-        {/* Storage Type Selector */}
-        <StorageTypeSelector
-          storageTypes={availableStorageTypes}
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-        />
-        
-        {/* Storage Specs */}
-        <StorageSpecs 
-          iops={selectedTypeDetails.iops}
-          throughput={selectedTypeDetails.throughput}
-          price={totalPrice}
-          description={selectedTypeDetails.description}
-          storageType={selectedTypeDetails.name}
-          pricePerGB={selectedTypeDetails.pricePerGB}
-        />
-        
-        {/* Capacity Slider */}
-        <CapacitySlider capacity={capacity} onCapacityChange={setCapacity} />
-        
-        {/* Price and Add Button */}
-        <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-xs sm:text-sm text-muted-foreground">Preço mensal</p>
-            <p className="text-lg sm:text-xl font-semibold text-primary">{formatCurrency(totalPrice)}</p>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Storage Externo</CardTitle>
+          <CardDescription>
+            Configure storage adicional para o seu servidor
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="storage-type">Tipo de Storage</Label>
+            <Select onValueChange={handleTypeChange} value={selectedType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo de storage" />
+              </SelectTrigger>
+              <SelectContent>
+                {storageTypesList.map(([key, storageType]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center justify-between w-full">
+                      <span>{storageType.name}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        R$ {storageType.pricePerGB.toFixed(2)}/GB
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Button 
-            onClick={handleAddStorage}
-            className="gap-2 w-full sm:w-auto"
-            size="sm"
-          >
-            <HardDrive className="h-4 w-4" />
-            <span className="whitespace-nowrap">Adicionar ao Servidor</span>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          
+          {selectedStorageType && (
+            <>
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="text-sm space-y-1">
+                  <p><strong>IOPS:</strong> {selectedStorageType.iops}</p>
+                  <p><strong>Throughput:</strong> {selectedStorageType.throughput}</p>
+                  <p><strong>Descrição:</strong> {selectedStorageType.description}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="capacity">Capacidade (GB)</Label>
+                <Input
+                  id="capacity"
+                  type="number"
+                  min="50"
+                  max="10000"
+                  step="50"
+                  value={capacity}
+                  onChange={handleCapacityChange}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+                <div>
+                  <p className="font-medium">Total: R$ {totalPrice.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {capacity}GB × R$ {selectedStorageType.pricePerGB.toFixed(2)}/GB
+                  </p>
+                </div>
+                <Button onClick={handleAddStorage} className="ml-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

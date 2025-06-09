@@ -1,15 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { useStorageTypes, StorageType } from './hooks/useStorageTypes';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { PricedDiskOption } from '@/types/storage';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useStorageTypes } from './hooks/useStorageTypes';
 import { InternalStoragePanel } from './InternalStoragePanel';
 import { ExternalStoragePanel } from './ExternalStoragePanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StorageHeader } from './storage-header';
 import { HardDrive } from 'lucide-react';
 import { StorageService } from '@/services/storage-service-refactored';
+import { PricedDiskOption } from '@/types/storage';
 
 export interface StorageSelectorProps {
   onSelectInternalDisk: (disk: PricedDiskOption, quantity: number) => void;
@@ -28,47 +26,54 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       description: string;
     }
   }>({});
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Load external storage from unified data service
-  useEffect(() => {
-    const loadExternalStorageFromUnifiedService = async () => {
-      try {
-        console.log('[StorageSelector] Loading external storage from unified service...');
-        
-        const externalStorageData = await StorageService.getExternalStorageTypes();
-        
-        if (Object.keys(externalStorageData).length > 0) {
-          console.log(`[StorageSelector] Found ${Object.keys(externalStorageData).length} external storage types from unified service`);
-          setExternalStorageTypes(externalStorageData);
-          console.log('[StorageSelector] External storage loaded from unified service:', externalStorageData);
-        } else {
-          console.log('[StorageSelector] No external storage items found in unified service');
-          setExternalStorageTypes({});
-        }
-      } catch (error) {
-        console.error('[StorageSelector] Error loading external storage from unified service:', error);
+  // Memoize the external storage loading function to prevent recreation
+  const loadExternalStorage = useCallback(async () => {
+    if (isLoading) return; // Prevent multiple simultaneous calls
+    
+    setIsLoading(true);
+    try {
+      console.log('[StorageSelector] Loading external storage from unified service...');
+      
+      const externalStorageData = await StorageService.getExternalStorageTypes();
+      
+      if (Object.keys(externalStorageData).length > 0) {
+        console.log(`[StorageSelector] Found ${Object.keys(externalStorageData).length} external storage types`);
+        setExternalStorageTypes(externalStorageData);
+      } else {
+        console.log('[StorageSelector] No external storage items found');
         setExternalStorageTypes({});
       }
-    };
-
-    loadExternalStorageFromUnifiedService();
-  }, []);
-  
-  // Log dos tipos de armazenamento que foram carregados
-  useEffect(() => {
-    console.log('[StorageSelector] Loaded storage types:', storageTypes.length);
-    if (storageTypes.length > 0) {
-      console.log('[StorageSelector] First storage type:', storageTypes[0]);
+    } catch (error) {
+      console.error('[StorageSelector] Error loading external storage:', error);
+      setExternalStorageTypes({});
+    } finally {
+      setIsLoading(false);
     }
-  }, [storageTypes]);
+  }, [isLoading]);
   
-  // Log dos tipos externos carregados
+  // Load external storage only once on mount
   useEffect(() => {
-    console.log('[StorageSelector] External storage types loaded:', Object.keys(externalStorageTypes).length);
-    Object.entries(externalStorageTypes).forEach(([key, type]) => {
-      console.log(`[StorageSelector] External type ${key}: ${type.name} = ${type.pricePerGB}/GB`);
-    });
-  }, [externalStorageTypes]);
+    loadExternalStorage();
+  }, []); // Empty dependency array - only run on mount
+  
+  // Memoize storage types count to prevent unnecessary re-renders
+  const storageTypesCount = useMemo(() => storageTypes.length, [storageTypes]);
+  const externalTypesCount = useMemo(() => Object.keys(externalStorageTypes).length, [externalStorageTypes]);
+  
+  // Log only when counts actually change
+  useEffect(() => {
+    if (storageTypesCount > 0) {
+      console.log(`[StorageSelector] Loaded ${storageTypesCount} internal storage types`);
+    }
+  }, [storageTypesCount]);
+  
+  useEffect(() => {
+    if (externalTypesCount > 0) {
+      console.log(`[StorageSelector] Loaded ${externalTypesCount} external storage types`);
+    }
+  }, [externalTypesCount]);
 
   return (
     <div className="space-y-8">
@@ -80,8 +85,12 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
         <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="internal">Discos Internos</TabsTrigger>
-          <TabsTrigger value="external">Storage Externo</TabsTrigger>
+          <TabsTrigger value="internal">
+            Discos Internos ({storageTypesCount})
+          </TabsTrigger>
+          <TabsTrigger value="external">
+            Storage Externo ({externalTypesCount})
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">
