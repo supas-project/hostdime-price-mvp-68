@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
-import { serverComponents as components } from '@/data/server-components';
+import { serverData } from '@/data/server-components';
 import { useAuth } from '@/hooks/auth';
 
 interface UseComponentDataProps {
@@ -22,7 +22,7 @@ export function useComponentData({ componentId }: UseComponentDataProps) {
       return;
     }
     
-    const component = components.find(c => c.id === componentId);
+    const component = serverData.componentes.find(c => c.id === componentId);
     if (component) {
       setOptions(component.options);
     } else {
