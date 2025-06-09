@@ -17,31 +17,30 @@ export function useItemActions(
   const { 
     openAddItem, 
     setOpenAddItem, 
-    handleAddItem,
-    isSubmittingItem: isSubmittingAdd 
-  } = useItemAdd(activeTab, setPriceData);
+    handleAddItem
+  } = useItemAdd(setPriceData, activeTab);
   
   const { 
+    isEditing,
     openEditItem, 
     setOpenEditItem, 
     itemToEdit, 
     setItemToEdit, 
     handleInitiateEdit, 
-    handleEditItem,
-    isSubmittingItem: isSubmittingEdit 
-  } = useItemEdit(activeTab, setPriceData);
+    handleEditItem
+  } = useItemEdit(setPriceData);
   
-  const { handleDeleteItem } = useItemDelete(activeTab, setPriceData);
+  const { handleDeleteItem } = useItemDelete(setPriceData);
   
   const {
     openBulkImport,
     setOpenBulkImport,
     isImporting,
     handleBulkImport
-  } = useItemBulkImport(activeTab, setPriceData);
+  } = useItemBulkImport(setPriceData);
 
   // Combine isSubmitting states
-  const isSubmittingItem = isSubmittingAdd || isSubmittingEdit || isImporting;
+  const isSubmittingItem = isEditing || isImporting;
 
   // Check if the updated category needs special synchronization
   const handleCategorySync = async (categoryId: string) => {
@@ -63,13 +62,13 @@ export function useItemActions(
   };
 
   const handleEditItemWithSync = async (values: any, itemId?: string) => {
-    const result = await handleEditItem(values, itemId);
+    const result = await handleEditItem(activeTab, itemId || itemToEdit?.id, values);
     await handleCategorySync(activeTab);
     return result;
   };
 
   const handleDeleteItemWithSync = async (itemId: string) => {
-    const result = await handleDeleteItem(itemId);
+    const result = await handleDeleteItem(activeTab, itemId);
     await handleCategorySync(activeTab);
     return result;
   };

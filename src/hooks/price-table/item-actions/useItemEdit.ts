@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
@@ -6,8 +7,15 @@ import { toast } from "@/utils/toast-utils";
 
 export function useItemEdit(setPriceData: (data: any) => void) {
   const [isEditing, setIsEditing] = useState(false);
+  const [openEditItem, setOpenEditItem] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<any>(null);
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
+  
+  const handleInitiateEdit = (item: any) => {
+    setItemToEdit(item);
+    setOpenEditItem(true);
+  };
   
   const handleEditItem = async (categoryId: string, itemId: string, values: any) => {
     if (!isAuthenticated) {
@@ -31,18 +39,19 @@ export function useItemEdit(setPriceData: (data: any) => void) {
       const item = await PriceService.getItem(categoryId, itemId);
       const itemName = item?.name || itemId;
       
-      // Only pass the allowed properties to editItem
+      // Only pass the allowed properties to updateItem (use updateItem instead of editItem)
       const itemData = {
         name: values.name,
         description: values.description,
         price: values.price,
         specs: values.specs,
         tags: values.tags,
+        type: values.type,
         isHardware: values.isHardware
       };
       
-      // Execute item editing
-      const success = await PriceService.editItem(categoryId, itemId, itemData);
+      // Execute item editing using updateItem
+      const success = await PriceService.updateItem(categoryId, itemId, itemData);
       
       if (!success) {
         throw new Error("Falha ao editar o item. Tente novamente.");
@@ -75,6 +84,11 @@ export function useItemEdit(setPriceData: (data: any) => void) {
 
   return {
     isEditing,
+    openEditItem,
+    setOpenEditItem,
+    itemToEdit,
+    setItemToEdit,
+    handleInitiateEdit,
     handleEditItem
   };
 }

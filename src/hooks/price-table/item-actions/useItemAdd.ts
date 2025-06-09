@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
@@ -25,13 +26,14 @@ export function useItemAdd(setPriceData: (data: any) => void, activeTab: string)
     }
     
     try {
-      // Only pass the allowed properties to addItem
+      // Only pass the allowed properties to addItem - include type field
       const itemData = {
         name: values.name,
         description: values.description,
         price: values.price,
         specs: values.specs,
         tags: values.tags,
+        type: values.type || activeTab, // Add type field, default to activeTab
         isHardware: values.isHardware,
         id: values.id || undefined
       };
