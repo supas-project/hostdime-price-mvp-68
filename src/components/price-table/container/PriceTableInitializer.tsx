@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { InitService } from "@/services/init-service";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";

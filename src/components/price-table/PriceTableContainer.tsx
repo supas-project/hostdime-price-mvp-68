@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
@@ -78,7 +78,7 @@ export default function PriceTableContainer() {
     }
   };
 
-  // Show consolidated loading state
+  // Show consolidated loading state - combine all loading conditions
   const shouldShowLoading = isLoading || fileLoading || !isInitialized;
   
   if (shouldShowLoading) {
