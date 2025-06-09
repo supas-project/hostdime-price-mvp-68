@@ -1,28 +1,27 @@
 
 import { HardDrive } from "lucide-react";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
-import { useDataSync } from "@/hooks/useDataSync";
-import { useState } from "react";
 import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
+import { ConsolidatedLoadingState } from "@/hooks/price-table/useConsolidatedLoading";
 
 interface PriceTableHeaderProps {
   lastSyncTime: Date | null;
+  hasConflicts: boolean;
+  onRefresh: () => void;
+  consolidatedLoading: ConsolidatedLoadingState;
 }
 
-export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
-  const { hasUpdates, syncWithLatestData } = useDataSync();
-  const [isRefreshing, setIsRefreshing] = useState(false);
+export function PriceTableHeader({ 
+  lastSyncTime, 
+  hasConflicts, 
+  onRefresh,
+  consolidatedLoading 
+}: PriceTableHeaderProps) {
   const { isAdmin } = useAuth();
+  const { isLoading, currentState } = consolidatedLoading;
   
-  // Handle refresh function
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    // Simple timeout to simulate refresh process
-    setTimeout(() => {
-      syncWithLatestData();
-      setIsRefreshing(false);
-    }, 1000);
-  };
+  // Determine if refreshing based on consolidated state
+  const isRefreshing = isLoading && (currentState === 'refreshing' || currentState === 'syncing');
   
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -45,8 +44,8 @@ export function PriceTableHeader({ lastSyncTime }: PriceTableHeaderProps) {
       <div className="flex items-center gap-4">
         <SyncIndicator 
           lastSyncTime={lastSyncTime}
-          hasConflicts={hasUpdates}
-          onRefresh={handleRefresh}
+          hasConflicts={hasConflicts}
+          onRefresh={onRefresh}
           isRefreshing={isRefreshing}
         />
       </div>

@@ -10,6 +10,7 @@ import { PriceTableContent } from "@/components/price-table/PriceTableContent";
 import { ContractSelect } from "@/components/price-table/ContractSelect";
 import { SyncIndicator } from "@/components/price-table/SyncIndicator";
 import { PriceData } from "@/types/pricing";
+import { ConsolidatedLoadingState } from "@/hooks/price-table/useConsolidatedLoading";
 
 interface PriceTablePageProps {
   priceTableState: any;
@@ -20,6 +21,7 @@ interface PriceTablePageProps {
   hasConflicts: boolean;
   isLoading: boolean;
   isRefreshing: boolean;
+  consolidatedLoading: ConsolidatedLoadingState;
 }
 
 export function PriceTablePage({
@@ -30,7 +32,8 @@ export function PriceTablePage({
   handleRefreshData,
   hasConflicts,
   isLoading,
-  isRefreshing
+  isRefreshing,
+  consolidatedLoading
 }: PriceTablePageProps) {
   const { isAdminAccess } = useDataSync();
   const {
@@ -53,7 +56,12 @@ export function PriceTablePage({
 
   return (
     <div className="container py-6 md:py-8 animate-fade-in">
-      <PriceTableHeader lastSyncTime={lastSyncTime} />
+      <PriceTableHeader 
+        lastSyncTime={lastSyncTime} 
+        hasConflicts={hasConflicts}
+        onRefresh={handleRefreshData}
+        consolidatedLoading={consolidatedLoading}
+      />
 
       {!isAdminAccess && (
         <Alert className="mb-4 border-primary/20 bg-primary/5">
@@ -79,7 +87,7 @@ export function PriceTablePage({
               lastSyncTime={lastSyncTime}
               hasConflicts={hasConflicts}
               handleRefreshData={handleRefreshData}
-              isRefreshing={isRefreshing}
+              consolidatedLoading={consolidatedLoading}
               contractDuration={contractDuration}
               setContractDuration={setContractDuration}
               isAdminAccess={isAdminAccess}
@@ -156,11 +164,14 @@ function PriceTableHeaderControls({
   lastSyncTime,
   hasConflicts,
   handleRefreshData,
-  isRefreshing,
+  consolidatedLoading,
   contractDuration,
   setContractDuration,
   isAdminAccess
 }) {
+  const { isLoading, currentState } = consolidatedLoading;
+  const isRefreshing = isLoading && (currentState === 'refreshing' || currentState === 'syncing');
+
   return (
     <div className="flex flex-col sm:flex-row gap-2 ml-auto">
       <SyncIndicator 

@@ -5,16 +5,12 @@ import { toast } from "@/utils/toast-utils";
 import { PriceData } from "@/types/pricing";
 
 export function useFileHandling(setPriceData: (data: PriceData) => void) {
-  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Garantir que estamos definindo o estado de carregamento
-    setIsLoading(true);
-    
     try {
       const content = await file.text();
       let importedData: PriceData;
@@ -44,11 +40,9 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
       toast.error("Erro ao importar", {
         description: error instanceof Error ? error.message : "Verifique se o arquivo está no formato correto."
       });
+      throw error;
     } finally {
-      // Garantir que o estado de carregamento é redefinido
-      setIsLoading(false);
-      
-      // Resetar o valor do input para permitir que o mesmo arquivo seja selecionado novamente
+      // Reset the input value to allow the same file to be selected again
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -56,7 +50,6 @@ export function useFileHandling(setPriceData: (data: PriceData) => void) {
   };
 
   return {
-    isLoading,
     fileInputRef,
     handleFileUpload
   };

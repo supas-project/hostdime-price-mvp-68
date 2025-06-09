@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
-import { useLoadingStates } from "@/hooks/price-table/useLoadingStates";
+import { useConsolidatedLoading } from "@/hooks/price-table/useConsolidatedLoading";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
 import { PriceTableInitializer } from "./container/PriceTableInitializer";
@@ -17,7 +17,10 @@ import { PriceTableLoadingState } from "./PriceTableLoadingState";
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
-  const { currentState, isLoading, loadingMessage, setLoadingState } = useLoadingStates();
+  
+  // Consolidated loading state management
+  const consolidatedLoading = useConsolidatedLoading();
+  const { isLoading, loadingMessage, currentState, setLoadingState, setFileLoading, setRefreshing } = consolidatedLoading;
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -38,48 +41,46 @@ export default function PriceTableContainer() {
   } = priceTableState;
 
   const {
-    isLoading: fileLoading,
     fileInputRef,
     handleFileUpload: originalHandleFileUpload
   } = useFileHandling(setPriceData);
   
   // Data actions hook
   const {
-    isRefreshing,
     hasConflicts,
     checkForConflicts,
     handleRefreshData: originalHandleRefreshData,
     handleResetData
   } = useDataActions(setPriceData);
 
-  // Wrapper for file upload with loading state
+  // Wrapper for file upload with consolidated loading state
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      setLoadingState('uploading-file');
+      setFileLoading(true);
       await originalHandleFileUpload(e);
-      setLoadingState('idle');
     } catch (error) {
-      setLoadingState('idle');
       throw error;
+    } finally {
+      setFileLoading(false);
     }
   };
 
-  // Wrapper function to ensure sync and load happen in sequence with loading states
+  // Wrapper function for refresh with consolidated loading state
   const handleRefreshData = async () => {
     try {
-      setLoadingState('syncing');
+      setRefreshing(true);
       await handleSyncData();
       await loadPriceData();
       await originalHandleRefreshData();
-      setLoadingState('idle');
     } catch (error) {
-      setLoadingState('idle');
       throw error;
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  // Show consolidated loading state - combine all loading conditions
-  const shouldShowLoading = isLoading || fileLoading || !isInitialized;
+  // Show consolidated loading state
+  const shouldShowLoading = isLoading || !isInitialized;
   
   if (shouldShowLoading) {
     return (
@@ -132,7 +133,8 @@ export default function PriceTableContainer() {
         handleRefreshData={handleRefreshData}
         hasConflicts={hasConflicts}
         isLoading={false}
-        isRefreshing={isRefreshing}
+        isRefreshing={false}
+        consolidatedLoading={consolidatedLoading}
       />
     </PriceTableErrorBoundary>
   );
