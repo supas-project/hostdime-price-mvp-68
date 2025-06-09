@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { PriceService } from '@/services/price-service';
 import { InitService } from '@/services/init-service';
@@ -38,4 +39,3 @@ export function useDataLoader() {
     isLoading
   };
 }
-
