@@ -1,72 +1,49 @@
 
 import { ComponentOption } from '@/types/component';
-import { HybridComponentService } from '@/services/hybridComponentService';
+import { ComponentService as RefactoredComponentService } from './component-service-refactored';
 
 /**
- * Main component service that provides a unified interface for all components
- * Uses the hybrid service to prioritize database data over static data
+ * @deprecated Use ComponentService from component-service-refactored.ts instead
+ * This file is kept for backward compatibility only
  */
 export class ComponentService {
   static async getCPUComponents(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getComponentsByType('cpu');
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getCPUComponents();
   }
 
   static async getMemoryComponents(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getComponentsByType('memory');
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getMemoryComponents();
   }
 
   static async getOSComponents(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getComponentsByType('os');
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getOSComponents();
   }
 
   static async getConnectivityComponents(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getComponentsByType('connectivity');
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getConnectivityComponents();
   }
 
   static async getStorageComponents(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getComponentsByType('storage');
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getStorageComponents();
   }
 
   static async getDataCenters(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getDataCenters();
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getDataCenters();
   }
 
   static async getContractTypes(): Promise<ComponentOption[]> {
-    return await HybridComponentService.getContractTypes();
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getContractTypes();
   }
 
   static async getAllComponentsByCategory(): Promise<{ [key: string]: ComponentOption[] }> {
-    try {
-      const [
-        cpuComponents,
-        memoryComponents,
-        osComponents,
-        connectivityComponents,
-        storageComponents,
-        dataCenters,
-        contractTypes
-      ] = await Promise.all([
-        this.getCPUComponents(),
-        this.getMemoryComponents(),
-        this.getOSComponents(),
-        this.getConnectivityComponents(),
-        this.getStorageComponents(),
-        this.getDataCenters(),
-        this.getContractTypes()
-      ]);
-
-      return {
-        cpu: cpuComponents,
-        memory: memoryComponents,
-        os: osComponents,
-        connectivity: connectivityComponents,
-        storage: storageComponents,
-        datacenter: dataCenters,
-        contract: contractTypes
-      };
-    } catch (error) {
-      console.error('[ComponentService] Error loading all components:', error);
-      throw error;
-    }
+    console.warn('[ComponentService] DEPRECATED: Use ComponentService from component-service-refactored.ts instead');
+    return RefactoredComponentService.getAllComponentsByCategory();
   }
 }
