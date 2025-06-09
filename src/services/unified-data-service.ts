@@ -94,7 +94,11 @@ export class UnifiedDataService {
         .eq('key', 'data_consolidation_status')
         .single();
 
-      return data?.value || {
+      if (data?.value && typeof data.value === 'object') {
+        return data.value as ConsolidatedDataStatus;
+      }
+
+      return {
         phase: 'starting',
         completed_steps: [],
         total_items: 0,
@@ -308,7 +312,8 @@ export class UnifiedDataService {
       .from('storage_items')
       .select('*')
       .eq('is_active', true)
-      .order('storage_type', 'capacity_gb');
+      .order('storage_type')
+      .order('capacity_gb');
 
     if (error) {
       throw new Error(`Failed to fetch storage items: ${error.message}`);

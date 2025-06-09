@@ -9,6 +9,7 @@ import { SystemComponentsTable } from './SystemComponentsTable';
 import { CreateComponentDialog } from './CreateComponentDialog';
 import { MigrationButton } from './MigrationButton';
 import { ProductionDashboard } from './ProductionDashboard';
+import { UnifiedComponent, UnifiedStorageItem } from '@/services/unified-data-service';
 
 const componentTypes = [
   { id: 'cpu', name: 'Processadores', icon: Cpu },
@@ -17,6 +18,23 @@ const componentTypes = [
   { id: 'os', name: 'Sistemas Operacionais', icon: Server },
   { id: 'connectivity', name: 'Conectividade', icon: Globe }
 ];
+
+// Create a unified type that matches what SystemComponentsTable expects
+interface UnifiedSystemComponent {
+  id: string;
+  component_type: string;
+  component_id: string;
+  name: string;
+  description?: string;
+  price: number;
+  subtype?: string;
+  is_hardware: boolean;
+  is_active: boolean;
+  specs?: string[];
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
 
 export function SystemComponentsManager() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -34,14 +52,33 @@ export function SystemComponentsManager() {
     loadAllData
   } = useUnifiedData();
 
+  // Convert storage items to match the expected interface
+  const convertStorageToComponents = (items: UnifiedStorageItem[]): UnifiedSystemComponent[] => {
+    return items.map(item => ({
+      id: item.id,
+      component_type: 'storage',
+      component_id: `${item.storage_type}_${item.item_type}_${item.capacity_gb || 0}`,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      subtype: `${item.storage_type}_${item.item_type}`,
+      is_hardware: true,
+      is_active: item.is_active,
+      specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+      metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {},
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
+  };
+
   // Get current components based on selected tab
-  const getCurrentComponents = () => {
+  const getCurrentComponents = (): UnifiedSystemComponent[] => {
     switch (componentTab) {
-      case 'cpu': return cpuComponents;
-      case 'memory': return memoryComponents;
-      case 'os': return osComponents;
-      case 'connectivity': return connectivityComponents;
-      case 'storage': return storageItems;
+      case 'cpu': return cpuComponents as UnifiedSystemComponent[];
+      case 'memory': return memoryComponents as UnifiedSystemComponent[];
+      case 'os': return osComponents as UnifiedSystemComponent[];
+      case 'connectivity': return connectivityComponents as UnifiedSystemComponent[];
+      case 'storage': return convertStorageToComponents(storageItems);
       default: return [];
     }
   };
