@@ -80,11 +80,18 @@ export class DataSynchronizationService {
         metadata: component.metadata || {}
       }));
       
-      await PriceService.addCategory({
+      // Create category with proper structure
+      const categoryData = {
         id: categoryId,
-        name: categoryName,
-        items: items
-      });
+        name: categoryName
+      };
+      
+      await PriceService.addCategory(categoryData);
+      
+      // Add items to the category
+      for (const item of items) {
+        await PriceService.addItem(categoryId, item);
+      }
       
       console.log(`[DataSync] Category ${categoryId} added with ${items.length} items`);
     } catch (error) {

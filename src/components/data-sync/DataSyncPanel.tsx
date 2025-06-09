@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDataSynchronization } from '@/hooks/useDataSynchronization';
-import { Sync, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
 export function DataSyncPanel() {
   const { isSyncing, lastSyncTime, synchronizeData, checkConsistency } = useDataSynchronization();
@@ -41,7 +41,7 @@ export function DataSyncPanel() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sync className="w-5 h-5" />
+          <RefreshCw className="w-5 h-5" />
           Sincronização de Dados
         </CardTitle>
         <CardDescription>
@@ -108,12 +108,12 @@ export function DataSyncPanel() {
           >
             {isSyncing ? (
               <>
-                <Sync className="w-4 h-4 mr-2 animate-spin" />
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                 Sincronizando...
               </>
             ) : (
               <>
-                <Sync className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-4 h-4 mr-2" />
                 {hasIssues ? 'Corrigir Divergências' : 'Verificar Novamente'}
               </>
             )}
