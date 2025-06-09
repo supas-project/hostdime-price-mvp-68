@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { PriceService } from "@/services/price-service";
 import { useDataSync } from "@/hooks/useDataSync";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { toast } from "@/utils/toast-utils";
 
 export function useCategoryDelete(setPriceData: (data: any) => void) {
@@ -10,7 +10,7 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
   const { registerAdminChange, isAdminAccess } = useDataSync();
   const { isAuthenticated } = useAuth();
   
-  const handleDeleteCategory = async (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string): Promise<boolean> => {
     if (!isAuthenticated) {
       toast.error("Você precisa estar autenticado", {
         description: "Faça login para excluir categorias."
@@ -27,33 +27,60 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
     
     try {
       setIsDeleting(true);
+      console.log(`[CategoryDelete] Iniciando exclusão da categoria ${categoryId}`);
       
       // Get category name before deleting for message
-      const category = await PriceService.getCategory(categoryId);
+      const allData = await PriceService.getAllData();
+      const category = allData[categoryId];
       const categoryName = category?.name || categoryId;
       
+      // Check if category exists and is empty or can be deleted
+      if (!category) {
+        console.warn(`[CategoryDelete] Categoria ${categoryId} não encontrada`);
+        toast.error("Categoria não encontrada", {
+          description: "A categoria não existe ou já foi removida."
+        });
+        return false;
+      }
+      
+      // Allow deletion of empty categories or all categories if admin
+      const canDelete = !category.items || category.items.length === 0 || isAdminAccess;
+      
+      if (!canDelete) {
+        toast.error("Categoria não pode ser excluída", {
+          description: "Apenas categorias vazias podem ser excluídas."
+        });
+        return false;
+      }
+      
       // Execute category deletion
+      console.log(`[CategoryDelete] Executando exclusão da categoria ${categoryId}`);
       const success = await PriceService.deleteCategory(categoryId);
       
       if (!success) {
-        throw new Error("Falha ao excluir a categoria. Tente novamente.");
+        throw new Error("Falha na operação de exclusão no servidor.");
       }
       
-      // Get updated data after deletion
+      // Get updated data after deletion to ensure consistency
       const updatedData = await PriceService.getAllData();
       
-      // Log para debug - verificar se a categoria foi removida dos dados
-      console.log(`[CategoryDelete] Categoria ${categoryId} removida. Categorias restantes:`, 
+      // Verify deletion was successful
+      if (updatedData[categoryId]) {
+        console.error(`[CategoryDelete] Categoria ${categoryId} ainda existe após exclusão`);
+        throw new Error("A categoria não foi completamente removida.");
+      }
+      
+      console.log(`[CategoryDelete] Categoria ${categoryId} removida com sucesso. Categorias restantes:`, 
         Object.keys(updatedData).join(", "));
       
-      // Importante: Atualizar o estado com os dados atualizados
+      // Update state with the fresh data from server
       setPriceData(updatedData);
       
       // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
       
       toast.success("Categoria excluída", {
-        description: "A categoria foi excluída com sucesso."
+        description: `A categoria "${categoryName}" foi excluída com sucesso.`
       });
       
       return true;

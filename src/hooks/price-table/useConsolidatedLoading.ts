@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { LoadingState } from './useLoadingStates';
 
 export interface ConsolidatedLoadingState {
@@ -14,10 +14,9 @@ export interface ConsolidatedLoadingState {
 
 export function useConsolidatedLoading(): ConsolidatedLoadingState {
   const [currentState, setCurrentState] = useState<LoadingState>('idle');
-  const [isFileLoading, setIsFileLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isLoadingRef = useRef(false);
 
-  const getLoadingMessage = (state: LoadingState): string => {
+  const getLoadingMessage = useCallback((state: LoadingState): string => {
     switch (state) {
       case 'initializing':
         return 'Inicializando tabela de preços...';
@@ -34,51 +33,40 @@ export function useConsolidatedLoading(): ConsolidatedLoadingState {
       default:
         return '';
     }
-  };
+  }, []);
 
   const setLoadingState = useCallback((state: LoadingState) => {
+    console.log(`[ConsolidatedLoading] Setting state: ${state}`);
     setCurrentState(state);
-    // Reset other states when setting main state
-    if (state !== 'idle') {
-      setIsFileLoading(false);
-      setIsRefreshing(false);
-    }
+    isLoadingRef.current = state !== 'idle';
   }, []);
 
   const setFileLoading = useCallback((loading: boolean) => {
-    setIsFileLoading(loading);
+    console.log(`[ConsolidatedLoading] File loading: ${loading}`);
     if (loading) {
-      setCurrentState('uploading-file');
+      setLoadingState('uploading-file');
     } else if (currentState === 'uploading-file') {
-      setCurrentState('idle');
+      setLoadingState('idle');
     }
-  }, [currentState]);
+  }, [currentState, setLoadingState]);
 
   const setRefreshing = useCallback((refreshing: boolean) => {
-    setIsRefreshing(refreshing);
+    console.log(`[ConsolidatedLoading] Refreshing: ${refreshing}`);
     if (refreshing) {
-      setCurrentState('refreshing');
+      setLoadingState('refreshing');
     } else if (currentState === 'refreshing') {
-      setCurrentState('idle');
+      setLoadingState('idle');
     }
-  }, [currentState]);
+  }, [currentState, setLoadingState]);
 
   const reset = useCallback(() => {
+    console.log(`[ConsolidatedLoading] Resetting state`);
     setCurrentState('idle');
-    setIsFileLoading(false);
-    setIsRefreshing(false);
+    isLoadingRef.current = false;
   }, []);
 
-  // Determine if any loading is active
-  const isLoading = currentState !== 'idle' || isFileLoading || isRefreshing;
-  
-  // Get appropriate message
-  let loadingMessage = getLoadingMessage(currentState);
-  if (isFileLoading && !loadingMessage) {
-    loadingMessage = 'Enviando arquivo...';
-  } else if (isRefreshing && !loadingMessage) {
-    loadingMessage = 'Atualizando dados...';
-  }
+  const isLoading = currentState !== 'idle';
+  const loadingMessage = getLoadingMessage(currentState);
 
   return {
     isLoading,

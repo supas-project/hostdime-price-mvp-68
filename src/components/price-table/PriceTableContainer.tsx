@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
@@ -17,6 +17,7 @@ import { PriceTableLoadingState } from "./PriceTableLoadingState";
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const initializationStarted = useRef(false);
   
   // Consolidated loading state management
   const consolidatedLoading = useConsolidatedLoading();
@@ -59,6 +60,7 @@ export default function PriceTableContainer() {
       setFileLoading(true);
       await originalHandleFileUpload(e);
     } catch (error) {
+      console.error("Error uploading file:", error);
       throw error;
     } finally {
       setFileLoading(false);
@@ -70,17 +72,21 @@ export default function PriceTableContainer() {
     try {
       setRefreshing(true);
       await handleSyncData();
-      await loadPriceData();
+      const newData = await loadPriceData();
+      if (newData) {
+        setPriceData(newData);
+      }
       await originalHandleRefreshData();
     } catch (error) {
+      console.error("Error refreshing data:", error);
       throw error;
     } finally {
       setRefreshing(false);
     }
   };
 
-  // Show consolidated loading state
-  const shouldShowLoading = isLoading || !isInitialized;
+  // Show loading state only when actually loading and not yet initialized
+  const shouldShowLoading = (isLoading || !isInitialized) && !initializationStarted.current;
   
   if (shouldShowLoading) {
     return (
@@ -102,14 +108,19 @@ export default function PriceTableContainer() {
   return (
     <PriceTableErrorBoundary>
       {/* Logic-only components for data management */}
-      <PriceTableInitializer
-        isAuthenticated={isAuthenticated}
-        loadPriceData={loadPriceData}
-        priceData={priceData}
-        setIsInitialized={setIsInitialized}
-        checkForConflicts={checkForConflicts}
-        setLoadingState={setLoadingState}
-      />
+      {!initializationStarted.current && (
+        <PriceTableInitializer
+          isAuthenticated={isAuthenticated}
+          loadPriceData={loadPriceData}
+          priceData={priceData}
+          setIsInitialized={(initialized) => {
+            setIsInitialized(initialized);
+            if (initialized) initializationStarted.current = true;
+          }}
+          checkForConflicts={checkForConflicts}
+          setLoadingState={setLoadingState}
+        />
+      )}
       
       <PriceDataProcessor
         priceData={priceData}

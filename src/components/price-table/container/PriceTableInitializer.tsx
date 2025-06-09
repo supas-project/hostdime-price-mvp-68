@@ -1,6 +1,5 @@
 
-import { useEffect } from "react";
-import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
+import { useEffect, useRef } from "react";
 import { InitService } from "@/services/init-service";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
@@ -23,11 +22,20 @@ export function PriceTableInitializer({
   checkForConflicts,
   setLoadingState
 }: PriceTableInitializerProps) {
+  const initializationRef = useRef(false);
+  
   useEffect(() => {
     async function initialize() {
+      // Prevent multiple initializations
+      if (initializationRef.current) {
+        console.log("PriceTableInitializer: Already initialized, skipping");
+        return;
+      }
+
       if (isAuthenticated) {
         try {
-          console.log("PriceTableInitializer: Authenticated user, attempting to initialize data");
+          console.log("PriceTableInitializer: Starting initialization");
+          initializationRef.current = true;
           
           setLoadingState('initializing');
           await InitService.initializeData();
@@ -38,6 +46,13 @@ export function PriceTableInitializer({
           console.log("PriceTableInitializer: Data loaded successfully");
           setLoadingState('idle');
           setIsInitialized(true);
+          
+          // Set up conflict checking interval
+          const intervalId = setInterval(() => {
+            checkForConflicts();
+          }, 30000);
+          
+          return () => clearInterval(intervalId);
         } catch (error) {
           console.error("PriceTableInitializer: Error initializing price table:", error);
           setLoadingState('idle');
@@ -50,12 +65,6 @@ export function PriceTableInitializer({
           }
           setIsInitialized(true);
         }
-        
-        const intervalId = setInterval(() => {
-          checkForConflicts();
-        }, 30000);
-        
-        return () => clearInterval(intervalId);
       } else {
         console.log("PriceTableInitializer: User not authenticated, skipping initialization");
         setLoadingState('idle');
@@ -64,7 +73,7 @@ export function PriceTableInitializer({
     }
     
     initialize();
-  }, [isAuthenticated, loadPriceData, setIsInitialized, checkForConflicts, setLoadingState]);
+  }, [isAuthenticated]); // Remove other dependencies to prevent loops
 
   return null;
 }
