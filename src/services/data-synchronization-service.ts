@@ -122,10 +122,9 @@ export class DataSynchronizationService {
             type: 'storage',
             specs: item.specs,
             metadata: {
-              ...item.metadata,
+              capacity_gb: item.capacity_gb,
               storage_type: item.storage_type,
-              item_type: item.item_type,
-              capacity_gb: item.capacity_gb
+              item_type: item.item_type
             }
           }))
         },
@@ -142,8 +141,7 @@ export class DataSynchronizationService {
             metadata: {
               location: dc.location,
               region: dc.region,
-              badge: dc.badge,
-              certifications: dc.certifications
+              badge: dc.badge
             }
           }))
         },

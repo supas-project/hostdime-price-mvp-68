@@ -138,16 +138,18 @@ export class UnifiedDataService {
    * Import static data from data files
    */
   private static async importStaticData() {
-    // Import CPU components
+    // Import components using correct file names and exports
     const cpuData = await import('@/data/cpu-components').then(m => m.cpuComponents);
     const memoryData = await import('@/data/memory-components').then(m => m.memoryComponents);
-    const osData = await import('@/data/os-components').then(m => m.operatingSystems);
+    const osData = await import('@/data/os-components').then(m => m.osComponents);
     const connectivityData = await import('@/data/connectivity-components').then(m => m.connectivityComponents);
-    const dataCenterData = await import('@/data/datacenter-options').then(m => m.dataCenterOptions);
-    const contractData = await import('@/data/contract-types').then(m => m.contractTypes);
     
-    // Internal storage data
-    const internalStorageData = await import('@/data/storage-types').then(m => m.storageTypes);
+    // Import datacenter and contract data using correct file names
+    const dataCenterData = await import('@/data/datacenter-components').then(m => m.dataCenterComponents);
+    const contractData = await import('@/data/contract-components').then(m => m.contractComponents);
+    
+    // Get disk data from existing storage pricing
+    const diskData = await import('@/data/disk-data').then(m => m.diskData);
     
     // External storage data 
     const externalStorageData = [
@@ -173,18 +175,19 @@ export class UnifiedDataService {
 
     return {
       components: [
-        ...cpuData.map(item => ({ ...item, component_type: 'cpu' })),
-        ...memoryData.map(item => ({ ...item, component_type: 'memory' })),
-        ...osData.map(item => ({ ...item, component_type: 'os' })),
-        ...connectivityData.map(item => ({ ...item, component_type: 'connectivity' }))
+        ...cpuData.options.map(item => ({ ...item, component_type: 'cpu' })),
+        ...memoryData.options.map(item => ({ ...item, component_type: 'memory' })),
+        ...osData.options.map(item => ({ ...item, component_type: 'os' })),
+        ...connectivityData.options.map(item => ({ ...item, component_type: 'connectivity' }))
       ],
-      datacenters: dataCenterData,
-      contracts: contractData,
+      datacenters: dataCenterData.options,
+      contracts: contractData.options,
       storage: [
-        ...internalStorageData.map(item => ({
+        ...diskData.map(item => ({
           ...item,
           storage_type: 'internal',
-          item_type: item.type || 'ssd'
+          item_type: item.type,
+          capacity_gb: parseInt(item.capacity.replace(/[^\d]/g, '')) || 0
         })),
         ...externalStorageData
       ]

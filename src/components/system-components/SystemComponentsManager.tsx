@@ -63,11 +63,11 @@ export function SystemComponentsManager() {
       price: item.price,
       subtype: `${item.storage_type}_${item.item_type}`,
       is_hardware: true,
-      is_active: item.is_active,
+      is_active: true,
       specs: Array.isArray(item.specs) ? item.specs as string[] : [],
       metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {},
-      created_at: item.created_at,
-      updated_at: item.updated_at
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }));
   };
 
