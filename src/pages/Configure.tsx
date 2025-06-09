@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WizardProvider } from "@/contexts/wizard";
 import { WizardContent } from "@/components/wizard/WizardContent";
 import { DataSyncPanel } from "@/components/data-sync/DataSyncPanel";
-import { Settings, Cog, Database } from "lucide-react";
+import { DataComparisonPanel } from "@/components/data-sync/DataComparisonPanel";
+import { Settings, Cog, Database, GitCompare } from "lucide-react";
 
 export default function Configure() {
   const { isAuthenticated } = useAuth();
@@ -25,19 +26,23 @@ export default function Configure() {
               Configuração do Sistema
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Configure servidores e mantenha os dados sincronizados entre configuração e tabela de preços
+              Configure servidores, compare dados e mantenha tudo sincronizado
             </p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="wizard" className="flex items-center gap-2">
                 <Cog className="w-4 h-4" />
                 Configurar Servidor
               </TabsTrigger>
+              <TabsTrigger value="comparison" className="flex items-center gap-2">
+                <GitCompare className="w-4 h-4" />
+                Comparar Dados
+              </TabsTrigger>
               <TabsTrigger value="sync" className="flex items-center gap-2">
                 <Database className="w-4 h-4" />
-                Sincronização de Dados
+                Sincronização
               </TabsTrigger>
             </TabsList>
 
@@ -45,6 +50,12 @@ export default function Configure() {
               <WizardProvider>
                 <WizardContent />
               </WizardProvider>
+            </TabsContent>
+
+            <TabsContent value="comparison" className="mt-6">
+              <div className="max-w-4xl mx-auto">
+                <DataComparisonPanel />
+              </div>
             </TabsContent>
 
             <TabsContent value="sync" className="mt-6">
