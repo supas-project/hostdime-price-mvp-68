@@ -20,11 +20,14 @@ export class StorageService {
         id: item.id,
         name: item.name,
         price: item.price,
-        capacity: item.capacity_gb || 0,
+        capacity: `${item.capacity_gb || 0}GB`, // Convert to string as expected by PricedDiskOption
         type: item.item_type as 'ssd' | 'hdd' | 'nvme',
-        specs: Array.isArray(item.specs) ? item.specs : [],
-        description: item.description || '',
-        metadata: item.metadata || {}
+        specs: {
+          readSpeed: item.specs?.find((spec: string) => spec.toLowerCase().includes('read')) || 'N/A',
+          writeSpeed: item.specs?.find((spec: string) => spec.toLowerCase().includes('write')) || 'N/A', 
+          iops: item.specs?.find((spec: string) => spec.toLowerCase().includes('iops')) || 'N/A',
+          recommended: Array.isArray(item.specs) ? item.specs : []
+        }
       }));
     } catch (error) {
       console.error('[StorageService] Error loading internal storage:', error);

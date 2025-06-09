@@ -55,10 +55,11 @@ export class ComponentService {
       isHardware: true,
       specs: Array.isArray(item.specs) ? item.specs : [],
       metadata: {
-        capacity: item.capacity_gb,
-        storageType: item.storage_type,
-        itemType: item.item_type,
-        ...item.metadata
+        ...item.metadata,
+        // Add storage-specific metadata that fits ComponentOption interface
+        quantity: 1,
+        unitInfo: `${item.capacity_gb}GB ${item.item_type.toUpperCase()}`,
+        features: Array.isArray(item.specs) ? item.specs : []
       }
     }));
   }
