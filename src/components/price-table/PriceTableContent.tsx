@@ -76,7 +76,17 @@ export function PriceTableContent({
     return <EmptyState isAdmin={isAdmin} />;
   }
 
-  const wrappedDeleteCategory = (categoryId: string) => handleDeleteCategory(categoryId, onDeleteCategory);
+  const wrappedDeleteCategory = async (categoryId: string) => {
+    const result = await handleDeleteCategory(categoryId, onDeleteCategory);
+    // Force a re-render by ensuring the active tab is valid
+    const remainingCategories = Object.keys(priceData).filter(id => id !== categoryId);
+    if (categoryId === activeTab && remainingCategories.length > 0) {
+      setActiveTab(remainingCategories[0]);
+    } else if (remainingCategories.length === 0) {
+      setActiveTab("");
+    }
+    return result;
+  };
 
   return (
     <DataProcessor priceData={priceData}>

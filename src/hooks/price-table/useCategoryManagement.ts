@@ -11,13 +11,19 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       setAvailableCategories(categoryIds);
       console.log("[useCategoryManagement] Categorias disponíveis atualizadas:", categoryIds.join(", "));
       
-      // Only change active tab if current one doesn't exist and we have categories
+      // If current active tab doesn't exist and we have categories, switch to first one
       if (activeTab && !categoryIds.includes(activeTab) && categoryIds.length > 0) {
         const newActiveTab = categoryIds[0];
         console.log(`[useCategoryManagement] Categoria ativa ${activeTab} não existe mais, alterando para ${newActiveTab}`);
         setActiveTab(newActiveTab);
       } else if (categoryIds.length === 0) {
         console.log(`[useCategoryManagement] Nenhuma categoria disponível`);
+        // If no categories available, clear active tab
+        setActiveTab("");
+      } else if (!activeTab && categoryIds.length > 0) {
+        // If no active tab but categories exist, set first one as active
+        console.log(`[useCategoryManagement] Nenhuma categoria ativa, definindo primeira categoria como ativa: ${categoryIds[0]}`);
+        setActiveTab(categoryIds[0]);
       }
     }
   }, [priceData, activeTab, setActiveTab]);
@@ -30,10 +36,6 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       
       if (success) {
         console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso`);
-        
-        // The priceData will be updated by the parent component after successful deletion
-        // No need to manually update availableCategories here as useEffect will handle it
-        
         return true;
       } else {
         console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId}`);
