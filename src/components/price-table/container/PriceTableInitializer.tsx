@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/auth";
 import { InitService } from "@/services/init-service";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { LoadingState } from "@/hooks/price-table/useLoadingStates";
 
 interface PriceTableInitializerProps {
   isAuthenticated: boolean;
@@ -11,6 +12,7 @@ interface PriceTableInitializerProps {
   priceData: any;
   setIsInitialized: (value: boolean) => void;
   checkForConflicts: () => void;
+  setLoadingState: (state: LoadingState) => void;
 }
 
 export function PriceTableInitializer({
@@ -18,49 +20,51 @@ export function PriceTableInitializer({
   loadPriceData,
   priceData,
   setIsInitialized,
-  checkForConflicts
+  checkForConflicts,
+  setLoadingState
 }: PriceTableInitializerProps) {
-  // Ensure data is loaded when component mounts
   useEffect(() => {
     async function initialize() {
       if (isAuthenticated) {
         try {
           console.log("PriceTableInitializer: Authenticated user, attempting to initialize data");
           
-          // Initialize data if needed
+          setLoadingState('initializing');
           await InitService.initializeData();
           
-          // Then load price data
+          setLoadingState('loading-data');
           await loadPriceData();
           
           console.log("PriceTableInitializer: Data loaded successfully");
-          
+          setLoadingState('idle');
           setIsInitialized(true);
         } catch (error) {
           console.error("PriceTableInitializer: Error initializing price table:", error);
+          setLoadingState('idle');
+          
           if (error instanceof Error && !error.message.includes("Authentication")) {
             toast.error("Erro ao inicializar tabela", {
               description: "Por favor, tente novamente ou contate o suporte.",
               icon: <AlertCircle className="h-5 w-5" />
             });
           }
-          setIsInitialized(true); // Still mark as initialized to avoid loading forever
+          setIsInitialized(true);
         }
         
-        // Set up periodic conflict checks
         const intervalId = setInterval(() => {
           checkForConflicts();
-        }, 30000); // Check every 30 seconds
+        }, 30000);
         
         return () => clearInterval(intervalId);
       } else {
         console.log("PriceTableInitializer: User not authenticated, skipping initialization");
+        setLoadingState('idle');
         setIsInitialized(true);
       }
     }
     
     initialize();
-  }, [isAuthenticated, loadPriceData, setIsInitialized, checkForConflicts]);
+  }, [isAuthenticated, loadPriceData, setIsInitialized, checkForConflicts, setLoadingState]);
 
-  return null; // This is a logic-only component
+  return null;
 }

@@ -4,16 +4,20 @@ import { useAuth } from "@/hooks/auth";
 import { usePriceTable } from "@/hooks/usePriceTable";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useDataActions } from "@/hooks/price-table/useDataActions";
+import { useLoadingStates } from "@/hooks/price-table/useLoadingStates";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
 import { PriceTableInitializer } from "./container/PriceTableInitializer";
 import { PriceDataProcessor } from "./container/PriceDataProcessor";
 import { UpdatesHandler } from "./container/UpdatesHandler";
 import { DataValidator } from "./container/DataValidator";
+import { PriceTableErrorBoundary } from "./PriceTableErrorBoundary";
+import { PriceTableLoadingState } from "./PriceTableLoadingState";
 
 export default function PriceTableContainer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const { currentState, isLoading, loadingMessage, setLoadingState } = useLoadingStates();
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -27,7 +31,6 @@ export default function PriceTableContainer() {
     setPriceData,
     activeTab,
     tableActions,
-    isLoading: dataLoading,
     hasUpdates,
     handleSyncData,
     loadPriceData,
@@ -37,7 +40,7 @@ export default function PriceTableContainer() {
   const {
     isLoading: fileLoading,
     fileInputRef,
-    handleFileUpload
+    handleFileUpload: originalHandleFileUpload
   } = useFileHandling(setPriceData);
   
   // Data actions hook
@@ -49,15 +52,45 @@ export default function PriceTableContainer() {
     handleResetData
   } = useDataActions(setPriceData);
 
-  // Wrapper function to ensure sync and load happen in sequence
-  const handleRefreshData = async () => {
-    await handleSyncData();
-    await loadPriceData();
-    await originalHandleRefreshData();
+  // Wrapper for file upload with loading state
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setLoadingState('uploading-file');
+      await originalHandleFileUpload(e);
+      setLoadingState('idle');
+    } catch (error) {
+      setLoadingState('idle');
+      throw error;
+    }
   };
 
-  // Combined loading indicator
-  const isLoading = dataLoading || fileLoading || isRefreshing || !isInitialized;
+  // Wrapper function to ensure sync and load happen in sequence with loading states
+  const handleRefreshData = async () => {
+    try {
+      setLoadingState('syncing');
+      await handleSyncData();
+      await loadPriceData();
+      await originalHandleRefreshData();
+      setLoadingState('idle');
+    } catch (error) {
+      setLoadingState('idle');
+      throw error;
+    }
+  };
+
+  // Show consolidated loading state
+  const shouldShowLoading = isLoading || fileLoading || !isInitialized;
+  
+  if (shouldShowLoading) {
+    return (
+      <PriceTableErrorBoundary>
+        <PriceTableLoadingState 
+          loadingState={currentState}
+          message={loadingMessage}
+        />
+      </PriceTableErrorBoundary>
+    );
+  }
 
   // Filter categories to remove contract category
   const filteredPriceData = priceData ? {...priceData} : {};
@@ -66,7 +99,7 @@ export default function PriceTableContainer() {
   }
 
   return (
-    <>
+    <PriceTableErrorBoundary>
       {/* Logic-only components for data management */}
       <PriceTableInitializer
         isAuthenticated={isAuthenticated}
@@ -74,6 +107,7 @@ export default function PriceTableContainer() {
         priceData={priceData}
         setIsInitialized={setIsInitialized}
         checkForConflicts={checkForConflicts}
+        setLoadingState={setLoadingState}
       />
       
       <PriceDataProcessor
@@ -84,6 +118,7 @@ export default function PriceTableContainer() {
       <UpdatesHandler
         hasUpdates={hasUpdates}
         handleRefreshData={handleRefreshData}
+        setLoadingState={setLoadingState}
       />
       
       <DataValidator priceData={priceData} />
@@ -96,9 +131,9 @@ export default function PriceTableContainer() {
         handleFileUpload={handleFileUpload}
         handleRefreshData={handleRefreshData}
         hasConflicts={hasConflicts}
-        isLoading={isLoading}
+        isLoading={false}
         isRefreshing={isRefreshing}
       />
-    </>
+    </PriceTableErrorBoundary>
   );
 }
