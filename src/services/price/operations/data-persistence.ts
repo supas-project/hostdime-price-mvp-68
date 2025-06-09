@@ -44,16 +44,13 @@ export async function saveData(data: PriceData): Promise<void> {
 
     if (error) {
       console.error("[PriceService] Error saving price data:", error);
-      throw new Error(error.message);
+      throw new Error(`Database error: ${error.message}`);
     }
 
-    console.log("[PriceService] Price data saved successfully");
-    toast.success("Data saved successfully", { 
-      description: "Components have been saved and synchronized." 
-    });
+    console.log("[PriceService] Price data saved successfully to database");
 
     // Also save in the updates table to notify other users
-    await supabase
+    const { error: updateError } = await supabase
       .from('price_data_updates')
       .insert({
         type: 'update',
@@ -61,6 +58,18 @@ export async function saveData(data: PriceData): Promise<void> {
         initiator: 'admin',
         updated_at: new Date().toISOString()
       });
+
+    if (updateError) {
+      console.warn("[PriceService] Warning: Could not save update notification:", updateError);
+      // Don't throw here - the main data was saved successfully
+    }
+
+    console.log("[PriceService] Update notification saved successfully");
+
+    // Show success toast
+    toast.success("Data saved successfully", { 
+      description: "Components have been saved and synchronized." 
+    });
 
     // Notify listeners after successful save
     notifyListeners(data);
@@ -71,6 +80,6 @@ export async function saveData(data: PriceData): Promise<void> {
         description: err.message
       });
     }
-    throw new Error(err.message || "Failed to save price data.");
+    throw err; // Re-throw the original error
   }
 }

@@ -35,11 +35,15 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
       const success = await onDeleteCategory(categoryId);
       
       if (success) {
-        console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso`);
+        console.log(`[useCategoryManagement] Categoria ${categoryId} excluída com sucesso pelo hook`);
         
-        // Force immediate tab change if we deleted the active category
+        // The state should already be updated by the delete hook, 
+        // but we'll handle tab switching as a safety measure
         if (categoryId === activeTab) {
-          const remainingCategories = Object.keys(priceData || {}).filter(id => id !== categoryId);
+          // Calculate remaining categories based on current priceData
+          const currentCategories = Object.keys(priceData || {});
+          const remainingCategories = currentCategories.filter(id => id !== categoryId);
+          
           if (remainingCategories.length > 0) {
             console.log(`[useCategoryManagement] Mudando aba ativa de ${categoryId} para ${remainingCategories[0]}`);
             setActiveTab(remainingCategories[0]);
@@ -51,7 +55,7 @@ export function useCategoryManagement(priceData: PriceData, activeTab: string, s
         
         return true;
       } else {
-        console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId}`);
+        console.error(`[useCategoryManagement] Falha ao excluir categoria ${categoryId} - hook retornou false`);
         return false;
       }
     } catch (error) {

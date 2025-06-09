@@ -44,29 +44,46 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       const categoryName = category?.name || categoryId;
       console.log(`[CategoryDelete] Deletando categoria "${categoryName}" (${categoryId}) com ${category.items?.length || 0} itens`);
       
-      // Execute category deletion
+      // Execute category deletion - this is the main operation
       const success = await PriceService.deleteCategory(categoryId);
       
       if (!success) {
-        console.error(`[CategoryDelete] Falha na exclusão da categoria ${categoryId}`);
-        throw new Error("Falha na operação de exclusão no servidor.");
+        console.error(`[CategoryDelete] PriceService.deleteCategory retornou false para ${categoryId}`);
+        toast.error("Erro ao excluir categoria", {
+          description: "A operação de exclusão falhou no servidor. Tente novamente."
+        });
+        return false;
       }
       
-      console.log(`[CategoryDelete] Categoria ${categoryId} removida com sucesso pelo serviço`);
+      console.log(`[CategoryDelete] PriceService.deleteCategory retornou true para ${categoryId}`);
       
       // Force refresh data from server to ensure UI sync
-      const freshData = await PriceService.getAllData();
-      console.log(`[CategoryDelete] Dados atualizados após exclusão:`, Object.keys(freshData).join(", "));
-      
-      // Verify category was actually deleted
-      if (freshData[categoryId]) {
-        console.error(`[CategoryDelete] ERRO: Categoria ${categoryId} ainda existe após exclusão!`);
-        throw new Error("A categoria não foi completamente removida.");
+      try {
+        const freshData = await PriceService.getAllData();
+        console.log(`[CategoryDelete] Dados atualizados após exclusão:`, Object.keys(freshData).join(", "));
+        
+        // Double-check category was actually deleted
+        if (freshData[categoryId]) {
+          console.error(`[CategoryDelete] CRÍTICO: Categoria ${categoryId} ainda existe nos dados frescos!`);
+          toast.error("Falha na exclusão", {
+            description: "A categoria não foi completamente removida do servidor."
+          });
+          return false;
+        }
+        
+        // Update local state with fresh data immediately
+        setPriceData(freshData);
+        console.log(`[CategoryDelete] Estado local atualizado - categoria ${categoryId} removida com sucesso`);
+        
+      } catch (fetchError) {
+        console.error(`[CategoryDelete] Erro ao buscar dados frescos:`, fetchError);
+        // Even if we can't fetch fresh data, if deleteCategory returned true, 
+        // we should trust it and update local state optimistically
+        const optimisticData = { ...beforeData };
+        delete optimisticData[categoryId];
+        setPriceData(optimisticData);
+        console.log(`[CategoryDelete] Usando atualização otimista do estado local`);
       }
-      
-      // Update local state with fresh data
-      setPriceData(freshData);
-      console.log(`[CategoryDelete] Estado local atualizado - categoria ${categoryId} removida`);
       
       // Register change for notification
       await registerAdminChange("delete_category", `Categoria "${categoryName}" excluída`);
@@ -77,9 +94,9 @@ export function useCategoryDelete(setPriceData: (data: any) => void) {
       
       return true;
     } catch (error) {
-      console.error("[CategoryDelete] Erro ao excluir categoria:", error);
-      toast.error("Erro ao excluir categoria", {
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
+      console.error("[CategoryDelete] Erro inesperado ao excluir categoria:", error);
+      toast.error("Erro inesperado", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado ao excluir a categoria."
       });
       return false;
     } finally {
