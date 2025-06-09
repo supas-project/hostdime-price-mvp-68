@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { PriceService } from '@/services/price-service';
 import { InitService } from '@/services/init-service';
 import { toast } from '@/utils/toast-utils';
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 export function useDataLoader() {
   const { isAuthenticated } = useAuth();

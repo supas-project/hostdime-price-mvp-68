@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
 import { serverData } from '@/data/server-components';
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 interface UseComponentDataProps {
   componentId: string;

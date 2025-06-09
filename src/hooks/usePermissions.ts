@@ -1,5 +1,5 @@
 
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 export interface Permissions {
   canViewQuotes: boolean;

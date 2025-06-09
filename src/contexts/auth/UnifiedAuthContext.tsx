@@ -1,9 +1,11 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
-import { UnifiedAuthContext as AuthContextType } from "@/hooks/auth/useUnifiedAuth";
 import { useUnifiedAuth } from "@/hooks/auth/useUnifiedAuth";
 
-const UnifiedAuthContext = createContext<AuthContextType | undefined>(undefined);
+// Define the context type based on the unified auth hook
+type UnifiedAuthContextType = ReturnType<typeof useUnifiedAuth>;
+
+const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
 
 /**
  * Unified AuthProvider - single source of truth for auth context
