@@ -10,6 +10,7 @@ import { CategoriesTable } from './CategoriesTable';
 import { ItemsTable } from './ItemsTable';
 import { PriceModifiersTable } from './PriceModifiersTable';
 import { SyncStatus } from './SyncStatus';
+import { MigrationPanel } from './MigrationPanel';
 
 export function PricingTableManager() {
   const {
@@ -23,7 +24,7 @@ export function PricingTableManager() {
     syncWithStaticData
   } = usePricingTable();
 
-  const [activeTab, setActiveTab] = useState('categories');
+  const [activeTab, setActiveTab] = useState('migration');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
   const handleCategorySelect = (categoryId: string) => {
@@ -52,7 +53,7 @@ export function PricingTableManager() {
           {initialSyncCompleted && (
             <Badge variant="outline" className="text-green-600 border-green-600">
               <CheckCircle className="h-3 w-3 mr-1" />
-              Dados Carregados
+              Sistema Ativo
             </Badge>
           )}
           <SyncStatus />
@@ -63,7 +64,7 @@ export function PricingTableManager() {
             className="flex items-center gap-2"
           >
             <RotateCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Sincronizar Dados
+            Sincronizar
           </Button>
           <Button
             variant="outline"
@@ -84,8 +85,8 @@ export function PricingTableManager() {
             <div className="flex items-center gap-3">
               <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
               <div>
-                <p className="font-medium text-blue-900">Sincronizando dados...</p>
-                <p className="text-sm text-blue-700">Importando categorias e itens dos dados estáticos</p>
+                <p className="font-medium text-blue-900">Carregando sistema...</p>
+                <p className="text-sm text-blue-700">Verificando dados e configurações</p>
               </div>
             </div>
           </CardContent>
@@ -136,11 +137,11 @@ export function PricingTableManager() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
                 <p className="text-sm font-semibold text-green-600">
-                  {initialSyncCompleted ? 'Sincronizado' : 'Carregando...'}
+                  {initialSyncCompleted ? 'Online' : 'Carregando...'}
                 </p>
               </div>
               <Badge variant="outline" className="text-green-600 border-green-600">
-                Online
+                Sistema
               </Badge>
             </div>
           </CardContent>
@@ -152,12 +153,15 @@ export function PricingTableManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Gerenciamento de Componentes
+            Gerenciamento de Dados
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="migration">
+                Migração
+              </TabsTrigger>
               <TabsTrigger value="categories">
                 Categorias ({categories.length})
               </TabsTrigger>
@@ -168,6 +172,10 @@ export function PricingTableManager() {
                 Modificadores ({priceModifiers.length})
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="migration" className="mt-6">
+              <MigrationPanel />
+            </TabsContent>
 
             <TabsContent value="categories" className="mt-6">
               <CategoriesTable
