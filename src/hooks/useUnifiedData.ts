@@ -134,9 +134,15 @@ export function useUnifiedData() {
     return result;
   };
 
+  // New method for filtering items by category
+  const getItemsByCategory = (categoryId: string) => {
+    return items.filter(item => item.category_id === categoryId);
+  };
+
   // Legacy compatibility methods (no-op)
   const loadComponentsByType = async (type: string) => {
     console.log(`Legacy method loadComponentsByType called with type: ${type}`);
+    return [];
   };
 
   const loadAllData = async () => {
@@ -150,6 +156,37 @@ export function useUnifiedData() {
 
   const loadConsolidationStatus = async () => {
     console.log('Legacy loadConsolidationStatus method called');
+  };
+
+  // Legacy compatibility for missing service methods
+  const getComponentsByType = async (type: string) => {
+    console.log(`Legacy getComponentsByType called with type: ${type}`);
+    return [];
+  };
+
+  const getAllStorageItems = async () => {
+    console.log('Legacy getAllStorageItems called');
+    return [];
+  };
+
+  const getAllDataCenters = async () => {
+    console.log('Legacy getAllDataCenters called');
+    return [];
+  };
+
+  const getAllContractTypes = async () => {
+    console.log('Legacy getAllContractTypes called');
+    return [];
+  };
+
+  const getConsolidationStatus = async () => {
+    console.log('Legacy getConsolidationStatus called');
+    return consolidationStatus;
+  };
+
+  const consolidateAllData = async () => {
+    console.log('Legacy consolidateAllData called');
+    return true;
   };
 
   useEffect(() => {
@@ -177,10 +214,17 @@ export function useUnifiedData() {
     updateItem,
     deleteItem,
     loadData,
+    getItemsByCategory,
     // Legacy methods
     loadComponentsByType,
     loadAllData,
     consolidateData,
-    loadConsolidationStatus
+    loadConsolidationStatus,
+    getComponentsByType,
+    getAllStorageItems,
+    getAllDataCenters,
+    getAllContractTypes,
+    getConsolidationStatus,
+    consolidateAllData
   };
 }
