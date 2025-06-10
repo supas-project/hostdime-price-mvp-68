@@ -48,6 +48,24 @@ export interface PriceModifier {
   updated_at: string;
 }
 
+// Helper function to convert Supabase data to ComponentItem
+function mapToComponentItem(data: any): ComponentItem {
+  return {
+    ...data,
+    specs: Array.isArray(data.specs) ? data.specs : [],
+    metadata: typeof data.metadata === 'object' ? data.metadata : {}
+  };
+}
+
+// Helper function to convert Supabase data to PriceModifier
+function mapToPriceModifier(data: any): PriceModifier {
+  return {
+    ...data,
+    modifier_type: data.modifier_type as 'percentage' | 'fixed' | 'multiplier',
+    conditions: typeof data.conditions === 'object' ? data.conditions : {}
+  };
+}
+
 export class PricingTableService {
   // ============ CATEGORIAS ============
   static async getAllCategories(): Promise<ComponentCategory[]> {
@@ -138,7 +156,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(mapToComponentItem);
   }
 
   static async getItemsByType(componentType: string): Promise<ComponentItem[]> {
@@ -157,7 +175,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(mapToComponentItem);
   }
 
   static async getItemByComponentId(componentId: string): Promise<ComponentItem | null> {
@@ -173,7 +191,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data;
+    return data ? mapToComponentItem(data) : null;
   }
 
   static async createItem(item: Omit<ComponentItem, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<ComponentItem> {
@@ -188,7 +206,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data;
+    return mapToComponentItem(data);
   }
 
   static async updateItem(id: string, updates: Partial<ComponentItem>): Promise<ComponentItem> {
@@ -204,7 +222,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data;
+    return mapToComponentItem(data);
   }
 
   static async deleteItem(id: string): Promise<void> {
@@ -232,7 +250,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(mapToPriceModifier);
   }
 
   static async createPriceModifier(modifier: Omit<PriceModifier, 'id' | 'created_at' | 'updated_at'>): Promise<PriceModifier> {
@@ -247,7 +265,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data;
+    return mapToPriceModifier(data);
   }
 
   static async updatePriceModifier(id: string, updates: Partial<PriceModifier>): Promise<PriceModifier> {
@@ -263,7 +281,7 @@ export class PricingTableService {
       throw error;
     }
 
-    return data;
+    return mapToPriceModifier(data);
   }
 
   static async deletePriceModifier(id: string): Promise<void> {
@@ -283,7 +301,6 @@ export class PricingTableService {
     console.log('[PricingTableService] Iniciando sincronização completa...');
     
     // Importar dados estáticos
-    const { serverData } = await import('@/data/server-components');
     const { cpuComponents } = await import('@/data/cpu-components');
     const { memoryComponents } = await import('@/data/memory-components');
     const { osComponents } = await import('@/data/os-components');
@@ -343,7 +360,8 @@ export class PricingTableService {
         is_hardware: option.isHardware || false,
         specs: Array.isArray(option.specs) ? option.specs : [],
         metadata: option.metadata || {},
-        display_order: 0
+        display_order: 0,
+        is_active: true
       };
 
       if (existingItem) {

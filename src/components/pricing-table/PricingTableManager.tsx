@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Plus, Sync, Settings } from 'lucide-react';
+import { RefreshCw, Plus, RotateCcw, Settings } from 'lucide-react';
 import { usePricingTable } from '@/hooks/usePricingTable';
 import { CategoriesTable } from './CategoriesTable';
 import { ItemsTable } from './ItemsTable';
@@ -55,7 +54,7 @@ export function PricingTableManager() {
             disabled={loading}
             className="flex items-center gap-2"
           >
-            <Sync className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Sincronizar Dados
           </Button>
           <Button

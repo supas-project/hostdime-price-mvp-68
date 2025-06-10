@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from './pages/Index';
@@ -10,22 +11,24 @@ import Diagnostics from './pages/Diagnostics';
 import NotFound from './pages/NotFound';
 import LoginPage from './pages/LoginPage';
 import ResetPassword from './pages/ResetPassword';
-import MainLayout from './components/MainLayout';
+import { MainLayout } from './layouts/MainLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import { UnifiedAuthProvider } from './contexts/auth/UnifiedAuthContext';
 import { ThemeProvider } from "@/components/theme-provider"
-import { QueryProvider } from './contexts/query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/sonner"
 
 import PricingTable from "@/pages/PricingTable";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <Router>
       <UnifiedAuthProvider>
-        <QueryProvider>
-          <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
@@ -110,7 +113,7 @@ function App() {
             </Routes>
             <Toaster />
           </ThemeProvider>
-        </QueryProvider>
+        </QueryClientProvider>
       </UnifiedAuthProvider>
     </Router>
   );

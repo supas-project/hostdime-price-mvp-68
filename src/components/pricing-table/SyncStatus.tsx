@@ -3,10 +3,12 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
+type SyncStatusType = 'synced' | 'pending' | 'error';
+
 export function SyncStatus() {
   // Por enquanto, vamos mostrar como sincronizado
   // Futuramente pode ser conectado a um serviço real de status
-  const status = 'synced'; // 'synced', 'pending', 'error'
+  const status: SyncStatusType = 'synced';
 
   const getStatusConfig = () => {
     switch (status) {
