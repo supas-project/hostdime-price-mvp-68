@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, Database, CheckCircle, AlertTriangle, ArrowRight, Trash2, Bug } from 'lucide-react';
+import { RefreshCw, Database, CheckCircle, AlertTriangle, ArrowRight, Trash2, Bug, Zap } from 'lucide-react';
 import { DataMigrationService } from '@/services/data-migration-service';
+import { DirectMigrationService } from '@/services/direct-migration-service';
 import { toast } from 'sonner';
 
 interface MigrationStatus {
@@ -21,6 +22,7 @@ export function MigrationPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isDirectMigrating, setIsDirectMigrating] = useState(false);
 
   const loadMigrationStatus = async () => {
     try {
@@ -46,6 +48,27 @@ export function MigrationPanel() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDirectMigration = async () => {
+    try {
+      setIsDirectMigrating(true);
+      console.log('🚀 Iniciando migração direta...');
+      
+      await DirectMigrationService.executeFullMigration();
+      
+      // Aguardar um momento antes de verificar o status
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await loadMigrationStatus();
+      
+      toast.success('Migração direta realizada com sucesso!');
+      console.log('✅ Migração direta concluída');
+    } catch (error) {
+      console.error('❌ Erro na migração direta:', error);
+      toast.error(`Erro na migração direta: ${error}`);
+    } finally {
+      setIsDirectMigrating(false);
     }
   };
 
@@ -186,9 +209,29 @@ export function MigrationPanel() {
         {/* Ações */}
         <div className="flex gap-2 flex-wrap">
           <Button 
-            onClick={handleMigration}
-            disabled={isMigrating || isLoading || isClearing}
+            onClick={handleDirectMigration}
+            disabled={isDirectMigrating || isLoading || isClearing || isMigrating}
             className="flex-1 min-w-[200px]"
+            variant="default"
+          >
+            {isDirectMigrating ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Migrando Diretamente...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Migração Direta
+              </>
+            )}
+          </Button>
+
+          <Button 
+            onClick={handleMigration}
+            disabled={isMigrating || isLoading || isClearing || isDirectMigrating}
+            className="flex-1 min-w-[200px]"
+            variant="outline"
           >
             {isMigrating ? (
               <>
@@ -206,7 +249,7 @@ export function MigrationPanel() {
           <Button 
             variant="outline"
             onClick={loadMigrationStatus}
-            disabled={isLoading || isMigrating || isClearing}
+            disabled={isLoading || isMigrating || isClearing || isDirectMigrating}
             title="Atualizar Status"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -216,7 +259,7 @@ export function MigrationPanel() {
             <Button 
               variant="outline"
               onClick={handleClearData}
-              disabled={isLoading || isMigrating || isClearing}
+              disabled={isLoading || isMigrating || isClearing || isDirectMigrating}
               className="text-red-600 hover:text-red-700"
               title="Limpar Dados Migrados"
             >
@@ -237,6 +280,20 @@ export function MigrationPanel() {
           </div>
         )}
 
+        {/* Informações sobre a migração direta */}
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 text-blue-800 mb-2">
+            <Zap className="h-4 w-4" />
+            <span className="font-medium">Migração Direta</span>
+          </div>
+          <div className="text-xs text-blue-700 space-y-1">
+            <p>• <strong>Recomendado:</strong> Usa JavaScript em vez de SQL complexo</p>
+            <p>• <strong>Mais confiável:</strong> Evita problemas de compatibilidade SQL</p>
+            <p>• <strong>Controle total:</strong> Validação e inserção item por item</p>
+            <p>• <strong>Resultado garantido:</strong> Dados estáticos transferidos corretamente</p>
+          </div>
+        </div>
+
         {/* Debug info */}
         {migrationStatus && !migrationStatus.isHealthy && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -246,7 +303,7 @@ export function MigrationPanel() {
             </div>
             <div className="text-xs text-yellow-700 space-y-1">
               <p>• Verifique o console do navegador para logs detalhados</p>
-              <p>• Tente limpar os dados e migrar novamente</p>
+              <p>• Tente a migração direta se a migração padrão falhar</p>
               <p>• Certifique-se de que as configurações estáticas estão disponíveis</p>
             </div>
           </div>

@@ -169,6 +169,36 @@ export function usePricingTable() {
     }
   };
 
+  // Função para executar migração direta dos dados estáticos
+  const executeDirectMigration = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Executando migração direta dos dados estáticos...');
+      
+      // Primeiro inserir dados de CPU
+      const cpuCategoryInsert = await fetch('/api/direct-migration/cpu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!cpuCategoryInsert.ok) {
+        throw new Error('Falha ao migrar dados de CPU');
+      }
+
+      // Recarregar categorias para verificar se funcionou
+      await loadCategories();
+      
+      setInitialSyncCompleted(true);
+      toast.success('Migração direta executada com sucesso!');
+      console.log('✅ Migração direta concluída');
+    } catch (error) {
+      console.error('❌ Erro na migração direta:', error);
+      toast.error(`Erro na migração direta: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sincronizar com dados estáticos usando o novo serviço
   const syncWithStaticData = async () => {
     try {
@@ -187,7 +217,9 @@ export function usePricingTable() {
       console.log('✅ Sincronização concluída');
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
-      toast.error(`Erro na sincronização: ${error}`);
+      // Se falhar, tentar migração direta
+      console.log('🔄 Tentando migração direta como fallback...');
+      await executeDirectMigration();
     } finally {
       setLoading(false);
     }
@@ -198,24 +230,24 @@ export function usePricingTable() {
     try {
       console.log('🔍 Verificando se sincronização inicial é necessária...');
       
-      // Primeiro garantir que as categorias básicas existem
-      await DataMigrationService.ensureBasicCategoriesExist();
+      // Carregar categorias diretamente para verificar
+      await loadCategories();
       
-      // Verificar status do sistema
-      const status = await DataMigrationService.checkMigrationStatus();
+      // Se não há categorias, executar migração direta
+      const currentCategories = await PricingTableService.getAllCategories();
       
-      if (status.totalCategories === 0) {
-        console.log('📦 Nenhuma categoria encontrada. Executando sincronização inicial...');
-        await syncWithStaticData();
+      if (currentCategories.length === 0) {
+        console.log('📦 Nenhuma categoria encontrada. Executando migração direta...');
+        await executeDirectMigration();
       } else {
-        console.log(`✅ Sistema já inicializado: ${status.totalCategories} categorias, ${status.totalItems} itens`);
-        await loadCategories();
+        console.log(`✅ Sistema já inicializado: ${currentCategories.length} categorias encontradas`);
+        setCategories(currentCategories);
         setInitialSyncCompleted(true);
       }
     } catch (error) {
       console.error('❌ Erro na sincronização inicial:', error);
-      // Se houver erro, tentar carregar dados existentes
-      await loadCategories();
+      // Tentar migração direta como último recurso
+      await executeDirectMigration();
     }
   };
 
@@ -254,6 +286,7 @@ export function usePricingTable() {
     loadPriceModifiers,
 
     // Sincronização
-    syncWithStaticData
+    syncWithStaticData,
+    executeDirectMigration
   };
 }
