@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { ComponentOption } from '@/types/component';
-import { ComponentService } from '@/services/componentService';
+import { ComponentService } from '@/services/component-service-refactored';
 import { toast } from 'sonner';
 
 export function useComponentData(componentType?: string) {

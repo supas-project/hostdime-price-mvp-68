@@ -5,7 +5,7 @@ import {
   initializeServerCategories, 
   cleanupDuplicateCategories,
   syncDiskDataWithPriceService
-} from './component-sync-service';
+} from '@/services/component-sync';
 
 /**
  * Service for initializing application data

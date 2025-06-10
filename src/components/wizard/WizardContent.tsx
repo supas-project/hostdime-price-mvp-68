@@ -1,3 +1,4 @@
+
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
+import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);

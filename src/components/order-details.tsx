@@ -1,4 +1,3 @@
-
 import { ComponentOption } from "@/types/component";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -7,10 +6,9 @@ import { Separator } from "@/components/ui/separator";
 import { Check, Shield, Wifi, X } from "lucide-react";
 import { useWizard } from "@/contexts/WizardContext";
 import { cn } from "@/lib/utils";
-import { CustomService } from "@/types/wizard";
+import { CustomService, ConnectivityItemsMap } from "@/types/wizard";
 import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
 import { usePayBackCalculation } from "@/hooks/usePayBackCalculation";
-import { ConnectivityItemsMap } from "@/types/wizard";
 import { convertStorageItemsMapToArray, convertConnectivityToArray } from "@/utils/storage-utils";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 
@@ -20,13 +18,11 @@ interface OrderDetailsProps {
   onRemoveItem?: (type: string) => void;
 }
 
-// CORREÇÃO: Definir a função auxiliar antes de usá-la
-// Corrigido cálculo de PayBack - não estamos mais descontando o valor mas sim aplicando a divisão pelo fator
+// Calculate price with PayBack
 const calculatePriceWithPayBack = (component: ComponentOption, contractDuration: string): number => {
   if (component.isHardware && contractDuration !== "0") {
     const paybackValue = getPayBackValue(component, contractDuration);
     if (paybackValue) {
-      // Preço dividido pelo fator de PayBack
       return component.price / paybackValue;
     }
   }
@@ -36,12 +32,13 @@ const calculatePriceWithPayBack = (component: ComponentOption, contractDuration:
 export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: OrderDetailsProps) {
   const { storageItems, customServices, connectivityItems, handleRemoveComponent } = useWizard();
 
-  // CORREÇÃO: Buscar explicitamente os componentes de datacenter e contrato usando lowercase
+  // Ensure connectivityItems is properly typed
+  const typedConnectivityItems: ConnectivityItemsMap = connectivityItems || {};
+
   const dataCenterComponent = selectedComponents["datacenter"];
   const contractComponent = selectedComponents["contrato"];
   const contractDuration = contractComponent?.subtype || "0";
 
-  // CORREÇÃO: Garantir que temos listas deduplicadas para todos os cálculos
   const uniqueInternalStorage = deduplicateStorageItems(storageItems.internal);
   const uniqueExternalStorage = deduplicateStorageItems(storageItems.external);
   
@@ -51,15 +48,12 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   // Filter non-storage components and handle OS price calculation
   const otherComponents = Object.values(selectedComponents).filter(
     component => {
-      // CORREÇÃO: Verificar tanto pelo tipo original quanto pelo tipo em lowercase
       const type = component?.type?.toLowerCase();
       
-      // Skip storage, datacenter and contract components
       if (type === "armazenamento" || type === "datacenter" || type === "contrato") {
         return false;
       }
       
-      // Special handling for OS price calculation
       if (component.type === "SistemaOperacional" && component.metadata?.perCore) {
         const processorInfo = selectedComponents["processador"];
         const coreCount = processorInfo?.metadata?.cores || 1;
@@ -74,7 +68,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
   // Calculate prices with PayBack for hardware components
   const nonStoragePrice = otherComponents.reduce(
     (sum, component) => {
-      // Apply PayBack for hardware components
       const price = component.isHardware 
         ? calculatePriceWithPayBack(component, contractDuration)
         : component.price;
@@ -84,7 +77,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     0
   );
   
-  // Apply PayBack to internal storage - usar os arrays deduplicados
+  // Apply PayBack to internal storage
   const internalStoragePrice = uniqueInternalStorage
     .filter(disk => disk && disk.price > 0)
     .reduce(
@@ -98,7 +91,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
       0
     );
   
-  // Apply PayBack to external storage - usar os arrays deduplicados
+  // Apply PayBack to external storage
   const externalStoragePrice = uniqueExternalStorage
     .filter(storage => storage && storage.price > 0)
     .reduce(
@@ -112,20 +105,25 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
       0
     );
   
-  // Calculate other prices normally (non-hardware components)
+  // Calculate other prices normally
   const customServicesPrice = Array.isArray(customServices) ?
     customServices.reduce((sum, service) => sum + service.price, 0) : 0;
   
-  // Process connectivity items
-  const connectivityPrice = Object.values(connectivityItems || {})
-    .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
+  // Process connectivity items with proper typing
+  const connectivityPrice = Object.values(typedConnectivityItems)
+    .reduce((sum, item) => {
+      if (item && item.option && typeof item.option.price === 'number' && typeof item.quantity === 'number') {
+        return sum + (item.option.price * item.quantity);
+      }
+      return sum;
+    }, 0);
   
   // Calculate final totals
   const subtotal = nonStoragePrice + internalStoragePrice + externalStoragePrice + customServicesPrice + connectivityPrice;
   const profit = (subtotal * margin) / 100;
   const total = subtotal + profit;
 
-  // Handler para remoção de itens
+  // Handler for item removal
   const handleRemoveItem = (itemId: string, itemType?: string) => {
     console.log(`[OrderDetails] Removendo item: ${itemId}, tipo: ${itemType || 'não especificado'}`);
     
@@ -159,8 +157,8 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
     return null;
   };
 
-  // Extract connectivity items for rendering
-  const connectivityItemsList = Object.entries(connectivityItems || {}).map(([itemId, item]) => ({
+  // Extract connectivity items for rendering with proper typing
+  const connectivityItemsList = Object.entries(typedConnectivityItems).map(([itemId, item]) => ({
     id: itemId,
     option: item.option,
     quantity: item.quantity
@@ -469,7 +467,7 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
             )}
             
             {/* Connectivity Items */}
-            {Object.keys(connectivityItems || {}).length > 0 && (
+            {Object.keys(typedConnectivityItems).length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-medium text-primary/80">Conectividade</h3>
                 {connectivityItemsList.map(({id, option, quantity}) => (
@@ -488,7 +486,6 @@ export function OrderDetails({ selectedComponents, margin = 25, onRemoveItem }: 
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-primary">{formatCurrency(option.price * quantity)}</span>
                         
-                        {/* CORREÇÃO: Botão de remoção agora usa o ID correto do item */}
                         <button
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                           onClick={() => handleRemoveItem(id)}
