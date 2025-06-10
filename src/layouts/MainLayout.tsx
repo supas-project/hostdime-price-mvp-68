@@ -1,18 +1,15 @@
 
-import React from "react";
-import { Navbar } from "../components/navigation/Navbar";
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/navigation/Navbar";
 import { cn } from "@/lib/utils";
+import { NotificationCenter } from "@/components/notification-center";
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
-
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout = () => {
   return (
     <div className={cn("min-h-screen flex flex-col bg-background text-foreground")}>
-      <Navbar />
+      <Navbar notifications={<NotificationCenter />} />
       <main className="flex-1">
-        {children}
+        <Outlet />
       </main>
     </div>
   );

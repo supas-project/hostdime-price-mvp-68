@@ -1,45 +1,72 @@
-
 import { serverData } from "@/data/server-components";
 import { AccordionStep } from "@/components/accordion-step";
 import { useWizard } from "@/contexts/WizardContext";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComponentOption, ServerComponent } from "@/types/component";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 import { findMatchingComponent } from "@/utils/component-matching";
 import { cn } from "@/lib/utils";
+import { PriceService } from "@/services/price-service";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { initializeServerCategories, cleanupDuplicateCategories } from "@/services/component-sync-service";
 
 export function WizardContent() {
   const [showAllSteps, setShowAllSteps] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   
   const { 
     currentStep, 
+    setCurrentStep,
     selectedComponents, 
     connectivityItems,
     storageItems,
     handleSelectOption,
     isStepComplete,
+    setStepComplete,
     setConnectivityItems,
     handleSelectStorageItem,
+    categoriesLoaded
   } = useWizard();
 
   console.log(`[WizardContent] Current step: ${currentStep}, Selected components:`, selectedComponents);
 
   const refreshData = async () => {
     try {
-      toast.success("Dados atualizados!", {
-        description: "Componentes estáticos carregados."
+      setIsLoadingData(true);
+      await cleanupDuplicateCategories();
+      await PriceService.forceRefreshFromLatestSource();
+      await initializeServerCategories();
+      
+      toast.success("Dados sincronizados com sucesso!", {
+        description: "Todas as categorias e itens atualizados."
       });
     } catch (error) {
-      console.error("Erro ao atualizar dados:", error);
-      toast.error("Falha ao atualizar dados", {
-        description: "Usando dados estáticos."
+      console.error("Erro ao sincronizar dados:", error);
+      toast.error("Falha ao sincronizar dados", {
+        description: "Verifique sua conexão e tente novamente."
       });
+    } finally {
+      setIsLoadingData(false);
     }
   };
+
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        await refreshData();
+      } catch (error) {
+        console.error("Erro ao inicializar dados:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    
+    initializeData();
+  }, []);
 
   const getSelectedOption = (component: ServerComponent): ComponentOption | null => {
     if (!component) return null;
@@ -67,6 +94,15 @@ export function WizardContent() {
   };
 
   const currentComponent = serverData.componentes[currentStep];
+
+  if (isLoadingData) {
+    return (
+      <div className="space-y-4 w-full p-4 animate-pulse">
+        <Skeleton className="h-8 w-40 bg-muted-foreground/20" />
+        <Skeleton className="h-64 w-full bg-muted-foreground/10" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
@@ -98,10 +134,11 @@ export function WizardContent() {
           variant="outline"
           size="sm"
           onClick={refreshData}
+          disabled={isLoadingData}
           className="flex items-center gap-1 text-xs sm:text-sm py-1.5 px-2.5 sm:py-2 sm:px-3 h-auto"
         >
-          <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
-          <span>Atualizar</span>
+          <RefreshCw className={cn("h-3 w-3 sm:h-4 sm:w-4", isLoadingData && "animate-spin")} />
+          <span>Sincronizar</span>
         </Button>
       </div>
 

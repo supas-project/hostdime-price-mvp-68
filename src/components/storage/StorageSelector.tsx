@@ -1,59 +1,20 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useStorageTypes } from './hooks/useStorageTypes';
+import React, { useState, useEffect } from 'react';
+import { useStorageTypes, StorageType } from './hooks/useStorageTypes';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { PricedDiskOption } from '@/types/storage';
+import { InternalStoragePanel } from './InternalStoragePanel';
 import { ExternalStoragePanel } from './ExternalStoragePanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StorageHeader } from './storage-header';
 import { HardDrive } from 'lucide-react';
-import { PricedDiskOption } from '@/types/storage';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils';
+import { PriceService } from '@/services/price-service';
 
 export interface StorageSelectorProps {
   onSelectInternalDisk: (disk: PricedDiskOption, quantity: number) => void;
   onSelectExternalStorage: (type: string, capacity: number, price: number) => void;
 }
-
-// Static internal disk data
-const staticInternalDisks: PricedDiskOption[] = [
-  {
-    id: 'ssd-480gb',
-    type: 'ssd',
-    capacity: '480 GB',
-    price: 150,
-    specs: {
-      readSpeed: '550 MB/s',
-      writeSpeed: '520 MB/s',
-      iops: '95,000',
-      recommended: ['Web servers', 'Databases']
-    }
-  },
-  {
-    id: 'ssd-960gb',
-    type: 'ssd',
-    capacity: '960 GB',
-    price: 280,
-    specs: {
-      readSpeed: '550 MB/s',
-      writeSpeed: '520 MB/s',
-      iops: '95,000',
-      recommended: ['Web servers', 'Databases']
-    }
-  },
-  {
-    id: 'nvme-1tb',
-    type: 'nvme',
-    capacity: '1 TB',
-    price: 350,
-    specs: {
-      readSpeed: '3,500 MB/s',
-      writeSpeed: '3,000 MB/s',
-      iops: '500,000',
-      recommended: ['High performance apps', 'Gaming servers']
-    }
-  }
-];
 
 export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage }: StorageSelectorProps) {
   const storageTypes = useStorageTypes();
@@ -66,29 +27,86 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       throughput: string;
       description: string;
     }
-  }>({
-    'block-storage': {
-      name: 'Block Storage',
-      pricePerGB: 0.15,
-      iops: '3,000',
-      throughput: '125 MB/s',
-      description: 'Storage de alta performance para aplicações críticas'
-    },
-    'object-storage': {
-      name: 'Object Storage',
-      pricePerGB: 0.08,
-      iops: '1,000',
-      throughput: '50 MB/s',
-      description: 'Storage econômico para backups e arquivos'
+  }>({});
+  
+  // CORREÇÃO: Carregar dados REAIS da tabela de preços para storage externo
+  useEffect(() => {
+    const loadExternalStorageFromPriceTable = async () => {
+      try {
+        console.log('[StorageSelector] Loading external storage from price table...');
+        
+        // Tentar carregar da categoria "external_storage" primeiro
+        let externalStorageItems = await PriceService.getCategoryItems('external_storage');
+        
+        // Se não encontrar, tentar categoria "storage"
+        if (!externalStorageItems || externalStorageItems.length === 0) {
+          console.log('[StorageSelector] No items in external_storage, trying storage category...');
+          const allStorageItems = await PriceService.getCategoryItems('storage');
+          // Filtrar apenas itens que são claramente de storage externo
+          externalStorageItems = allStorageItems?.filter(item => 
+            item.name.toLowerCase().includes('block') || 
+            item.name.toLowerCase().includes('storage')
+          ) || [];
+        }
+        
+        if (externalStorageItems && externalStorageItems.length > 0) {
+          console.log(`[StorageSelector] Found ${externalStorageItems.length} external storage items from price table`);
+          
+          const storageMap: { [key: string]: any } = {};
+          
+          externalStorageItems.forEach((item, index) => {
+            // Extrair IOPS das specs
+            const iopsSpec = item.specs?.find(spec => spec.toLowerCase().includes('iops'));
+            const iops = iopsSpec ? iopsSpec : 'N/A IOPS';
+            
+            // Extrair throughput das specs  
+            const throughputSpec = item.specs?.find(spec => spec.toLowerCase().includes('throughput') || spec.toLowerCase().includes('mb/s'));
+            const throughput = throughputSpec ? throughputSpec : 'N/A MB/s';
+            
+            // Usar o preço REAL da tabela
+            const pricePerGB = typeof item.price === 'number' ? item.price : 0;
+            
+            console.log(`[StorageSelector] REAL PRICE - Item: ${item.name}, Price per GB from table: ${pricePerGB}`);
+            
+            storageMap[item.id] = {
+              name: item.name,
+              pricePerGB: pricePerGB, // VALOR REAL DA TABELA
+              iops: iops,
+              throughput: throughput,
+              description: item.description || 'Storage externo de alta performance'
+            };
+          });
+          
+          setExternalStorageTypes(storageMap);
+          console.log('[StorageSelector] REAL PRICES loaded from price table:', storageMap);
+        } else {
+          console.log('[StorageSelector] No external storage items found in price table');
+          setExternalStorageTypes({});
+        }
+      } catch (error) {
+        console.error('[StorageSelector] Error loading external storage from price table:', error);
+        setExternalStorageTypes({});
+      }
+    };
+
+    loadExternalStorageFromPriceTable();
+  }, []);
+  
+  // Log dos tipos de armazenamento que foram carregados
+  useEffect(() => {
+    console.log('[StorageSelector] Loaded storage types:', storageTypes.length);
+    if (storageTypes.length > 0) {
+      console.log('[StorageSelector] First storage type:', storageTypes[0]);
     }
-  });
-
-  const handleSelectInternalDisk = (disk: PricedDiskOption) => {
-    onSelectInternalDisk(disk, 1);
-  };
-
-  const storageTypesCount = useMemo(() => staticInternalDisks.length, []);
-  const externalTypesCount = useMemo(() => Object.keys(externalStorageTypes).length, [externalStorageTypes]);
+  }, [storageTypes]);
+  
+  // Log dos tipos externos carregados
+  useEffect(() => {
+    console.log('[StorageSelector] External storage types loaded:', Object.keys(externalStorageTypes).length);
+    Object.entries(externalStorageTypes).forEach(([key, type]) => {
+      console.log(`[StorageSelector] REAL PRICE - External type ${key}: ${type.name} = ${type.pricePerGB}/GB`);
+    });
+  }, [externalStorageTypes]);
 
   return (
     <div className="space-y-8">
@@ -100,64 +118,12 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'internal' | 'external')}>
         <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="internal">
-            Discos Internos ({storageTypesCount})
-          </TabsTrigger>
-          <TabsTrigger value="external">
-            Storage Externo ({externalTypesCount})
-          </TabsTrigger>
+          <TabsTrigger value="internal">Discos Internos</TabsTrigger>
+          <TabsTrigger value="external">Storage Externo</TabsTrigger>
         </TabsList>
         
         <TabsContent value="internal" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {staticInternalDisks.map((disk) => (
-              <Card key={disk.id} className="relative">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{disk.type.toUpperCase()}</span>
-                    <span className="text-lg font-bold text-primary">
-                      {formatCurrency(disk.price)}
-                    </span>
-                  </CardTitle>
-                  <CardDescription>{disk.capacity}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Leitura:</span>
-                      <span>{disk.specs.readSpeed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Escrita:</span>
-                      <span>{disk.specs.writeSpeed}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>IOPS:</span>
-                      <span>{disk.specs.iops}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Recomendado para:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {disk.specs.recommended.map((rec, index) => (
-                        <span key={index} className="text-xs bg-secondary px-2 py-1 rounded">
-                          {rec}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => handleSelectInternalDisk(disk)}
-                    className="w-full"
-                  >
-                    Selecionar
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <InternalStoragePanel onSelectDisk={onSelectInternalDisk} />
         </TabsContent>
         
         <TabsContent value="external" className="mt-4">

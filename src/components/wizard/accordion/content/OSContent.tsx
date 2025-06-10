@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { OSSelector } from "./os/OSSelector";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PriceService } from "@/services/price-service";
 
 interface OSContentProps {
   options?: ComponentOption[];
@@ -28,6 +29,28 @@ export function OSContent({
     }
   }, [propOptions, options]);
   
+  useEffect(() => {
+    const updateFromPriceTable = async () => {
+      try {
+        const { data: session } = await PriceService.supabase.auth.getSession();
+        if (!session.session) {
+          console.log("User not authenticated, skipping OS data refresh");
+          return;
+        }
+        
+        await PriceService.forceRefreshFromLatestSource().catch(error => {
+          if (!error.message.includes("Authentication")) {
+            console.error("Erro ao carregar dados de SO da tabela de preços:", error);
+          }
+        });
+      } catch (error) {
+        console.log("Error during OS data refresh:", error);
+      }
+    };
+    
+    updateFromPriceTable();
+  }, []);
+  
   if (isLoading && !propOptions) {
     return (
       <Card className="p-4 sm:p-6">
@@ -48,7 +71,7 @@ export function OSContent({
         <div className="flex flex-col gap-4">
           <div className="text-base font-medium text-white">Sistema Operacional</div>
           <p className="text-sm text-muted-foreground">
-            Nenhum sistema operacional disponível no momento.
+            Nenhum sistema operacional disponível. Por favor, certifique-se de que existem opções cadastradas na tabela de preços.
           </p>
         </div>
       </Card>

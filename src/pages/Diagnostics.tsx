@@ -1,10 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DiagnosticReport, DiagnosticResult, diagnosticService } from "@/services/diagnostic-service";
 import { RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 

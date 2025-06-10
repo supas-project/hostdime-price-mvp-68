@@ -1,19 +1,17 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-/**
- * Unified protected route using centralized auth
- */
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
+  // Se ainda está carregando a informação de autenticação, mostra um loader
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -25,9 +23,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
+  // Se não estiver autenticado, redireciona para página de login
   if (!isAuthenticated) {
+    // Salva a localização atual para redirecionamento após login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Se estiver autenticado, renderiza o conteúdo protegido
   return <>{children}</>;
 }

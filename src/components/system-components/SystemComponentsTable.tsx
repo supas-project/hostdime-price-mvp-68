@@ -4,26 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Eye } from 'lucide-react';
+import { SystemComponent } from '@/services/systemComponentsService';
 import { formatCurrency } from '@/lib/utils';
 
-interface UnifiedSystemComponent {
-  id: string;
-  component_type: string;
-  component_id: string;
-  name: string;
-  description?: string;
-  price: number;
-  subtype?: string;
-  is_hardware: boolean;
-  is_active: boolean;
-  specs?: string[];
-  metadata?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
-
 interface SystemComponentsTableProps {
-  components: UnifiedSystemComponent[];
+  components: SystemComponent[];
   loading: boolean;
   onRefetch: () => void;
 }

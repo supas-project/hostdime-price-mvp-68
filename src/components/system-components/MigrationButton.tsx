@@ -2,130 +2,96 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Database, Play, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
-import { useUnifiedData } from '@/hooks/useUnifiedData';
+import { Database, Play, CheckCircle } from 'lucide-react';
+import { DataMigrationService } from '@/services/data-migration-service';
+import { toast } from 'sonner';
 
 export function MigrationButton() {
-  const { 
-    loading, 
-    consolidationStatus, 
-    consolidateData, 
-    loadConsolidationStatus 
-  } = useUnifiedData();
+  const [isRunning, setIsRunning] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<{
+    needed: boolean;
+    summary: string;
+  } | null>(null);
 
-  const handleConsolidateData = async () => {
-    await consolidateData();
+  const checkStatus = async () => {
+    try {
+      const status = await DataMigrationService.checkMigrationStatus();
+      setMigrationStatus(status);
+    } catch (error) {
+      console.error('Error checking migration status:', error);
+      toast.error('Erro ao verificar status da migração');
+    }
   };
 
-  const handleRefreshStatus = async () => {
-    await loadConsolidationStatus();
+  const runMigration = async () => {
+    setIsRunning(true);
+    try {
+      await DataMigrationService.runCompleteMigration();
+      await checkStatus(); // Update status after migration
+    } catch (error) {
+      console.error('Migration failed:', error);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   React.useEffect(() => {
-    loadConsolidationStatus();
+    checkStatus();
   }, []);
-
-  const isCompleted = consolidationStatus?.phase === 'completed';
-  const isError = consolidationStatus?.phase === 'error';
-  const isConsolidating = consolidationStatus?.phase === 'consolidating';
-  
-  const getStatusColor = () => {
-    if (isCompleted) return 'text-green-600';
-    if (isError) return 'text-red-600';
-    if (isConsolidating) return 'text-blue-600';
-    return 'text-amber-600';
-  };
-
-  const getStatusIcon = () => {
-    if (isCompleted) return <CheckCircle className="h-4 w-4" />;
-    if (isError) return <AlertTriangle className="h-4 w-4" />;
-    return <AlertTriangle className="h-4 w-4" />;
-  };
 
   return (
     <Card className="mb-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="h-5 w-5" />
-          Consolidação de Dados para Produção
+          Migração de Dados Estáticos
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {consolidationStatus ? (
-          <div>
-            <div className={`flex items-center gap-2 ${getStatusColor()}`}>
-              {getStatusIcon()}
-              <span className="font-medium">
-                Status: {consolidationStatus.phase === 'completed' ? 'Completa' :
-                        consolidationStatus.phase === 'consolidating' ? 'Em andamento' :
-                        consolidationStatus.phase === 'error' ? 'Erro' : 'Pendente'}
-              </span>
+        <div className="text-sm text-muted-foreground">
+          {migrationStatus ? (
+            <div>
+              <p><strong>Status:</strong> {migrationStatus.summary}</p>
+              {migrationStatus.needed ? (
+                <p className="text-amber-600 mt-1">
+                  ⚠️ Migração necessária - Banco de dados vazio
+                </p>
+              ) : (
+                <p className="text-green-600 mt-1 flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  Dados já migrados
+                </p>
+              )}
             </div>
-            
-            {(consolidationStatus.components_count > 0 || consolidationStatus.datacenters_count > 0) && (
-              <div className="mt-2">
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Dados consolidados:</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-1">
-                  <div>Componentes: {consolidationStatus.components_count}</div>
-                  <div>Data Centers: {consolidationStatus.datacenters_count}</div>
-                  <div>Contratos: {consolidationStatus.contracts_count}</div>
-                  <div>Storage: {consolidationStatus.storage_count}</div>
-                </div>
-              </div>
-            )}
-
-            {consolidationStatus.errors.length > 0 && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-                <p className="text-sm font-medium text-red-800">Erros encontrados:</p>
-                <ul className="text-xs text-red-600 mt-1">
-                  {consolidationStatus.errors.map((error, index) => (
-                    <li key={index}>• {error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            <p>Verificando status da consolidação...</p>
-          </div>
-        )}
+          ) : (
+            <p>Verificando status...</p>
+          )}
+        </div>
         
         <div className="flex gap-2">
           <Button
-            onClick={handleConsolidateData}
-            disabled={loading || isConsolidating}
-            variant={isCompleted ? "outline" : "default"}
+            onClick={runMigration}
+            disabled={isRunning}
+            variant={migrationStatus?.needed ? "default" : "outline"}
             className="gap-2"
           >
             <Play className="h-4 w-4" />
-            {loading || isConsolidating ? 'Consolidando...' : 
-             isCompleted ? 'Reconsolidar Dados' : 'Consolidar Dados'}
+            {isRunning ? 'Migrando...' : 'Executar Migração'}
           </Button>
           
           <Button
-            onClick={handleRefreshStatus}
+            onClick={checkStatus}
             variant="outline"
             size="sm"
-            className="gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar Status
+            Verificar Status
           </Button>
         </div>
         
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>
-            <strong>Consolidação de dados:</strong> Migra todos os dados estáticos para o banco de dados, 
-            eliminando dependências de arquivos locais e preparando o sistema para produção.
-          </p>
-          <p>
-            <strong>Benefícios:</strong> Dados centralizados, gestão via interface admin, 
-            performance otimizada e escalabilidade melhorada.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Esta migração copia todos os dados estáticos (CPUs, memória, OS, conectividade, data centers e contratos) 
+          para o banco de dados, permitindo que sejam gerenciados através da interface administrativa.
+        </p>
       </CardContent>
     </Card>
   );

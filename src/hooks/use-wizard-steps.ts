@@ -3,15 +3,29 @@ import { useState, useEffect } from "react";
 import { serverData } from "@/data/server-components";
 import { normalizeComponentType } from "./use-component-selection";
 import { ComponentOption } from "@/types/component";
+import { PriceService } from "@/services/price-service"; // Importando o serviço
 
 export function useWizardSteps() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
-  const [categoriesLoaded, setCategoriesLoaded] = useState(true); // Always true for static data
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
+  // Adicionar carregar as categorias da tabela de preços ao inicializar
   useEffect(() => {
-    console.log("[useWizardSteps] Using static component data");
-    setCategoriesLoaded(true);
+    const loadCategories = async () => {
+      try {
+        // Carregar dados do serviço de preços para garantir que temos os dados mais recentes
+        await PriceService.forceRefreshFromLatestSource();
+        setCategoriesLoaded(true);
+        
+        // CORREÇÃO: Log para debug
+        console.log("[useWizardSteps] Categorias carregadas com sucesso");
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+      }
+    };
+    
+    loadCategories();
   }, []);
 
   const isStepComplete = (
@@ -25,11 +39,13 @@ export function useWizardSteps() {
 
     const normalizedType = normalizeComponentType(component.type);
     
+    // CORREÇÃO: Log para debug da verificação de completude da etapa
     console.log(`[isStepComplete] Verificando etapa ${stepIndex}, tipo: ${component.type}, normalizado: ${normalizedType}`);
+    console.log(`[isStepComplete] Componentes selecionados:`, selectedComponents);
 
     // Serviços Personalizados é o único passo opcional
     if (normalizedType === "servicospersonalizados") {
-      return true;
+      return true; // Sempre considerado completo, já que é opcional
     }
     
     if (normalizedType === "memoria") {
@@ -37,10 +53,12 @@ export function useWizardSteps() {
         key => normalizeComponentType(key) === "memoria"
       );
     } else if (normalizedType === "datacenter") {
+      // CORREÇÃO: Verificar componentes de datacenter corretamente
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "datacenter"
       );
     } else if (normalizedType === "contrato") {
+      // CORREÇÃO: Verificar componentes de contrato corretamente
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "contrato"
       );
@@ -53,12 +71,14 @@ export function useWizardSteps() {
       );
       return hasPort && hasIp;
     } else if (normalizedType === "armazenamento") {
+      // Modificado para exigir pelo menos um armazenamento interno
       return storageItems.internal.length > 0;
     } else if (normalizedType === "sistemaoperacional") {
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === "sistemaoperacional"
       );
     } else {
+      // Caso padrão, usando o tipo normalizado para verificar
       return Object.keys(selectedComponents).some(
         key => normalizeComponentType(key) === normalizedType
       );

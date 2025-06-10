@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { ComponentOption } from "@/types/component";
 import { serverData } from "@/data/server-components";
+import { syncDiskDataWithPriceService, initExternalStorageData, syncConnectivityData } from "@/services/component-sync";
 import { ConnectivityItemsMap } from "@/types/wizard";
 import { normalizeComponentType } from "@/hooks/use-component-selection";
 
@@ -15,7 +16,7 @@ export function useWizardState() {
     new Array(serverData.componentes.length).fill(false)
   );
   const [beginnerMode, setBeginnerMode] = useState(true);
-  const [categoriesLoaded, setCategoriesLoaded] = useState(true); // Static data is always loaded
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   
   const [storageItems, setStorageItems] = useState<{
     internal: ComponentOption[];
@@ -28,25 +29,31 @@ export function useWizardState() {
   const [connectivityItems, setConnectivityItems] = useState<ConnectivityItemsMap>({});
   const [customServices, setCustomServices] = useState<ComponentOption[]>([]);
 
+  // CORREÇÃO: Log para debug do estado inicial
   useEffect(() => {
     console.log("[useWizardState] Estado inicial de componentes selecionados:", selectedComponents);
   }, []);
 
+  // Função para selecionar um componente
   const selectComponent = useCallback((
     componentType: string,
     option: ComponentOption,
     quantity: number
   ) => {
+    // CORREÇÃO: Log de debug para a seleção de componentes
     console.log(`[selectComponent] Selecionando componente tipo: ${componentType}, opção:`, option);
     
+    // CORREÇÃO: Garantir que estamos usando a chave correta para salvar no estado
     let normalizedType = componentType.toLowerCase();
     
+    // Ajustes específicos para DataCenter e Contrato
     if (normalizedType === "datacenter") {
       normalizedType = "datacenter";
     } else if (normalizedType === "contrato") {
       normalizedType = "contrato";
     }
     
+    // Atualizar o estado com a nova seleção
     setSelectedComponents((prevComponents) => {
       const newComponents = {
         ...prevComponents,
@@ -58,13 +65,17 @@ export function useWizardState() {
     });
   }, []);
 
+  // Wrapper para selectComponent com quantidade padrão 1
   const handleSelectOption = useCallback((option: ComponentOption) => {
+    // CORREÇÃO: Log para debug
     console.log(`[handleSelectOption] Selecionando opção:`, option);
     
+    // Garantir que estamos usando o tipo correto
     const normalizedType = option.type.toLowerCase();
     selectComponent(normalizedType, option, 1);
   }, [selectComponent]);
 
+  // Função para selecionar itens de armazenamento
   const handleSelectStorageItem = useCallback((option: ComponentOption, storageType: 'internal' | 'external') => {
     const key = storageType === 'internal' ? 'storage_internal' : 'storage_external';
     setStorageItems(prev => {
@@ -79,17 +90,20 @@ export function useWizardState() {
     selectComponent(key, option, 1);
   }, [selectComponent]);
 
+  // Função para atualizar quantidade de componentes
   const updateComponentQuantity = useCallback((
     componentType: string,
     optionId: string,
     quantity: number
   ) => {
-    // Implementation can be added if needed
+    // Implementação existente (mantida vazia neste exemplo)
   }, []);
 
+  // CORREÇÃO PRINCIPAL: Reimplementação completa do handleRemoveComponent para garantir remoção robusta
   const handleRemoveComponent = useCallback((componentId: string, componentType?: string) => {
     console.log(`[handleRemoveComponent] Removendo componente: ID=${componentId}, Tipo=${componentType || 'não especificado'}`);
     
+    // NOVA CORREÇÃO: Verificar se é um item de conectividade para remover corretamente da lista
     if (componentId.startsWith('network-') || componentId.startsWith('ip-')) {
       console.log(`[handleRemoveComponent] Removendo item de conectividade: ${componentId}`);
       
@@ -99,6 +113,7 @@ export function useWizardState() {
           delete newItems[componentId];
           console.log(`[handleRemoveComponent] Item de conectividade removido: ${componentId}`);
         } else {
+          // Busca avançada por ID parcial
           const keyToRemove = Object.keys(newItems).find(k => 
             k.includes(componentId) || componentId.includes(k)
           );
@@ -111,19 +126,24 @@ export function useWizardState() {
         return newItems;
       });
       
-      return;
+      return; // Termina aqui para itens de conectividade
     }
     
+    // Verificar se o componentId é um disco interno específico
     if (componentId.startsWith('internal-disk-')) {
       console.log(`[handleRemoveComponent] Removendo disco interno: ${componentId}`);
       
+      // CORREÇÃO CRÍTICA: Corrigir imutabilidade para garantir atualização de UI
       setStorageItems(prev => {
+        // Encontra e remove o disco pelo ID exato
         const updatedInternal = prev.internal.filter(disk => disk.id !== componentId);
         console.log(`[handleRemoveComponent] Discos antes: ${prev.internal.length}, depois: ${updatedInternal.length}`);
         
+        // Se nenhum disco foi removido, tentar buscar por substrings ou padrões no ID
         if (updatedInternal.length === prev.internal.length) {
           console.log(`[handleRemoveComponent] Tentando remoção alternativa para: ${componentId}`);
           
+          // Tenta encontrar correspondências parciais
           const diskToRemove = prev.internal.find(disk => 
             disk.id.includes(componentId) || componentId.includes(disk.id)
           );
@@ -143,6 +163,7 @@ export function useWizardState() {
         };
       });
       
+      // CORREÇÃO: Também atualizar o selectedComponents para manter consistência
       setSelectedComponents(prev => {
         const newComponents = { ...prev };
         if (newComponents['storage_internal'] && 
@@ -152,9 +173,10 @@ export function useWizardState() {
         return newComponents;
       });
       
-      return;
+      return; // Termina aqui se for um disco interno
     }
     
+    // Verificar se o componentId é um disco externo específico
     if (componentId.startsWith('external-storage-')) {
       console.log(`[handleRemoveComponent] Removendo storage externo: ${componentId}`);
       
@@ -166,6 +188,7 @@ export function useWizardState() {
         };
       });
       
+      // Atualizar selectedComponents para manter consistência
       setSelectedComponents(prev => {
         const newComponents = { ...prev };
         if (newComponents['storage_external'] && 
@@ -175,23 +198,28 @@ export function useWizardState() {
         return newComponents;
       });
       
-      return;
+      return; // Termina aqui se for um storage externo
     }
     
+    // Caso seja um componente regular com tipo especificado
     if (componentType) {
       console.log(`[handleRemoveComponent] Removendo componente regular: ${componentType}, ID: ${componentId}`);
       
+      // Normaliza o tipo para consistência
       const normalizedType = componentType.toLowerCase();
       
       setSelectedComponents(prev => {
         const newComponents = { ...prev };
         
+        // Se o componente existir e tiver o ID especificado, remover
         if (newComponents[normalizedType] && 
             newComponents[normalizedType].id === componentId) {
           console.log(`[handleRemoveComponent] Removido componente: ${normalizedType}`);
           delete newComponents[normalizedType];
         } 
+        // Se não encontrar pelo tipo+id, tentar apenas pelo ID
         else if (Object.values(newComponents).some(comp => comp.id === componentId)) {
+          // Encontrar a chave do componente pelo ID
           const keyToRemove = Object.keys(newComponents).find(
             key => newComponents[key].id === componentId
           );
@@ -205,20 +233,23 @@ export function useWizardState() {
         return newComponents;
       });
       
-      return;
+      return; // Termina aqui se for um componente regular
     }
     
+    // Se chegarmos aqui, tenta remover usando o ID como tipo (último recurso)
     console.log(`[handleRemoveComponent] Tentando remoção pelo ID como tipo: ${componentId}`);
     
     setSelectedComponents(prev => {
       const newComponents = { ...prev };
       
+      // Caso 1: ID é uma chave direta
       if (newComponents[componentId]) {
         console.log(`[handleRemoveComponent] Removido componente com ID como chave: ${componentId}`);
         delete newComponents[componentId];
         return newComponents;
       }
       
+      // Caso 2: Procurar componente com este ID
       const keyWithId = Object.keys(newComponents).find(
         key => newComponents[key].id === componentId
       );
@@ -232,16 +263,19 @@ export function useWizardState() {
     });
   }, [setStorageItems, setSelectedComponents, setConnectivityItems]);
 
+  // Verifica se um componente está selecionado
   const isComponentSelected = useCallback((componentType: string, optionId: string) => {
     const component = selectedComponents[componentType];
     return component ? component.id === optionId : false;
   }, [selectedComponents]);
 
+  // Retorna a quantidade de um componente
   const getComponentQuantity = useCallback((componentType: string, optionId: string) => {
     const component = selectedComponents[componentType];
     return component ? 1 : 0;
   }, [selectedComponents]);
 
+  // CORREÇÃO: Verifica se um passo está completo - função melhorada
   const isStepComplete = useCallback((stepIndex: number) => {
     const component = serverData.componentes[stepIndex];
     if (!component) return false;
@@ -251,10 +285,12 @@ export function useWizardState() {
     console.log(`[isStepComplete] Verificando etapa ${stepIndex}, tipo: ${component.type}, normalizado: ${normalizedType}`);
     console.log(`[isStepComplete] Componentes selecionados:`, selectedComponents);
 
+    // Serviços Personalizados é o único passo opcional
     if (normalizedType === "servicospersonalizados") {
-      return true;
+      return true; // Sempre considerado completo, já que é opcional
     }
     
+    // Para categorias simples, verificar se há um componente selecionado
     if (["datacenter", "contrato", "processador", "memoria", "sistemaoperacional"].includes(normalizedType)) {
       const hasSelection = Object.keys(selectedComponents).some(key => {
         const keyNormalized = normalizeComponentType(key);
@@ -266,6 +302,7 @@ export function useWizardState() {
       return hasSelection;
     }
     
+    // Para conectividade, verificar porta + IP
     if (normalizedType === "conectividade") {
       const hasPort = Object.values(connectivityItems).some(
         item => item.option.subtype === "porta"
@@ -278,6 +315,7 @@ export function useWizardState() {
       return complete;
     }
     
+    // Para armazenamento, verificar se há pelo menos um disco interno
     if (normalizedType === "armazenamento") {
       const complete = storageItems.internal.length > 0;
       console.log(`[isStepComplete] Armazenamento completo: ${complete}, discos internos: ${storageItems.internal.length}`);
@@ -287,6 +325,7 @@ export function useWizardState() {
     return false;
   }, [selectedComponents, connectivityItems, storageItems]);
 
+  // Define se um passo está completo
   const setStepComplete = useCallback((stepIndex: number, complete: boolean) => {
     setCompletedSteps((prev) => {
       const newCompletedSteps = [...prev];
@@ -295,6 +334,7 @@ export function useWizardState() {
     });
   }, []);
 
+  // Reinicia o wizard
   const handleRestart = useCallback(() => {
     setCurrentStep(0);
     setSelectedComponents({});
@@ -305,6 +345,7 @@ export function useWizardState() {
     setCustomServices([]);
   }, []);
 
+  // Funções para serviços personalizados
   const addCustomService = useCallback((option: ComponentOption) => {
     setCustomServices(prev => [...prev, option]);
   }, []);
@@ -313,20 +354,30 @@ export function useWizardState() {
     setCustomServices(prev => prev.filter(service => service.id !== optionId));
   }, []);
 
-  // No initialization needed since we're using static data
+  // Sincroniza dados na inicialização
   useEffect(() => {
-    setCategoriesLoaded(true);
-  }, []);
+    // Initialize data from PriceService
+    syncDiskDataWithPriceService();
+
+    // Initialize external storage data
+    initExternalStorageData();
+    
+    // Sincronizar dados de conectividade
+    syncConnectivityData().then(() => {
+      setCategoriesLoaded(true);
+    });
+  
+  }, []); // dependencies array
 
   return {
     currentStep,
     setCurrentStep,
     selectedComponents,
-    setSelectedComponents,
+    setSelectedComponents, // Garantir que isso é explicitamente incluído no valor de retorno
     selectComponent,
     updateComponentQuantity,
     handleRemoveComponent,
-    removeComponent: handleRemoveComponent,
+    removeComponent: handleRemoveComponent, // Alias para manter compatibilidade
     isComponentSelected,
     getComponentQuantity,
     showFinalSummary,

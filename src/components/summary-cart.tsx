@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ComponentOption } from "@/types/component";
 import { useWizard } from "@/contexts/WizardContext";
@@ -9,7 +8,6 @@ import { CartNavigation } from "./summary-cart/cart-navigation";
 import { cn } from "@/lib/utils";
 import { deduplicateStorageItems } from "@/utils/html/price-calculator";
 import { usePaybackPricing } from "@/hooks/usePaybackPricing";
-import { ConnectivityItemsMap } from "@/types/wizard";
 
 interface SummaryCartProps {
   selectedComponents: { [key: string]: ComponentOption };
@@ -51,9 +49,6 @@ export function SummaryCart({
   const { storageItems, connectivityItems, handleRemoveComponent, handleRestart } = useWizard();
   const { calculatePriceWithPayback } = usePaybackPricing();
 
-  // Ensure connectivityItems is properly typed
-  const typedConnectivityItems: ConnectivityItemsMap = connectivityItems || {};
-
   const uniqueStorageItems = {
     internal: deduplicateStorageItems(storageItems.internal),
     external: deduplicateStorageItems(storageItems.external)
@@ -70,30 +65,26 @@ export function SummaryCart({
     }
   );
   
-  // Apply payback to standard components
+  // Aplicar payback aos componentes padrão
   const standardComponentsPrice = standardComponents.reduce(
     (sum, component) => sum + calculatePriceWithPayback(component),
     0
   );
   
-  // Apply payback to internal storage (hardware)
+  // Aplicar payback ao storage interno (é hardware)
   const internalStoragePrice = uniqueStorageItems.internal
     .filter(disk => disk && disk.price > 0)
     .reduce((sum, disk) => sum + calculatePriceWithPayback(disk), 0);
   
-  // External storage doesn't have payback
+  // Storage externo não tem payback
   const externalStoragePrice = uniqueStorageItems.external
     .filter(storage => storage && storage.price > 0)
     .reduce((sum, storage) => sum + storage.price, 0);
 
-  // Connectivity doesn't have payback - with proper typing
-  const connectivityPrice = Object.values(typedConnectivityItems)
-    .reduce((sum, item) => {
-      if (item && item.option && typeof item.option.price === 'number' && typeof item.quantity === 'number') {
-        return sum + (item.option.price * item.quantity);
-      }
-      return sum;
-    }, 0);
+  // Conectividade não tem payback
+  const connectivityPrice = Object.values(connectivityItems)
+    .filter(item => item && item.option)
+    .reduce((sum, item) => sum + (item.option.price * item.quantity), 0);
 
   const totalPrice = standardComponentsPrice + internalStoragePrice + externalStoragePrice + connectivityPrice;
   console.log(`[SummaryCart] Total com Payback aplicado: ${totalPrice}`);
@@ -105,7 +96,7 @@ export function SummaryCart({
     Object.keys(selectedComponents).length || 
     uniqueStorageItems.internal.length || 
     uniqueStorageItems.external.length ||
-    Object.keys(typedConnectivityItems).length
+    Object.keys(connectivityItems).length
   );
   
   const handleClearAll = () => {
@@ -152,7 +143,7 @@ export function SummaryCart({
       <CartContent 
         selectedComponents={selectedComponents}
         storageItems={uniqueStorageItems}
-        connectivityItems={typedConnectivityItems}
+        connectivityItems={connectivityItems}
         onRemoveItem={handleRemoveComponentWithFeedback}
       />
       
