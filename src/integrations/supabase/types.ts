@@ -9,78 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      categories: {
-        Row: {
-          active: boolean
-          created_at: string
-          created_by: string | null
-          description: string | null
-          display_order: number
-          id: string
-          name: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          name: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          name?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
-      change_log: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          id: string
-          new_values: Json | null
-          old_values: Json | null
-          operation: string
-          record_id: string
-          table_name: string
-          version_number: number
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          operation: string
-          record_id: string
-          table_name: string
-          version_number?: number
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          id?: string
-          new_values?: Json | null
-          old_values?: Json | null
-          operation?: string
-          record_id?: string
-          table_name?: string
-          version_number?: number
-        }
-        Relationships: []
-      }
       consolidated_data: {
         Row: {
           created_at: string | null
@@ -177,39 +105,6 @@ export type Database = {
         }
         Relationships: []
       }
-      data_versions: {
-        Row: {
-          categories_snapshot: Json
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          is_current: boolean
-          items_snapshot: Json
-          version_name: string
-        }
-        Insert: {
-          categories_snapshot: Json
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_current?: boolean
-          items_snapshot: Json
-          version_name: string
-        }
-        Update: {
-          categories_snapshot?: Json
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_current?: boolean
-          items_snapshot?: Json
-          version_name?: string
-        }
-        Relationships: []
-      }
       datacenters: {
         Row: {
           badge: string | null
@@ -257,62 +152,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      items: {
-        Row: {
-          active: boolean
-          category_id: string
-          created_at: string
-          created_by: string | null
-          description: string | null
-          display_order: number
-          id: string
-          name: string
-          price: number
-          specs: Json | null
-          tags: string[] | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          active?: boolean
-          category_id: string
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          name: string
-          price?: number
-          specs?: Json | null
-          tags?: string[] | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          active?: boolean
-          category_id?: string
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          name?: string
-          price?: number
-          specs?: Json | null
-          tags?: string[] | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "items_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       price_data: {
         Row: {
@@ -717,10 +556,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_data_snapshot: {
-        Args: { p_version_name: string; p_description?: string }
-        Returns: string
-      }
       generate_quote_number: {
         Args: Record<PropertyKey, never>
         Returns: string

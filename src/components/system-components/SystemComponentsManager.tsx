@@ -9,6 +9,7 @@ import { SystemComponentsTable } from './SystemComponentsTable';
 import { CreateComponentDialog } from './CreateComponentDialog';
 import { MigrationButton } from './MigrationButton';
 import { ProductionDashboard } from './ProductionDashboard';
+import { UnifiedComponent, UnifiedStorageItem } from '@/services/unified-data-service';
 
 const componentTypes = [
   { id: 'cpu', name: 'Processadores', icon: Cpu },
@@ -42,33 +43,44 @@ export function SystemComponentsManager() {
   
   const { 
     loading,
-    items,
-    loadData
+    cpuComponents,
+    memoryComponents,
+    osComponents,
+    connectivityComponents,
+    storageItems,
+    loadComponentsByType,
+    loadAllData
   } = useUnifiedData();
 
-  // Convert items to match the expected interface
-  const convertItemsToComponents = (): UnifiedSystemComponent[] => {
+  // Convert storage items to match the expected interface
+  const convertStorageToComponents = (items: UnifiedStorageItem[]): UnifiedSystemComponent[] => {
     return items.map(item => ({
       id: item.id,
-      component_type: 'general',
-      component_id: item.id,
+      component_type: 'storage',
+      component_id: `${item.storage_type}_${item.item_type}_${item.capacity_gb || 0}`,
       name: item.name,
       description: item.description,
       price: item.price,
-      subtype: undefined,
+      subtype: `${item.storage_type}_${item.item_type}`,
       is_hardware: true,
-      is_active: item.active,
-      specs: Array.isArray(item.specs) ? [] : [],
-      metadata: typeof item.specs === 'object' ? item.specs as Record<string, any> : {},
-      created_at: item.created_at,
-      updated_at: item.updated_at
+      is_active: true,
+      specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+      metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }));
   };
 
   // Get current components based on selected tab
   const getCurrentComponents = (): UnifiedSystemComponent[] => {
-    // For now, return converted items for all tabs
-    return convertItemsToComponents();
+    switch (componentTab) {
+      case 'cpu': return cpuComponents as UnifiedSystemComponent[];
+      case 'memory': return memoryComponents as UnifiedSystemComponent[];
+      case 'os': return osComponents as UnifiedSystemComponent[];
+      case 'connectivity': return connectivityComponents as UnifiedSystemComponent[];
+      case 'storage': return convertStorageToComponents(storageItems);
+      default: return [];
+    }
   };
 
   const handleCreateComponent = () => {
@@ -76,12 +88,16 @@ export function SystemComponentsManager() {
   };
 
   const handleComponentCreated = () => {
-    loadData();
+    loadComponentsByType(componentTab);
     setIsCreateDialogOpen(false);
   };
 
   const handleRefetch = () => {
-    loadData();
+    if (componentTab === 'storage') {
+      loadAllData();
+    } else {
+      loadComponentsByType(componentTab);
+    }
   };
 
   return (

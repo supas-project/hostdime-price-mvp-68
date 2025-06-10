@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { InitService } from './services/init-service'
+import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner'
 
 // Inicializar serviços antes da renderização, mas não bloquear se falhar
@@ -14,7 +15,9 @@ InitService.initializeData().catch(error => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
-    <Toaster />
+    <BrowserRouter>
+      <App />
+      <Toaster />
+    </BrowserRouter>
   </React.StrictMode>
 )
