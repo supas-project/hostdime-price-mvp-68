@@ -6,7 +6,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
 import { UnifiedAuthProvider } from "./contexts/auth/UnifiedAuthContext";
 import Home from "./pages/Home";
-import PriceTable from "./pages/PriceTable";
 import SystemComponents from "./pages/SystemComponents";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -34,7 +33,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark">
       <TooltipProvider>
         <UnifiedAuthProvider>
           <Toaster />
@@ -52,12 +51,6 @@ const App = () => (
               <Route index element={<Navigate to="/configure" replace />} />
               
               {/* Admin protected routes */}
-              <Route path="price-table" element={
-                <AdminProtectedRoute>
-                  <PriceTable />
-                </AdminProtectedRoute>
-              } />
-              
               <Route path="system-components" element={
                 <AdminProtectedRoute>
                   <SystemComponents />
