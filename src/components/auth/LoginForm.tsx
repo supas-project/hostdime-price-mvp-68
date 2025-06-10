@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,8 @@ import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 import { toast } from "sonner";
 
 export function LoginForm() {
+  console.log('🔍 LoginForm component rendering');
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

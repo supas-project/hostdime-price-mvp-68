@@ -5,6 +5,8 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { AuthLoadingState } from "@/components/auth/AuthLoadingState";
 
 export default function LoginPage() {
+  console.log('🔍 LoginPage component rendering');
+  
   const {
     isAuthenticated,
     user,
