@@ -32,7 +32,7 @@ export function MemoryContent({
 
   // Sync selectedOption with local state
   useEffect(() => {
-    if (selectedOption) {
+    if (selectedOption?.id) {
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
@@ -48,7 +48,7 @@ export function MemoryContent({
     PriceService.addDataChangeListener(handlePriceDataChange);
     
     // Garantir que temos opções iniciais
-    if (options.length === 0 && !isLoading) {
+    if ((options?.length || 0) === 0 && !isLoading) {
       refreshOptions();
     }
     
@@ -56,7 +56,7 @@ export function MemoryContent({
       // Remover listener quando o componente for desmontado
       PriceService.removeDataChangeListener(handlePriceDataChange);
     };
-  }, [refreshOptions]);
+  }, [refreshOptions, options?.length, isLoading]);
 
   // Notify about errors
   useEffect(() => {
@@ -68,7 +68,7 @@ export function MemoryContent({
   }, [error]);
 
   const handleSelectionChange = (value: string) => {
-    const option = options.find(opt => opt.id === value);
+    const option = options?.find(opt => opt?.id === value);
     setLocalSelectedId(value);
     if (option) {
       onSelectOption(option);
@@ -85,6 +85,23 @@ export function MemoryContent({
           </div>
           <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
           <Skeleton className="h-4 w-2/3 bg-[#2a2a2a]" />
+        </div>
+      </Card>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <Card className="p-4 sm:p-6 bg-[#1e1e1e]">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <MemoryStick className="h-5 w-5 text-[#f58220]" />
+            <div className="text-base font-medium text-white">Memória RAM</div>
+          </div>
+          <div className="text-sm text-red-400">
+            Erro ao carregar opções de memória. Tente novamente.
+          </div>
         </div>
       </Card>
     );
@@ -114,7 +131,9 @@ export function MemoryContent({
               <SelectValue placeholder="Escolha a memória ideal para você" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
-              {options.map((option) => {
+              {(options || []).map((option) => {
+                if (!option?.id) return null;
+                
                 const paybackInfo = getPaybackInfo(option);
                 const displayPrice = calculatePriceWithPayback(option);
                 
@@ -126,10 +145,10 @@ export function MemoryContent({
                   >
                     <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-xs sm:text-sm">{option.name}</span>
-                        {option.specs && (
+                        <span className="truncate text-xs sm:text-sm">{option.name || 'Opção sem nome'}</span>
+                        {option.specs && option.specs.length > 0 && (
                           <HelpTooltip
-                            title={option.name}
+                            title={option.name || 'Especificações'}
                             description={option.specs.join('\n')}
                             iconOnly
                           />

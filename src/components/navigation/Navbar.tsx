@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,8 @@ const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
   const navigate = useNavigate();
   const { isAuthenticated, isAdmin, logout, user } = useAuth();
 
-  // Verificação explícita para acesso de administrador
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
+  // Verificação explícita para acesso de administrador com null check
+  const isAdminAccess = isAdmin || (user?.email === "admin@hostdime.com.br");
 
   return (
     <header className={cn(

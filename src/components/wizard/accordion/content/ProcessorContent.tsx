@@ -42,7 +42,7 @@ export function ProcessorContent({
 
   // Sync selectedOption with local state
   useEffect(() => {
-    if (selectedOption) {
+    if (selectedOption?.id) {
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
@@ -55,15 +55,17 @@ export function ProcessorContent({
   }, [error]);
 
   const handleSelectionChange = (value: string) => {
-    const option = options.find(opt => opt.id === value);
+    const option = options?.find(opt => opt?.id === value);
     setLocalSelectedId(value);
     if (option) {
       onSelectOption(option);
     }
   };
 
+  // Handle loading state
   if (isLoading) {
-    return <Card className="p-4 sm:p-6">
+    return (
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <Server className="h-5 w-5 text-[#f58220]" />
@@ -71,15 +73,34 @@ export function ProcessorContent({
           </div>
           <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
         </div>
-      </Card>;
+      </Card>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Server className="h-5 w-5 text-[#f58220]" />
+            <div className="text-base font-medium text-white">Processador</div>
+          </div>
+          <div className="text-sm text-red-400">
+            Erro ao carregar processadores. Tente novamente.
+          </div>
+        </div>
+      </Card>
+    );
   }
   
-  return <Card className="p-4 sm:p-6">
+  return (
+    <Card className="p-4 sm:p-6">
       <div className="flex flex-col gap-4">
         <div className="w-full">
           <ComponentSelector 
             label="Processador" 
-            options={options} 
+            options={options || []} 
             value={localSelectedId} 
             onChange={handleSelectionChange} 
             tooltip="Escolha o processador que melhor atenda às suas necessidades computacionais." 
@@ -87,5 +108,6 @@ export function ProcessorContent({
           />
         </div>
       </div>
-    </Card>;
+    </Card>
+  );
 }

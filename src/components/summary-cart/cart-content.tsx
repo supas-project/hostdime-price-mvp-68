@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { ComponentOption } from "@/types/component";
 import { DataCenterItem } from "./data-center-item";
@@ -35,24 +34,24 @@ export function CartContent({
   console.log(`[CartContent] Storage externos originais: ${storageItems.external.length}, únicos: ${uniqueStorageItems.external.length}`);
   console.log(`[CartContent] Conectividade itens:`, connectivityItems);
   
-  // Separate components by type - CORREÇÃO: Buscar pelo tipo correto
-  // Estas são as chaves corretas para cada tipo específico de componente
-  const dataCenterComponent = selectedComponents["datacenter"];
-  const contractComponent = selectedComponents["contrato"];
+  // Separate components by type - CORREÇÃO: Buscar pelo tipo correto com verificação de nulidade
+  const dataCenterComponent = selectedComponents?.["datacenter"] || null;
+  const contractComponent = selectedComponents?.["contrato"] || null;
   
   // Log para debug dos componentes
   useEffect(() => {
     console.log("[CartContent] Componentes selecionados atualizados:", 
-      Object.keys(selectedComponents).length ? Object.keys(selectedComponents).join(", ") : "nenhum");
+      Object.keys(selectedComponents || {}).length ? Object.keys(selectedComponents).join(", ") : "nenhum");
   }, [selectedComponents]);
   
-  // Filter other components (excluding DataCenter, Contract and Storage)
-  const standardComponents = Object.values(selectedComponents).filter(
-    component => {
-      // CORREÇÃO: Verificar tanto pelo tipo em si quanto pelo tipo lowercase
-      const type = component?.type?.toLowerCase();
-      if (!component || 
-          type === "datacenter" || 
+  // Filter other components (excluding DataCenter, Contract and Storage) com verificação de nulidade
+  const standardComponents = Object.values(selectedComponents || {}).filter(
+    (component): component is ComponentOption => {
+      // CORREÇÃO: Verificar tanto pelo tipo em si quanto pelo tipo lowercase com null checks
+      if (!component || !component.type) return false;
+      
+      const type = component.type.toLowerCase();
+      if (type === "datacenter" || 
           type === "contrato" || 
           type === "armazenamento") {
         return false;
@@ -66,7 +65,7 @@ export function CartContent({
     standardComponents.length || 
     uniqueStorageItems.internal.length || 
     uniqueStorageItems.external.length ||
-    Object.keys(connectivityItems).length
+    Object.keys(connectivityItems || {}).length
   );
   
   if (!hasItems && !dataCenterComponent && !contractComponent) {
@@ -82,34 +81,44 @@ export function CartContent({
       "p-3 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1 text-xs sm:text-sm",
       "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
     )}>
-      {/* Data Center - CORREÇÃO: Verificar que tipo está em lowercase */}
-      {dataCenterComponent && <DataCenterItem component={dataCenterComponent} />}
+      {/* Data Center - CORREÇÃO: Verificar que componente existe */}
+      {dataCenterComponent && (
+        <DataCenterItem 
+          key={dataCenterComponent.instanceId || `datacenter-${dataCenterComponent.id}`}
+          component={dataCenterComponent} 
+        />
+      )}
       
-      {/* Contract - CORREÇÃO: Verificar que tipo está em lowercase */}
-      {contractComponent && <ContractItem component={contractComponent} />}
+      {/* Contract - CORREÇÃO: Verificar que componente existe */}
+      {contractComponent && (
+        <ContractItem 
+          key={contractComponent.instanceId || `contrato-${contractComponent.id}`}
+          component={contractComponent} 
+        />
+      )}
       
       {/* Standard components with prices */}
       <StandardComponentList 
         components={standardComponents} 
-        onRemoveItem={onRemoveItem}
+        onRemoveItem={(instanceId: string) => onRemoveItem?.(instanceId)}
       />
       
       {/* Internal Storage components - SEMPRE usar lista deduplicada */}
       <StorageList 
         storageItems={uniqueStorageItems.internal} 
-        onRemoveItem={onRemoveItem}
+        onRemoveItem={(instanceId: string) => onRemoveItem?.(instanceId)}
       />
       
       {/* External Storage components - SEMPRE usar lista deduplicada */}
       <ExternalStorageList 
         storageItems={uniqueStorageItems.external} 
-        onRemoveItem={onRemoveItem}
+        onRemoveItem={(instanceId: string) => onRemoveItem?.(instanceId)}
       />
       
       {/* Connectivity items */}
       <ConnectivityList 
-        connectivityItems={connectivityItems} 
-        onRemoveItem={onRemoveItem}
+        connectivityItems={connectivityItems || {}} 
+        onRemoveItem={(instanceId: string) => onRemoveItem?.(instanceId)}
       />
     </div>
   );
