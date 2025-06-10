@@ -17,7 +17,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <UnifiedAuthProvider>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           <Router>
             <div className="min-h-screen bg-background">
               <Navigation />
