@@ -49,6 +49,9 @@ export function MigrationPanel() {
   }, []);
 
   const hasData = migrationStatus && migrationStatus.totalItems > 0;
+  const itemsByCategory = migrationStatus?.itemsByCategory && typeof migrationStatus.itemsByCategory === 'object' 
+    ? migrationStatus.itemsByCategory as Record<string, number>
+    : {};
 
   return (
     <Card>
@@ -83,11 +86,11 @@ export function MigrationPanel() {
               </div>
             </div>
 
-            {migrationStatus.itemsByCategory && Object.keys(migrationStatus.itemsByCategory).length > 0 && (
+            {Object.keys(itemsByCategory).length > 0 && (
               <div className="mt-3 pt-3 border-t">
                 <span className="text-sm font-medium mb-2 block">Itens por categoria:</span>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(migrationStatus.itemsByCategory).map(([type, count]) => (
+                  {Object.entries(itemsByCategory).map(([type, count]) => (
                     <Badge key={type} variant="outline" className="text-xs">
                       {type}: {count}
                     </Badge>
