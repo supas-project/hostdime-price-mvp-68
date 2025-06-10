@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/contexts/theme";
+import { ThemeProvider } from "@/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { UnifiedAuthProvider } from "@/contexts/auth/UnifiedAuthContext";
@@ -8,7 +8,7 @@ import Index from "@/pages/Index";
 import Configure from "@/pages/Configure";
 import PriceTable from "@/pages/PriceTable";
 import UnifiedTable from "@/pages/UnifiedTable";
-import Login from "@/pages/Login";
+import LoginPage from "@/pages/LoginPage";
 import { Navigation } from "@/components/navigation";
 
 const queryClient = new QueryClient();
@@ -26,7 +26,7 @@ function App() {
                 <Route path="/configure" element={<Configure />} />
                 <Route path="/price-table" element={<PriceTable />} />
                 <Route path="/unified-table" element={<UnifiedTable />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<LoginPage />} />
               </Routes>
               <Toaster />
             </div>

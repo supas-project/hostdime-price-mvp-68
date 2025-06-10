@@ -5,24 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useDataSynchronization } from '@/hooks/useDataSynchronization';
-import { UnifiedDataService } from '@/services/unified-data-service';
 import { RefreshCw, AlertTriangle, CheckCircle, Clock, Database, Info } from 'lucide-react';
 
 export function DataSyncPanel() {
   const { isSyncing, lastSyncTime, synchronizeData, checkConsistency } = useDataSynchronization();
   const [consistencyReport, setConsistencyReport] = useState<any>(null);
-  const [consolidationStatus, setConsolidationStatus] = useState<any>(null);
   const [showReport, setShowReport] = useState(false);
   
   useEffect(() => {
     const loadStatus = async () => {
-      const [report, status] = await Promise.all([
-        checkConsistency(),
-        UnifiedDataService.getConsolidationStatus()
-      ]);
-      
+      const report = await checkConsistency();
       setConsistencyReport(report);
-      setConsolidationStatus(status);
     };
     
     loadStatus();
@@ -36,20 +29,14 @@ export function DataSyncPanel() {
       
       if (success) {
         // Refresh status after sync
-        const [report, status] = await Promise.all([
-          checkConsistency(),
-          UnifiedDataService.getConsolidationStatus()
-        ]);
-        
+        const report = await checkConsistency();
         setConsistencyReport(report);
-        setConsolidationStatus(status);
       }
     } catch (error) {
       console.error('[DataSyncPanel] Synchronization error:', error);
     }
   };
   
-  const needsConsolidation = consolidationStatus?.phase !== 'completed';
   const hasIssues = consistencyReport && (
     consistencyReport.missingInPrice.length > 0 ||
     consistencyReport.extraInPrice.length > 0 ||
@@ -57,14 +44,6 @@ export function DataSyncPanel() {
   );
   
   const getStatusInfo = () => {
-    if (needsConsolidation) {
-      return {
-        icon: <Info className="w-4 h-4 text-blue-500" />,
-        message: 'Dados precisam ser consolidados',
-        variant: 'default'
-      };
-    }
-    
     if (hasIssues) {
       return {
         icon: <AlertTriangle className="w-4 h-4 text-destructive" />,
@@ -94,24 +73,6 @@ export function DataSyncPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Consolidation Status */}
-        {consolidationStatus && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-blue-900">Status da Consolidação</span>
-              <Badge variant={consolidationStatus.phase === 'completed' ? 'default' : 'secondary'}>
-                {consolidationStatus.phase}
-              </Badge>
-            </div>
-            <div className="text-sm text-blue-700">
-              <p>Componentes: {consolidationStatus.components_count}</p>
-              <p>Storage: {consolidationStatus.storage_count}</p>
-              <p>Data Centers: {consolidationStatus.datacenters_count}</p>
-              <p>Contratos: {consolidationStatus.contracts_count}</p>
-            </div>
-          </div>
-        )}
-        
         {/* Status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -158,17 +119,17 @@ export function DataSyncPanel() {
           <Button 
             onClick={handleSynchronize}
             disabled={isSyncing}
-            variant={needsConsolidation || hasIssues ? "default" : "outline"}
+            variant={hasIssues ? "default" : "outline"}
           >
             {isSyncing ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                {needsConsolidation ? 'Consolidando e sincronizando...' : 'Sincronizando dados unificados...'}
+                Sincronizando dados unificados...
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {needsConsolidation ? 'Consolidar e Sincronizar' : hasIssues ? 'Corrigir Divergências' : 'Verificar Sincronização'}
+                {hasIssues ? 'Corrigir Divergências' : 'Verificar Sincronização'}
               </>
             )}
           </Button>

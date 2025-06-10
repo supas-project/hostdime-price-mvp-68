@@ -2,12 +2,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
+import { useUnifiedAuth } from "@/hooks/auth/useUnifiedAuth";
 import { LogOut, Settings, Table, Database, Home } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, logout } = useUnifiedAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -83,7 +83,7 @@ export function Navigation() {
           
           <div className="flex items-center gap-2 ml-4">
             <ThemeSwitcher />
-            <Button variant="outline" size="sm" onClick={signOut}>
+            <Button variant="outline" size="sm" onClick={logout}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair
             </Button>

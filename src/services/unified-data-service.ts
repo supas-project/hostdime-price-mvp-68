@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Category, Item, ChangeLog, DataVersion } from '@/types/database';
-import { toast } from 'sonner';
+import { toast } from '@/utils/toast-utils';
 
 export class UnifiedDataService {
   

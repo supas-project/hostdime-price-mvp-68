@@ -16,164 +16,42 @@ export class DataSynchronizationService {
     try {
       console.log('[DataSync] Starting unified data synchronization...');
       
-      // First ensure data is consolidated
-      const consolidationStatus = await UnifiedDataService.getConsolidationStatus();
-      
-      if (consolidationStatus.phase !== 'completed') {
-        console.log('[DataSync] Data not consolidated, starting consolidation...');
-        const consolidated = await UnifiedDataService.consolidateAllData();
-        
-        if (!consolidated) {
-          throw new Error('Failed to consolidate data');
-        }
-      }
-      
       // Get all data from unified service
-      const [
-        cpuComponents,
-        memoryComponents,
-        osComponents,
-        connectivityComponents,
-        storageItems,
-        dataCenters,
-        contractTypes
-      ] = await Promise.all([
-        UnifiedDataService.getComponentsByType('cpu'),
-        UnifiedDataService.getComponentsByType('memory'),
-        UnifiedDataService.getComponentsByType('os'),
-        UnifiedDataService.getComponentsByType('connectivity'),
-        UnifiedDataService.getAllStorageItems(),
-        UnifiedDataService.getAllDataCenters(),
-        UnifiedDataService.getAllContractTypes()
+      const [categories, items] = await Promise.all([
+        UnifiedDataService.getCategories(),
+        UnifiedDataService.getItems()
       ]);
       
       console.log('[DataSync] Loaded unified data:', {
-        cpu: cpuComponents.length,
-        memory: memoryComponents.length,
-        os: osComponents.length,
-        connectivity: connectivityComponents.length,
-        storage: storageItems.length,
-        datacenters: dataCenters.length,
-        contracts: contractTypes.length
+        categories: categories.length,
+        items: items.length
       });
       
       // Build unified price data structure with compatible metadata
-      const unifiedPriceData = {
-        cpu: {
-          id: 'cpu',
-          name: 'Processadores',
-          items: cpuComponents.map(comp => ({
-            id: comp.id,
-            name: comp.name,
-            description: comp.description,
-            price: comp.price,
-            type: 'cpu',
-            specs: comp.specs,
-            metadata: {
-              cores: comp.metadata?.cores,
-              features: Array.isArray(comp.specs) ? comp.specs : [],
-              ...comp.metadata
-            }
-          }))
-        },
-        memory: {
-          id: 'memory',
-          name: 'Memória',
-          items: memoryComponents.map(comp => ({
-            id: comp.id,
-            name: comp.name,
-            description: comp.description,
-            price: comp.price,
-            type: 'memory',
-            specs: comp.specs,
-            metadata: {
-              features: Array.isArray(comp.specs) ? comp.specs : [],
-              ...comp.metadata
-            }
-          }))
-        },
-        os: {
-          id: 'os',
-          name: 'Sistema Operacional',
-          items: osComponents.map(comp => ({
-            id: comp.id,
-            name: comp.name,
-            description: comp.description,
-            price: comp.price,
-            type: 'os',
-            specs: comp.specs,
-            metadata: {
-              features: Array.isArray(comp.specs) ? comp.specs : [],
-              ...comp.metadata
-            }
-          }))
-        },
-        connectivity: {
-          id: 'connectivity',
-          name: 'Conectividade',
-          items: connectivityComponents.map(comp => ({
-            id: comp.id,
-            name: comp.name,
-            description: comp.description,
-            price: comp.price,
-            type: 'connectivity',
-            specs: comp.specs,
-            metadata: {
-              features: Array.isArray(comp.specs) ? comp.specs : [],
-              ...comp.metadata
-            }
-          }))
-        },
-        storage: {
-          id: 'storage',
-          name: 'Armazenamento',
-          items: storageItems.map(item => ({
+      const unifiedPriceData: Record<string, any> = {};
+      
+      // Group items by category
+      categories.forEach(category => {
+        const categoryItems = items.filter(item => item.category_id === category.id);
+        
+        unifiedPriceData[category.name.toLowerCase().replace(/\s+/g, '')] = {
+          id: category.id,
+          name: category.name,
+          items: categoryItems.map(item => ({
             id: item.id,
             name: item.name,
             description: item.description,
             price: item.price,
-            type: 'storage',
-            specs: item.specs,
+            type: category.name.toLowerCase().replace(/\s+/g, ''),
+            specs: Array.isArray(item.specs) ? item.specs : [],
             metadata: {
               features: Array.isArray(item.specs) ? item.specs : [],
-              unitInfo: `${item.capacity_gb}GB ${item.item_type.toUpperCase()}`
+              categoryId: category.id,
+              tags: item.tags || []
             }
           }))
-        },
-        datacenter: {
-          id: 'datacenter',
-          name: 'Data Center',
-          items: dataCenters.map(dc => ({
-            id: dc.datacenter_id,
-            name: dc.name,
-            description: dc.description,
-            price: dc.price,
-            type: 'datacenter',
-            specs: dc.features,
-            metadata: {
-              location: dc.location,
-              badge: dc.badge,
-              features: dc.features
-            }
-          }))
-        },
-        contract: {
-          id: 'contract',
-          name: 'Contratos',
-          items: contractTypes.map(contract => ({
-            id: contract.contract_id,
-            name: contract.name,
-            description: contract.description,
-            price: 0,
-            type: 'contract',
-            specs: [`${contract.duration_months} meses`, `${contract.discount_percentage}% desconto`],
-            metadata: {
-              discount: contract.discount_percentage,
-              features: [`${contract.duration_months} meses`, `${contract.discount_percentage}% desconto`]
-            }
-          }))
-        }
-      };
+        };
+      });
       
       // Save to price service
       await PriceService.saveData(unifiedPriceData);
@@ -203,28 +81,36 @@ export class DataSynchronizationService {
   }> {
     try {
       // Get data from both sources
-      const [priceData, consolidationStatus] = await Promise.all([
+      const [priceData, categories, items] = await Promise.all([
         PriceService.getAllData(),
-        UnifiedDataService.getConsolidationStatus()
+        UnifiedDataService.getCategories(),
+        UnifiedDataService.getItems()
       ]);
       
-      const standardCategories = ['cpu', 'memory', 'os', 'connectivity', 'storage', 'datacenter', 'contract'];
+      const unifiedCategories = categories.map(cat => cat.name.toLowerCase().replace(/\s+/g, ''));
       const priceCategories = Object.keys(priceData);
       
-      const missingInPrice = standardCategories.filter(cat => !priceCategories.includes(cat));
-      const extraInPrice = priceCategories.filter(cat => !standardCategories.includes(cat));
+      const missingInPrice = unifiedCategories.filter(cat => !priceCategories.includes(cat));
+      const extraInPrice = priceCategories.filter(cat => !unifiedCategories.includes(cat));
       
       const itemMismatches: Record<string, { missing: number; extra: number }> = {};
       
-      // Check if consolidation is needed
-      if (consolidationStatus.phase !== 'completed') {
-        // If not consolidated, all standard categories are considered missing
-        standardCategories.forEach(cat => {
-          if (!priceData[cat] || !priceData[cat].items || priceData[cat].items.length === 0) {
-            itemMismatches[cat] = { missing: 1, extra: 0 };
-          }
-        });
-      }
+      // Check item counts per category
+      categories.forEach(category => {
+        const categoryKey = category.name.toLowerCase().replace(/\s+/g, '');
+        const unifiedItems = items.filter(item => item.category_id === category.id);
+        const priceItems = priceData[categoryKey]?.items || [];
+        
+        const unifiedCount = unifiedItems.length;
+        const priceCount = priceItems.length;
+        
+        if (unifiedCount !== priceCount) {
+          itemMismatches[category.name] = {
+            missing: Math.max(0, unifiedCount - priceCount),
+            extra: Math.max(0, priceCount - unifiedCount)
+          };
+        }
+      });
       
       return {
         missingInPrice,
