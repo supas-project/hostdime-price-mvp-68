@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
@@ -7,10 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatCurrency } from "@/lib/utils";
 import { useComponentOptions } from "@/hooks/use-component-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { PriceService } from "@/services/price-service";
-import { usePaybackPricing } from "@/hooks/usePaybackPricing";
-import { Badge } from "@/components/ui/badge";
 
 interface MemoryContentProps {
   selectedOption: ComponentOption | null;
@@ -21,51 +18,14 @@ export function MemoryContent({
   selectedOption, 
   onSelectOption 
 }: MemoryContentProps) {
-  const { options, isLoading, error, refreshOptions } = useComponentOptions('memory');
+  const { options, isLoading } = useComponentOptions('memory');
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
-  const { calculatePriceWithPayback, getPaybackInfo, hasActiveContract } = usePaybackPricing();
 
-  // Debug logs
-  useEffect(() => {
-    console.log("[MemoryContent] Component mounted");
-  }, []);
-
-  // Sync selectedOption with local state
   useEffect(() => {
     if (selectedOption) {
       setLocalSelectedId(selectedOption.id);
     }
   }, [selectedOption]);
-  
-  // Adicionar listener para atualizações na tabela de preços
-  useEffect(() => {
-    const handlePriceDataChange = () => {
-      console.log("[MemoryContent] Dados de preço atualizados, atualizando opções de memória");
-      refreshOptions();
-    };
-    
-    // Registrar listener
-    PriceService.addDataChangeListener(handlePriceDataChange);
-    
-    // Garantir que temos opções iniciais
-    if (options.length === 0 && !isLoading) {
-      refreshOptions();
-    }
-    
-    return () => {
-      // Remover listener quando o componente for desmontado
-      PriceService.removeDataChangeListener(handlePriceDataChange);
-    };
-  }, [refreshOptions]);
-
-  // Notify about errors
-  useEffect(() => {
-    if (error) {
-      toast.error("Erro ao carregar opções de memória", {
-        description: "Não foi possível carregar as opções de memória disponíveis."
-      });
-    }
-  }, [error]);
 
   const handleSelectionChange = (value: string) => {
     const option = options.find(opt => opt.id === value);
@@ -99,7 +59,7 @@ export function MemoryContent({
             Memória RAM
             <HelpTooltip
               title="Sobre: Memória RAM"
-              description="Escolha a quantidade de memória RAM adequada para suas aplicações. Mais memória permite executar mais aplicações simultaneamente."
+              description="Escolha a quantidade de memória RAM adequada para suas aplicações."
               iconOnly
             />
           </label>
@@ -110,66 +70,37 @@ export function MemoryContent({
             value={localSelectedId}
             onValueChange={handleSelectionChange}
           >
-            <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors min-h-[40px] text-xs sm:text-sm py-2 px-2.5 sm:py-2.5 sm:px-4">
+            <SelectTrigger className="w-full bg-[#1e1e1e] border-[#2a2a2a] text-white hover:border-[#f58220] transition-colors">
               <SelectValue placeholder="Escolha a memória ideal para você" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e1e1e] border-[#2a2a2a] max-h-[220px] z-[51]">
-              {options.map((option) => {
-                const paybackInfo = getPaybackInfo(option);
-                const displayPrice = calculatePriceWithPayback(option);
-                
-                return (
-                  <SelectItem
-                    key={option.id}
-                    value={option.id}
-                    className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
-                  >
-                    <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-xs sm:text-sm">{option.name}</span>
-                        {option.specs && (
-                          <HelpTooltip
-                            title={option.name}
-                            description={option.specs.join('\n')}
-                            iconOnly
-                          />
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col items-end gap-1">
-                        {paybackInfo?.hasPayback ? (
-                          <div className="flex flex-col items-end">
-                            <span className="text-xs text-gray-400 line-through">
-                              {formatCurrency(paybackInfo.originalPrice)}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <span className="text-green-400 font-medium text-xs sm:text-sm">
-                                {formatCurrency(displayPrice)}
-                              </span>
-                              <Badge variant="secondary" className="text-xs bg-green-600 text-white">
-                                {paybackInfo.paybackValue}x
-                              </Badge>
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
-                            {formatCurrency(displayPrice)}
-                          </span>
-                        )}
-                      </div>
+              {options.map((option) => (
+                <SelectItem
+                  key={option.id}
+                  value={option.id}
+                  className="flex items-center justify-between py-2 sm:py-2.5 px-3 hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] cursor-pointer text-white"
+                >
+                  <div className="flex justify-between items-center w-full gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-xs sm:text-sm">{option.name}</span>
+                      {option.specs && (
+                        <HelpTooltip
+                          title={option.name}
+                          description={option.specs.join('\n')}
+                          iconOnly
+                        />
+                      )}
                     </div>
-                  </SelectItem>
-                );
-              })}
+                    
+                    <span className="text-[#f58220] font-medium text-xs sm:text-sm whitespace-nowrap">
+                      {formatCurrency(option.price)}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-
-        {hasActiveContract && (
-          <div className="text-xs text-gray-400 bg-[#2a2a2a] p-2 rounded">
-            💡 Preços de hardware já incluem desconto PayBack do contrato selecionado
-          </div>
-        )}
       </div>
     </Card>
   );
