@@ -1,4 +1,4 @@
 
-export { WizardProvider } from "./WizardProvider";
-export { useWizard } from "./WizardContext";
-export type { WizardContextProps, WizardProviderProps } from "./types";
+export { WizardProvider } from './WizardProvider';
+export { useWizardState } from './useWizardState';
+export type { WizardContextProps, WizardProviderProps } from './types';

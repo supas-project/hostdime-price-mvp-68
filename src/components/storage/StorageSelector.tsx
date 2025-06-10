@@ -28,9 +28,8 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
   }>({});
   const [isLoading, setIsLoading] = useState(false);
   
-  // Memoize the external storage loading function to prevent recreation
   const loadExternalStorage = useCallback(async () => {
-    if (isLoading) return; // Prevent multiple simultaneous calls
+    if (isLoading) return;
     
     setIsLoading(true);
     try {
@@ -53,16 +52,13 @@ export function StorageSelector({ onSelectInternalDisk, onSelectExternalStorage 
     }
   }, [isLoading]);
   
-  // Load external storage only once on mount
   useEffect(() => {
     loadExternalStorage();
-  }, []); // Empty dependency array - only run on mount
+  }, []);
   
-  // Memoize storage types count to prevent unnecessary re-renders
   const storageTypesCount = useMemo(() => storageTypes.length, [storageTypes]);
   const externalTypesCount = useMemo(() => Object.keys(externalStorageTypes).length, [externalStorageTypes]);
   
-  // Log only when counts actually change
   useEffect(() => {
     if (storageTypesCount > 0) {
       console.log(`[StorageSelector] Loaded ${storageTypesCount} internal storage types`);
