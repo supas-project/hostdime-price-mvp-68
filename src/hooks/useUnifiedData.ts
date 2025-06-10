@@ -1,175 +1,157 @@
 
 import { useState, useEffect } from 'react';
-import { 
-  UnifiedDataService, 
-  UnifiedComponent, 
-  UnifiedDataCenter, 
-  UnifiedContractType, 
-  UnifiedStorageItem,
-  ConsolidatedDataStatus 
-} from '@/services/unified-data-service';
-import { ComponentService } from '@/services/component-service-refactored';
-import { useAuth } from '@/hooks/auth';
-import { toast } from 'sonner';
+import { Category, Item, ChangeLog } from '@/types/database';
+import { UnifiedDataService } from '@/services/unified-data-service';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 export function useUnifiedData() {
   const { isAuthenticated } = useAuth();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [changeLog, setChangeLog] = useState<ChangeLog[]>([]);
   const [loading, setLoading] = useState(false);
-  const [consolidationStatus, setConsolidationStatus] = useState<ConsolidatedDataStatus | null>(null);
-  
-  // Data states
-  const [cpuComponents, setCpuComponents] = useState<UnifiedComponent[]>([]);
-  const [memoryComponents, setMemoryComponents] = useState<UnifiedComponent[]>([]);
-  const [osComponents, setOsComponents] = useState<UnifiedComponent[]>([]);
-  const [connectivityComponents, setConnectivityComponents] = useState<UnifiedComponent[]>([]);
-  const [dataCenters, setDataCenters] = useState<UnifiedDataCenter[]>([]);
-  const [contractTypes, setContractTypes] = useState<UnifiedContractType[]>([]);
-  const [storageItems, setStorageItems] = useState<UnifiedStorageItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load consolidation status
-   */
-  const loadConsolidationStatus = async () => {
-    try {
-      const status = await UnifiedDataService.getConsolidationStatus();
-      setConsolidationStatus(status);
-      return status;
-    } catch (error) {
-      console.error('Error loading consolidation status:', error);
-      return null;
-    }
-  };
-
-  /**
-   * Run data consolidation and ensure unified data
-   */
-  const consolidateData = async () => {
+  // Load initial data
+  const loadData = async () => {
+    if (!isAuthenticated) return;
+    
     setLoading(true);
+    setError(null);
+    
     try {
-      console.log('[useUnifiedData] Starting data consolidation...');
-      
-      // Consolidate data through ComponentService
-      await ComponentService.ensureDataConsolidation();
-      
-      // Reload status and data
-      await loadConsolidationStatus();
-      await loadAllData();
-      
-      toast.success('Dados unificados consolidados com sucesso');
-    } catch (error) {
-      console.error('Error consolidating unified data:', error);
-      toast.error('Erro na consolidação de dados unificados');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Load all data from unified service
-   */
-  const loadAllData = async () => {
-    if (!isAuthenticated) {
-      console.log('User not authenticated, skipping unified data load');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log('[useUnifiedData] Loading all unified data...');
-      
-      const [
-        cpuData,
-        memoryData,
-        osData,
-        connectivityData,
-        dataCenterData,
-        contractData,
-        storageData
-      ] = await Promise.all([
-        UnifiedDataService.getComponentsByType('cpu'),
-        UnifiedDataService.getComponentsByType('memory'),
-        UnifiedDataService.getComponentsByType('os'),
-        UnifiedDataService.getComponentsByType('connectivity'),
-        UnifiedDataService.getAllDataCenters(),
-        UnifiedDataService.getAllContractTypes(),
-        UnifiedDataService.getAllStorageItems()
+      const [categoriesData, itemsData, changeLogData] = await Promise.all([
+        UnifiedDataService.getCategories(),
+        UnifiedDataService.getItems(),
+        UnifiedDataService.getChangeLog(20)
       ]);
-
-      setCpuComponents(cpuData);
-      setMemoryComponents(memoryData);
-      setOsComponents(osData);
-      setConnectivityComponents(connectivityData);
-      setDataCenters(dataCenterData);
-      setContractTypes(contractData);
-      setStorageItems(storageData);
-
-      console.log('[useUnifiedData] All unified data loaded successfully');
-    } catch (error) {
-      console.error('Error loading unified data:', error);
-      toast.error('Erro ao carregar dados unificados do sistema');
+      
+      setCategories(categoriesData);
+      setItems(itemsData);
+      setChangeLog(changeLogData);
+    } catch (err) {
+      setError('Erro ao carregar dados');
+      console.error('Error loading unified data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Load specific component type
-   */
-  const loadComponentsByType = async (componentType: string) => {
-    try {
-      const data = await UnifiedDataService.getComponentsByType(componentType);
-      
-      switch (componentType) {
-        case 'cpu':
-          setCpuComponents(data);
-          break;
-        case 'memory':
-          setMemoryComponents(data);
-          break;
-        case 'os':
-          setOsComponents(data);
-          break;
-        case 'connectivity':
-          setConnectivityComponents(data);
-          break;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error(`Error loading ${componentType} components:`, error);
-      toast.error(`Erro ao carregar componentes de ${componentType}`);
-      return [];
+  // Category operations
+  const addCategory = async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => {
+    const newCategory = await UnifiedDataService.createCategory(category);
+    if (newCategory) {
+      setCategories(prev => [...prev, newCategory].sort((a, b) => a.display_order - b.display_order));
     }
+    return newCategory;
   };
 
-  // Auto-load data on authentication
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadConsolidationStatus();
-      loadAllData();
+  const updateCategory = async (id: string, updates: Partial<Category>) => {
+    const updatedCategory = await UnifiedDataService.updateCategory(id, updates);
+    if (updatedCategory) {
+      setCategories(prev => 
+        prev.map(cat => cat.id === id ? updatedCategory : cat)
+           .sort((a, b) => a.display_order - b.display_order)
+      );
     }
+    return updatedCategory;
+  };
+
+  const deleteCategory = async (id: string) => {
+    const success = await UnifiedDataService.deleteCategory(id);
+    if (success) {
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+      setItems(prev => prev.filter(item => item.category_id !== id));
+    }
+    return success;
+  };
+
+  // Item operations
+  const addItem = async (item: Omit<Item, 'id' | 'created_at' | 'updated_at'>) => {
+    const newItem = await UnifiedDataService.createItem(item);
+    if (newItem) {
+      setItems(prev => [...prev, newItem].sort((a, b) => 
+        a.category_id.localeCompare(b.category_id) || a.display_order - b.display_order
+      ));
+    }
+    return newItem;
+  };
+
+  const updateItem = async (id: string, updates: Partial<Item>) => {
+    const updatedItem = await UnifiedDataService.updateItem(id, updates);
+    if (updatedItem) {
+      setItems(prev => 
+        prev.map(item => item.id === id ? updatedItem : item)
+           .sort((a, b) => 
+             a.category_id.localeCompare(b.category_id) || a.display_order - b.display_order
+           )
+      );
+    }
+    return updatedItem;
+  };
+
+  const deleteItem = async (id: string) => {
+    const success = await UnifiedDataService.deleteItem(id);
+    if (success) {
+      setItems(prev => prev.filter(item => item.id !== id));
+    }
+    return success;
+  };
+
+  // Get items by category
+  const getItemsByCategory = (categoryId: string) => {
+    return items.filter(item => item.category_id === categoryId);
+  };
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    loadData();
+
+    // Subscribe to real-time changes
+    const categoriesSubscription = UnifiedDataService.subscribeToCategories((payload) => {
+      console.log('Categories change:', payload);
+      loadData(); // Reload data on any change
+    });
+
+    const itemsSubscription = UnifiedDataService.subscribeToItems((payload) => {
+      console.log('Items change:', payload);
+      loadData(); // Reload data on any change
+    });
+
+    const changeLogSubscription = UnifiedDataService.subscribeToChangeLog((payload) => {
+      console.log('Change log update:', payload);
+      setChangeLog(prev => [payload.new, ...prev.slice(0, 19)]);
+    });
+
+    return () => {
+      categoriesSubscription.unsubscribe();
+      itemsSubscription.unsubscribe();
+      changeLogSubscription.unsubscribe();
+    };
   }, [isAuthenticated]);
 
   return {
-    // Loading states
-    loading,
-    
     // Data
-    cpuComponents,
-    memoryComponents,
-    osComponents,
-    connectivityComponents,
-    dataCenters,
-    contractTypes,
-    storageItems,
+    categories,
+    items,
+    changeLog,
+    loading,
+    error,
     
-    // Consolidation
-    consolidationStatus,
+    // Category operations
+    addCategory,
+    updateCategory,
+    deleteCategory,
     
-    // Actions
-    consolidateData,
-    loadAllData,
-    loadComponentsByType,
-    loadConsolidationStatus
+    // Item operations
+    addItem,
+    updateItem,
+    deleteItem,
+    getItemsByCategory,
+    
+    // Utilities
+    loadData
   };
 }

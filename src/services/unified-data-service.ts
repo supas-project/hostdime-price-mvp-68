@@ -1,385 +1,275 @@
 
 import { supabase } from '@/lib/supabase';
+import { Category, Item, ChangeLog, DataVersion } from '@/types/database';
+import { toast } from 'sonner';
 
-export interface UnifiedComponent {
-  component_id: string;
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  component_type: string;
-  subtype?: string;
-  is_hardware: boolean;
-  specs: string[];
-  metadata: Record<string, any>;
-}
-
-export interface UnifiedDataCenter {
-  datacenter_id: string;
-  name: string;
-  description?: string;
-  location: string;
-  region?: string;
-  price: number;
-  badge?: string;
-  features: string[];
-  certifications: string[];
-}
-
-export interface UnifiedContractType {
-  contract_id: string;
-  name: string;
-  description?: string;
-  duration_months: number;
-  discount_percentage: number;
-}
-
-export interface UnifiedStorageItem {
-  id: string;
-  name: string;
-  description?: string;
-  storage_type: 'internal' | 'external';
-  item_type: 'nvme' | 'ssd' | 'hdd' | 'object' | 'block';
-  capacity_gb: number;
-  price: number;
-  specs: string[];
-  metadata: Record<string, any>;
-}
-
-export interface ConsolidatedDataStatus {
-  phase: 'not_started' | 'consolidating' | 'completed' | 'error';
-  components_count: number;
-  datacenters_count: number;
-  contracts_count: number;
-  storage_count: number;
-  last_updated: string | null;
-  errors: string[];
-}
-
-/**
- * Unified Data Service - Single source of truth for all system data
- * This service consolidates data from multiple sources into the database
- */
 export class UnifiedDataService {
   
-  /**
-   * Get consolidation status
-   */
-  static async getConsolidationStatus(): Promise<ConsolidatedDataStatus> {
+  // Categories CRUD
+  static async getCategories(): Promise<Category[]> {
     try {
       const { data, error } = await supabase
-        .from('consolidated_data')
+        .from('categories')
         .select('*')
-        .eq('data_type', 'consolidation_status')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('[UnifiedDataService] Error getting consolidation status:', error);
-      }
-
-      if (!data) {
-        return {
-          phase: 'not_started',
-          components_count: 0,
-          datacenters_count: 0,
-          contracts_count: 0,
-          storage_count: 0,
-          last_updated: null,
-          errors: []
-        };
-      }
-
-      return data.data as ConsolidatedDataStatus;
+        .eq('active', true)
+        .order('display_order', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
     } catch (error) {
-      console.error('[UnifiedDataService] Error in getConsolidationStatus:', error);
-      return {
-        phase: 'error',
-        components_count: 0,
-        datacenters_count: 0,
-        contracts_count: 0,
-        storage_count: 0,
-        last_updated: null,
-        errors: [error instanceof Error ? error.message : 'Unknown error']
-      };
+      console.error('Error fetching categories:', error);
+      toast.error('Erro ao carregar categorias');
+      return [];
     }
   }
 
-  /**
-   * Consolidate all data from static sources into database
-   */
-  static async consolidateAllData(): Promise<boolean> {
+  static async createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category | null> {
     try {
-      console.log('[UnifiedDataService] Starting data consolidation...');
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([category])
+        .select()
+        .single();
       
-      // Mark consolidation as started
-      await this.updateConsolidationStatus('consolidating');
+      if (error) throw error;
+      toast.success('Categoria criada com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast.error('Erro ao criar categoria');
+      return null;
+    }
+  }
+
+  static async updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
       
-      // Import and consolidate static data
-      const staticData = await this.importStaticData();
+      if (error) throw error;
+      toast.success('Categoria atualizada com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Erro ao atualizar categoria');
+      return null;
+    }
+  }
+
+  static async deleteCategory(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
       
-      // Save consolidated data to database
-      await this.saveConsolidatedData(staticData);
-      
-      // Mark consolidation as completed
-      await this.updateConsolidationStatus('completed');
-      
-      console.log('[UnifiedDataService] Data consolidation completed successfully');
+      if (error) throw error;
+      toast.success('Categoria excluída com sucesso');
       return true;
     } catch (error) {
-      console.error('[UnifiedDataService] Error during consolidation:', error);
-      await this.updateConsolidationStatus('error', [error instanceof Error ? error.message : 'Unknown error']);
+      console.error('Error deleting category:', error);
+      toast.error('Erro ao excluir categoria');
       return false;
     }
   }
 
-  /**
-   * Import static data from data files
-   */
-  private static async importStaticData() {
-    // Import components using correct file names and exports
-    const cpuData = await import('@/data/cpu-components').then(m => m.cpuComponents);
-    const memoryData = await import('@/data/memory-components').then(m => m.memoryComponents);
-    const osData = await import('@/data/os-components').then(m => m.osComponents);
-    const connectivityData = await import('@/data/connectivity-components').then(m => m.connectivityComponents);
-    
-    // Import datacenter and contract data using correct file names
-    const dataCenterData = await import('@/data/datacenter-components').then(m => m.dataCenterComponents);
-    const contractData = await import('@/data/contract-components').then(m => m.contractComponents);
-    
-    // Get disk data from existing storage pricing
-    const diskData = await import('@/data/disk-data').then(m => m.diskData);
-    
-    // External storage data 
-    const externalStorageData = [
-      {
-        id: 'object_storage_standard',
-        name: 'Object Storage Standard',
-        storage_type: 'external',
-        item_type: 'object',
-        capacity_gb: 1000,
-        price: 50,
-        description: 'Armazenamento de objetos padrão'
-      },
-      {
-        id: 'block_storage_ssd',
-        name: 'Block Storage SSD',
-        storage_type: 'external', 
-        item_type: 'block',
-        capacity_gb: 500,
-        price: 80,
-        description: 'Armazenamento em bloco SSD'
+  // Items CRUD
+  static async getItems(categoryId?: string): Promise<Item[]> {
+    try {
+      let query = supabase
+        .from('items')
+        .select('*')
+        .eq('active', true);
+      
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
       }
-    ];
-
-    return {
-      components: [
-        ...cpuData.options.map(item => ({ ...item, component_type: 'cpu' })),
-        ...memoryData.options.map(item => ({ ...item, component_type: 'memory' })),
-        ...osData.options.map(item => ({ ...item, component_type: 'os' })),
-        ...connectivityData.options.map(item => ({ ...item, component_type: 'connectivity' }))
-      ],
-      datacenters: dataCenterData.options,
-      contracts: contractData.options,
-      storage: [
-        ...diskData.map(item => ({
-          ...item,
-          storage_type: 'internal',
-          item_type: item.type,
-          capacity_gb: parseInt(item.capacity.replace(/[^\d]/g, '')) || 0
-        })),
-        ...externalStorageData
-      ]
-    };
+      
+      const { data, error } = await query.order('display_order', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      toast.error('Erro ao carregar itens');
+      return [];
+    }
   }
 
-  /**
-   * Save consolidated data to database
-   */
-  private static async saveConsolidatedData(data: any) {
-    const { error } = await supabase
-      .from('consolidated_data')
-      .insert({
-        data_type: 'unified_data',
-        data: data
+  static async createItem(item: Omit<Item, 'id' | 'created_at' | 'updated_at'>): Promise<Item | null> {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .insert([item])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      toast.success('Item criado com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Error creating item:', error);
+      toast.error('Erro ao criar item');
+      return null;
+    }
+  }
+
+  static async updateItem(id: string, updates: Partial<Item>): Promise<Item | null> {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      toast.success('Item atualizado com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Error updating item:', error);
+      toast.error('Erro ao atualizar item');
+      return null;
+    }
+  }
+
+  static async deleteItem(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast.success('Item excluído com sucesso');
+      return true;
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error('Erro ao excluir item');
+      return false;
+    }
+  }
+
+  // Reordering
+  static async reorderCategories(categories: { id: string; display_order: number }[]): Promise<boolean> {
+    try {
+      const updates = categories.map(cat => 
+        supabase
+          .from('categories')
+          .update({ display_order: cat.display_order })
+          .eq('id', cat.id)
+      );
+      
+      await Promise.all(updates);
+      toast.success('Ordem das categorias atualizada');
+      return true;
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+      toast.error('Erro ao reordenar categorias');
+      return false;
+    }
+  }
+
+  static async reorderItems(items: { id: string; display_order: number }[]): Promise<boolean> {
+    try {
+      const updates = items.map(item => 
+        supabase
+          .from('items')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id)
+      );
+      
+      await Promise.all(updates);
+      toast.success('Ordem dos itens atualizada');
+      return true;
+    } catch (error) {
+      console.error('Error reordering items:', error);
+      toast.error('Erro ao reordenar itens');
+      return false;
+    }
+  }
+
+  // Versioning and Change Log
+  static async getChangeLog(limit: number = 50): Promise<ChangeLog[]> {
+    try {
+      const { data, error } = await supabase
+        .from('change_log')
+        .select('*')
+        .order('changed_at', { ascending: false })
+        .limit(limit);
+      
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching change log:', error);
+      return [];
+    }
+  }
+
+  static async createSnapshot(versionName: string, description?: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.rpc('create_data_snapshot', {
+        p_version_name: versionName,
+        p_description: description
       });
-
-    if (error) {
-      throw new Error(`Failed to save consolidated data: ${error.message}`);
+      
+      if (error) throw error;
+      toast.success('Snapshot criado com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Error creating snapshot:', error);
+      toast.error('Erro ao criar snapshot');
+      return null;
     }
   }
 
-  /**
-   * Update consolidation status
-   */
-  private static async updateConsolidationStatus(
-    phase: ConsolidatedDataStatus['phase'], 
-    errors: string[] = []
-  ) {
-    const status: ConsolidatedDataStatus = {
-      phase,
-      components_count: 0,
-      datacenters_count: 0,
-      contracts_count: 0,
-      storage_count: 0,
-      last_updated: new Date().toISOString(),
-      errors
-    };
-
-    await supabase
-      .from('consolidated_data')
-      .insert({
-        data_type: 'consolidation_status',
-        data: status
-      });
-  }
-
-  /**
-   * Get components by type from unified data
-   */
-  static async getComponentsByType(componentType: string): Promise<UnifiedComponent[]> {
+  static async getVersions(): Promise<DataVersion[]> {
     try {
       const { data, error } = await supabase
-        .from('consolidated_data')
-        .select('data')
-        .eq('data_type', 'unified_data')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) {
-        console.warn(`[UnifiedDataService] No unified data found for type ${componentType}`);
-        return [];
-      }
-
-      const unifiedData = data.data;
-      const components = unifiedData.components || [];
+        .from('data_versions')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      return components
-        .filter((comp: any) => comp.component_type === componentType)
-        .map((comp: any) => ({
-          component_id: comp.id,
-          id: comp.id,
-          name: comp.name,
-          description: comp.description || '',
-          price: comp.price || 0,
-          component_type: comp.component_type,
-          subtype: comp.subtype || 'standard',
-          is_hardware: comp.isHardware || false,
-          specs: Array.isArray(comp.specs) ? comp.specs : [],
-          metadata: comp.metadata || {}
-        }));
+      if (error) throw error;
+      return data || [];
     } catch (error) {
-      console.error(`[UnifiedDataService] Error getting components for type ${componentType}:`, error);
+      console.error('Error fetching versions:', error);
       return [];
     }
   }
 
-  /**
-   * Get all data centers from unified data
-   */
-  static async getAllDataCenters(): Promise<UnifiedDataCenter[]> {
-    try {
-      const { data, error } = await supabase
-        .from('consolidated_data')
-        .select('data')
-        .eq('data_type', 'unified_data')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) {
-        return [];
-      }
-
-      const unifiedData = data.data;
-      const datacenters = unifiedData.datacenters || [];
-      
-      return datacenters.map((dc: any) => ({
-        datacenter_id: dc.id,
-        name: dc.name,
-        description: dc.description || '',
-        location: dc.location || '',
-        region: dc.region || '',
-        price: dc.price || 0,
-        badge: dc.badge || '',
-        features: Array.isArray(dc.features) ? dc.features : [],
-        certifications: Array.isArray(dc.certifications) ? dc.certifications : []
-      }));
-    } catch (error) {
-      console.error('[UnifiedDataService] Error getting data centers:', error);
-      return [];
-    }
+  // Real-time subscriptions
+  static subscribeToCategories(callback: (payload: any) => void) {
+    return supabase
+      .channel('categories-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'categories' }, 
+        callback
+      )
+      .subscribe();
   }
 
-  /**
-   * Get all contract types from unified data
-   */
-  static async getAllContractTypes(): Promise<UnifiedContractType[]> {
-    try {
-      const { data, error } = await supabase
-        .from('consolidated_data')
-        .select('data')
-        .eq('data_type', 'unified_data')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) {
-        return [];
-      }
-
-      const unifiedData = data.data;
-      const contracts = unifiedData.contracts || [];
-      
-      return contracts.map((contract: any) => ({
-        contract_id: contract.id,
-        name: contract.name,
-        description: contract.description || '',
-        duration_months: contract.duration || 12,
-        discount_percentage: contract.discount || 0
-      }));
-    } catch (error) {
-      console.error('[UnifiedDataService] Error getting contract types:', error);
-      return [];
-    }
+  static subscribeToItems(callback: (payload: any) => void) {
+    return supabase
+      .channel('items-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'items' }, 
+        callback
+      )
+      .subscribe();
   }
 
-  /**
-   * Get all storage items from unified data
-   */
-  static async getAllStorageItems(): Promise<UnifiedStorageItem[]> {
-    try {
-      const { data, error } = await supabase
-        .from('consolidated_data')
-        .select('data')
-        .eq('data_type', 'unified_data')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) {
-        return [];
-      }
-
-      const unifiedData = data.data;
-      const storage = unifiedData.storage || [];
-      
-      return storage.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || '',
-        storage_type: item.storage_type || 'internal',
-        item_type: item.item_type || 'ssd',
-        capacity_gb: item.capacity_gb || item.capacity || 0,
-        price: item.price || 0,
-        specs: Array.isArray(item.specs) ? item.specs : [],
-        metadata: item.metadata || {}
-      }));
-    } catch (error) {
-      console.error('[UnifiedDataService] Error getting storage items:', error);
-      return [];
-    }
+  static subscribeToChangeLog(callback: (payload: any) => void) {
+    return supabase
+      .channel('changelog-changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'change_log' }, 
+        callback
+      )
+      .subscribe();
   }
 }
