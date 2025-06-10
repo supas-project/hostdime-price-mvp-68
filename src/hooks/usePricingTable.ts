@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { PricingTableService, ComponentCategory, ComponentItem, PriceModifier } from '@/services/pricing-table-service';
 import { DataMigrationService } from '@/services/data-migration-service';
+import { DirectMigrationService } from '@/services/direct-migration-service';
 import { toast } from 'sonner';
 
 export function usePricingTable() {
