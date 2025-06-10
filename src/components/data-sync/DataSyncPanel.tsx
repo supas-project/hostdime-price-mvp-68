@@ -50,10 +50,12 @@ export function DataSyncPanel() {
   };
   
   const needsConsolidation = consolidationStatus?.phase !== 'completed';
+  
+  // Safely check for issues with proper null checks and default values
   const hasIssues = consistencyReport && (
-    consistencyReport.missingInPrice.length > 0 ||
-    consistencyReport.extraInPrice.length > 0 ||
-    Object.keys(consistencyReport.itemMismatches).length > 0
+    (consistencyReport.missingInPrice && consistencyReport.missingInPrice.length > 0) ||
+    (consistencyReport.extraInPrice && consistencyReport.extraInPrice.length > 0) ||
+    (consistencyReport.itemMismatches && Object.keys(consistencyReport.itemMismatches).length > 0)
   );
   
   const getStatusInfo = () => {
@@ -104,10 +106,10 @@ export function DataSyncPanel() {
               </Badge>
             </div>
             <div className="text-sm text-blue-700">
-              <p>Componentes: {consolidationStatus.components_count}</p>
-              <p>Storage: {consolidationStatus.storage_count}</p>
-              <p>Data Centers: {consolidationStatus.datacenters_count}</p>
-              <p>Contratos: {consolidationStatus.contracts_count}</p>
+              <p>Componentes: {consolidationStatus.components_count || 0}</p>
+              <p>Storage: {consolidationStatus.storage_count || 0}</p>
+              <p>Data Centers: {consolidationStatus.datacenters_count || 0}</p>
+              <p>Contratos: {consolidationStatus.contracts_count || 0}</p>
             </div>
           </div>
         )}
@@ -127,23 +129,23 @@ export function DataSyncPanel() {
           )}
         </div>
         
-        {/* Issues Report */}
+        {/* Issues Report - with safe checks */}
         {hasIssues && consistencyReport && (
           <Alert>
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription>
               <div className="space-y-2">
-                {consistencyReport.missingInPrice.length > 0 && (
+                {consistencyReport.missingInPrice && consistencyReport.missingInPrice.length > 0 && (
                   <p>
                     <strong>{consistencyReport.missingInPrice.length}</strong> categorias padrão ausentes na tabela de preços
                   </p>
                 )}
-                {consistencyReport.extraInPrice.length > 0 && (
+                {consistencyReport.extraInPrice && consistencyReport.extraInPrice.length > 0 && (
                   <p>
                     <strong>{consistencyReport.extraInPrice.length}</strong> categorias não-padrão na tabela de preços
                   </p>
                 )}
-                {Object.keys(consistencyReport.itemMismatches).length > 0 && (
+                {consistencyReport.itemMismatches && Object.keys(consistencyReport.itemMismatches).length > 0 && (
                   <p>
                     <strong>{Object.keys(consistencyReport.itemMismatches).length}</strong> categorias com itens divergentes
                   </p>
@@ -184,10 +186,10 @@ export function DataSyncPanel() {
           )}
         </div>
         
-        {/* Detailed Report */}
+        {/* Detailed Report - with safe checks */}
         {showReport && consistencyReport && (
           <div className="space-y-3 p-3 bg-muted rounded-lg">
-            {consistencyReport.missingInPrice.length > 0 && (
+            {consistencyReport.missingInPrice && consistencyReport.missingInPrice.length > 0 && (
               <div>
                 <h4 className="font-medium text-sm mb-2">Categorias padrão ausentes na tabela de preços:</h4>
                 <div className="flex flex-wrap gap-1">
@@ -198,7 +200,7 @@ export function DataSyncPanel() {
               </div>
             )}
             
-            {consistencyReport.extraInPrice.length > 0 && (
+            {consistencyReport.extraInPrice && consistencyReport.extraInPrice.length > 0 && (
               <div>
                 <h4 className="font-medium text-sm mb-2">Categorias não-padrão na tabela de preços:</h4>
                 <div className="flex flex-wrap gap-1">
@@ -209,7 +211,7 @@ export function DataSyncPanel() {
               </div>
             )}
             
-            {Object.keys(consistencyReport.itemMismatches).length > 0 && (
+            {consistencyReport.itemMismatches && Object.keys(consistencyReport.itemMismatches).length > 0 && (
               <div>
                 <h4 className="font-medium text-sm mb-2">Divergências de itens por categoria:</h4>
                 <div className="space-y-1">
