@@ -4,23 +4,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, Database, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
+import { RefreshCw, Database, CheckCircle, AlertTriangle, ArrowRight, Trash2, Bug } from 'lucide-react';
 import { DataMigrationService } from '@/services/data-migration-service';
 import { toast } from 'sonner';
 
+interface MigrationStatus {
+  totalCategories: number;
+  totalItems: number;
+  itemsByCategory: Record<string, number>;
+  isHealthy: boolean;
+  errors: string[];
+}
+
 export function MigrationPanel() {
-  const [migrationStatus, setMigrationStatus] = useState<any>(null);
+  const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const loadMigrationStatus = async () => {
     try {
       setIsLoading(true);
+      console.log('🔄 Carregando status da migração...');
       const status = await DataMigrationService.checkMigrationStatus();
       setMigrationStatus(status);
+      
+      if (status.errors.length > 0) {
+        console.error('❌ Erros no status:', status.errors);
+      } else {
+        console.log('✅ Status carregado com sucesso');
+      }
     } catch (error) {
-      console.error('Erro ao carregar status da migração:', error);
+      console.error('❌ Erro ao carregar status da migração:', error);
       toast.error('Erro ao carregar status da migração');
+      setMigrationStatus({
+        totalCategories: 0,
+        totalItems: 0,
+        itemsByCategory: {},
+        isHealthy: false,
+        errors: [`Erro ao carregar: ${error}`]
+      });
     } finally {
       setIsLoading(false);
     }
@@ -31,16 +54,48 @@ export function MigrationPanel() {
       setIsMigrating(true);
       console.log('🔄 Iniciando migração de dados...');
       
+      // Validar dados estáticos primeiro
+      const validation = DataMigrationService.validateStaticData();
+      if (!validation.isValid) {
+        toast.error(`Dados estáticos inválidos: ${validation.errors.join(', ')}`);
+        return;
+      }
+
       await DataMigrationService.migrateAllDataToPricingTable();
+      
+      // Aguardar um momento antes de verificar o status
+      await new Promise(resolve => setTimeout(resolve, 1500));
       await loadMigrationStatus();
       
       toast.success('Migração realizada com sucesso!');
       console.log('✅ Migração concluída');
     } catch (error) {
       console.error('❌ Erro na migração:', error);
-      toast.error('Erro na migração de dados');
+      toast.error(`Erro na migração de dados: ${error}`);
     } finally {
       setIsMigrating(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Tem certeza que deseja limpar todos os dados migrados? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      console.log('🗑️ Limpando dados migrados...');
+      
+      await DataMigrationService.clearMigratedData();
+      await loadMigrationStatus();
+      
+      toast.success('Dados limpos com sucesso!');
+      console.log('✅ Limpeza concluída');
+    } catch (error) {
+      console.error('❌ Erro na limpeza:', error);
+      toast.error(`Erro ao limpar dados: ${error}`);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -49,9 +104,7 @@ export function MigrationPanel() {
   }, []);
 
   const hasData = migrationStatus && migrationStatus.totalItems > 0;
-  const itemsByCategory = migrationStatus?.itemsByCategory && typeof migrationStatus.itemsByCategory === 'object' 
-    ? migrationStatus.itemsByCategory as Record<string, number>
-    : {};
+  const itemsByCategory = migrationStatus?.itemsByCategory || {};
 
   return (
     <Card>
@@ -65,13 +118,13 @@ export function MigrationPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status atual */}
+        {/* Status de saúde */}
         {migrationStatus && (
-          <div className="p-3 bg-muted rounded-lg">
+          <div className={`p-3 rounded-lg border ${migrationStatus.isHealthy ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium">Status Atual</span>
-              <Badge variant={hasData ? 'default' : 'secondary'}>
-                {hasData ? 'Dados Presentes' : 'Sem Dados'}
+              <span className="font-medium">Status do Sistema</span>
+              <Badge variant={migrationStatus.isHealthy ? 'default' : 'destructive'}>
+                {migrationStatus.isHealthy ? 'Saudável' : 'Com Problemas'}
               </Badge>
             </div>
             
@@ -86,6 +139,25 @@ export function MigrationPanel() {
               </div>
             </div>
 
+            {/* Erros */}
+            {migrationStatus.errors.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-red-300">
+                <div className="flex items-center gap-2 text-red-600 mb-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="font-medium">Erros encontrados:</span>
+                </div>
+                <ul className="text-sm text-red-600 space-y-1">
+                  {migrationStatus.errors.map((error, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>{error}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Distribuição por categoria */}
             {Object.keys(itemsByCategory).length > 0 && (
               <div className="mt-3 pt-3 border-t">
                 <span className="text-sm font-medium mb-2 block">Itens por categoria:</span>
@@ -112,11 +184,11 @@ export function MigrationPanel() {
         </Alert>
 
         {/* Ações */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button 
             onClick={handleMigration}
-            disabled={isMigrating || isLoading}
-            className="flex-1"
+            disabled={isMigrating || isLoading || isClearing}
+            className="flex-1 min-w-[200px]"
           >
             {isMigrating ? (
               <>
@@ -134,17 +206,49 @@ export function MigrationPanel() {
           <Button 
             variant="outline"
             onClick={loadMigrationStatus}
-            disabled={isLoading || isMigrating}
+            disabled={isLoading || isMigrating || isClearing}
+            title="Atualizar Status"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
+
+          {hasData && (
+            <Button 
+              variant="outline"
+              onClick={handleClearData}
+              disabled={isLoading || isMigrating || isClearing}
+              className="text-red-600 hover:text-red-700"
+              title="Limpar Dados Migrados"
+            >
+              {isClearing ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Status de sucesso */}
-        {hasData && (
+        {migrationStatus?.isHealthy && hasData && (
           <div className="flex items-center gap-2 text-sm text-green-600">
             <CheckCircle className="h-4 w-4" />
             <span>Dados migrados e sincronizados com sucesso</span>
+          </div>
+        )}
+
+        {/* Debug info */}
+        {migrationStatus && !migrationStatus.isHealthy && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-2 text-yellow-800 mb-2">
+              <Bug className="h-4 w-4" />
+              <span className="font-medium">Informações de Debug</span>
+            </div>
+            <div className="text-xs text-yellow-700 space-y-1">
+              <p>• Verifique o console do navegador para logs detalhados</p>
+              <p>• Tente limpar os dados e migrar novamente</p>
+              <p>• Certifique-se de que as configurações estáticas estão disponíveis</p>
+            </div>
           </div>
         )}
       </CardContent>

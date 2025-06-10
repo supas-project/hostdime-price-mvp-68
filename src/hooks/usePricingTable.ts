@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { PricingTableService, ComponentCategory, ComponentItem, PriceModifier } from '@/services/pricing-table-service';
+import { DataMigrationService } from '@/services/data-migration-service';
 import { toast } from 'sonner';
 
 export function usePricingTable() {
@@ -13,10 +15,12 @@ export function usePricingTable() {
   const loadCategories = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Carregando categorias...');
       const data = await PricingTableService.getAllCategories();
       setCategories(data);
+      console.log(`✅ ${data.length} categorias carregadas`);
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
+      console.error('❌ Erro ao carregar categorias:', error);
       toast.error('Erro ao carregar categorias');
     } finally {
       setLoading(false);
@@ -27,10 +31,12 @@ export function usePricingTable() {
   const loadItemsByCategory = async (categoryId: string) => {
     try {
       setLoading(true);
+      console.log(`🔄 Carregando itens da categoria ${categoryId}...`);
       const data = await PricingTableService.getItemsByCategory(categoryId);
       setItems(data);
+      console.log(`✅ ${data.length} itens carregados`);
     } catch (error) {
-      console.error('Erro ao carregar itens:', error);
+      console.error('❌ Erro ao carregar itens:', error);
       toast.error('Erro ao carregar itens');
     } finally {
       setLoading(false);
@@ -41,10 +47,12 @@ export function usePricingTable() {
   const loadItemsByType = async (componentType: string) => {
     try {
       setLoading(true);
+      console.log(`🔄 Carregando itens do tipo ${componentType}...`);
       const data = await PricingTableService.getItemsByType(componentType);
       setItems(data);
+      console.log(`✅ ${data.length} itens carregados`);
     } catch (error) {
-      console.error('Erro ao carregar itens por tipo:', error);
+      console.error('❌ Erro ao carregar itens por tipo:', error);
       toast.error('Erro ao carregar itens');
     } finally {
       setLoading(false);
@@ -54,10 +62,12 @@ export function usePricingTable() {
   // Carregar modificadores de preço
   const loadPriceModifiers = async () => {
     try {
+      console.log('🔄 Carregando modificadores de preço...');
       const data = await PricingTableService.getAllPriceModifiers();
       setPriceModifiers(data);
+      console.log(`✅ ${data.length} modificadores carregados`);
     } catch (error) {
-      console.error('Erro ao carregar modificadores:', error);
+      console.error('❌ Erro ao carregar modificadores:', error);
       toast.error('Erro ao carregar modificadores de preço');
     }
   };
@@ -70,7 +80,7 @@ export function usePricingTable() {
       await loadCategories(); // Recarregar lista
       toast.success('Categoria criada com sucesso');
     } catch (error) {
-      console.error('Erro ao criar categoria:', error);
+      console.error('❌ Erro ao criar categoria:', error);
       toast.error('Erro ao criar categoria');
     } finally {
       setLoading(false);
@@ -85,7 +95,7 @@ export function usePricingTable() {
       await loadCategories(); // Recarregar lista
       toast.success('Categoria atualizada com sucesso');
     } catch (error) {
-      console.error('Erro ao atualizar categoria:', error);
+      console.error('❌ Erro ao atualizar categoria:', error);
       toast.error('Erro ao atualizar categoria');
     } finally {
       setLoading(false);
@@ -100,7 +110,7 @@ export function usePricingTable() {
       await loadCategories(); // Recarregar lista
       toast.success('Categoria excluída com sucesso');
     } catch (error) {
-      console.error('Erro ao excluir categoria:', error);
+      console.error('❌ Erro ao excluir categoria:', error);
       toast.error('Erro ao excluir categoria');
     } finally {
       setLoading(false);
@@ -115,7 +125,7 @@ export function usePricingTable() {
       await loadItemsByCategory(itemData.category_id); // Recarregar lista
       toast.success('Item criado com sucesso');
     } catch (error) {
-      console.error('Erro ao criar item:', error);
+      console.error('❌ Erro ao criar item:', error);
       toast.error('Erro ao criar item');
     } finally {
       setLoading(false);
@@ -134,7 +144,7 @@ export function usePricingTable() {
       }
       toast.success('Item atualizado com sucesso');
     } catch (error) {
-      console.error('Erro ao atualizar item:', error);
+      console.error('❌ Erro ao atualizar item:', error);
       toast.error('Erro ao atualizar item');
     } finally {
       setLoading(false);
@@ -152,48 +162,54 @@ export function usePricingTable() {
       }
       toast.success('Item excluído com sucesso');
     } catch (error) {
-      console.error('Erro ao excluir item:', error);
+      console.error('❌ Erro ao excluir item:', error);
       toast.error('Erro ao excluir item');
     } finally {
       setLoading(false);
     }
   };
 
-  // Sincronizar com dados estáticos
+  // Sincronizar com dados estáticos usando o novo serviço
   const syncWithStaticData = async () => {
     try {
       setLoading(true);
       console.log('🔄 Iniciando sincronização com dados estáticos...');
-      await PricingTableService.syncAllComponentsFromStaticData();
+      
+      // Usar o novo serviço de migração
+      await DataMigrationService.migrateAllDataToPricingTable();
+      
+      // Aguardar um momento e recarregar dados
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await loadCategories();
+      
       setInitialSyncCompleted(true);
       toast.success('Sincronização completa realizada com sucesso');
       console.log('✅ Sincronização concluída');
     } catch (error) {
       console.error('❌ Erro na sincronização:', error);
-      toast.error('Erro na sincronização com dados estáticos');
+      toast.error(`Erro na sincronização: ${error}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // Sincronização automática inicial
+  // Verificação e sincronização inicial mais robusta
   const performInitialSync = async () => {
     try {
       console.log('🔍 Verificando se sincronização inicial é necessária...');
       
       // Primeiro garantir que as categorias básicas existem
-      await PricingTableService.ensureBasicCategories();
+      await DataMigrationService.ensureBasicCategoriesExist();
       
-      const categoriesData = await PricingTableService.getAllCategories();
+      // Verificar status do sistema
+      const status = await DataMigrationService.checkMigrationStatus();
       
-      // Se não há categorias, fazer sincronização automática
-      if (categoriesData.length === 0) {
+      if (status.totalCategories === 0) {
         console.log('📦 Nenhuma categoria encontrada. Executando sincronização inicial...');
         await syncWithStaticData();
       } else {
-        console.log('✅ Categorias já existem, carregando dados...');
-        setCategories(categoriesData);
+        console.log(`✅ Sistema já inicializado: ${status.totalCategories} categorias, ${status.totalItems} itens`);
+        await loadCategories();
         setInitialSyncCompleted(true);
       }
     } catch (error) {
@@ -203,7 +219,7 @@ export function usePricingTable() {
     }
   };
 
-  // Carregar dados iniciais e sincronizar se necessário
+  // Carregar dados iniciais
   useEffect(() => {
     const initializeData = async () => {
       await performInitialSync();
