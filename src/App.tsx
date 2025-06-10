@@ -11,7 +11,7 @@ import Diagnostics from './pages/Diagnostics';
 import NotFound from './pages/NotFound';
 import LoginPage from './pages/LoginPage';
 import ResetPassword from './pages/ResetPassword';
-import { MainLayout } from './layouts/MainLayout';
+import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import { UnifiedAuthProvider } from './contexts/auth/UnifiedAuthContext';
