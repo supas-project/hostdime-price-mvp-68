@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Plus, RotateCcw, Settings } from 'lucide-react';
+import { RefreshCw, Plus, RotateCcw, Settings, CheckCircle } from 'lucide-react';
 import { usePricingTable } from '@/hooks/usePricingTable';
 import { CategoriesTable } from './CategoriesTable';
 import { ItemsTable } from './ItemsTable';
@@ -16,6 +17,7 @@ export function PricingTableManager() {
     items,
     priceModifiers,
     loading,
+    initialSyncCompleted,
     loadCategories,
     loadItemsByCategory,
     syncWithStaticData
@@ -47,6 +49,12 @@ export function PricingTableManager() {
         </div>
         
         <div className="flex items-center gap-2">
+          {initialSyncCompleted && (
+            <Badge variant="outline" className="text-green-600 border-green-600">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Dados Carregados
+            </Badge>
+          )}
           <SyncStatus />
           <Button
             variant="outline"
@@ -68,6 +76,21 @@ export function PricingTableManager() {
           </Button>
         </div>
       </div>
+
+      {/* Status da sincronização inicial */}
+      {loading && !initialSyncCompleted && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              <div>
+                <p className="font-medium text-blue-900">Sincronizando dados...</p>
+                <p className="text-sm text-blue-700">Importando categorias e itens dos dados estáticos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -112,7 +135,9 @@ export function PricingTableManager() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <p className="text-sm font-semibold text-green-600">Sincronizado</p>
+                <p className="text-sm font-semibold text-green-600">
+                  {initialSyncCompleted ? 'Sincronizado' : 'Carregando...'}
+                </p>
               </div>
               <Badge variant="outline" className="text-green-600 border-green-600">
                 Online

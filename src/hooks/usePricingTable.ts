@@ -8,6 +8,7 @@ export function usePricingTable() {
   const [items, setItems] = useState<ComponentItem[]>([]);
   const [priceModifiers, setPriceModifiers] = useState<PriceModifier[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialSyncCompleted, setInitialSyncCompleted] = useState(false);
 
   // Carregar todas as categorias
   const loadCategories = async () => {
@@ -163,21 +164,50 @@ export function usePricingTable() {
   const syncWithStaticData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Iniciando sincronização com dados estáticos...');
       await PricingTableService.syncAllComponentsFromStaticData();
       await loadCategories();
+      setInitialSyncCompleted(true);
       toast.success('Sincronização completa realizada com sucesso');
+      console.log('✅ Sincronização concluída');
     } catch (error) {
-      console.error('Erro na sincronização:', error);
+      console.error('❌ Erro na sincronização:', error);
       toast.error('Erro na sincronização com dados estáticos');
     } finally {
       setLoading(false);
     }
   };
 
-  // Carregar dados iniciais
+  // Sincronização automática inicial
+  const performInitialSync = async () => {
+    try {
+      console.log('🔍 Verificando se sincronização inicial é necessária...');
+      const categoriesData = await PricingTableService.getAllCategories();
+      
+      // Se não há categorias, fazer sincronização automática
+      if (categoriesData.length === 0) {
+        console.log('📦 Nenhuma categoria encontrada. Executando sincronização inicial...');
+        await syncWithStaticData();
+      } else {
+        console.log('✅ Categorias já existem, carregando dados...');
+        setCategories(categoriesData);
+        setInitialSyncCompleted(true);
+      }
+    } catch (error) {
+      console.error('❌ Erro na sincronização inicial:', error);
+      // Se houver erro, tentar carregar dados existentes
+      await loadCategories();
+    }
+  };
+
+  // Carregar dados iniciais e sincronizar se necessário
   useEffect(() => {
-    loadCategories();
-    loadPriceModifiers();
+    const initializeData = async () => {
+      await performInitialSync();
+      await loadPriceModifiers();
+    };
+    
+    initializeData();
   }, []);
 
   return {
@@ -186,6 +216,7 @@ export function usePricingTable() {
     items,
     priceModifiers,
     loading,
+    initialSyncCompleted,
 
     // Ações para categorias
     loadCategories,
