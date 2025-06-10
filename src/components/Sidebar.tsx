@@ -29,7 +29,7 @@ export function Sidebar() {
         {isAdmin && (
           <>
             <SidebarItem to="/system-components" icon={Cpu} label="Componentes" />
-            <SidebarItem to="/pricing-table" icon={DollarSign} label="Tabela de Preços" />
+            <SidebarItem to="/price-table" icon={DollarSign} label="Tabela de Preços" />
             <SidebarItem to="/user-management" icon={Users} label="Usuários" />
             <SidebarItem to="/diagnostics" icon={Activity} label="Diagnósticos" />
           </>

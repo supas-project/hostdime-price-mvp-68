@@ -80,7 +80,7 @@ function App() {
                 }
               />
               <Route
-                path="/pricing-table"
+                path="/price-table"
                 element={
                   <AdminProtectedRoute>
                     <MainLayout>
