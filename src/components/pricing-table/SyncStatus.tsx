@@ -8,7 +8,7 @@ type SyncStatusType = 'synced' | 'pending' | 'error';
 export function SyncStatus() {
   // Por enquanto, vamos mostrar como sincronizado
   // Futuramente pode ser conectado a um serviço real de status
-  const status: SyncStatusType = 'synced';
+  const status = 'synced' as SyncStatusType;
 
   const getStatusConfig = () => {
     switch (status) {
