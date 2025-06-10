@@ -14,10 +14,13 @@ export class DirectMigrationService {
     console.log('[DirectMigrationService] 🚀 Iniciando migração direta completa...');
     
     try {
-      // 1. Inserir categorias básicas
+      // 1. Limpar dados existentes se necessário
+      await this.clearExistingData();
+      
+      // 2. Inserir categorias básicas
       await this.insertBasicCategories();
       
-      // 2. Inserir dados de cada tipo de componente
+      // 3. Inserir dados de cada tipo de componente
       await this.insertCPUData();
       await this.insertMemoryData();
       await this.insertOSData();
@@ -29,6 +32,31 @@ export class DirectMigrationService {
     } catch (error) {
       console.error('[DirectMigrationService] ❌ Erro na migração direta:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Limpar dados existentes para evitar conflitos
+   */
+  private static async clearExistingData(): Promise<void> {
+    console.log('[DirectMigrationService] 🧹 Limpando dados existentes...');
+    
+    try {
+      // Deletar itens primeiro (devido a foreign keys)
+      await supabase
+        .from('component_items')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      // Depois deletar categorias
+      await supabase
+        .from('component_categories')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      console.log('[DirectMigrationService] ✅ Dados existentes limpos');
+    } catch (error) {
+      console.warn('[DirectMigrationService] ⚠️ Erro ao limpar dados existentes (pode ser normal):', error);
     }
   }
 
@@ -49,37 +77,45 @@ export class DirectMigrationService {
 
     for (const category of categories) {
       try {
-        // Verificar se a categoria já existe
-        const { data: existing } = await supabase
+        const { error } = await supabase
           .from('component_categories')
-          .select('id')
-          .eq('component_type', category.component_type)
-          .eq('is_active', true)
-          .single();
+          .insert({
+            name: category.name,
+            description: category.description,
+            component_type: category.component_type,
+            display_order: category.display_order,
+            is_active: true
+          });
 
-        if (!existing) {
-          const { error } = await supabase
-            .from('component_categories')
-            .insert({
-              name: category.name,
-              description: category.description,
-              component_type: category.component_type,
-              display_order: category.display_order,
-              is_active: true
-            });
-
-          if (error) {
-            console.error(`Erro ao inserir categoria ${category.component_type}:`, error);
-          } else {
-            console.log(`✅ Categoria inserida: ${category.component_type}`);
-          }
+        if (error) {
+          console.error(`Erro ao inserir categoria ${category.component_type}:`, error);
+          throw error;
         } else {
-          console.log(`✅ Categoria já existe: ${category.component_type}`);
+          console.log(`✅ Categoria inserida: ${category.component_type}`);
         }
       } catch (error) {
         console.error(`Erro ao processar categoria ${category.component_type}:`, error);
+        throw error;
       }
     }
+  }
+
+  /**
+   * Buscar ID da categoria por tipo
+   */
+  private static async getCategoryId(componentType: string): Promise<string> {
+    const { data, error } = await supabase
+      .from('component_categories')
+      .select('id')
+      .eq('component_type', componentType)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Categoria ${componentType} não encontrada`);
+    }
+
+    return data.id;
   }
 
   /**
@@ -88,16 +124,7 @@ export class DirectMigrationService {
   private static async insertCPUData(): Promise<void> {
     console.log('[DirectMigrationService] 🖥️ Inserindo dados de CPU...');
     
-    // Buscar categoria de CPU
-    const { data: cpuCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'cpu')
-      .single();
-
-    if (!cpuCategory) {
-      throw new Error('Categoria CPU não encontrada');
-    }
+    const categoryId = await this.getCategoryId('cpu');
 
     const cpuItems = [
       {
@@ -150,7 +177,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(cpuCategory.id, cpuItems, 'standard', true);
+    await this.insertComponentItems(categoryId, cpuItems, 'standard', true);
   }
 
   /**
@@ -159,13 +186,7 @@ export class DirectMigrationService {
   private static async insertMemoryData(): Promise<void> {
     console.log('[DirectMigrationService] 💾 Inserindo dados de Memória...');
     
-    const { data: memoryCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'memory')
-      .single();
-
-    if (!memoryCategory) return;
+    const categoryId = await this.getCategoryId('memory');
 
     const memoryItems = [
       {
@@ -178,7 +199,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(memoryCategory.id, memoryItems, 'standard', true);
+    await this.insertComponentItems(categoryId, memoryItems, 'standard', true);
   }
 
   /**
@@ -187,13 +208,7 @@ export class DirectMigrationService {
   private static async insertOSData(): Promise<void> {
     console.log('[DirectMigrationService] 🖥️ Inserindo dados de OS...');
     
-    const { data: osCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'os')
-      .single();
-
-    if (!osCategory) return;
+    const categoryId = await this.getCategoryId('os');
 
     const osItems = [
       {
@@ -238,7 +253,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(osCategory.id, osItems, 'linux', false);
+    await this.insertComponentItems(categoryId, osItems, 'linux', false);
   }
 
   /**
@@ -247,13 +262,7 @@ export class DirectMigrationService {
   private static async insertConnectivityData(): Promise<void> {
     console.log('[DirectMigrationService] 🌐 Inserindo dados de Conectividade...');
     
-    const { data: connectivityCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'connectivity')
-      .single();
-
-    if (!connectivityCategory) return;
+    const categoryId = await this.getCategoryId('connectivity');
 
     const connectivityItems = [
       {
@@ -274,7 +283,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(connectivityCategory.id, connectivityItems, 'porta', false);
+    await this.insertComponentItems(categoryId, connectivityItems, 'porta', false);
   }
 
   /**
@@ -283,13 +292,7 @@ export class DirectMigrationService {
   private static async insertDataCenterData(): Promise<void> {
     console.log('[DirectMigrationService] 🏢 Inserindo dados de Data Centers...');
     
-    const { data: datacenterCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'datacenter')
-      .single();
-
-    if (!datacenterCategory) return;
+    const categoryId = await this.getCategoryId('datacenter');
 
     const datacenterItems = [
       {
@@ -318,7 +321,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(datacenterCategory.id, datacenterItems, 'standard', false);
+    await this.insertComponentItems(categoryId, datacenterItems, 'standard', false);
   }
 
   /**
@@ -327,13 +330,7 @@ export class DirectMigrationService {
   private static async insertContractData(): Promise<void> {
     console.log('[DirectMigrationService] 📋 Inserindo dados de Contratos...');
     
-    const { data: contractCategory } = await supabase
-      .from('component_categories')
-      .select('id')
-      .eq('component_type', 'contract')
-      .single();
-
-    if (!contractCategory) return;
+    const categoryId = await this.getCategoryId('contract');
 
     const contractItems = [
       {
@@ -386,7 +383,7 @@ export class DirectMigrationService {
       }
     ];
 
-    await this.insertComponentItems(contractCategory.id, contractItems, '0', false);
+    await this.insertComponentItems(categoryId, contractItems, '0', false);
   }
 
   /**
@@ -400,14 +397,6 @@ export class DirectMigrationService {
   ): Promise<void> {
     for (const [index, item] of items.entries()) {
       try {
-        // Verificar se o item já existe
-        const { data: existing } = await supabase
-          .from('component_items')
-          .select('id')
-          .eq('component_id', item.component_id)
-          .eq('is_active', true)
-          .single();
-
         const itemData = {
           category_id: categoryId,
           component_id: item.component_id,
@@ -423,32 +412,19 @@ export class DirectMigrationService {
           is_active: true
         };
 
-        if (existing) {
-          // Atualizar item existente
-          const { error } = await supabase
-            .from('component_items')
-            .update(itemData)
-            .eq('id', existing.id);
+        const { error } = await supabase
+          .from('component_items')
+          .insert(itemData);
 
-          if (error) {
-            console.error(`Erro ao atualizar item ${item.component_id}:`, error);
-          } else {
-            console.log(`✅ Item atualizado: ${item.component_id}`);
-          }
+        if (error) {
+          console.error(`Erro ao criar item ${item.component_id}:`, error);
+          throw error;
         } else {
-          // Criar novo item
-          const { error } = await supabase
-            .from('component_items')
-            .insert(itemData);
-
-          if (error) {
-            console.error(`Erro ao criar item ${item.component_id}:`, error);
-          } else {
-            console.log(`✅ Item criado: ${item.component_id}`);
-          }
+          console.log(`✅ Item criado: ${item.component_id}`);
         }
       } catch (error) {
         console.error(`Erro ao processar item ${item.component_id}:`, error);
+        throw error;
       }
     }
   }

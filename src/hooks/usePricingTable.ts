@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { PricingTableService, ComponentCategory, ComponentItem, PriceModifier } from '@/services/pricing-table-service';
 import { DataMigrationService } from '@/services/data-migration-service';
@@ -175,17 +174,11 @@ export function usePricingTable() {
       setLoading(true);
       console.log('🔄 Executando migração direta dos dados estáticos...');
       
-      // Primeiro inserir dados de CPU
-      const cpuCategoryInsert = await fetch('/api/direct-migration/cpu', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // Executar migração direta usando o serviço
+      await DirectMigrationService.executeFullMigration();
       
-      if (!cpuCategoryInsert.ok) {
-        throw new Error('Falha ao migrar dados de CPU');
-      }
-
-      // Recarregar categorias para verificar se funcionou
+      // Aguardar um momento e recarregar categorias
+      await new Promise(resolve => setTimeout(resolve, 2000));
       await loadCategories();
       
       setInitialSyncCompleted(true);
@@ -254,8 +247,19 @@ export function usePricingTable() {
   // Carregar dados iniciais
   useEffect(() => {
     const initializeData = async () => {
-      await performInitialSync();
+      console.log('🔍 Inicializando dados da tabela de preços...');
+      await loadCategories();
       await loadPriceModifiers();
+      
+      // Verificar se há categorias, se não houver, marcar para sync
+      const currentCategories = await PricingTableService.getAllCategories();
+      if (currentCategories.length === 0) {
+        console.log('⚠️ Nenhuma categoria encontrada, sync necessário');
+        setInitialSyncCompleted(false);
+      } else {
+        console.log(`✅ ${currentCategories.length} categorias encontradas`);
+        setInitialSyncCompleted(true);
+      }
     };
     
     initializeData();
