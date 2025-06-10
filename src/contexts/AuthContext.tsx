@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useAuthState } from "@/hooks/useAuthState";
@@ -16,7 +15,19 @@ interface AuthContextType {
   isSupabaseReady: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Valor padrão que implementa completamente a interface
+const defaultAuthContext: AuthContextType = {
+  isAuthenticated: false,
+  isAdmin: false,
+  user: null,
+  session: null,
+  login: async () => false,
+  logout: async () => {},
+  loading: false,
+  isSupabaseReady: false,
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { 
