@@ -1,5 +1,5 @@
 
-import { Home, Cpu, Settings, FileText, Users, Activity } from "lucide-react";
+import { Home, Cpu, Settings, FileText, Users, Activity, DollarSign } from "lucide-react";
 import { SidebarItem } from "./SidebarItem";
 import { useAuth } from "@/contexts/auth/UnifiedAuthContext";
 
@@ -29,6 +29,7 @@ export function Sidebar() {
         {isAdmin && (
           <>
             <SidebarItem to="/system-components" icon={Cpu} label="Componentes" />
+            <SidebarItem to="/pricing-table" icon={DollarSign} label="Tabela de Preços" />
             <SidebarItem to="/user-management" icon={Users} label="Usuários" />
             <SidebarItem to="/diagnostics" icon={Activity} label="Diagnósticos" />
           </>

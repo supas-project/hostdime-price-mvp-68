@@ -81,6 +81,113 @@ export type Database = {
         }
         Relationships: []
       }
+      component_categories: {
+        Row: {
+          component_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          component_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          component_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      component_items: {
+        Row: {
+          base_price: number
+          category_id: string
+          component_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_hardware: boolean
+          metadata: Json | null
+          name: string
+          price: number
+          specs: Json | null
+          subtype: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_price?: number
+          category_id: string
+          component_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_hardware?: boolean
+          metadata?: Json | null
+          name: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_price?: number
+          category_id?: string
+          component_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_hardware?: boolean
+          metadata?: Json | null
+          name?: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "component_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consolidated_data: {
         Row: {
           created_at: string | null
@@ -313,6 +420,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      price_modifiers: {
+        Row: {
+          applies_to: string[] | null
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          modifier_type: string
+          name: string
+          priority: number
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          applies_to?: string[] | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          modifier_type: string
+          name: string
+          priority?: number
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          applies_to?: string[] | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          modifier_type?: string
+          name?: string
+          priority?: number
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
       }
       pricing_rules: {
         Row: {
