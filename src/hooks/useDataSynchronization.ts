@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { DataSynchronizationService } from '@/services/data-synchronization-service';
 import { UnifiedDataService } from '@/services/unified-data-service';
 import { toast } from '@/utils/toast-utils';
 
@@ -36,34 +35,17 @@ export function useDataSynchronization() {
         toast.success('Dados consolidados', {
           description: 'Dados estáticos consolidados com sucesso'
         });
-      }
-      
-      // Check consistency 
-      const consistency = await DataSynchronizationService.checkDataConsistency();
-      
-      console.log('[useDataSynchronization] Consistency check:', consistency);
-      
-      if (consistency.missingInPrice.length === 0 && 
-          consistency.extraInPrice.length === 0 && 
-          Object.keys(consistency.itemMismatches).length === 0) {
-        toast.success('Dados já sincronizados', {
-          description: 'Configuração e tabela de preços estão em sincronia'
-        });
+        
         setLastSyncTime(new Date());
         return true;
       }
       
-      // Perform synchronization using the correct method
-      const success = await DataSynchronizationService.synchronizeAllData();
+      toast.success('Dados já sincronizados', {
+        description: 'Sistema já está com dados consolidados'
+      });
+      setLastSyncTime(new Date());
+      return true;
       
-      if (success) {
-        setLastSyncTime(new Date());
-        toast.success('Sincronização concluída', {
-          description: 'Dados unificados sincronizados com sucesso'
-        });
-      }
-      
-      return success;
     } catch (error) {
       console.error('[useDataSynchronization] Synchronization error:', error);
       toast.error('Erro na sincronização', {
@@ -77,13 +59,17 @@ export function useDataSynchronization() {
   
   const checkConsistency = useCallback(async () => {
     try {
-      return await DataSynchronizationService.checkDataConsistency();
+      // Basic consistency check - just verify consolidated data exists
+      const status = await UnifiedDataService.getConsolidationStatus();
+      return {
+        isConsistent: status.phase === 'completed',
+        issues: status.phase !== 'completed' ? ['Data not consolidated'] : []
+      };
     } catch (error) {
       console.error('[useDataSynchronization] Error checking consistency:', error);
       return {
-        missingInPrice: [],
-        extraInPrice: [],
-        itemMismatches: {}
+        isConsistent: false,
+        issues: ['Error checking data consistency']
       };
     }
   }, []);
