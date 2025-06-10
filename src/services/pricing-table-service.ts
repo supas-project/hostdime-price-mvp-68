@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ComponentCategory {
@@ -97,6 +96,45 @@ export class PricingTableService {
     }
 
     return data;
+  }
+
+  // ============ INICIALIZAÇÃO DAS CATEGORIAS ============
+  static async ensureBasicCategories(): Promise<void> {
+    console.log('[PricingTableService] Verificando categorias básicas...');
+    
+    const basicCategories = [
+      { name: 'Processadores', component_type: 'cpu', display_order: 1, description: 'Processadores e CPUs para servidores' },
+      { name: 'Memória RAM', component_type: 'memory', display_order: 2, description: 'Módulos de memória RAM para servidores' },
+      { name: 'Sistema Operacional', component_type: 'os', display_order: 3, description: 'Sistemas operacionais e licenças' },
+      { name: 'Conectividade', component_type: 'connectivity', display_order: 4, description: 'Opções de conectividade e largura de banda' },
+      { name: 'Data Centers', component_type: 'datacenter', display_order: 5, description: 'Localização de data centers' },
+      { name: 'Contratos', component_type: 'contract', display_order: 6, description: 'Tipos de contrato e durações' }
+    ];
+
+    for (const category of basicCategories) {
+      try {
+        const existing = await this.getCategoryByType(category.component_type);
+        if (!existing) {
+          const { error } = await supabase
+            .from('component_categories')
+            .insert({
+              name: category.name,
+              description: category.description,
+              component_type: category.component_type,
+              display_order: category.display_order,
+              is_active: true
+            });
+
+          if (error) {
+            console.error(`Erro ao criar categoria ${category.component_type}:`, error);
+          } else {
+            console.log(`[PricingTableService] Categoria criada: ${category.component_type}`);
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao verificar categoria ${category.component_type}:`, error);
+      }
+    }
   }
 
   static async createCategory(category: Omit<ComponentCategory, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<ComponentCategory> {
@@ -300,6 +338,9 @@ export class PricingTableService {
   static async syncAllComponentsFromStaticData(): Promise<void> {
     console.log('[PricingTableService] Iniciando sincronização completa...');
     
+    // Primeiro, garantir que as categorias básicas existem
+    await this.ensureBasicCategories();
+    
     // Importar dados estáticos
     const { cpuComponents } = await import('@/data/cpu-components');
     const { memoryComponents } = await import('@/data/memory-components');
@@ -340,38 +381,42 @@ export class PricingTableService {
     // Buscar categoria
     let category = await this.getCategoryByType(componentType);
     if (!category) {
-      console.warn(`Categoria ${componentType} não encontrada`);
+      console.warn(`Categoria ${componentType} não encontrada mesmo após inicialização`);
       return;
     }
 
     // Sincronizar cada item
     for (const option of staticOptions) {
-      const componentId = option.id;
-      const existingItem = await this.getItemByComponentId(componentId);
+      try {
+        const componentId = option.id;
+        const existingItem = await this.getItemByComponentId(componentId);
 
-      const itemData = {
-        category_id: category.id,
-        component_id: componentId,
-        name: option.name,
-        description: option.description || '',
-        price: option.price || 0,
-        base_price: option.price || 0,
-        subtype: option.subtype || 'standard',
-        is_hardware: option.isHardware || false,
-        specs: Array.isArray(option.specs) ? option.specs : [],
-        metadata: option.metadata || {},
-        display_order: 0,
-        is_active: true
-      };
+        const itemData = {
+          category_id: category.id,
+          component_id: componentId,
+          name: option.name,
+          description: option.description || '',
+          price: option.price || 0,
+          base_price: option.price || 0,
+          subtype: option.subtype || 'standard',
+          is_hardware: option.isHardware || false,
+          specs: Array.isArray(option.specs) ? option.specs : [],
+          metadata: option.metadata || {},
+          display_order: 0,
+          is_active: true
+        };
 
-      if (existingItem) {
-        // Atualizar item existente
-        await this.updateItem(existingItem.id, itemData);
-        console.log(`[PricingTableService] Item atualizado: ${componentId}`);
-      } else {
-        // Criar novo item
-        await this.createItem(itemData);
-        console.log(`[PricingTableService] Item criado: ${componentId}`);
+        if (existingItem) {
+          // Atualizar item existente
+          await this.updateItem(existingItem.id, itemData);
+          console.log(`[PricingTableService] Item atualizado: ${componentId}`);
+        } else {
+          // Criar novo item
+          await this.createItem(itemData);
+          console.log(`[PricingTableService] Item criado: ${componentId}`);
+        }
+      } catch (error) {
+        console.error(`[PricingTableService] Erro ao sincronizar item ${option.id}:`, error);
       }
     }
   }

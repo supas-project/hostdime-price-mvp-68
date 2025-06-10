@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { PricingTableService, ComponentCategory, ComponentItem, PriceModifier } from '@/services/pricing-table-service';
 import { toast } from 'sonner';
@@ -182,6 +181,10 @@ export function usePricingTable() {
   const performInitialSync = async () => {
     try {
       console.log('🔍 Verificando se sincronização inicial é necessária...');
+      
+      // Primeiro garantir que as categorias básicas existem
+      await PricingTableService.ensureBasicCategories();
+      
       const categoriesData = await PricingTableService.getAllCategories();
       
       // Se não há categorias, fazer sincronização automática
