@@ -1,9 +1,8 @@
-
 import { useState } from "react";
-import { PriceService } from "@/services/price-service";
-import { useDataSync } from "@/hooks/useDataSync";
+import { systemComponentsService } from "@/services/systemComponentsService";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/utils/toast-utils";
+import { toast } from "sonner";
 import { parseBRLToFloat } from "@/utils/number-formatter";
 
 export function useItemAdd(
@@ -12,8 +11,8 @@ export function useItemAdd(
 ) {
   const [isSubmittingItem, setIsSubmittingItem] = useState(false);
   const [openAddItem, setOpenAddItem] = useState(false);
-  const { registerAdminChange, isAdminAccess } = useDataSync();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
 
   const handleAddItem = async (values: any) => {
     // Check authentication
@@ -25,7 +24,7 @@ export function useItemAdd(
     }
     
     // Check admin permission
-    if (!isAdminAccess) {
+    if (!isAdmin) {
       toast.error("Permissão negada", {
         description: "Apenas administradores podem adicionar itens."
       });
@@ -50,37 +49,55 @@ export function useItemAdd(
       console.log(`[useItemAdd] Processed price: ${values.price} -> ${price}`);
       
       const itemData = {
+        component_type: activeTab,
+        component_id: `${activeTab}_${Date.now()}`,
         name: values.name,
         description: values.description,
         price: price,
-        type: values.type || activeTab,
         subtype: values.subtype,
+        is_hardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
+        is_active: true,
         specs: Array.isArray(values.specs) ? values.specs : [],
-        tags: Array.isArray(values.tags) ? values.tags : [],
-        // Set isHardware based on tags for backwards compatibility
-        isHardware: Array.isArray(values.tags) ? values.tags.includes("Hardware") : false,
-        metadata: {}
+        metadata: {
+          tags: Array.isArray(values.tags) ? values.tags : [],
+          ...values.metadata
+        }
       };
       
-      // Add item to service
-      await PriceService.addItem(activeTab, itemData);
+      // Add item using systemComponentsService
+      const newComponent = await systemComponentsService.addComponent(itemData);
       
-      // Reload data for consistency
-      const updatedData = await PriceService.getAllData();
-      setPriceData(updatedData);
+      // Invalidate and refetch system components query
+      await queryClient.invalidateQueries({ queryKey: ['systemComponents'] });
+      
+      // Also invalidate component-specific queries
+      await queryClient.invalidateQueries({ queryKey: ['componentOptions', activeTab] });
+      
+      // Reload data for local state consistency
+      try {
+        const updatedComponents = await systemComponentsService.getAllComponents();
+        // Group components by category for setPriceData
+        const groupedData: any = {};
+        updatedComponents.forEach(component => {
+          const category = component.component_type;
+          if (!groupedData[category]) {
+            groupedData[category] = { items: [] };
+          }
+          groupedData[category].items.push(component);
+        });
+        setPriceData(groupedData);
+      } catch (error) {
+        console.warn("Failed to update local state, but component was added successfully");
+      }
       
       // Close modal
       setOpenAddItem(false);
       
-      // Get the category name for the notification
-      const category = await PriceService.getCategory(activeTab);
-      // Register change for notification
-      await registerAdminChange("add_item", `Item "${values.name}" adicionado na categoria ${category?.name || activeTab}`);
-      
       toast.success("Item adicionado", {
-        description: `O item ${values.name} foi adicionado com sucesso.`
+        description: `O item "${values.name}" foi adicionado com sucesso à categoria ${activeTab}.`
       });
     } catch (error) {
+      console.error("Error adding component:", error);
       toast.error("Erro ao adicionar item", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado."
       });

@@ -1,15 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowUp, ArrowDown, LayoutGrid, List, Scale } from "lucide-react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
 
@@ -22,6 +14,7 @@ interface TableControlsProps {
   isComparisonMode?: boolean;
   onToggleComparison?: () => void;
   comparisonCount?: number;
+  disabled?: boolean;
 }
 
 export function TableControls({ 
@@ -32,7 +25,8 @@ export function TableControls({
   sortOrder,
   isComparisonMode = false,
   onToggleComparison,
-  comparisonCount = 0
+  comparisonCount = 0,
+  disabled = false
 }: TableControlsProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -43,6 +37,8 @@ export function TableControls({
   };
 
   const handleSortClick = () => {
+    if (disabled) return;
+    
     if (sortOrder === null) {
       onSortChange("asc");
     } else if (sortOrder === "asc") {
@@ -60,10 +56,12 @@ export function TableControls({
           placeholder="Buscar componentes..."
           value={searchTerm}
           onChange={handleSearchChange}
+          disabled={disabled}
           className={cn(
             "pl-9 w-full h-10 text-base transition-all duration-200",
             "border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20",
-            "hover:border-primary/40"
+            "hover:border-primary/40",
+            disabled && "opacity-50 cursor-not-allowed"
           )}
           aria-label="Buscar componentes"
         />
@@ -76,11 +74,13 @@ export function TableControls({
             variant={isComparisonMode ? "default" : "outline"}
             size="sm"
             onClick={onToggleComparison}
+            disabled={disabled}
             className={cn(
               "h-10 px-3 transition-all duration-200 hover:scale-105",
               isComparisonMode 
                 ? "bg-[#f58220] hover:bg-[#e55a00] text-white shadow-md" 
-                : "hover:bg-[#f58220]/10 hover:text-[#f58220] hover:border-[#f58220]/50"
+                : "hover:bg-[#f58220]/10 hover:text-[#f58220] hover:border-[#f58220]/50",
+              disabled && "opacity-50 cursor-not-allowed hover:scale-100"
             )}
             title={isComparisonMode ? "Sair do modo comparação" : "Ativar modo comparação"}
           >
@@ -101,10 +101,12 @@ export function TableControls({
           variant="outline"
           size="sm"
           onClick={handleSortClick}
+          disabled={disabled}
           className={cn(
             "h-10 px-3 transition-all duration-200 hover:scale-105", 
             sortOrder !== null && "bg-accent text-accent-foreground border-primary/30 shadow-sm",
-            "hover:bg-[#f58220]/10 hover:text-[#f58220] hover:border-[#f58220]/50"
+            "hover:bg-[#f58220]/10 hover:text-[#f58220] hover:border-[#f58220]/50",
+            disabled && "opacity-50 cursor-not-allowed hover:scale-100"
           )}
           title={
             sortOrder === "asc" ? "Ordenar por preço (maior para menor)" : 
@@ -121,16 +123,21 @@ export function TableControls({
           )}
         </Button>
         
-        <div className="flex border border-input rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className={cn(
+          "flex border border-input rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow",
+          disabled && "opacity-50 cursor-not-allowed"
+        )}>
           <Button
             variant="ghost"
             size="sm"
+            disabled={disabled}
             className={cn(
               "h-10 px-3 rounded-none border-r border-input transition-all duration-200",
               displayMode === "table" && "bg-accent text-accent-foreground",
-              "hover:bg-[#f58220]/10 hover:text-[#f58220]"
+              "hover:bg-[#f58220]/10 hover:text-[#f58220]",
+              disabled && "cursor-not-allowed"
             )}
-            onClick={() => onDisplayModeChange("table")}
+            onClick={() => !disabled && onDisplayModeChange("table")}
             title="Visualização em lista"
           >
             <List className="h-4 w-4" />
@@ -138,12 +145,14 @@ export function TableControls({
           <Button
             variant="ghost"
             size="sm"
+            disabled={disabled}
             className={cn(
               "h-10 px-3 rounded-none transition-all duration-200",
               displayMode === "card" && "bg-accent text-accent-foreground",
-              "hover:bg-[#f58220]/10 hover:text-[#f58220]"
+              "hover:bg-[#f58220]/10 hover:text-[#f58220]",
+              disabled && "cursor-not-allowed"
             )}
-            onClick={() => onDisplayModeChange("card")}
+            onClick={() => !disabled && onDisplayModeChange("card")}
             title="Visualização em cartões"
           >
             <LayoutGrid className="h-4 w-4" />

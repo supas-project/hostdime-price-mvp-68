@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SystemComponent {
@@ -217,4 +216,153 @@ export class SystemComponentsService {
       throw error;
     }
   }
+
+  /**
+   * Adiciona um novo componente à tabela hd_hardwares
+   * @param newComponentData - Dados do novo componente (sem id e created_at)
+   * @returns Promise com o componente criado
+   */
+  static async addComponent(newComponentData: Omit<SystemComponent, 'id' | 'created_at' | 'updated_at'>): Promise<SystemComponent> {
+    console.log('[SystemComponentsService] Adding new component to hd_hardwares:', newComponentData.name);
+    
+    try {
+      const { data, error } = await supabase
+        .from('hd_hardwares')
+        .insert([{
+          ...newComponentData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[SystemComponentsService] Error adding component to hd_hardwares:', error);
+        throw new Error(`Não foi possível adicionar o novo item: ${error.message}`);
+      }
+
+      console.log('[SystemComponentsService] Component added successfully to hd_hardwares:', data.id);
+      
+      // Convert Json fields to proper types
+      const typedData = {
+        ...data,
+        specs: Array.isArray(data.specs) ? data.specs as string[] : [],
+        metadata: typeof data.metadata === 'object' ? data.metadata as Record<string, any> : {}
+      };
+      
+      return typedData;
+    } catch (error) {
+      console.error('[SystemComponentsService] Error in addComponent:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza um componente existente na tabela hd_hardwares
+   * @param componentId - ID do componente a ser atualizado
+   * @param updatedData - Dados a serem atualizados
+   * @returns Promise com o componente atualizado
+   */
+  static async updateComponentInHardwares(componentId: string, updatedData: Partial<SystemComponent>): Promise<SystemComponent> {
+    console.log('[SystemComponentsService] Updating component in hd_hardwares:', componentId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('hd_hardwares')
+        .update({ 
+          ...updatedData, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', componentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[SystemComponentsService] Error updating component in hd_hardwares:', error);
+        throw new Error(`Não foi possível atualizar o componente: ${error.message}`);
+      }
+
+      console.log('[SystemComponentsService] Component updated successfully in hd_hardwares');
+      
+      // Convert Json fields to proper types
+      const typedData = {
+        ...data,
+        specs: Array.isArray(data.specs) ? data.specs as string[] : [],
+        metadata: typeof data.metadata === 'object' ? data.metadata as Record<string, any> : {}
+      };
+      
+      return typedData;
+    } catch (error) {
+      console.error('[SystemComponentsService] Error in updateComponentInHardwares:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove um componente da tabela hd_hardwares (soft delete)
+   * @param componentId - ID do componente a ser removido
+   * @returns Promise<void>
+   */
+  static async deleteComponentFromHardwares(componentId: string): Promise<void> {
+    console.log('[SystemComponentsService] Deleting component from hd_hardwares:', componentId);
+    
+    try {
+      const { error } = await supabase
+        .from('hd_hardwares')
+        .update({ 
+          is_active: false, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', componentId);
+
+      if (error) {
+        console.error('[SystemComponentsService] Error deleting component from hd_hardwares:', error);
+        throw new Error(`Não foi possível remover o componente: ${error.message}`);
+      }
+
+      console.log('[SystemComponentsService] Component deleted successfully from hd_hardwares');
+    } catch (error) {
+      console.error('[SystemComponentsService] Error in deleteComponentFromHardwares:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Busca todos os componentes da tabela hd_hardwares
+   * @returns Promise com array de componentes
+   */
+  static async getAllComponents(): Promise<SystemComponent[]> {
+    console.log('[SystemComponentsService] Getting all components from hd_hardwares');
+    
+    try {
+      const { data, error } = await supabase
+        .from('hd_hardwares')
+        .select('*')
+        .eq('is_active', true)
+        .order('component_type', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('[SystemComponentsService] Error fetching components from hd_hardwares:', error);
+        throw new Error(`Failed to fetch components: ${error.message}`);
+      }
+
+      console.log(`[SystemComponentsService] Found ${data?.length || 0} components in hd_hardwares`);
+      
+      // Convert Json fields to proper types
+      const typedData = (data || []).map(item => ({
+        ...item,
+        specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+        metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
+      }));
+      
+      return typedData;
+    } catch (error) {
+      console.error('[SystemComponentsService] Error in getAllComponents:', error);
+      throw error;
+    }
+  }
 }
+
+// Export instance for easier access
+export const systemComponentsService = SystemComponentsService;
