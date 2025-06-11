@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { ComponentSelector } from "@/components/component-selector";
 import { ComponentOption } from "@/types/component";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatPayBack, getPayBackValue } from "@/utils/payback-utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatPayBack } from "@/utils/payback-utils";
 import { findMatchingComponent } from "@/utils/component-matching";
+import { usePaybackOptions } from "@/hooks/use-payback-options";
 
 interface ContractContentProps {
   options: ComponentOption[];
@@ -19,10 +20,12 @@ export function ContractContent({
   onSelectOption 
 }: ContractContentProps) {
   const [localSelectedId, setLocalSelectedId] = useState<string>(selectedOption?.id || "");
+  const { data: paybackOptions, isLoading: isLoadingPayback } = usePaybackOptions();
   
   // CORREÇÃO: Log para debug
   console.log("[ContractContent] Opções disponíveis:", options);
   console.log("[ContractContent] Opção selecionada:", selectedOption);
+  console.log("[ContractContent] PayBack options:", paybackOptions);
   
   // Synchronize selected option when it changes
   useEffect(() => {
@@ -40,7 +43,7 @@ export function ContractContent({
   
   const handleOptionChange = (value: string) => {
     setLocalSelectedId(value);
-    const option = options.find(opt => opt.id === value);
+    const option = options.find(opt => opt?.id === value);
     
     // CORREÇÃO: Adicionar verificação e log
     if (option) {
@@ -51,15 +54,37 @@ export function ContractContent({
     }
   };
 
-  // Get the PayBack value for the current contract
-  const paybackValue = selectedOption ? getPayBackValue({ isHardware: true } as ComponentOption, selectedOption.subtype || "0") : null;
+  // Get the PayBack value for the current contract from dynamic data
+  const getPayBackValueFromOptions = (contractDuration: string | number): number | null => {
+    if (!paybackOptions || paybackOptions.length === 0) return null;
+    
+    const duration = String(contractDuration);
+    const paybackOption = paybackOptions.find(option => String(option.contract_duration) === duration);
+    
+    return paybackOption?.value || null;
+  };
+
+  const paybackValue = selectedOption ? 
+    getPayBackValueFromOptions(selectedOption.subtype || "0") : null;
+
+  // Show loading state
+  if (isLoadingPayback) {
+    return (
+      <Card className="p-4 sm:p-6 overflow-hidden">
+        <div className="w-full overflow-x-hidden space-y-4">
+          <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
+          <Skeleton className="h-6 w-2/3 bg-[#2a2a2a]" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 sm:p-6 overflow-hidden">
       <div className="w-full overflow-x-hidden">
         <ComponentSelector
           label="Duração do Contrato"
-          options={options}
+          options={options || []}
           value={localSelectedId}
           onChange={handleOptionChange}
           tooltip="Escolha o período do seu contrato"
