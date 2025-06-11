@@ -1,6 +1,7 @@
 import { ComponentOption } from "@/types/component";
 import { PaybackRule, PriceCalculationRequest, PriceCalculationResponse, PriceBreakdown, MemoryScalingRule } from "@/types/pricing";
 import { PriceService } from "./price-service";
+import { supabase } from '@/lib/supabase';
 
 const PAYBACK_RULES: PaybackRule[] = [
   { contract_duration: 0, payback_factor: 4, description: "Sem contrato" },
@@ -254,6 +255,47 @@ export class PricingService {
   getMemoryScalingRules(): MemoryScalingRule[] {
     return MEMORY_SCALING_RULES;
   }
+
+  /**
+   * Busca as opções de payback disponíveis no banco de dados
+   * @returns Promise com array das opções de payback ordenadas por valor
+   */
+  async getPaybackOptions() {
+    try {
+      const { data, error } = await supabase
+        .from('payback_options')
+        .select('*')
+        .order('value', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar opções de payback:', error);
+        throw new Error('Não foi possível carregar as opções de payback.');
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Erro ao buscar opções de payback:', error);
+      throw new Error('Não foi possível carregar as opções de payback.');
+    }
+  }
 }
 
 export const pricingService = PricingService.getInstance();
+
+/**
+ * Função utilitária para buscar opções de payback
+ * @returns Promise com array das opções de payback ordenadas por valor
+ */
+export async function getPaybackOptions() {
+  const { data, error } = await supabase
+    .from('payback_options')
+    .select('*')
+    .order('value', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar opções de payback:', error);
+    throw new Error('Não foi possível carregar as opções de payback.');
+  }
+
+  return data || [];
+}
