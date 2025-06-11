@@ -388,8 +388,8 @@ export class SystemComponentsService {
         console.log('[SystemComponentsService] Banco de dados de componentes vazio. Iniciando migração automática...');
         
         try {
-          // 3. Executa a migração dos dados estáticos para o banco
-          await dataMigrationService.migrateStaticData();
+          // 3. Executa a migração completa dos dados estáticos para o banco
+          await dataMigrationService.runCompleteMigration();
           console.log('[SystemComponentsService] Migração automática concluída com sucesso.');
 
           // 4. Busca os dados novamente, que agora devem existir
@@ -423,7 +423,7 @@ export class SystemComponentsService {
       }
 
       // 5. Se os dados já existiam, apenas os retorna
-      console.log(`[SystemComponentsService] Found ${components.length} existing components in hd_hardwares`);
+      console.log(`[SystemComponentsService] Dados encontrados: ${components.length} componentes.`);
       
       // Convert Json fields to proper types
       const typedData = components.map(item => ({

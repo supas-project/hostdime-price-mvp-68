@@ -45,6 +45,7 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
     refetch
   } = useQuery({
     queryKey: ['systemComponents'],
+    // CORREÇÃO: Usar a nova função que inicializa dados automaticamente
     queryFn: () => systemComponentsService.getOrInitializeAllComponents(),
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 3,
