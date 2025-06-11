@@ -3,7 +3,8 @@ import { useFileHandling } from "@/hooks/useFileHandling";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { PriceTablePage } from "./PriceTablePage";
-import { systemComponentsService } from "@/services/system-components-service";
+import { systemComponentsService } from "@/services/systemComponentsService";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { ComponentOption } from "@/types/component";
@@ -25,10 +26,8 @@ interface PriceTableContainerProps {
 
 export default function PriceTableContainer({ disabled = false }: PriceTableContainerProps) {
   const { isAuthenticated, isAdmin } = useAuth();
-  const [isInitialized, setIsInitialized] = useState(false);
   const [priceData, setPriceData] = useState<GroupedPriceData | null>(null);
   const [activeTab, setActiveTab] = useState<string>("cpu");
-  const [isLoading, setIsLoading] = useState(true);
   const [hasUpdates, setHasUpdates] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
@@ -36,6 +35,21 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  // Use useQuery to fetch and initialize components
+  const { 
+    data: allComponents, 
+    isLoading, 
+    isError,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['systemComponents'],
+    queryFn: () => systemComponentsService.getOrInitializeAllComponents(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
 
   const {
     isLoading: fileLoading,
@@ -103,19 +117,25 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
     return descriptions[category] || `Componentes da categoria ${category}`;
   };
 
-  // Função para carregar dados dos componentes
-  const loadPriceData = async (): Promise<void> => {
-    try {
-      setIsLoading(true);
-      console.log("PriceTableContainer: Loading components from hd_hardwares table");
+  // Process components when data changes
+  useEffect(() => {
+    if (allComponents && Array.isArray(allComponents)) {
+      console.log(`PriceTableContainer: Processing ${allComponents.length} components`);
       
-      // Buscar todos os componentes da tabela hd_hardwares
-      const components = await systemComponentsService.getAllComponents();
-      
-      console.log(`PriceTableContainer: Loaded ${components.length} components`);
-      
-      // Agrupar componentes por categoria
-      const groupedData = groupComponentsByCategory(components);
+      // Convert SystemComponent[] to ComponentOption[] and group by category
+      const convertedComponents: ComponentOption[] = allComponents.map(component => ({
+        id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        type: component.component_type,
+        subtype: component.subtype,
+        isHardware: component.is_hardware,
+        specs: component.specs,
+        metadata: component.metadata
+      }));
+
+      const groupedData = groupComponentsByCategory(convertedComponents);
       
       // Log das categorias encontradas
       Object.keys(groupedData).forEach(category => {
@@ -131,31 +151,33 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
       if (availableCategories.length > 0 && !availableCategories.includes(activeTab)) {
         setActiveTab(availableCategories[0]);
       }
-      
-    } catch (error) {
+    }
+  }, [allComponents, activeTab]);
+
+  // Handle query errors
+  useEffect(() => {
+    if (isError && error) {
       console.error("PriceTableContainer: Error loading components:", error);
       toast.error("Erro ao carregar componentes", {
         description: "Não foi possível carregar os dados da tabela de preços.",
         icon: <AlertCircle className="h-5 w-5" />
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [isError, error]);
 
   // Função para sincronizar dados
   const handleSyncData = async (): Promise<void> => {
-    await loadPriceData();
+    await refetch();
   };
 
   // Função para atualizar dados
   const handleRefreshData = async (): Promise<void> => {
-    await loadPriceData();
+    await refetch();
   };
 
   // Função para resetar dados (recarregar do banco)
   const handleResetData = async (): Promise<void> => {
-    await loadPriceData();
+    await refetch();
   };
 
   // Ações da tabela
@@ -212,30 +234,12 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
     isLoading,
     hasUpdates,
     handleSyncData,
-    loadPriceData,
+    refetch,
     lastSyncTime
   };
 
-  // Inicialização dos dados
-  useEffect(() => {
-    async function initialize() {
-      if (isAuthenticated) {
-        try {
-          console.log("PriceTableContainer: Initializing component data");
-          await loadPriceData();
-          setIsInitialized(true);
-        } catch (error) {
-          console.error("PriceTableContainer: Error initializing:", error);
-          setIsInitialized(true);
-        }
-      }
-    }
-    
-    initialize();
-  }, [isAuthenticated]);
-
   // Combinação de estados de loading
-  const combinedLoading = isLoading || fileLoading || !isInitialized;
+  const combinedLoading = isLoading || fileLoading;
 
   // Filtrar dados de preço (remover categoria de contrato se existir)
   const filteredPriceData = priceData ? { ...priceData } : {};
