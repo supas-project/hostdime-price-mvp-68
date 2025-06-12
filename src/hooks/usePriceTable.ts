@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { systemComponentsService } from '@/services/systemComponentsService';
-import { useItemActions } from './price-table/item-actions/useItemActions';
-import { useCategoryActions } from './price-table/category-actions/useCategoryActions';
+import { systemComponentsService, SystemComponent } from '@/services/systemComponentsService';
 
 // A interface para uma categoria agrupada
 export interface GroupedCategory {
   id: string;
   nome: string;
-  items: any[]; // Use 'any' por enquanto, podemos refinar o tipo depois
+  items: SystemComponent[];
 }
 
 export function usePriceTable() {
@@ -46,21 +44,36 @@ export function usePriceTable() {
     return Object.values(grouped);
   }, [allComponents]);
 
-  // 3. Reúne as ações de edição (com fallback para evitar erros se os hooks não existirem)
-  let itemActions = {};
-  let categoryActions = {};
-  
-  try {
-    itemActions = useItemActions?.() || {};
-  } catch (error) {
-    console.warn('useItemActions not available:', error);
-  }
-  
-  try {
-    categoryActions = useCategoryActions?.() || {};
-  } catch (error) {
-    console.warn('useCategoryActions not available:', error);
-  }
+  // 3. Reúne as ações de edição básicas
+  const actions = useMemo(() => ({
+    addItem: async (categoryId: string, item: Omit<SystemComponent, 'id' | 'created_at' | 'updated_at'>) => {
+      try {
+        await systemComponentsService.addComponent(item);
+        refetch();
+      } catch (error) {
+        console.error('Error adding item:', error);
+        throw error;
+      }
+    },
+    updateItem: async (itemId: string, updates: Partial<SystemComponent>) => {
+      try {
+        await systemComponentsService.updateComponent(itemId, updates);
+        refetch();
+      } catch (error) {
+        console.error('Error updating item:', error);
+        throw error;
+      }
+    },
+    deleteItem: async (itemId: string) => {
+      try {
+        await systemComponentsService.deleteComponent(itemId);
+        refetch();
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        throw error;
+      }
+    }
+  }), [refetch]);
 
   // 4. Retorna tudo o que a UI precisa, sem nenhum serviço ou lógica antiga.
   return {
@@ -68,11 +81,8 @@ export function usePriceTable() {
     isLoading,
     isError,
     error,
-    refetch,
     allComponents,
-    actions: {
-      ...itemActions,
-      ...categoryActions,
-    },
+    refetch,
+    actions,
   };
 }
