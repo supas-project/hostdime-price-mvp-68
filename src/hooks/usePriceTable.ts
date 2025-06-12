@@ -1,98 +1,78 @@
-import { usePriceTableState } from './price-table/usePriceTableState';
-import { useDataLoader } from './price-table/useDataLoader';
-import { usePriceTableActions } from './price-table/usePriceTableActions';
-import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { systemComponentsService } from '@/services/systemComponentsService';
+import { useItemActions } from './price-table/item-actions/useItemActions';
+import { useCategoryActions } from './price-table/category-actions/useCategoryActions';
+
+// A interface para uma categoria agrupada
+export interface GroupedCategory {
+  id: string;
+  nome: string;
+  items: any[]; // Use 'any' por enquanto, podemos refinar o tipo depois
+}
 
 export function usePriceTable() {
-  const { isAuthenticated } = useAuth();
-  
-  // Use the specialized hooks
+  // 1. A ÚNICA FONTE DE DADOS: useQuery com nosso serviço inteligente e automático.
   const {
-    priceData,
-    setPriceData,
-    activeTab,
-    setActiveTab,
-    searchTerm,
-    setSearchTerm,
-    sortOrder,
-    setSortOrder,
-    displayMode,
-    setDisplayMode,
-    collapsedCategories,
-    toggleCategoryCollapse,
-    contractDuration,
-    setContractDuration,
+    data: allComponents,
     isLoading,
-    setIsLoading
-  } = usePriceTableState();
-  
-  // useDataLoader takes no arguments
-  const { loadPriceData } = useDataLoader();
-  
-  // Criar uma função de filtro que será usada pelos componentes
-  const filterItems = (items: any[], searchTerm: string, sortOrder?: 'asc' | 'desc') => {
-    if (!items || !Array.isArray(items)) return [];
-    
-    // Filter by search term
-    let filteredItems = items;
-    if (searchTerm && searchTerm.trim() !== '') {
-      const searchLower = searchTerm.toLowerCase();
-      filteredItems = items.filter(item => {
-        return (
-          (item.name && item.name.toLowerCase().includes(searchLower)) ||
-          (item.description && item.description.toLowerCase().includes(searchLower)) ||
-          (item.specs && Array.isArray(item.specs) && item.specs.some(spec => spec.toLowerCase().includes(searchLower))) ||
-          (item.tags && Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(searchLower)))
-        );
-      });
-    }
-    
-    // Sort items
-    if (sortOrder) {
-      filteredItems = [...filteredItems].sort((a, b) => {
-        if (sortOrder === 'asc') {
-          return (a.price || 0) - (b.price || 0);
-        } else if (sortOrder === 'desc') {
-          return (b.price || 0) - (a.price || 0);
-        }
-        return 0;
-      });
-    }
-    
-    return filteredItems;
-  };
-  
-  // Simplified sync data without old system
-  const hasUpdates = false;
-  const handleSyncData = async (): Promise<void> => {
-    await loadPriceData();
-  };
-  const lastSyncTime = new Date();
-  
-  const tableActions = usePriceTableActions(activeTab, setPriceData);
+    isError,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['systemComponents'],
+    queryFn: () => systemComponentsService.getOrInitializeAllComponents(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3,
+  });
 
+  // 2. Transforma a lista de componentes em categorias agrupadas para a UI.
+  const categories: GroupedCategory[] = useMemo(() => {
+    if (!allComponents) return [];
+    
+    const grouped = allComponents.reduce((acc, component) => {
+      const categoryName = component.component_type || 'outros';
+      if (!acc[categoryName]) {
+        acc[categoryName] = { 
+          id: categoryName, 
+          nome: categoryName, 
+          items: [] 
+        };
+      }
+      acc[categoryName].items.push(component);
+      return acc;
+    }, {} as Record<string, GroupedCategory>);
+
+    return Object.values(grouped);
+  }, [allComponents]);
+
+  // 3. Reúne as ações de edição (com fallback para evitar erros se os hooks não existirem)
+  let itemActions = {};
+  let categoryActions = {};
+  
+  try {
+    itemActions = useItemActions?.() || {};
+  } catch (error) {
+    console.warn('useItemActions not available:', error);
+  }
+  
+  try {
+    categoryActions = useCategoryActions?.() || {};
+  } catch (error) {
+    console.warn('useCategoryActions not available:', error);
+  }
+
+  // 4. Retorna tudo o que a UI precisa, sem nenhum serviço ou lógica antiga.
   return {
+    categories,
     isLoading,
-    priceData,
-    setPriceData,
-    activeTab,
-    setActiveTab,
-    tableActions,
-    hasUpdates,
-    handleSyncData,
-    loadPriceData,
-    lastSyncTime,
-    searchTerm,
-    setSearchTerm,
-    sortOrder,
-    setSortOrder,
-    displayMode,
-    setDisplayMode,
-    collapsedCategories,
-    toggleCategoryCollapse,
-    filterItems,
-    contractDuration,
-    setContractDuration,
+    isError,
+    error,
+    refetch,
+    allComponents,
+    actions: {
+      ...itemActions,
+      ...categoryActions,
+    },
   };
 }
