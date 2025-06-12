@@ -1,22 +1,22 @@
-import { useMemo } from 'react';
 import { CategoryTabs } from './CategoryTabs';
-import { GroupedCategory } from '@/hooks/usePriceTable'; // Importando o tipo do nosso hook
+import { GroupedCategory } from '@/hooks/usePriceTable';
 
-// A interface de props para este componente
 interface PriceTableContentProps {
   categories: GroupedCategory[];
-  searchTerm: string;
-  sortOrder: 'asc' | 'desc';
 }
 
-export const PriceTableContent = ({ 
-  categories, 
-  searchTerm, 
-  sortOrder 
-}: PriceTableContentProps) => {
+export const PriceTableContent = ({ categories }: PriceTableContentProps) => {
+  if (categories.length === 0) {
+    return (
+      <div className="text-center p-10 mt-4">
+        <h3 className="text-lg font-semibold">Nenhuma Categoria para Exibir</h3>
+        <p className="text-sm text-muted-foreground">Verifique se os dados foram migrados corretamente.</p>
+      </div>
+    );
+  }
 
-  // A lógica de filtro e ordenação agora vive aqui, de forma clara.
-  const filteredAndSortedCategories = useMemo(() => {
+  return <CategoryTabs categories={categories} />;
+};
     if (!categories) return [];
 
     return categories

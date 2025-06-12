@@ -224,9 +224,11 @@ export class DataMigrationService {
   }
 
   /**
-   * Gets all static components from data files
+   * Gets all static components from data files with robust validation
    */
   static getAllStaticComponents() {
+    console.log("[MIGRAÇÃO-360] Lendo todos os componentes estáticos...");
+    
     const allComponents = [];
     
     // Add CPU components
@@ -234,9 +236,9 @@ export class DataMigrationService {
       allComponents.push({
         component_type: 'cpu',
         component_id: component.id,
-        name: component.name,
-        description: component.description,
-        price: component.price,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || '',
+        price: component.price || 0,
         subtype: component.subtype,
         is_hardware: component.isHardware || true,
         is_active: true,
@@ -250,9 +252,9 @@ export class DataMigrationService {
       allComponents.push({
         component_type: 'memory',
         component_id: component.id,
-        name: component.name,
-        description: component.description,
-        price: component.price,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || '',
+        price: component.price || 0,
         subtype: component.subtype,
         is_hardware: component.isHardware || true,
         is_active: true,
@@ -264,11 +266,11 @@ export class DataMigrationService {
     // Add OS components
     osComponents.options.forEach(component => {
       allComponents.push({
-        component_type: 'os',
+        component_type: 'operating_system',
         component_id: component.id,
-        name: component.name,
-        description: component.description,
-        price: component.price,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || '',
+        price: component.price || 0,
         subtype: component.subtype,
         is_hardware: component.isHardware || false,
         is_active: true,
@@ -282,9 +284,9 @@ export class DataMigrationService {
       allComponents.push({
         component_type: 'connectivity',
         component_id: component.id,
-        name: component.name,
-        description: component.description,
-        price: component.price,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || '',
+        price: component.price || 0,
         subtype: component.subtype,
         is_hardware: component.isHardware || false,
         is_active: true,
@@ -293,7 +295,29 @@ export class DataMigrationService {
       });
     });
 
-    return allComponents;
+    console.log(`[MIGRAÇÃO-360] Total de componentes processados: ${allComponents.length}`);
+    
+    // GARANTE QUE CADA COMPONENTE TENHA OS CAMPOS NECESSÁRIOS
+    const validatedComponents = allComponents.map(comp => {
+      const baseComponent = {
+        component_type: comp.component_type || 'outros',
+        component_id: comp.component_id || `comp-${Date.now()}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || '',
+        price: comp.price || 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.is_hardware !== undefined ? comp.is_hardware : false,
+        is_active: true,
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: typeof comp.metadata === 'object' ? comp.metadata : {}
+      };
+      
+      console.log(`[MIGRAÇÃO-360] Processando componente: ${baseComponent.name}, Tipo: ${baseComponent.component_type}`);
+      return baseComponent;
+    });
+
+    console.log(`[MIGRAÇÃO-360] Componentes validados: ${validatedComponents.length}`);
+    return validatedComponents;
   }
 
   /**
