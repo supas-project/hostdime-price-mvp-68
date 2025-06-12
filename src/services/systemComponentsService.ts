@@ -45,77 +45,69 @@ export class SystemComponentsService {
     return typedData;
   }
 
-  // NOVA FUNÇÃO "INTELIGENTE" E CORRIGIDA
+  // FUNÇÃO MODIFICADA COM LOGS
   static async getOrInitializeAllComponents(): Promise<SystemComponent[]> {
-    console.log('[SystemComponentsService] Getting or initializing components from system_components');
+    console.log('[DEBUG] PASSO A: Iniciando getOrInitializeAllComponents...');
     
-    try {
-      // 1. Tenta buscar os componentes existentes no banco de dados
-      let { data: components, error: fetchError } = await supabase
-        .from('system_components')
-        .select('*')
-        .eq('is_active', true);
+    // 1. Tenta buscar os componentes existentes
+    console.log('[DEBUG] PASSO B: Tentando buscar dados de "system_components"...');
+    let { data: components, error: fetchError } = await supabase
+      .from('system_components')
+      .select('*');
 
-      if (fetchError) {
-        console.error('[SystemComponentsService] Erro inicial ao buscar componentes:', fetchError);
-        throw new Error(`Failed to fetch components: ${fetchError.message}`);
-      }
-
-      // 2. Verifica se o banco de dados está vazio
-      if (!components || components.length === 0) {
-        console.log('[SystemComponentsService] Banco de dados de componentes vazio. Iniciando migração automática...');
-        
-        try {
-          // 3. Executa a migração completa dos dados estáticos para o banco
-          await dataMigrationService.runCompleteMigration();
-          console.log('[SystemComponentsService] Migração automática concluída com sucesso.');
-
-          // 4. Busca os dados novamente, que agora devem existir
-          let { data: populatedComponents, error: postMigrationError } = await supabase
-            .from('system_components')
-            .select('*')
-            .eq('is_active', true)
-            .order('component_type', { ascending: true })
-            .order('name', { ascending: true });
-          
-          if (postMigrationError) {
-            console.error('[SystemComponentsService] Erro ao buscar componentes pós-migração:', postMigrationError);
-            throw new Error(`Failed to fetch components after migration: ${postMigrationError.message}`);
-          }
-          
-          console.log(`[SystemComponentsService] Found ${populatedComponents?.length || 0} components after migration`);
-          
-          // Convert Json fields to proper types
-          const typedData = (populatedComponents || []).map(item => ({
-            ...item,
-            specs: Array.isArray(item.specs) ? item.specs as string[] : [],
-            metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
-          }));
-          
-          return typedData;
-
-        } catch (migrationError) {
-          console.error('[SystemComponentsService] Erro durante a migração automática:', migrationError);
-          throw new Error(`Migration failed: ${migrationError instanceof Error ? migrationError.message : 'Unknown error'}`);
-        }
-      }
-
-      // 5. Se os dados já existiam, apenas os retorna
-      console.log(`[SystemComponentsService] Dados encontrados: ${components.length} componentes.`);
-      
-      // Convert Json fields to proper types
-      const typedData = components.map(item => ({
-        ...item,
-        specs: Array.isArray(item.specs) ? item.specs as string[] : [],
-        metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
-      }));
-      
-      return typedData;
-      
-    } catch (error) {
-      console.error('[SystemComponentsService] Error in getOrInitializeAllComponents:', error);
-      throw error;
+    if (fetchError) {
+      console.error('[DEBUG] ERRO CRÍTICO no PASSO B:', fetchError);
+      throw fetchError;
     }
+    console.log('[DEBUG] PASSO C: Resposta do Supabase recebida. Dados:', components);
+
+    // 2. Verifica se o banco de dados está vazio
+    if (components && components.length === 0) {
+      console.log('[DEBUG] PASSO D: O banco de dados está vazio. Tentando migração automática...');
+      try {
+        // 3. Executa a migração
+        await dataMigrationService.runCompleteMigration();
+        console.log('[DEBUG] PASSO E: Migração automática concluída com sucesso.');
+
+        // 4. Busca os dados novamente
+        console.log('[DEBUG] PASSO F: Buscando dados novamente pós-migração...');
+        let { data: populatedComponents, error: postMigrationError } = await supabase
+          .from('system_components')
+          .select('*');
+        
+        if (postMigrationError) {
+          console.error('[DEBUG] ERRO CRÍTICO no PASSO F:', postMigrationError);
+          throw postMigrationError;
+        }
+        
+        console.log('[DEBUG] PASSO G: Dados encontrados pós-migração:', populatedComponents);
+        
+        // Convert Json fields to proper types
+        const typedData = (populatedComponents || []).map(item => ({
+          ...item,
+          specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+          metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
+        }));
+        
+        return typedData;
+
+      } catch (migrationError) {
+        console.error('[DEBUG] ERRO CRÍTICO no PASSO E (Migração):', migrationError);
+        throw migrationError;
+      }
+    }
+
+    // 5. Se os dados já existiam, apenas os retorna
+    console.log(`[DEBUG] PASSO H: Fim da função. Retornando ${components?.length || 0} componentes existentes.`);
+    
+    // Convert Json fields to proper types
+    const typedData = (components || []).map(item => ({
+      ...item,
+      specs: Array.isArray(item.specs) ? item.specs as string[] : [],
+      metadata: typeof item.metadata === 'object' ? item.metadata as Record<string, any> : {}
+    }));
+    
+    return typedData;
   }
 
   // Função para adicionar componente

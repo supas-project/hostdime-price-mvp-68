@@ -52,6 +52,12 @@ export default function PriceTableContainer({ disabled = false }: PriceTableCont
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  // DEBUG LOGS
+  console.log('[DEBUG-UI] Estado do useQuery isLoading:', isLoading);
+  console.log('[DEBUG-UI] Estado do useQuery isError:', isError);
+  console.log('[DEBUG-UI] Objeto de erro do useQuery:', error);
+  console.log('[DEBUG-UI] Dados recebidos pelo componente (allComponents):', allComponents);
+
   const {
     isLoading: fileLoading,
     fileInputRef,
