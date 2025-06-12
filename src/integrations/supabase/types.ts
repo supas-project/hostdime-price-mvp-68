@@ -9,6 +9,212 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      change_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+          version_number: number
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+          version_number?: number
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          operation?: string
+          record_id?: string
+          table_name?: string
+          version_number?: number
+        }
+        Relationships: []
+      }
+      component_categories: {
+        Row: {
+          component_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          component_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          component_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      component_items: {
+        Row: {
+          base_price: number
+          category_id: string
+          component_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_hardware: boolean
+          metadata: Json | null
+          name: string
+          price: number
+          specs: Json | null
+          subtype: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_price?: number
+          category_id: string
+          component_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_hardware?: boolean
+          metadata?: Json | null
+          name: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_price?: number
+          category_id?: string
+          component_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_hardware?: boolean
+          metadata?: Json | null
+          name?: string
+          price?: number
+          specs?: Json | null
+          subtype?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "component_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consolidated_data: {
+        Row: {
+          created_at: string | null
+          data: Json
+          data_type: string
+          id: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string | null
+          data: Json
+          data_type: string
+          id?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          data_type?: string
+          id?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       contract_types: {
         Row: {
           contract_id: string
@@ -78,6 +284,39 @@ export type Database = {
         }
         Relationships: []
       }
+      data_versions: {
+        Row: {
+          categories_snapshot: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_current: boolean
+          items_snapshot: Json
+          version_name: string
+        }
+        Insert: {
+          categories_snapshot: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_current?: boolean
+          items_snapshot: Json
+          version_name: string
+        }
+        Update: {
+          categories_snapshot?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_current?: boolean
+          items_snapshot?: Json
+          version_name?: string
+        }
+        Relationships: []
+      }
       datacenters: {
         Row: {
           badge: string | null
@@ -126,48 +365,179 @@ export type Database = {
         }
         Relationships: []
       }
+      hd_hardwares: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          descricao: string | null
+          id: number
+          metadata: Json | null
+          nome: string
+          preco: number
+          tipo: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: number
+          metadata?: Json | null
+          nome: string
+          preco: number
+          tipo: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: number
+          metadata?: Json | null
+          nome?: string
+          preco?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          active: boolean
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          price: number
+          specs: Json | null
+          tags: string[] | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          price?: number
+          specs?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          price?: number
+          specs?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payback_options: {
+        Row: {
+          created_at: string | null
+          discount: number
+          id: number
+          label: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          discount: number
+          id?: number
+          label: string
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          discount?: number
+          id?: number
+          label?: string
+          value?: number
+        }
+        Relationships: []
+      }
       price_data: {
         Row: {
           created_at: string | null
           data: Json
-          id: string
+          id: number
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           data: Json
-          id?: string
+          id?: number
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           data?: Json
-          id?: string
+          id?: number
           updated_at?: string | null
         }
         Relationships: []
       }
-      price_data_updates: {
+      price_modifiers: {
         Row: {
-          details: string | null
+          applies_to: string[] | null
+          conditions: Json | null
+          created_at: string
+          description: string | null
           id: string
-          initiator: string | null
-          type: string
-          updated_at: string | null
+          is_active: boolean
+          modifier_type: string
+          name: string
+          priority: number
+          updated_at: string
+          value: number
         }
         Insert: {
-          details?: string | null
+          applies_to?: string[] | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
           id?: string
-          initiator?: string | null
-          type: string
-          updated_at?: string | null
+          is_active?: boolean
+          modifier_type: string
+          name: string
+          priority?: number
+          updated_at?: string
+          value: number
         }
         Update: {
-          details?: string | null
+          applies_to?: string[] | null
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
           id?: string
-          initiator?: string | null
-          type?: string
-          updated_at?: string | null
+          is_active?: boolean
+          modifier_type?: string
+          name?: string
+          priority?: number
+          updated_at?: string
+          value?: number
         }
         Relationships: []
       }
@@ -345,7 +715,10 @@ export type Database = {
           expires_at: string
           id: string
           margin_percentage: number | null
+          monthly_total: number | null
           notes: string | null
+          payback_total: number | null
+          quote_number: string | null
           sent_at: string | null
           status: string
           subtotal: number
@@ -366,7 +739,10 @@ export type Database = {
           expires_at: string
           id?: string
           margin_percentage?: number | null
+          monthly_total?: number | null
           notes?: string | null
+          payback_total?: number | null
+          quote_number?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number
@@ -387,7 +763,10 @@ export type Database = {
           expires_at?: string
           id?: string
           margin_percentage?: number | null
+          monthly_total?: number | null
           notes?: string | null
+          payback_total?: number | null
+          quote_number?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number
@@ -395,6 +774,51 @@ export type Database = {
           total_price?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      storage_items: {
+        Row: {
+          capacity_gb: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          item_type: string
+          metadata: Json | null
+          name: string
+          price: number
+          specs: Json | null
+          storage_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity_gb?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_type: string
+          metadata?: Json | null
+          name: string
+          price?: number
+          specs?: Json | null
+          storage_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity_gb?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_type?: string
+          metadata?: Json | null
+          name?: string
+          price?: number
+          specs?: Json | null
+          storage_type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -446,12 +870,43 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_data_snapshot: {
+        Args: { p_version_name: string; p_description?: string }
+        Returns: string
+      }
+      generate_quote_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
