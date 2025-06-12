@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { systemComponentsService, SystemComponent } from '@/services/systemComponentsService';
 
-// A interface para uma categoria agrupada
 export interface GroupedCategory {
   id: string;
   nome: string;
@@ -10,7 +9,6 @@ export interface GroupedCategory {
 }
 
 export function usePriceTable() {
-  // 1. A ÚNICA FONTE DE DADOS: useQuery com nosso serviço inteligente e automático.
   const {
     data: allComponents,
     isLoading,
@@ -24,12 +22,27 @@ export function usePriceTable() {
     retry: 3,
   });
 
-  // 2. Transforma a lista de componentes em categorias agrupadas para a UI.
   const categories: GroupedCategory[] = useMemo(() => {
-    if (!allComponents) return [];
+    // ================== INÍCIO DOS LOGS DE DEPURAÇÃO ==================
+    console.log('[GROUPING-DEBUG] Iniciando o agrupamento de dados...');
     
+    if (!allComponents || allComponents.length === 0) {
+      console.log('[GROUPING-DEBUG] `allComponents` está vazio ou nulo. Nada a agrupar.');
+      return [];
+    }
+
+    // LOG PARA VER A ESTRUTURA EXATA DE UM ITEM
+    console.log('[GROUPING-DEBUG] Amostra do primeiro componente recebido do banco:', allComponents[0]);
+    console.log('[GROUPING-DEBUG] A chave de categoria do primeiro componente é:', allComponents[0]?.component_type);
+    // =================================================================
+
     const grouped = allComponents.reduce((acc, component) => {
       const categoryName = component.component_type || 'outros';
+      
+      if (!categoryName || categoryName === 'outros') {
+        console.warn('[GROUPING-DEBUG] AVISO: Componente com categoria nula ou indefinida encontrado:', component);
+      }
+
       if (!acc[categoryName]) {
         acc[categoryName] = { 
           id: categoryName, 
@@ -40,11 +53,17 @@ export function usePriceTable() {
       acc[categoryName].items.push(component);
       return acc;
     }, {} as Record<string, GroupedCategory>);
+    
+    // ================== LOGS DE RESULTADO ==================
+    console.log('[GROUPING-DEBUG] Objeto de categorias agrupadas final:', grouped);
+    const result = Object.values(grouped);
+    console.log('[GROUPING-DEBUG] Array de categorias final enviado para a UI:', result);
+    // =======================================================
 
-    return Object.values(grouped);
+    return result;
   }, [allComponents]);
 
-  // 3. Reúne as ações de edição básicas
+  // Ações básicas de edição
   const actions = useMemo(() => ({
     addItem: async (categoryId: string, item: Omit<SystemComponent, 'id' | 'created_at' | 'updated_at'>) => {
       try {
@@ -74,8 +93,7 @@ export function usePriceTable() {
       }
     }
   }), [refetch]);
-
-  // 4. Retorna tudo o que a UI precisa, sem nenhum serviço ou lógica antiga.
+  
   return {
     categories,
     isLoading,
