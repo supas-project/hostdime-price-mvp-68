@@ -224,134 +224,147 @@ export class DataMigrationService {
   }
 
   /**
-   * Gets all static components from data files with robust validation
+   * Gets all static components from data files without problematic IDs
    */
   static getAllStaticComponents() {
-    console.log("[MIGRAÇÃO-360] Lendo e padronizando todos os componentes estáticos...");
+    console.log("[MIGRAÇÃO-FINAL] Lendo e preparando todos os componentes estáticos...");
     
     const allComponents = [];
     
     // Process CPU components
     cpuComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] CPU item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] CPU item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      // Remove ID and create standardized component
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'cpu',
-        component_id: comp.id || `cpu-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : true,
+        component_id: `cpu-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : true,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
     // Process Memory components
     memoryComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] Memory item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] Memory item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'memory',
-        component_id: comp.id || `memory-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : true,
+        component_id: `memory-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : true,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
     // Process OS components
     osComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] OS item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] OS item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'operating_system',
-        component_id: comp.id || `os-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
+        component_id: `os-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : false,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
     // Process Connectivity components
     connectivityComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] Connectivity item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] Connectivity item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'connectivity',
-        component_id: comp.id || `connectivity-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
+        component_id: `connectivity-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : false,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
     // Process DataCenter components
     dataCenterComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] DataCenter item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] DataCenter item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'datacenter',
-        component_id: comp.id || `datacenter-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
+        component_id: `datacenter-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : false,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
     // Process Contract components
     contractComponents.options.forEach((comp, index) => {
       if (!comp || typeof comp !== 'object') {
-        console.warn(`[MIGRAÇÃO-360] Contract item inválido no índice ${index} foi ignorado.`);
+        console.warn(`[MIGRAÇÃO-FINAL] Contract item inválido no índice ${index} foi ignorado.`);
         return;
       }
+      
+      const { id, ...rest } = comp;
       allComponents.push({
         component_type: 'contract',
-        component_id: comp.id || `contract-${index}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || null,
-        price: typeof comp.price === 'number' ? comp.price : 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
+        component_id: `contract-${index}-${Date.now()}`,
+        name: rest.name || 'Nome Indefinido',
+        description: rest.description || null,
+        price: typeof rest.price === 'number' ? rest.price : 0,
+        subtype: rest.subtype || '',
+        is_hardware: rest.isHardware !== undefined ? rest.isHardware : false,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: comp.metadata || {},
+        specs: Array.isArray(rest.specs) ? rest.specs : [],
+        metadata: rest.metadata || {},
       });
     });
 
-    console.log(`[MIGRAÇÃO-360] Total de ${allComponents.length} componentes padronizados e prontos para inserção.`);
+    console.log(`[MIGRAÇÃO-FINAL] Total de ${allComponents.length} componentes prontos para inserção (sem IDs pré-definidos).`);
     return allComponents;
   }
 
