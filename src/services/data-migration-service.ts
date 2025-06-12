@@ -224,161 +224,185 @@ export class DataMigrationService {
   }
 
   /**
-   * Gets all static components from data files with robust validation and standardization
+   * Gets all static components from data files with robust validation
    */
   static getAllStaticComponents() {
     console.log("[MIGRAÇÃO-360] Lendo e padronizando todos os componentes estáticos...");
     
     const allComponents = [];
     
-    // Add CPU components with standardization
-    cpuComponents.options.forEach(component => {
+    // Process CPU components
+    cpuComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] CPU item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'cpu',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : true,
+        component_id: comp.id || `cpu-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : true,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
-    // Add memory components with standardization
-    memoryComponents.options.forEach(component => {
+    // Process Memory components
+    memoryComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] Memory item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'memory',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : true,
+        component_id: comp.id || `memory-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : true,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
-    // Add OS components with standardization
-    osComponents.options.forEach(component => {
+    // Process OS components
+    osComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] OS item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'operating_system',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
+        component_id: comp.id || `os-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
-    // Add connectivity components with standardization
-    connectivityComponents.options.forEach(component => {
+    // Process Connectivity components
+    connectivityComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] Connectivity item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'connectivity',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
+        component_id: comp.id || `connectivity-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
-    // Add datacenter components with standardization
-    dataCenterComponents.options.forEach(component => {
+    // Process DataCenter components
+    dataCenterComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] DataCenter item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'datacenter',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
+        component_id: comp.id || `datacenter-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
-    // Add contract components with standardization
-    contractComponents.options.forEach(component => {
+    // Process Contract components
+    contractComponents.options.forEach((comp, index) => {
+      if (!comp || typeof comp !== 'object') {
+        console.warn(`[MIGRAÇÃO-360] Contract item inválido no índice ${index} foi ignorado.`);
+        return;
+      }
       allComponents.push({
         component_type: 'contract',
-        component_id: component.id,
-        name: component.name || 'Nome Indefinido',
-        description: component.description || null,
-        price: component.price || 0,
-        subtype: component.subtype || '',
-        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
+        component_id: comp.id || `contract-${index}`,
+        name: comp.name || 'Nome Indefinido',
+        description: comp.description || null,
+        price: typeof comp.price === 'number' ? comp.price : 0,
+        subtype: comp.subtype || '',
+        is_hardware: comp.isHardware !== undefined ? comp.isHardware : false,
         is_active: true,
-        specs: Array.isArray(component.specs) ? component.specs : [],
-        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+        specs: Array.isArray(comp.specs) ? comp.specs : [],
+        metadata: comp.metadata || {},
       });
     });
 
     console.log(`[MIGRAÇÃO-360] Total de ${allComponents.length} componentes padronizados e prontos para inserção.`);
-    
-    // Final validation to ensure all components have required fields
-    const validatedComponents = allComponents.map(comp => {
-      // Garantir que o campo component_type (categoria) existe
-      const validatedComp = {
-        ...comp,
-        component_type: comp.component_type || 'outros',
-        name: comp.name || 'Nome Indefinido'
-      };
-      
-      console.log(`[MIGRAÇÃO-360] Validando: ${validatedComp.name}, Tipo: ${validatedComp.component_type}`);
-      return validatedComp;
-    });
-
-    return validatedComponents;
+    return allComponents;
   }
 
   /**
-   * Runs complete migration of all static data
+   * Runs complete migration of all static data category by category
    */
   static async runCompleteMigration() {
-    console.log('[MIGRAÇÃO-FINAL] PASSO 1: Iniciando a migração completa...');
-    
+    console.log('[MIGRAÇÃO-360] Iniciando migração categoria por categoria...');
     const staticComponents = this.getAllStaticComponents();
-    console.log(`[MIGRAÇÃO-FINAL] PASSO 2: Encontrados ${staticComponents.length} componentes estáticos no total.`);
-    
-    // LOG PARA VER A ESTRUTURA DOS DADOS QUE SERÃO INSERIDOS
-    console.log('[MIGRAÇÃO-FINAL] PASSO 3: Amostra do primeiro item a ser inserido:', staticComponents[0]);
-    
+
     if (staticComponents.length === 0) {
-      console.warn('[MIGRAÇÃO-FINAL] Nenhum componente para migrar.');
+      console.warn('[MIGRAÇÃO-360] Nenhum componente estático para migrar.');
       return;
     }
 
-    // A operação de inserção crítica
-    const { data, error } = await supabase
-      .from('system_components')
-      .insert(staticComponents)
-      .select(); // .select() é crucial para vermos o resultado
+    // Agrupa os componentes por categoria antes de inserir
+    const componentsByCategory = staticComponents.reduce((acc, comp) => {
+      const category = comp.component_type;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(comp);
+      return acc;
+    }, {} as Record<string, any[]>);
 
-    if (error) {
-      console.error('[MIGRAÇÃO-FINAL] ERRO CRÍTICO AO INSERIR:', {
-        message: error.message,
-        details: error.details,
-        code: error.code,
-      });
-      throw new Error(`A migração falhou: ${error.message}`);
+    console.log(`[MIGRAÇÃO-360] Componentes agrupados em ${Object.keys(componentsByCategory).length} categorias.`);
+
+    // Itera e insere cada categoria separadamente
+    for (const category in componentsByCategory) {
+      const itemsToInsert = componentsByCategory[category];
+      console.log(`[MIGRAÇÃO-360] Tentando inserir ${itemsToInsert.length} itens para a categoria: ${category}`);
+
+      try {
+        const { data, error } = await supabase
+          .from('system_components')
+          .insert(itemsToInsert)
+          .select();
+
+        if (error) {
+          console.error(`[MIGRAÇÃO-360] ERRO CRÍTICO ao inserir a categoria '${category}':`, error);
+          // Continua para a próxima categoria em vez de parar tudo
+        } else {
+          console.log(`[MIGRAÇÃO-360] SUCESSO: Inseridos ${data?.length || 0} itens para a categoria '${category}'.`);
+        }
+      } catch (migrationError) {
+        console.error(`[MIGRAÇÃO-360] Erro inesperado na categoria '${category}':`, migrationError);
+        // Continua para a próxima categoria
+      }
     }
 
-    console.log(`[MIGRAÇÃO-FINAL] PASSO 4: Migração finalizada. ${data?.length || 0} linhas foram inseridas com sucesso.`);
-    console.log('[MIGRAÇÃO-FINAL] Amostra da primeira linha inserida:', data?.[0]);
+    console.log('[MIGRAÇÃO-360] Migração categoria por categoria finalizada.');
   }
 
   /**
