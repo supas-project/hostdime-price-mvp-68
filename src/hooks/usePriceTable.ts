@@ -1,8 +1,5 @@
-
 import { usePriceTableState } from './price-table/usePriceTableState';
 import { useDataLoader } from './price-table/useDataLoader';
-import { useItemFilter } from './price-table/useItemFilter';
-import { useSyncData } from './price-table/useSyncData';
 import { usePriceTableActions } from './price-table/usePriceTableActions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo } from 'react';
@@ -66,7 +63,13 @@ export function usePriceTable() {
     return filteredItems;
   };
   
-  const { hasUpdates, handleSyncData, lastSyncTime } = useSyncData();
+  // Simplified sync data without old system
+  const hasUpdates = false;
+  const handleSyncData = async (): Promise<void> => {
+    await loadPriceData();
+  };
+  const lastSyncTime = new Date();
+  
   const tableActions = usePriceTableActions(activeTab, setPriceData);
 
   return {
