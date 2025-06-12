@@ -1,4 +1,3 @@
-
 import { SystemComponentsService } from './systemComponentsService';
 import { cpuComponents } from '@/data/cpu-components';
 import { memoryComponents } from '@/data/memory-components';
@@ -8,6 +7,7 @@ import { dataCenterComponents } from '@/data/datacenter-components';
 import { contractComponents } from '@/data/contract-components';
 import { ComponentOption } from '@/types/component';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Service for migrating static data to the database
@@ -224,38 +224,110 @@ export class DataMigrationService {
   }
 
   /**
+   * Gets all static components from data files
+   */
+  static getAllStaticComponents() {
+    const allComponents = [];
+    
+    // Add CPU components
+    cpuComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'cpu',
+        component_id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        subtype: component.subtype,
+        is_hardware: component.isHardware || true,
+        is_active: true,
+        specs: component.specs || [],
+        metadata: component.metadata || {}
+      });
+    });
+
+    // Add memory components
+    memoryComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'memory',
+        component_id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        subtype: component.subtype,
+        is_hardware: component.isHardware || true,
+        is_active: true,
+        specs: component.specs || [],
+        metadata: component.metadata || {}
+      });
+    });
+
+    // Add OS components
+    osComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'os',
+        component_id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        subtype: component.subtype,
+        is_hardware: component.isHardware || false,
+        is_active: true,
+        specs: component.specs || [],
+        metadata: component.metadata || {}
+      });
+    });
+
+    // Add connectivity components
+    connectivityComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'connectivity',
+        component_id: component.id,
+        name: component.name,
+        description: component.description,
+        price: component.price,
+        subtype: component.subtype,
+        is_hardware: component.isHardware || false,
+        is_active: true,
+        specs: component.specs || [],
+        metadata: component.metadata || {}
+      });
+    });
+
+    return allComponents;
+  }
+
+  /**
    * Runs complete migration of all static data
    */
-  static async runCompleteMigration(): Promise<void> {
-    console.log('[DataMigrationService] Starting complete data migration...');
+  static async runCompleteMigration() {
+    console.log('[MIGRAÇÃO-DEBUG] PASSO 1: Iniciando a migração completa...');
     
-    try {
-      // Check if user is authenticated and is admin
-      const { supabase } = SystemComponentsService;
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session.session) {
-        throw new Error('User must be authenticated to run migration');
-      }
-
-      // Run all migrations
-      await this.migrateCPUComponents();
-      await this.migrateMemoryComponents();
-      await this.migrateOSComponents();
-      await this.migrateConnectivityComponents();
-      await this.migrateDataCenters();
-      await this.migrateContractTypes();
-      
-      console.log('[DataMigrationService] Complete migration finished successfully');
-      toast.success('Migração de dados concluída com sucesso!');
-      
-    } catch (error) {
-      console.error('[DataMigrationService] Error in complete migration:', error);
-      toast.error('Erro na migração de dados', {
-        description: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
-      throw error;
+    // Esta função interna busca os dados dos arquivos estáticos
+    const staticComponents = this.getAllStaticComponents();
+    console.log(`[MIGRAÇÃO-DEBUG] PASSO 2: Encontrados ${staticComponents.length} componentes estáticos para migrar.`);
+    
+    if (staticComponents.length === 0) {
+      console.warn('[MIGRAÇÃO-DEBUG] Nenhum componente estático encontrado. Abortando.');
+      return;
     }
+
+    console.log('[MIGRAÇÃO-DEBUG] PASSO 3: Dados que serão enviados para o Supabase:', staticComponents);
+
+    // Esta é a operação de inserção que está falhando silenciosamente.
+    const { data, error } = await supabase
+      .from('system_components')
+      .insert(staticComponents)
+      .select(); // .select() é importante para ver o que foi inserido.
+
+    // Verificação de erro explícita
+    if (error) {
+      console.error('[MIGRAÇÃO-DEBUG] ERRO CRÍTICO AO INSERIR NO SUPABASE:', error);
+      // Lançar o erro para que o useQuery saiba que falhou.
+      throw new Error(`A migração falhou: ${error.message}`);
+    }
+
+    console.log('[MIGRAÇÃO-DEBUG] PASSO 4: Resposta do Supabase após a inserção:', data);
+    console.log(`[MIGRAÇÃO-DEBUG] Migração finalizada. ${data?.length || 0} linhas foram inseridas com sucesso.`);
   }
 
   /**
@@ -291,3 +363,6 @@ export class DataMigrationService {
     }
   }
 }
+
+// Export instance for easier access
+export const dataMigrationService = DataMigrationService;
