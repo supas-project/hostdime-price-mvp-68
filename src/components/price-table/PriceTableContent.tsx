@@ -1,241 +1,58 @@
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Table, TableBody, TableCaption } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { CategoryTabs } from "@/components/price-table/CategoryTabs";
-import { TableContent } from "@/components/price-table/TableContent";
-import { PriceTableHeader } from "@/components/price-table/TableHeader";
-import { CategoryHeader } from "@/components/price-table/CategoryHeader";
-import { ProductComparison } from "@/components/price-table/ProductComparison";
-import { useProductComparison } from "@/hooks/use-product-comparison";
-import { PriceData, PriceCategory, PriceItem } from "@/types/pricing";
-import { useEffect, useState } from "react";
+import { useMemo } from 'react';
+import { CategoryTabs } from './CategoryTabs';
+import { GroupedCategory } from '@/hooks/usePriceTable'; // Importando o tipo do nosso hook
 
+// A interface de props para este componente
 interface PriceTableContentProps {
-  priceData: PriceData;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  isAdmin: boolean;
+  categories: GroupedCategory[];
   searchTerm: string;
-  sortOrder: "asc" | "desc" | null;
-  displayMode: "table" | "card";
-  collapsedCategories: Record<string, boolean>;
-  toggleCategoryCollapse: (categoryId: string) => void;
-  filterItems: (items: PriceItem[], searchTerm: string, sortOrder?: 'asc' | 'desc' | null) => PriceItem[];
-  onDeleteCategory: (categoryId: string) => Promise<boolean>;
-  onDeleteItem: (itemId: string) => void;
-  onEditItem: (item: PriceItem) => void;
-  contractDuration?: string;
-  isComparisonMode?: boolean;
-  onToggleComparison?: () => void;
+  sortOrder: 'asc' | 'desc';
 }
 
-export function PriceTableContent({
-  priceData,
-  activeTab,
-  setActiveTab,
-  isAdmin,
-  searchTerm,
-  sortOrder,
-  displayMode,
-  collapsedCategories,
-  toggleCategoryCollapse,
-  filterItems,
-  onDeleteCategory,
-  onDeleteItem,
-  onEditItem,
-  contractDuration,
-  isComparisonMode = false,
-  onToggleComparison
-}: PriceTableContentProps) {
-  
-  const {
-    comparisonItems,
-    isComparisonMode: internalComparisonMode,
-    addToComparison,
-    removeFromComparison,
-    clearComparison,
-    toggleComparisonMode,
-    isItemInComparison,
-    canAddMore
-  } = useProductComparison();
+export const PriceTableContent = ({ 
+  categories, 
+  searchTerm, 
+  sortOrder 
+}: PriceTableContentProps) => {
 
-  // Use external comparison mode if provided, otherwise use internal
-  const currentComparisonMode = isComparisonMode !== undefined ? isComparisonMode : internalComparisonMode;
-  const currentToggleComparison = onToggleComparison || toggleComparisonMode;
+  // A lógica de filtro e ordenação agora vive aqui, de forma clara.
+  const filteredAndSortedCategories = useMemo(() => {
+    if (!categories) return [];
 
-  // Estado para rastrear categorias disponíveis
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  
-  useEffect(() => {
-    if (priceData) {
-      const categoryIds = Object.keys(priceData);
-      setAvailableCategories(categoryIds);
-      console.log("[PriceTableContent] Categorias disponíveis atualizadas:", categoryIds.join(", "));
-      
-      if (activeTab && !categoryIds.includes(activeTab) && categoryIds.length > 0) {
-        console.log(`[PriceTableContent] Categoria ativa ${activeTab} não existe mais, alterando para ${categoryIds[0]}`);
-        setActiveTab(categoryIds[0]);
-      }
-    }
-  }, [priceData, activeTab, setActiveTab]);
-  
-  useEffect(() => {
-    console.log("PriceTableContent: Received price data:", priceData ? Object.keys(priceData).length : 0, "categories");
-    console.log("PriceTableContent: Search term:", searchTerm);
-    console.log("PriceTableContent: Sort order:", sortOrder);
-  }, [priceData, searchTerm, sortOrder]);
-  
-  if (!priceData || typeof priceData !== 'object' || Object.keys(priceData).length === 0) {
-    console.warn("PriceTableContent: Received invalid or empty priceData");
+    return categories
+      .map(category => {
+        // Filtra os itens dentro de cada categoria com base no termo de busca
+        const filteredItems = category.items.filter(item =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        // Retorna a categoria apenas se ela tiver itens após o filtro
+        return { ...category, items: filteredItems };
+      })
+      .filter(category => category.items.length > 0) // Remove categorias que ficaram vazias
+      .sort((a, b) => {
+        // Ordena as categorias pelo nome
+        if (sortOrder === 'asc') {
+          return a.nome.localeCompare(b.nome);
+        }
+        return b.nome.localeCompare(a.nome);
+      });
+  }, [categories, searchTerm, sortOrder]);
+
+  // Adicionamos um log final para ter certeza do que está sendo renderizado
+  console.log('[UI-RENDER] PriceTableContent está renderizando com', filteredAndSortedCategories.length, 'categorias filtradas.');
+
+  if (filteredAndSortedCategories.length === 0) {
     return (
-      <div className="p-6 text-center animate-fade-in">
-        <h3 className="text-lg font-medium mb-2">Nenhuma categoria cadastrada</h3>
-        <p className="text-muted-foreground mb-4">
-          {isAdmin 
-            ? "Comece adicionando uma nova categoria ou importe dados existentes."
-            : "Entre como administrador para gerenciar a tabela de preços."
-          }
+      <div className="text-center p-10 bg-muted/20 rounded-lg mt-4">
+        <h3 className="text-lg font-semibold">Nenhum item ou categoria encontrada</h3>
+        <p className="text-sm text-muted-foreground">
+          Tente ajustar sua busca ou adicione novos itens.
         </p>
       </div>
     );
   }
-  
-  // Processar o priceData para remover duplicatas das categorias críticas
-  const processedPriceData = { ...priceData };
-  
-  ["connectivity", "port_speed", "ip_blocks"].forEach(categoryId => {
-    if (processedPriceData[categoryId] && Array.isArray(processedPriceData[categoryId].items)) {
-      const originalLength = processedPriceData[categoryId].items.length;
-      
-      const uniqueIds = new Set<string>();
-      processedPriceData[categoryId].items = processedPriceData[categoryId].items.filter(item => {
-        if (!item || !item.id) return false;
-        if (uniqueIds.has(item.id)) return false;
-        uniqueIds.add(item.id);
-        return true;
-      });
-      
-      const newLength = processedPriceData[categoryId].items.length;
-      if (newLength < originalLength) {
-        console.log(`[PriceTableContent] Removed ${originalLength - newLength} duplicate items from ${categoryId}`);
-      }
-    }
-  });
-  
-  const handleDeleteCategory = async (categoryId: string) => {
-    const success = await onDeleteCategory(categoryId);
-    
-    if (success) {
-      console.log(`[PriceTableContent] Categoria ${categoryId} excluída com sucesso`);
-      
-      if (categoryId === activeTab) {
-        const remainingCategories = availableCategories.filter(id => id !== categoryId);
-        if (remainingCategories.length > 0) {
-          console.log(`[PriceTableContent] Alterando categoria ativa para ${remainingCategories[0]}`);
-          setActiveTab(remainingCategories[0]);
-        }
-      }
-    }
-    
-    return success;
-  };
 
-  return (
-    <div className="space-y-4">
-      {/* Product Comparison Section */}
-      {currentComparisonMode && (
-        <div className="animate-fade-in">
-          <ProductComparison
-            items={comparisonItems}
-            onRemoveItem={removeFromComparison}
-            onClear={clearComparison}
-            onClose={currentToggleComparison}
-          />
-        </div>
-      )}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <CategoryTabs
-          categories={Object.values(processedPriceData)}
-          isAdmin={isAdmin}
-          onDeleteCategory={handleDeleteCategory}
-        />
-
-        <div className="mt-4 space-y-3 animate-fade-in">
-          {Object.values(processedPriceData).map((category) => {
-            if (!Array.isArray(category.items)) {
-              console.warn(`PriceTableContent: Category ${category.id} items is not an array:`, category.items);
-              category.items = [];
-            }
-            
-            const filteredItems = filterItems(category.items, searchTerm, sortOrder);
-            const isCollapsed = collapsedCategories[category.id] || false;
-            
-            console.log(`PriceTableContent: Rendering category ${category.id} with ${filteredItems.length}/${category.items.length} items (search: "${searchTerm}", sort: ${sortOrder})`);
-            
-            return (
-              <TabsContent key={category.id} value={category.id} className="space-y-3">
-                <Collapsible 
-                  open={!isCollapsed} 
-                  className="border border-border rounded-xl overflow-hidden bg-card/50 shadow-sm hover:shadow-md transition-all duration-200"
-                >
-                  <CategoryHeader 
-                    category={{...category, items: filteredItems}}
-                    isCollapsed={isCollapsed}
-                    onToggleCollapse={() => toggleCategoryCollapse(category.id)}
-                  />
-                  
-                  <CollapsibleContent className="animate-accordion-down">
-                    {displayMode === "card" ? (
-                      <div className="p-3">
-                        <TableContent 
-                          category={{...category, items: filteredItems}} 
-                          onDelete={isAdmin ? onDeleteItem : undefined}
-                          onEdit={isAdmin ? onEditItem : undefined}
-                          displayMode="card"
-                          sortOrder={sortOrder}
-                          contractDuration={contractDuration}
-                          isComparisonMode={currentComparisonMode}
-                          onAddToComparison={addToComparison}
-                          isItemInComparison={isItemInComparison}
-                          canAddMoreToComparison={canAddMore}
-                        />
-                      </div>
-                    ) : (
-                      <div className="overflow-hidden">
-                        <Table>
-                          {filteredItems.length === 0 && (
-                            <TableCaption>
-                              {searchTerm 
-                                ? "Nenhum resultado encontrado para a busca" 
-                                : "Nenhum item cadastrado nesta categoria"}
-                            </TableCaption>
-                          )}
-                          <PriceTableHeader showActions={isAdmin} showComparison={currentComparisonMode} />
-                          <TableBody className="bg-background/50">
-                            <TableContent 
-                              category={{...category, items: filteredItems}} 
-                              onDelete={isAdmin ? onDeleteItem : undefined}
-                              onEdit={isAdmin ? onEditItem : undefined}
-                              sortOrder={sortOrder}
-                              contractDuration={contractDuration}
-                              isComparisonMode={currentComparisonMode}
-                              onAddToComparison={addToComparison}
-                              isItemInComparison={isItemInComparison}
-                              canAddMoreToComparison={canAddMore}
-                            />
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
-              </TabsContent>
-            );
-          })}
-        </div>
-      </Tabs>
-    </div>
-  );
-}
+  // O componente agora simplesmente passa os dados filtrados e ordenados para as abas.
+  return <CategoryTabs categories={filteredAndSortedCategories} />;
+};
