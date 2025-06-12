@@ -224,99 +224,124 @@ export class DataMigrationService {
   }
 
   /**
-   * Gets all static components from data files with robust validation
+   * Gets all static components from data files with robust validation and standardization
    */
   static getAllStaticComponents() {
-    console.log("[MIGRAÇÃO-360] Lendo todos os componentes estáticos...");
+    console.log("[MIGRAÇÃO-360] Lendo e padronizando todos os componentes estáticos...");
     
     const allComponents = [];
     
-    // Add CPU components
+    // Add CPU components with standardization
     cpuComponents.options.forEach(component => {
       allComponents.push({
         component_type: 'cpu',
         component_id: component.id,
         name: component.name || 'Nome Indefinido',
-        description: component.description || '',
+        description: component.description || null,
         price: component.price || 0,
-        subtype: component.subtype,
-        is_hardware: component.isHardware || true,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : true,
         is_active: true,
-        specs: component.specs || [],
-        metadata: component.metadata || {}
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
       });
     });
 
-    // Add memory components
+    // Add memory components with standardization
     memoryComponents.options.forEach(component => {
       allComponents.push({
         component_type: 'memory',
         component_id: component.id,
         name: component.name || 'Nome Indefinido',
-        description: component.description || '',
+        description: component.description || null,
         price: component.price || 0,
-        subtype: component.subtype,
-        is_hardware: component.isHardware || true,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : true,
         is_active: true,
-        specs: component.specs || [],
-        metadata: component.metadata || {}
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
       });
     });
 
-    // Add OS components
+    // Add OS components with standardization
     osComponents.options.forEach(component => {
       allComponents.push({
         component_type: 'operating_system',
         component_id: component.id,
         name: component.name || 'Nome Indefinido',
-        description: component.description || '',
+        description: component.description || null,
         price: component.price || 0,
-        subtype: component.subtype,
-        is_hardware: component.isHardware || false,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
         is_active: true,
-        specs: component.specs || [],
-        metadata: component.metadata || {}
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
       });
     });
 
-    // Add connectivity components
+    // Add connectivity components with standardization
     connectivityComponents.options.forEach(component => {
       allComponents.push({
         component_type: 'connectivity',
         component_id: component.id,
         name: component.name || 'Nome Indefinido',
-        description: component.description || '',
+        description: component.description || null,
         price: component.price || 0,
-        subtype: component.subtype,
-        is_hardware: component.isHardware || false,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
         is_active: true,
-        specs: component.specs || [],
-        metadata: component.metadata || {}
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
       });
     });
 
-    console.log(`[MIGRAÇÃO-360] Total de componentes processados: ${allComponents.length}`);
-    
-    // GARANTE QUE CADA COMPONENTE TENHA OS CAMPOS NECESSÁRIOS
-    const validatedComponents = allComponents.map(comp => {
-      const baseComponent = {
-        component_type: comp.component_type || 'outros',
-        component_id: comp.component_id || `comp-${Date.now()}`,
-        name: comp.name || 'Nome Indefinido',
-        description: comp.description || '',
-        price: comp.price || 0,
-        subtype: comp.subtype || '',
-        is_hardware: comp.is_hardware !== undefined ? comp.is_hardware : false,
+    // Add datacenter components with standardization
+    dataCenterComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'datacenter',
+        component_id: component.id,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || null,
+        price: component.price || 0,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
         is_active: true,
-        specs: Array.isArray(comp.specs) ? comp.specs : [],
-        metadata: typeof comp.metadata === 'object' ? comp.metadata : {}
-      };
-      
-      console.log(`[MIGRAÇÃO-360] Processando componente: ${baseComponent.name}, Tipo: ${baseComponent.component_type}`);
-      return baseComponent;
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+      });
     });
 
-    console.log(`[MIGRAÇÃO-360] Componentes validados: ${validatedComponents.length}`);
+    // Add contract components with standardization
+    contractComponents.options.forEach(component => {
+      allComponents.push({
+        component_type: 'contract',
+        component_id: component.id,
+        name: component.name || 'Nome Indefinido',
+        description: component.description || null,
+        price: component.price || 0,
+        subtype: component.subtype || '',
+        is_hardware: component.isHardware !== undefined ? component.isHardware : false,
+        is_active: true,
+        specs: Array.isArray(component.specs) ? component.specs : [],
+        metadata: typeof component.metadata === 'object' ? component.metadata : {}
+      });
+    });
+
+    console.log(`[MIGRAÇÃO-360] Total de ${allComponents.length} componentes padronizados e prontos para inserção.`);
+    
+    // Final validation to ensure all components have required fields
+    const validatedComponents = allComponents.map(comp => {
+      // Garantir que o campo component_type (categoria) existe
+      const validatedComp = {
+        ...comp,
+        component_type: comp.component_type || 'outros',
+        name: comp.name || 'Nome Indefinido'
+      };
+      
+      console.log(`[MIGRAÇÃO-360] Validando: ${validatedComp.name}, Tipo: ${validatedComp.component_type}`);
+      return validatedComp;
+    });
+
     return validatedComponents;
   }
 
