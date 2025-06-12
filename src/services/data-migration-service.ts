@@ -300,34 +300,36 @@ export class DataMigrationService {
    * Runs complete migration of all static data
    */
   static async runCompleteMigration() {
-    console.log('[MIGRAÇÃO-DEBUG] PASSO 1: Iniciando a migração completa...');
+    console.log('[MIGRAÇÃO-FINAL] PASSO 1: Iniciando a migração completa...');
     
-    // Esta função interna busca os dados dos arquivos estáticos
     const staticComponents = this.getAllStaticComponents();
-    console.log(`[MIGRAÇÃO-DEBUG] PASSO 2: Encontrados ${staticComponents.length} componentes estáticos para migrar.`);
+    console.log(`[MIGRAÇÃO-FINAL] PASSO 2: Encontrados ${staticComponents.length} componentes estáticos no total.`);
+    
+    // LOG PARA VER A ESTRUTURA DOS DADOS QUE SERÃO INSERIDOS
+    console.log('[MIGRAÇÃO-FINAL] PASSO 3: Amostra do primeiro item a ser inserido:', staticComponents[0]);
     
     if (staticComponents.length === 0) {
-      console.warn('[MIGRAÇÃO-DEBUG] Nenhum componente estático encontrado. Abortando.');
+      console.warn('[MIGRAÇÃO-FINAL] Nenhum componente para migrar.');
       return;
     }
 
-    console.log('[MIGRAÇÃO-DEBUG] PASSO 3: Dados que serão enviados para o Supabase:', staticComponents);
-
-    // Esta é a operação de inserção que está falhando silenciosamente.
+    // A operação de inserção crítica
     const { data, error } = await supabase
       .from('system_components')
       .insert(staticComponents)
-      .select(); // .select() é importante para ver o que foi inserido.
+      .select(); // .select() é crucial para vermos o resultado
 
-    // Verificação de erro explícita
     if (error) {
-      console.error('[MIGRAÇÃO-DEBUG] ERRO CRÍTICO AO INSERIR NO SUPABASE:', error);
-      // Lançar o erro para que o useQuery saiba que falhou.
+      console.error('[MIGRAÇÃO-FINAL] ERRO CRÍTICO AO INSERIR:', {
+        message: error.message,
+        details: error.details,
+        code: error.code,
+      });
       throw new Error(`A migração falhou: ${error.message}`);
     }
 
-    console.log('[MIGRAÇÃO-DEBUG] PASSO 4: Resposta do Supabase após a inserção:', data);
-    console.log(`[MIGRAÇÃO-DEBUG] Migração finalizada. ${data?.length || 0} linhas foram inseridas com sucesso.`);
+    console.log(`[MIGRAÇÃO-FINAL] PASSO 4: Migração finalizada. ${data?.length || 0} linhas foram inseridas com sucesso.`);
+    console.log('[MIGRAÇÃO-FINAL] Amostra da primeira linha inserida:', data?.[0]);
   }
 
   /**
