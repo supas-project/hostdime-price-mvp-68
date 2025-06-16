@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme-provider";
-import { useAppStore, initializeAuth } from "./store/appStore";
+import { useAppStore } from "./store/appStore";
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
@@ -19,11 +19,14 @@ const App = () => {
   const { fetchInitialData, status, isAuthenticated } = useAppStore();
 
   useEffect(() => {
-    // Inicializar autenticação
-    initializeAuth();
-    
     // Carregar dados iniciais
     fetchInitialData();
+    
+    // Verificar token salvo no localStorage
+    const savedToken = localStorage.getItem('auth_token');
+    if (savedToken) {
+      console.log('🔐 Token encontrado no localStorage');
+    }
   }, [fetchInitialData]);
 
   useEffect(() => {

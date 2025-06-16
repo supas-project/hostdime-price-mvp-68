@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Frontend Final</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .result { margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        .login-form { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Final do Frontend HostDime Price MVP</h1>
+    
+    <!-- Status do Sistema -->
+    <div class="test-section">
+        <h2>📊 Status do Sistema</h2>
+        <button onclick="checkBackendHealth()">Verificar Backend</button>
+        <button onclick="checkFrontendStatus()">Verificar Frontend</button>
+        <div id="system-status"></div>
+    </div>
+
+    <!-- Teste de Login -->
+    <div class="test-section">
+        <h2>🔐 Teste de Autenticação</h2>
+        <div class="login-form">
+            <h3>Login</h3>
+            <input type="email" id="email" placeholder="Email" value="admin@hostdime.com">
+            <input type="password" id="password" placeholder="Senha" value="admin123">
+            <button onclick="testLogin()">Fazer Login</button>
+        </div>
+        <div id="auth-results"></div>
+    </div>
+
+    <!-- Teste de Dados -->
+    <div class="test-section">
+        <h2>📦 Teste de Dados</h2>
+        <button onclick="loadCategories()">Carregar Categorias</button>
+        <button onclick="loadItems()">Carregar Itens (CPU)</button>
+        <div id="data-results"></div>
+    </div>
+
+    <!-- Teste do Frontend UI -->
+    <div class="test-section">
+        <h2>🎨 Teste da Interface</h2>
+        <button onclick="openMainApp()">Abrir Aplicação Principal</button>
+        <button onclick="testResponsiveness()">Testar Responsividade</button>
+        <div id="ui-results"></div>
+    </div>
+
+    <!-- Log de Atividades -->
+    <div class="test-section">
+        <h2>📋 Log de Atividades</h2>
+        <button onclick="clearLog()">Limpar Log</button>
+        <div id="activity-log"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:3001';
+        const FRONTEND_URL = 'http://localhost:8082';
+        
+        let currentToken = null;
+        
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('activity-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function addResult(containerId, title, data, isError = false) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${isError ? 'error' : 'success'}`;
+            resultDiv.innerHTML = `<h4>${title}</h4><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            container.appendChild(resultDiv);
+        }
+        
+        function clearLog() {
+            document.getElementById('activity-log').innerHTML = '';
+            addLog('Log limpo', 'info');
+        }
+        
+        async function checkBackendHealth() {
+            addLog('Verificando saúde do backend...');
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/health`);
+                const data = await response.json();
+                addResult('system-status', '✅ Backend Health', data);
+                addLog('Backend está funcionando!', 'success');
+            } catch (error) {
+                addResult('system-status', '❌ Backend Error', { error: error.message }, true);
+                addLog(`Erro no backend: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkFrontendStatus() {
+            addLog('Verificando frontend...');
+            const frontendData = {
+                url: FRONTEND_URL,
+                userAgent: navigator.userAgent,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                timestamp: new Date().toISOString()
+            };
+            addResult('system-status', '✅ Frontend Status', frontendData);
+            addLog('Frontend carregado com sucesso!', 'success');
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addLog(`Tentando login com ${email}...`);
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentToken = data.token;
+                    addResult('auth-results', '✅ Login Successful', data);
+                    addLog('Login realizado com sucesso!', 'success');
+                } else {
+                    addResult('auth-results', '❌ Login Failed', data, true);
+                    addLog(`Falha no login: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addResult('auth-results', '❌ Login Error', { error: error.message }, true);
+                addLog(`Erro no login: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loadCategories() {
+            addLog('Carregando categorias...');
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/categories`);
+                const data = await response.json();
+                addResult('data-results', '✅ Categories Loaded', data);
+                addLog(`${data.data?.length || 0} categorias carregadas`, 'success');
+            } catch (error) {
+                addResult('data-results', '❌ Categories Error', { error: error.message }, true);
+                addLog(`Erro ao carregar categorias: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loadItems() {
+            addLog('Carregando itens da categoria CPU...');
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/categories/1/items`);
+                const data = await response.json();
+                addResult('data-results', '✅ CPU Items Loaded', data);
+                addLog(`${data.data?.length || 0} itens de CPU carregados`, 'success');
+            } catch (error) {
+                addResult('data-results', '❌ Items Error', { error: error.message }, true);
+                addLog(`Erro ao carregar itens: ${error.message}`, 'error');
+            }
+        }
+        
+        function openMainApp() {
+            addLog('Abrindo aplicação principal...');
+            window.open(`${FRONTEND_URL}`, '_blank');
+            addResult('ui-results', '✅ Main App Opened', { url: FRONTEND_URL });
+            addLog('Aplicação principal aberta em nova aba', 'success');
+        }
+        
+        function testResponsiveness() {
+            addLog('Testando responsividade...');
+            const viewportData = {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                ratio: window.devicePixelRatio,
+                isMobile: window.innerWidth <= 768,
+                isTablet: window.innerWidth > 768 && window.innerWidth <= 1024,
+                isDesktop: window.innerWidth > 1024
+            };
+            addResult('ui-results', '📱 Viewport Info', viewportData);
+            addLog('Teste de responsividade concluído', 'success');
+        }
+        
+        // Inicialização automática
+        window.addEventListener('load', () => {
+            addLog('Página de teste carregada', 'success');
+            checkBackendHealth();
+            checkFrontendStatus();
+        });
+    </script>
+</body>
+</html>

@@ -74,12 +74,19 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://hostdime-price-mvp.vercel.app'] 
-    : ['http://localhost:5173', 'http://localhost:3000'],
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8082', 'http://localhost:8083', 'http://localhost:8084'],
   credentials: true
 }));
 
+// Garantir que o body parser está ANTES de tudo
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Endpoint POST mínimo para debug
+app.post('/api/debug/post', (req, res) => {
+  console.log('🧪 POST mínimo recebido:', req.body);
+  res.json({ success: true, received: req.body });
+});
 
 // Segurança básica
 if (helmet) {
@@ -123,27 +130,25 @@ app.get('/api/health', (req, res) => {
 // Autenticação
 app.post('/api/auth/login', async (req, res) => {
   try {
-    console.log('🔐 Tentativa de login');
+    console.log('🔐 [LOGIN] Endpoint chamado');
     const { email, password } = req.body;
-    
+    console.log('🔐 [LOGIN] Email recebido:', email);
     if (!email || !password) {
       return res.status(400).json({
         success: false,
         error: 'Email e senha são obrigatórios'
       });
     }
-
     const result = await authService.login(email, password);
-    
     if (result.success) {
-      console.log('✅ Login bem-sucedido');
+      console.log('✅ [LOGIN] Login bem-sucedido');
       res.json(result);
     } else {
-      console.log('❌ Login falhou');
+      console.log('❌ [LOGIN] Login falhou');
       res.status(401).json(result);
     }
   } catch (error) {
-    console.error('❌ Erro no login:', error);
+    console.error('❌ [LOGIN] Erro no login:', error);
     res.status(500).json({
       success: false,
       error: 'Erro interno do servidor'
@@ -253,6 +258,37 @@ app.put('/api/items/:itemId', authService.authenticateToken, authService.require
     res.status(500).json({
       success: false,
       error: 'Erro ao atualizar item'
+    });
+  }
+});
+
+// Teste simples de login (para debug)
+app.post('/api/test/login', async (req, res) => {
+  try {
+    console.log('🧪 Teste de login simples');
+    const { email, password } = req.body;
+    
+    console.log('📧 Email recebido:', email);
+    console.log('🔑 Password recebido:', password ? '[HIDDEN]' : 'undefined');
+    
+    // Teste básico sem authService
+    if (email === 'admin@hostdime.com' && password === 'admin123') {
+      res.json({
+        success: true,
+        message: 'Login de teste bem-sucedido',
+        user: { email, name: 'Admin Test' }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: 'Credenciais de teste inválidas'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Erro no teste de login:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });

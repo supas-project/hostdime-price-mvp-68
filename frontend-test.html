@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste Frontend - HostDime Price MVP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log { 
+            max-height: 200px; 
+            overflow-y: auto; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Completo Frontend - HostDime Price MVP</h1>
+        
+        <div class="test-section">
+            <h3>🔗 1. Teste de Conectividade Backend</h3>
+            <button onclick="testBackendHealth()">🏥 Testar Health</button>
+            <button onclick="testBackendCategories()">📂 Testar Categorias</button>
+            <div id="backend-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 2. Teste de Autenticação</h3>
+            <button onclick="testLogin()">🔑 Testar Login</button>
+            <button onclick="testLoginFlow()">🌊 Fluxo Completo</button>
+            <div id="auth-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 3. Teste de Dados</h3>
+            <button onclick="testDataLoad()">📦 Carregar Dados</button>
+            <button onclick="testStoreIntegration()">🏪 Teste Store</button>
+            <div id="data-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 4. Teste de Interface</h3>
+            <button onclick="testFrontendPages()">📄 Testar Páginas</button>
+            <button onclick="testUIComponents()">🎨 Testar Componentes</button>
+            <div id="ui-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Log de Testes</h3>
+            <div id="test-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        const FRONTEND_BASE = 'http://localhost:8082';
+        
+        function log(message) {
+            const logDiv = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function showResult(elementId, message, type = 'loading') {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.innerHTML = message;
+            resultDiv.className = `result ${type}`;
+        }
+        
+        // 1. Testes de Backend
+        async function testBackendHealth() {
+            log('🏥 Testando health do backend...');
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('backend-result', 
+                        `✅ Backend Online!\nStatus: ${data.status}\nDatabase: ${data.database}\nTimestamp: ${data.timestamp}`, 
+                        'success'
+                    );
+                    log('✅ Backend health OK');
+                } else {
+                    throw new Error(`Status: ${response.status}`);
+                }
+            } catch (error) {
+                showResult('backend-result', `❌ Erro no backend: ${error.message}`, 'error');
+                log('❌ Backend health ERRO: ' + error.message);
+            }
+        }
+        
+        async function testBackendCategories() {
+            log('📂 Testando categorias...');
+            try {
+                const response = await fetch(`${API_BASE}/api/categories`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const categories = data.data.map(cat => cat.display_name).join(', ');
+                    showResult('backend-result', 
+                        `✅ Categorias carregadas!\nTotal: ${data.data.length}\nCategorias: ${categories}`, 
+                        'success'
+                    );
+                    log(`✅ ${data.data.length} categorias carregadas`);
+                } else {
+                    throw new Error(data.error || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showResult('backend-result', `❌ Erro nas categorias: ${error.message}`, 'error');
+                log('❌ Categorias ERRO: ' + error.message);
+            }
+        }
+        
+        // 2. Testes de Autenticação
+        async function testLogin() {
+            log('🔑 Testando login direto...');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@hostdime.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.token) {
+                    showResult('auth-result', 
+                        `✅ Login bem-sucedido!\nToken: ${data.token.substring(0, 50)}...\nUsuário: ${data.user.full_name}\nRole: ${data.user.role}`, 
+                        'success'
+                    );
+                    localStorage.setItem('test_token', data.token);
+                    log('✅ Login direto OK');
+                } else {
+                    throw new Error(data.error || 'Login falhou');
+                }
+            } catch (error) {
+                showResult('auth-result', `❌ Erro no login: ${error.message}`, 'error');
+                log('❌ Login ERRO: ' + error.message);
+            }
+        }
+        
+        async function testLoginFlow() {
+            log('🌊 Testando fluxo completo de autenticação...');
+            try {
+                // Simular store do frontend
+                const mockStore = {
+                    isAuthenticated: false,
+                    user: null,
+                    token: null
+                };
+                
+                // 1. Login
+                const loginResponse = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@hostdime.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.success) throw new Error('Login falhou');
+                
+                mockStore.isAuthenticated = true;
+                mockStore.user = loginData.user;
+                mockStore.token = loginData.token;
+                
+                // 2. Verificar token
+                const verifyResponse = await fetch(`${API_BASE}/api/auth/verify`, {
+                    headers: { 'Authorization': `Bearer ${mockStore.token}` }
+                });
+                
+                const verifyData = await verifyResponse.json();
+                
+                if (!verifyData.success) throw new Error('Verificação de token falhou');
+                
+                showResult('auth-result', 
+                    `✅ Fluxo completo funcionando!\n1. Login: OK\n2. Token gerado: OK\n3. Verificação: OK\n4. Dados do usuário: ${JSON.stringify(mockStore.user, null, 2)}`, 
+                    'success'
+                );
+                log('✅ Fluxo de autenticação completo OK');
+                
+            } catch (error) {
+                showResult('auth-result', `❌ Erro no fluxo: ${error.message}`, 'error');
+                log('❌ Fluxo autenticação ERRO: ' + error.message);
+            }
+        }
+        
+        // 3. Testes de Dados
+        async function testDataLoad() {
+            log('📦 Testando carregamento completo de dados...');
+            try {
+                const allData = {
+                    categories: [],
+                    items: []
+                };
+                
+                // Carregar categorias
+                const categoriesResponse = await fetch(`${API_BASE}/api/categories`);
+                const categoriesData = await categoriesResponse.json();
+                
+                if (!categoriesData.success) throw new Error('Erro ao carregar categorias');
+                
+                allData.categories = categoriesData.data;
+                
+                // Carregar itens para cada categoria
+                for (const category of allData.categories.slice(0, 3)) { // Testar apenas 3 primeiras
+                    const itemsResponse = await fetch(`${API_BASE}/api/categories/${category.id}/items`);
+                    const itemsData = await itemsResponse.json();
+                    
+                    if (itemsData.success) {
+                        allData.items.push(...itemsData.data.map(item => ({
+                            ...item,
+                            category: category.display_name
+                        })));
+                    }
+                }
+                
+                showResult('data-result', 
+                    `✅ Dados carregados!\nCategorias: ${allData.categories.length}\nItens testados: ${allData.items.length}\nExemplos: ${allData.items.slice(0, 3).map(i => i.name).join(', ')}`, 
+                    'success'
+                );
+                log(`✅ Dados carregados: ${allData.categories.length} cats, ${allData.items.length} itens`);
+                
+            } catch (error) {
+                showResult('data-result', `❌ Erro nos dados: ${error.message}`, 'error');
+                log('❌ Carregamento dados ERRO: ' + error.message);
+            }
+        }
+        
+        async function testStoreIntegration() {
+            log('🏪 Testando integração com store (simulação)...');
+            try {
+                // Simular o store do Zustand
+                const mockStore = {
+                    items: [],
+                    categories: [],
+                    selectedComponents: [],
+                    status: 'idle'
+                };
+                
+                // Simular fetchInitialData
+                mockStore.status = 'loading';
+                
+                const categoriesResponse = await fetch(`${API_BASE}/api/categories`);
+                const categoriesData = await categoriesResponse.json();
+                
+                if (categoriesData.success) {
+                    mockStore.categories = categoriesData.data.map(cat => cat.display_name);
+                    
+                    // Carregar alguns itens
+                    for (const category of categoriesData.data.slice(0, 2)) {
+                        const itemsResponse = await fetch(`${API_BASE}/api/categories/${category.id}/items`);
+                        const itemsData = await itemsResponse.json();
+                        
+                        if (itemsData.success) {
+                            mockStore.items.push(...itemsData.data.map(item => ({
+                                id: item.id,
+                                category: category.display_name,
+                                name: item.name,
+                                price: item.price,
+                                description: item.description
+                            })));
+                        }
+                    }
+                    
+                    mockStore.status = 'success';
+                }
+                
+                // Simular seleção de componente
+                if (mockStore.items.length > 0) {
+                    const firstItem = mockStore.items[0];
+                    mockStore.selectedComponents.push({
+                        category: firstItem.category,
+                        component: firstItem,
+                        quantity: 1
+                    });
+                }
+                
+                // Calcular preço total
+                const totalPrice = mockStore.selectedComponents.reduce(
+                    (total, item) => total + (item.component.price * item.quantity), 0
+                );
+                
+                showResult('data-result', 
+                    `✅ Store funcionando!\nStatus: ${mockStore.status}\nCategorias: ${mockStore.categories.length}\nItens: ${mockStore.items.length}\nSelecionados: ${mockStore.selectedComponents.length}\nTotal: R$ ${totalPrice.toFixed(2)}`, 
+                    'success'
+                );
+                log('✅ Store integration OK');
+                
+            } catch (error) {
+                showResult('data-result', `❌ Erro no store: ${error.message}`, 'error');
+                log('❌ Store integration ERRO: ' + error.message);
+            }
+        }
+        
+        // 4. Testes de Interface
+        async function testFrontendPages() {
+            log('📄 Testando páginas do frontend...');
+            try {
+                const pages = [
+                    { path: '/', name: 'Home' },
+                    { path: '/login', name: 'Login' },
+                    { path: '/configure', name: 'Configurador' },
+                    { path: '/price-table', name: 'Tabela de Preços' }
+                ];
+                
+                let results = [];
+                
+                for (const page of pages) {
+                    try {
+                        const response = await fetch(`${FRONTEND_BASE}${page.path}`);
+                        if (response.ok) {
+                            results.push(`✅ ${page.name}: OK`);
+                        } else {
+                            results.push(`⚠️ ${page.name}: Status ${response.status}`);
+                        }
+                    } catch (error) {
+                        results.push(`❌ ${page.name}: ${error.message}`);
+                    }
+                }
+                
+                showResult('ui-result', 
+                    `📄 Páginas testadas:\n${results.join('\n')}\n\n🌐 Frontend: ${FRONTEND_BASE}`, 
+                    'success'
+                );
+                log('✅ Páginas frontend testadas');
+                
+            } catch (error) {
+                showResult('ui-result', `❌ Erro nas páginas: ${error.message}`, 'error');
+                log('❌ Páginas frontend ERRO: ' + error.message);
+            }
+        }
+        
+        async function testUIComponents() {
+            log('🎨 Testando componentes da UI...');
+            try {
+                // Testar se conseguimos acessar o frontend
+                const response = await fetch(`${FRONTEND_BASE}/`);
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    // Verificar se tem elementos esperados
+                    const hasReact = html.includes('react') || html.includes('React');
+                    const hasVite = html.includes('vite') || html.includes('Vite');
+                    const hasTitle = html.includes('HostDime') || html.includes('title');
+                    
+                    showResult('ui-result', 
+                        `✅ Frontend carregando!\nReact detectado: ${hasReact}\nVite detectado: ${hasVite}\nTítulo correto: ${hasTitle}\n\n🔗 Acesse: ${FRONTEND_BASE}`, 
+                        'success'
+                    );
+                    log('✅ UI components OK');
+                } else {
+                    throw new Error(`Frontend não acessível: ${response.status}`);
+                }
+                
+            } catch (error) {
+                showResult('ui-result', `❌ Erro na UI: ${error.message}`, 'error');
+                log('❌ UI components ERRO: ' + error.message);
+            }
+        }
+        
+        // Executar teste inicial ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Iniciando testes do frontend...');
+            testBackendHealth();
+        });
+    </script>
+</body>
+</html>
