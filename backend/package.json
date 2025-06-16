@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
+    "start": "node simple-server.js",
+    "dev": "node simple-server.js",
+    "prod": "NODE_ENV=production node simple-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

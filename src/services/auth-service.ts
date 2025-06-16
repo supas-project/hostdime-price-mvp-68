@@ -1,5 +1,4 @@
 
-import { supabase } from "@/lib/supabaseClient";
 import { LoginCredentials, AuthUser, SessionConfig } from "@/types/auth";
 import { toast } from "sonner";
 
@@ -34,21 +33,25 @@ export class AuthService {
       // Normalizar email
       const email = credentials.email.trim().toLowerCase();
 
-      // Fazer login via Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: credentials.password
+      // Fazer login via API
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password: credentials.password
+        }),
       });
 
-      if (error) {
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
         this.recordFailedAttempt(email);
-        console.error("Erro de autenticação:", error);
+        console.error("Erro de autenticação:", data.error);
         
-        if (error.message.includes("Invalid login credentials")) {
-          return { user: null, error: "Email ou senha incorretos" };
-        }
-        
-        return { user: null, error: error.message };
+        return { user: null, error: data.error || "Email ou senha incorretos" };
       }
 
       if (!data.user) {
@@ -58,20 +61,18 @@ export class AuthService {
       // Reset contador de tentativas em caso de sucesso
       this.resetAttempts(email);
 
-      // Buscar dados do perfil
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      // Salvar token
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
 
       const authUser: AuthUser = {
         id: data.user.id,
-        email: data.user.email!,
-        nome_completo: profile?.nome_completo || '',
-        tipo: profile?.tipo || 'USER',
-        created_at: data.user.created_at,
-        updated_at: profile?.updated_at || data.user.updated_at
+        email: data.user.email,
+        nome_completo: data.user.name || '',
+        tipo: data.user.isAdmin ? 'ADMIN' : 'USER',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
 
       return { user: authUser, error: null };
@@ -87,7 +88,12 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await supabase.auth.signOut();
+      // Remover token local
+      localStorage.removeItem('auth_token');
+      
+      // Se houver endpoint de logout na API, chamar aqui
+      // await fetch('/api/logout', { method: 'POST' });
+      
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       throw error;
