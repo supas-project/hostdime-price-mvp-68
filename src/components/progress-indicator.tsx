@@ -1,5 +1,3 @@
-
-import { ServerComponent } from "@/data/server-components";
 import { Progress } from "@/components/ui/progress";
 import { Check, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,23 +10,20 @@ import {
 } from "@/components/ui/tooltip";
 
 interface ProgressIndicatorProps {
-  components: ServerComponent[];
   currentStep: number;
+  totalSteps: number;
+  categories: string[];
   completedSteps?: boolean[];
 }
 
 export function ProgressIndicator({ 
-  components, 
   currentStep,
+  totalSteps,
+  categories,
   completedSteps = [] 
 }: ProgressIndicatorProps) {
-  // Ensure we count all completed steps correctly
-  const completedCount = completedSteps.filter(Boolean).length;
-  
-  // Calculate progress percentage based on completed steps
-  const progress = Math.min(100, (completedCount / components.length) * 100);
-  
-  const currentComponent = components[currentStep];
+  const progress = Math.min(100, ((currentStep + 1) / totalSteps) * 100);
+  const currentCategory = categories[currentStep];
 
   return (
     <div className="space-y-3 mb-6 animate-fade-in">
@@ -42,7 +37,7 @@ export function ProgressIndicator({
           </div>
           <div>
             <p className="font-medium">
-              {currentComponent.friendlyName}
+              {currentCategory}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -51,17 +46,17 @@ export function ProgressIndicator({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs max-w-[250px]">{currentComponent.description}</p>
+                    <p className="text-xs max-w-[250px]">Selecione os componentes para {currentCategory}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </p>
-            <p className="text-xs text-muted-foreground">Etapa {currentStep + 1} de {components.length}</p>
+            <p className="text-xs text-muted-foreground">Etapa {currentStep + 1} de {totalSteps}</p>
           </div>
         </div>
         <div className="flex items-center">
           <span className="text-sm font-medium mr-2">
-            {completedCount} de {components.length} completo
+            {currentStep + 1} de {totalSteps}
           </span>
           <span className={cn(
             "text-xs px-2 py-0.5 rounded",
@@ -76,13 +71,13 @@ export function ProgressIndicator({
       <div className="relative">
         <Progress value={progress} className="h-2 rounded-full" />
         <div className="absolute top-full mt-1 flex justify-between w-full">
-          {components.map((_, idx) => (
+          {categories.map((_, idx) => (
             <div 
               key={idx} 
               className={cn(
                 "flex flex-col items-center",
                 idx === 0 ? "ml-0" : "",
-                idx === components.length - 1 ? "mr-0" : "",
+                idx === categories.length - 1 ? "mr-0" : "",
               )}
             >
               <div className={cn(
@@ -90,7 +85,7 @@ export function ProgressIndicator({
                 completedSteps[idx] ? "bg-primary" : 
                 currentStep === idx ? "bg-primary-hover" : "bg-muted"
               )}></div>
-              {(idx === 0 || idx === components.length - 1 || idx === Math.floor(components.length / 2)) && (
+              {(idx === 0 || idx === categories.length - 1 || idx === Math.floor(categories.length / 2)) && (
                 <span className="text-[10px] text-muted-foreground mt-1">{idx + 1}</span>
               )}
             </div>

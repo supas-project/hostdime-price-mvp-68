@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { DiagnosticReport, DiagnosticResult, diagnosticService } from "@/services/diagnostic-service";
 import { RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 

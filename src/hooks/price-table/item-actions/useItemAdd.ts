@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { systemComponentsService } from "@/services/systemComponentsService";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { toast } from "sonner";
 import { parseBRLToFloat } from "@/utils/number-formatter";
 

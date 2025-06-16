@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { Quote, QuoteStatus, ServerConfiguration, QuoteItem } from '@/types/quote';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store/appStore';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 

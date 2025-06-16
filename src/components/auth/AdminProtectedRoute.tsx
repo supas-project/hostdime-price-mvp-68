@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { ReactNode } from "react";
 import { toast } from "sonner";
 

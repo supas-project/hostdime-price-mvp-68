@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { cn } from "@/lib/utils";
 import { LoginDialog } from "@/components/login-dialog";
 import { ChevronRight, Database, Users } from "lucide-react";
@@ -12,10 +12,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, isAdmin, logout, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAppStore();
 
-  // Verificação explícita para acesso de administrador com null check
-  const isAdminAccess = isAdmin || (user?.email === "admin@hostdime.com.br");
+  // Verificação explícita para acesso de administrador
+  const isAdminAccess = user?.isAdmin || user?.email === "admin@hostdime.com.br";
 
   return (
     <header className={cn(

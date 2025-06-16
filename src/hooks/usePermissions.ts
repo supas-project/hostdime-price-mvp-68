@@ -1,5 +1,5 @@
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store/appStore';
 
 export interface Permissions {
   canViewQuotes: boolean;

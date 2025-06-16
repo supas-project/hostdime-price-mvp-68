@@ -1,473 +1,207 @@
 import { useState } from "react";
-import { ComponentOption } from "@/types/component";
 import { Button } from "@/components/ui/button";
-import { FileText, Save, ArrowRight, FileDown, Settings, Loader, User, Calendar, Mail, Phone, Globe, X } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileText, RotateCcw, Download, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import { OrderDetails } from "@/components/order-details"; // Caminho correto para o componente
-import { generateQuotePDF, generateQuoteWebView } from "@/utils/quote-export";
-import { useWizard } from "@/contexts/WizardContext";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Textarea } from "@/components/ui/textarea"; // Caminho correto
-import { Label } from "@/components/ui/label"; // Caminho correto
-import { QuoteVariables } from "@/utils/pdf/dynamic-variables";
-import { StorageItemsMap, ConnectivityItemsMap } from "@/types/wizard";
-import { convertStorageItemsMapToArray, convertConnectivityToArray, convertCustomServicesToArray } from "@/utils/storage-utils";
-import { deduplicateStorageItems } from "@/utils/html/price-calculator";
-import { PDFTemplateSelector } from "@/components/pdf/PDFTemplateSelector";
 
-interface FinalSummaryProps {
-  selectedComponents: { [key: string]: ComponentOption };
-  onRestart: () => void;
-  storageItems?: { [key: string]: { option: ComponentOption; quantity: number } };
-  connectivityItems?: ConnectivityItemsMap;
-  customServices?: { [key: string]: { option: ComponentOption; quantity: number } };
+interface SelectedComponent {
+  category: string;
+  component: {
+    id: number;
+    name: string;
+    price: number;
+    description?: string;
+  };
+  quantity: number;
 }
 
-export function FinalSummary({ selectedComponents, onRestart, storageItems: storageItemsMap, customServices: customServicesMap, connectivityItems }: FinalSummaryProps) {
-  const [profitMargin, setProfitMargin] = useState(25);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isFinishing, setIsFinishing] = useState(false);
-  const [pdfPreviewOption, setPdfPreviewOption] = useState("preview");
-  const [showPdfErrorDialog, setShowPdfErrorDialog] = useState(false);
-  const [pdfError, setPdfError] = useState("");
-  const [documentFormat, setDocumentFormat] = useState<"pdf" | "web">("web");
-  
-  // Enhanced state for dynamic PDF variables with HostDime branding defaults
-  const [quoteVariables, setQuoteVariables] = useState<QuoteVariables>({
-    responsavelComercial: "Equipe Comercial HostDime",
-    clientName: "Cliente",
-    dataValidade: "30 dias",
-    observacoes: "",
-    dataEmissao: new Date().toLocaleDateString('pt-BR'),
-    numeroContato: "(11) 4766-4840",
-    emailContato: "vendas@hostdime.com.br"
-  });
-  
-  const { storageItems: contextStorageItems, customServices: contextCustomServices, connectivityItems: contextConnectivityItems, handleRemoveComponent } = useWizard();
-  
-  // Use provided items or fall back to context items
-  let effectiveStorageItems = storageItemsMap 
-    ? convertStorageItemsMapToArray(storageItemsMap)
-    : contextStorageItems;
-    
-  // CORREÇÃO: Garantir que os discos estão deduplicados antes de passar para o componente OrderDetails
-  effectiveStorageItems = {
-    internal: deduplicateStorageItems(effectiveStorageItems.internal || []),
-    external: deduplicateStorageItems(effectiveStorageItems.external || [])
-  };
-  
-  console.log(`[FinalSummary] Deduplicando discos internos: ${(effectiveStorageItems.internal || []).length} itens`);
-  console.log(`[FinalSummary] Deduplicando storages externos: ${(effectiveStorageItems.external || []).length} itens`);
-    
-  const effectiveCustomServices = customServicesMap 
-    ? convertCustomServicesToArray(customServicesMap)
-    : contextCustomServices;
-    
-  const effectiveConnectivityItems = connectivityItems || contextConnectivityItems;
-  
-  const [selectedTemplate, setSelectedTemplate] = useState("hostdime-corporate");
-  
-  const handleSaveQuote = async () => {
-    setIsSaving(true);
-    try {
-      // Simulate a save operation
-      await new Promise(resolve => setTimeout(resolve, 800));
-      toast("Sua cotação foi salva com sucesso.");
-    } catch (error) {
-      toast.error("Não foi possível salvar sua cotação. Tente novamente.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+interface FinalSummaryProps {
+  selectedComponents: SelectedComponent[];
+  onRestart: () => void;
+}
 
-  const handleExportPDF = async () => {
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
+export function FinalSummary({ selectedComponents, onRestart }: FinalSummaryProps) {
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const totalPrice = selectedComponents.reduce(
+    (total, item) => total + (item.component.price * item.quantity),
+    0
+  );
+
+  const totalItems = selectedComponents.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const groupedComponents = selectedComponents.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, SelectedComponent[]>);
+
+  const handleGeneratePDF = async () => {
     setIsGeneratingPDF(true);
-    setPdfError("");
-    
     try {
-      // Show toast for document generation start
-      toast("Aguarde enquanto geramos seu documento...");
-      
-      // CORREÇÃO: Garante que os itens estão deduplificados antes de gerar a visualização
-      const dedupedStorageItems = {
-        internal: deduplicateStorageItems(effectiveStorageItems.internal || []),
-        external: deduplicateStorageItems(effectiveStorageItems.external || [])
-      };
-      
-      console.log(`[ExportPDF] Quantidade de discos original: ${effectiveStorageItems.internal?.length}, deduplificados: ${dedupedStorageItems.internal.length}`);
-      
-      if (documentFormat === "web") {
-        // Generate HTML web view in new tab
-        generateQuoteWebView(
-          selectedComponents,
-          dedupedStorageItems, // CORREÇÃO: Usa itens deduplificados
-          effectiveCustomServices,
-          profitMargin,
-          effectiveConnectivityItems,
-          quoteVariables
-        );
-      } else {
-        // Generate PDF (old behavior)
-        await generateQuotePDF(
-          selectedComponents,
-          dedupedStorageItems, // CORREÇÃO: Usa itens deduplificados
-          effectiveCustomServices,
-          profitMargin,
-          effectiveConnectivityItems,
-          pdfPreviewOption === "preview", // Use preview option to determine opening mode
-          quoteVariables
-        );
-      }
-      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('PDF gerado com sucesso!');
     } catch (error) {
-      console.error("Erro detalhado:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      // Store message for display in dialog
-      setPdfError(errorMessage);
-      setShowPdfErrorDialog(true);
-      
-      toast.error("Não foi possível gerar o documento. Clique para mais detalhes.");
+      toast.error('Erro ao gerar PDF');
     } finally {
       setIsGeneratingPDF(false);
     }
   };
 
-  const handleFinishOrder = async () => {
-    setIsFinishing(true);
-    try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Obrigado por escolher a HostDime! Em breve entraremos em contato.");
-    } catch (error) {
-      toast.error("Ocorreu um erro ao processar seu pedido. Tente novamente.");
-    } finally {
-      setIsFinishing(false);
-    }
-  };
-  
-  // Handlers for updating dynamic variables
-  const handleVariableChange = (key: keyof QuoteVariables, value: string) => {
-    setQuoteVariables(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  // Label for the export button based on format
-  const getExportButtonLabel = () => {
-    if (isGeneratingPDF) {
-      return "Gerando documento...";
-    }
+  const handleShare = () => {
+    const config = {
+      title: 'Configuração de Servidor HostDime',
+      components: selectedComponents,
+      total: totalPrice
+    };
     
-    if (documentFormat === "web") {
-      return "Visualizar Cotação";
-    } else {
-      return pdfPreviewOption === "preview" ? "Visualizar PDF" : "Exportar PDF";
-    }
-  };
-  
-  // Icon for the export button
-  const getExportButtonIcon = () => {
-    if (isGeneratingPDF) {
-      return <Loader className="h-4 w-4 animate-spin" />;
-    }
-    
-    return documentFormat === "web" ? 
-      <Globe className="h-4 w-4" /> : 
-      <FileDown className="h-4 w-4" />;
-  };
-  
-  const handleRemoveItem = (itemId: string) => {
-    if (handleRemoveComponent) {
-      handleRemoveComponent(itemId);
-    }
+    navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+    toast.success('Configuração copiada para a área de transferência!');
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold mb-2">Resumo do Seu Servidor</h2>
-          <p className="text-muted-foreground">Confira a configuração do seu servidor dedicado</p>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-green-600 mb-2">
+          🎉 Configuração Finalizada!
+        </h1>
+        <p className="text-muted-foreground">
+          Sua configuração de servidor está pronta. Confira os detalhes abaixo.
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Resumo da Configuração</span>
+                <Badge variant="secondary">
+                  {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {Object.entries(groupedComponents).map(([category, items]) => (
+                <div key={category} className="border-b pb-4 last:border-b-0">
+                  <h3 className="font-semibold text-lg mb-3 text-primary">
+                    {category}
+                  </h3>
+                  <div className="space-y-2">
+                    {items.map((item, index) => (
+                      <div key={index} className="flex justify-between items-start p-3 bg-muted/50 rounded">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{item.component.name}</h4>
+                          {item.component.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {item.component.description}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Quantidade: {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            {formatCurrency(item.component.price * item.quantity)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(item.component.price)} × {item.quantity}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" /> Configurações
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Configurações da Cotação</DialogTitle>
-              <DialogDescription>
-                Ajuste a margem de lucro, template do PDF e as informações que aparecerão no documento.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 py-4">
-              {/* Template Selection */}
-              <PDFTemplateSelector
-                selectedTemplate={selectedTemplate}
-                onTemplateChange={setSelectedTemplate}
-              />
-              
-              <div className="border-t pt-4">
-                <div className="space-y-4">
-                  <div className="font-medium text-sm">Margem de lucro</div>
-                  <div className="flex items-center justify-between">
-                    <span>Margem:</span>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        type="number"
-                        value={profitMargin}
-                        onChange={(e) => setProfitMargin(Number(e.target.value))}
-                        className="w-20 text-right"
-                        min={0}
-                        max={100}
-                      />
-                      <span>%</span>
-                    </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(totalPrice)}</span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-lg">Total Mensal:</span>
+                    <span className="text-2xl font-bold text-primary">
+                      {formatCurrency(totalPrice)}
+                    </span>
                   </div>
-                  <Slider 
-                    value={[profitMargin]} 
-                    onValueChange={(values) => setProfitMargin(values[0])}
-                    max={100}
-                    step={1}
-                    className="my-2"
-                  />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ações</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button 
+                onClick={handleGeneratePDF}
+                disabled={isGeneratingPDF}
+                className="w-full"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {isGeneratingPDF ? 'Gerando PDF...' : 'Gerar PDF'}
+              </Button>
               
-              <div className="space-y-4 pt-2 border-t">
-                <div className="font-medium text-sm">Informações para o documento</div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="responsavel">
-                    <div className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      <span>Responsável Comercial</span>
-                    </div>
-                  </Label>
-                  <Input
-                    id="responsavel"
-                    value={quoteVariables.responsavelComercial}
-                    onChange={(e) => handleVariableChange('responsavelComercial', e.target.value)}
-                    placeholder="Nome do responsável"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="cliente">
-                    <div className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      <span>Nome do Cliente</span>
-                    </div>
-                  </Label>
-                  <Input
-                    id="cliente"
-                    value={quoteVariables.clientName}
-                    onChange={(e) => handleVariableChange('clientName', e.target.value)}
-                    placeholder="Nome do cliente"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="validade">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>Validade da Proposta</span>
-                    </div>
-                  </Label>
-                  <Input
-                    id="validade"
-                    value={quoteVariables.dataValidade}
-                    onChange={(e) => handleVariableChange('dataValidade', e.target.value)}
-                    placeholder="Ex: 30 dias"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="contato">
-                    <div className="flex items-center gap-1">
-                      <Phone className="h-3.5 w-3.5" />
-                      <span>Número de Contato</span>
-                    </div>
-                  </Label>
-                  <Input
-                    id="contato"
-                    value={quoteVariables.numeroContato}
-                    onChange={(e) => handleVariableChange('numeroContato', e.target.value)}
-                    placeholder="Ex: (11) 4766-4840"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5" />
-                      <span>Email de Contato</span>
-                    </div>
-                  </Label>
-                  <Input
-                    id="email"
-                    value={quoteVariables.emailContato}
-                    onChange={(e) => handleVariableChange('emailContato', e.target.value)}
-                    placeholder="Ex: vendas@hostdime.com.br"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
-                  <Textarea
-                    id="observacoes"
-                    value={quoteVariables.observacoes}
-                    onChange={(e) => handleVariableChange('observacoes', e.target.value)}
-                    placeholder="Observações adicionais para a proposta"
-                    rows={3}
-                  />
-                </div>
+              <Button 
+                variant="outline"
+                onClick={handleShare}
+                className="w-full"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Compartilhar
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={onRestart}
+                className="w-full"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Nova Configuração
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Próximos Passos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <p>✅ Configuração revisada</p>
+                <p>📧 Entre em contato conosco para finalizar</p>
+                <p>📞 (11) 4766-4840</p>
+                <p>✉️ vendas@hostdime.com.br</p>
               </div>
-              
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-2">Formato do documento:</h4>
-                <Tabs defaultValue="web" value={documentFormat} onValueChange={(value) => setDocumentFormat(value as "pdf" | "web")}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="web">Visualização Web</TabsTrigger>
-                    <TabsTrigger value="pdf">PDF</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                
-                {documentFormat === "pdf" && (
-                  <div className="mt-3">
-                    <h4 className="text-sm font-medium mb-2">Opções de PDF:</h4>
-                    <Tabs defaultValue="preview" value={pdfPreviewOption} onValueChange={setPdfPreviewOption}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="preview">Visualizar em Nova Aba</TabsTrigger>
-                        <TabsTrigger value="download">Download Direto</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-      
-      <OrderDetails 
-        selectedComponents={selectedComponents}
-        margin={profitMargin}
-        onRemoveItem={handleRemoveItem}
-      />
-      
-      {/* Detailed error dialog for PDF */}
-      <AlertDialog open={showPdfErrorDialog} onOpenChange={setShowPdfErrorDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Erro na geração do documento</AlertDialogTitle>
-            <AlertDialogDescription>
-              <div className="text-sm text-destructive mt-2 mb-3">
-                Ocorreu um erro ao gerar o documento. Isso pode ser causado por:
-              </div>
-              <ul className="list-disc pl-5 mb-3 space-y-1 text-sm">
-                <li>Caracteres especiais incompatíveis</li>
-                <li>Problemas de formatação nos dados</li>
-                <li>Falha ao renderizar elementos gráficos</li>
-                <li>Bloqueio de popups pelo navegador</li>
-              </ul>
-              
-              <div className="bg-muted p-2 rounded text-xs font-mono my-2 max-h-24 overflow-auto">
-                {pdfError || "Erro desconhecido"}
-              </div>
-              
-              <p className="text-sm mt-3">
-                Recomendação: tente simplificar os dados ou remover caracteres especiais e símbolos.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>Entendi</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      <div className="flex flex-col md:flex-row gap-4">
-        <Button 
-          className="flex-1 flex items-center justify-center gap-2" 
-          onClick={handleFinishOrder}
-          disabled={isFinishing || isGeneratingPDF || isSaving}
-        >
-          {isFinishing ? (
-            <>
-              <Loader className="h-4 w-4 animate-spin" /> Processando...
-            </>
-          ) : (
-            <>
-              Finalizar Pedido <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </Button>
-        <Button 
-          variant="outline" 
-          className="flex-1 flex items-center justify-center gap-2" 
-          onClick={handleSaveQuote}
-          disabled={isSaving || isGeneratingPDF || isFinishing}
-        >
-          {isSaving ? (
-            <>
-              <Loader className="h-4 w-4 animate-spin" /> Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" /> Salvar Cotação
-            </>
-          )}
-        </Button>
-        <Button 
-          variant={documentFormat === "web" ? "default" : "outline"}
-          className="flex-1 flex items-center justify-center gap-2" 
-          onClick={handleExportPDF}
-          disabled={isGeneratingPDF || isSaving || isFinishing}
-        >
-          {isGeneratingPDF ? (
-            <>
-              <Loader className="h-4 w-4 animate-spin" /> Gerando documento...
-            </>
-          ) : (
-            <>
-              {getExportButtonIcon()} {getExportButtonLabel()}
-            </>
-          )}
-        </Button>
-      </div>
-      
-      <div className="text-center">
-        <Button variant="link" onClick={onRestart}>
-          Recomeçar configuração
-        </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { useFileHandling } from "@/hooks/useFileHandling";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";

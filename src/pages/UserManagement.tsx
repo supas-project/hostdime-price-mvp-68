@@ -1,65 +1,23 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store/appStore';
 import { Users } from 'lucide-react';
-import { useUserAdmin } from '@/hooks/useUserAdmin';
-import { CreateUserForm } from '@/components/users/CreateUserForm';
-import { UsersTable } from '@/components/users/UsersTable';
-import { EditUserDialog } from '@/components/users/EditUserDialog';
-import { DeleteUserDialog } from '@/components/users/DeleteUserDialog';
-import { UserProfile } from '@/services/userAdminService';
 
 export default function UserManagement() {
-  const { user, session } = useAuth();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const { user, isAuthenticated } = useAppStore();
 
-  const {
-    users,
-    loading,
-    isAdmin,
-    createUser,
-    updateUser,
-    deleteUser,
-    sendPasswordReset
-  } = useUserAdmin(user, session);
-
-  const openEditDialog = (user: UserProfile) => {
-    console.log('✏️ Opening edit dialog for user:', user.email);
-    setSelectedUser(user);
-    setIsEditDialogOpen(true);
-  };
-
-  const openDeleteDialog = (user: UserProfile) => {
-    console.log('🗑️ Opening delete dialog for user:', user.email);
-    setSelectedUser(user);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const closeEditDialog = () => {
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-  };
-
-  const closeDeleteDialog = () => {
-    setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
-  };
-
-  if (!isAdmin) {
+  if (!isAuthenticated || !user?.isAdmin) {
     return (
-      <div className="container mx-auto py-8">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">Acesso Restrito</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground">
-              Esta área é exclusiva para administradores.
-            </p>
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">Acesso Negado</h3>
+              <p className="text-muted-foreground">
+                Você precisa ser um administrador para acessar esta página.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -67,53 +25,34 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Users className="w-8 h-8" />
-          Gestão de Usuários
-        </h1>
-        <p className="text-muted-foreground">
-          Gerencie usuários do sistema - apenas para administradores
-        </p>
-      </div>
-
-      <Tabs defaultValue="list" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list">Listar/Editar Usuários</TabsTrigger>
-          <TabsTrigger value="create">Cadastrar Usuário</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="create">
-          <CreateUserForm onCreateUser={createUser} loading={loading} />
-        </TabsContent>
-
-        <TabsContent value="list">
-          <UsersTable
-            users={users}
-            loading={loading}
-            onEditUser={openEditDialog}
-            onDeleteUser={openDeleteDialog}
-            onSendPasswordReset={sendPasswordReset}
-          />
-        </TabsContent>
-      </Tabs>
-
-      <EditUserDialog
-        isOpen={isEditDialogOpen}
-        onClose={closeEditDialog}
-        user={selectedUser}
-        onUpdateUser={updateUser}
-        loading={loading}
-      />
-
-      <DeleteUserDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={closeDeleteDialog}
-        user={selectedUser}
-        onDeleteUser={deleteUser}
-        loading={loading}
-      />
+    <div className="container mx-auto px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Gerenciamento de Usuários
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="text-xl font-semibold mb-2">Em Desenvolvimento</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                O módulo de gerenciamento de usuários será implementado nas próximas versões.
+                Por enquanto, use as credenciais administrativas para acesso.
+              </p>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Usuário Atual:</strong> {user?.name} ({user?.email})
+                  <br />
+                  <strong>Perfil:</strong> {user?.isAdmin ? 'Administrador' : 'Usuário'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
