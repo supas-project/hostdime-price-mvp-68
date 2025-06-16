@@ -4,38 +4,24 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppStore } from "@/store/appStore";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    login,
-    isAuthenticated,
-    user,
-    loading,
-    isSupabaseReady
-  } = useAuth();
+  const { login, isAuthenticated, user } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Enhanced effect for handling authenticated users and redirecting properly
+  // Redirect if already authenticated
   useEffect(() => {
-    console.log("Login page mount - Auth state:", { 
-      isAuthenticated, 
-      loading, 
-      isSupabaseReady,
-      userEmail: user?.email 
-    });
-    
-    if (isSupabaseReady && isAuthenticated && !loading && user) {
+    if (isAuthenticated && user) {
       console.log("Usuário autenticado, redirecionando...");
       
       // If admin, redirect to price table
-      const isAdminEmail = user.email === "admin@hostdime.com.br";
-      const redirectTo = isAdminEmail ? "/price-table" : "/configure";
+      const redirectTo = user.isAdmin ? "/price-table" : "/configure";
       
       // Use the from if it exists, otherwise use the default redirectTo
       const from = location.state && (location.state as any).from?.pathname 
@@ -44,14 +30,11 @@ export default function LoginPage() {
       
       console.log("Redirecionando para:", from);
       
-      // Use timeout to ensure state updates are completed
-      setTimeout(() => {
-        navigate(from, {
-          replace: true
-        });
-      }, 100);
+      navigate(from, {
+        replace: true
+      });
     }
-  }, [isAuthenticated, loading, user, navigate, location.state, isSupabaseReady]);
+  }, [isAuthenticated, user, navigate, location.state]);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,41 +45,29 @@ export default function LoginPage() {
       const success = await login(email, password);
       
       if (success) {
-        // Check if admin email to show appropriate toast
-        const isAdmin = email.toLowerCase() === "admin@hostdime.com.br";
-        toast.success("Login realizado com sucesso", {
-          description: isAdmin ? "Bem-vindo, administrador!" : "Bem-vindo de volta!"
-        });
-        
-        // Login success is handled by the useEffect for redirection
-      } else {
-        toast.error("Credenciais inválidas", {
-          description: "Verifique seu email e senha e tente novamente."
-        });
+        // O redirecionamento será feito pelo useEffect acima
+        console.log("Login realizado com sucesso");
       }
     } catch (error) {
       console.error("Erro no login:", error);
-      toast.error("Falha no login", {
-        description: "Verifique suas credenciais e tente novamente."
-      });
     } finally {
       setIsLoading(false);
     }
   };
   
-  // Display loading indicator while checking authentication state
-  if (loading || !isSupabaseReady) {
+  // Display loading indicator if currently authenticating
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <div className="text-center space-y-4">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-foreground">Verificando autenticação...</p>
+          <p className="text-foreground">Autenticando...</p>
         </div>
       </div>
     );
   }
   
-  // If user is already authenticated, don't render the form
+  // If user is already authenticated, show redirect message
   if (isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
