@@ -11,7 +11,7 @@ export function LoginDialog() {
   
   // Mock auth state for now
   const isAuthenticated = false;
-  const user = null;
+  const user: { email?: string } | null = { email: "test@example.com" };
   const isAdmin = false;
 
   if (isAuthenticated && user) {

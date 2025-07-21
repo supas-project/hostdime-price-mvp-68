@@ -7,13 +7,9 @@ import { useAppStore } from "./store/appStore";
 
 import Home from "./pages/Home";
 import PriceTable from "./pages/PriceTable";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
-import UserManagement from "./pages/UserManagement";
 import MainLayout from "./layouts/MainLayout";
-import { NotificationDemo } from "./components/notification-demo";
-import QuotesPage from "./pages/QuotesPage";
 
 const App = () => {
   const { fetchInitialData, status, isAuthenticated } = useAppStore();
@@ -69,7 +65,7 @@ const App = () => {
               <MainLayout />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/configure" replace />} />
+            <Route index element={<Navigate to="/home" replace />} />
             
             {/* Admin protected routes */}
             <Route path="price-table" element={
@@ -78,16 +74,7 @@ const App = () => {
               </AdminProtectedRoute>
             } />
             
-            <Route path="user-management" element={
-              <AdminProtectedRoute>
-                <UserManagement />
-              </AdminProtectedRoute>
-            } />
-            
-            <Route path="configure" element={<Index />} />
-            <Route path="quotes" element={<QuotesPage />} />
             <Route path="home" element={<Home />} />
-            <Route path="notification-demo" element={<NotificationDemo />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />
