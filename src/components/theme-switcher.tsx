@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ThemeSwitcher() {
-  const { theme } = useTheme();
+  const { } = useTheme();
 
   return (
     <TooltipProvider>

@@ -54,7 +54,7 @@ export function InputPreco({
   };
 
   // Função para lidar com o blur (perda de foco)
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = () => {
     try {
       console.log(`[InputPreco] Handling blur with value: ${displayValue}`);
       

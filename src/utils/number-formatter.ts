@@ -9,3 +9,7 @@ export function formatCurrency(value: number): string {
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat('pt-BR').format(value);
 }
+
+export function parseBRLToFloat(value: string): number {
+  return parseFloat(value.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}

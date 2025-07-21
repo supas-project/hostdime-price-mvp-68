@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
-// import { buildApiUrl, API_CONFIG } from '../config/api'; // Disabled for now
+import { buildApiUrl, API_CONFIG } from '../config/api';
 
 interface PriceItem {
   id: number;

@@ -3,7 +3,7 @@
  * Mobile-first design com breakpoints semânticos
  */
 
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { MotionWrapper } from './motion-wrapper';
 import { cn } from '@/lib/utils';

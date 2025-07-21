@@ -12,7 +12,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ notifications }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAppStore();
+  const { isAuthenticated, user } = useAppStore();
 
   // Verificação explícita para acesso de administrador
   const isAdminAccess = user?.isAdmin || user?.email === "admin@hostdime.com.br";
