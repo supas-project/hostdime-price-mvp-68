@@ -103,30 +103,9 @@ export class AuthService {
 
   async refreshToken(): Promise<{ user: AuthUser | null; error: string | null }> {
     try {
-      const { data, error } = await supabase.auth.refreshSession();
+      // Para implementação futura com refresh tokens
+      return { user: null, error: "Sessão expirada" };
       
-      if (error || !data.user) {
-        return { user: null, error: "Sessão expirada" };
-      }
-
-      // Buscar dados atualizados do perfil
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-
-      const authUser: AuthUser = {
-        id: data.user.id,
-        email: data.user.email!,
-        nome_completo: profile?.nome_completo || '',
-        tipo: profile?.tipo || 'USER',
-        created_at: data.user.created_at,
-        updated_at: profile?.updated_at || data.user.updated_at
-      };
-
-      return { user: authUser, error: null };
-
     } catch (error) {
       console.error("Erro ao atualizar token:", error);
       return { user: null, error: "Erro ao atualizar sessão" };

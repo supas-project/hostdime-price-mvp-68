@@ -1,41 +1,66 @@
+import { useState, useEffect } from 'react';
+import { useAppStore } from '@/store/appStore';
 
-import { useState } from 'react';
-import { PriceData, PriceItem } from '@/types/pricing';
+export interface PriceItem {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  specifications?: string[];
+}
+
+export interface GroupedCategory {
+  id: string;
+  name: string;
+  display_name: string;
+  items: PriceItem[];
+}
 
 export function usePriceTableState() {
-  const [priceData, setPriceData] = useState<PriceData | null>(null);
-  const [activeTab, setActiveTab] = useState('cpu');
+  const { items, categories, status, fetchInitialData } = useAppStore();
+  const [activeTab, setActiveTab] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [displayMode, setDisplayMode] = useState<'table' | 'card'>('card');
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  const [contractDuration, setContractDuration] = useState<string>('12');
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Toggle category collapse state
-  const toggleCategoryCollapse = (categoryId: string) => {
-    setCollapsedCategories(current => ({
-      ...current,
-      [categoryId]: !current[categoryId]
-    }));
-  };
+  useEffect(() => {
+    if (status === 'idle') {
+      fetchInitialData();
+    }
+  }, [status, fetchInitialData]);
+
+  useEffect(() => {
+    if (categories.length > 0 && !activeTab) {
+      setActiveTab(categories[0]);
+    }
+  }, [categories, activeTab]);
+
+  // Agrupar itens por categoria
+  const groupedCategories: GroupedCategory[] = categories.map(categoryName => {
+    const categoryItems = items.filter(item => item.category === categoryName);
+    
+    return {
+      id: categoryName.toLowerCase().replace(/\s+/g, '-'),
+      name: categoryName,
+      display_name: categoryName,
+      items: categoryItems
+    };
+  });
+
+  // Filtrar por busca
+  const filteredCategories = groupedCategories.map(category => ({
+    ...category,
+    items: category.items.filter(item => 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  })).filter(category => category.items.length > 0);
 
   return {
-    priceData,
-    setPriceData,
+    groupedCategories: filteredCategories,
     activeTab,
     setActiveTab,
     searchTerm,
     setSearchTerm,
-    sortOrder,
-    setSortOrder,
-    displayMode,
-    setDisplayMode,
-    collapsedCategories,
-    toggleCategoryCollapse,
-    contractDuration,
-    setContractDuration,
-    isLoading,
-    setIsLoading
+    status,
+    isLoading: status === 'loading'
   };
 }

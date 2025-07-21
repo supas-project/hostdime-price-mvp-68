@@ -43,7 +43,13 @@ const loginLimiter = rateLimit({
 
 // CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'],
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:8080',
+    'https://cf50e29d-f282-41f2-aba7-9ca182ac913e.lovableproject.com',
+    /.*\.lovable\.app$/,
+    /.*\.lovableproject\.com$/
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -95,7 +101,7 @@ app.get('/api/health/database', async (req, res) => {
 // ============ AUTH ROUTES ============
 
 // Login
-app.post('/api/login', loginLimiter, async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -132,7 +138,7 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 });
 
 // Logout (invalidar token no frontend - sem persistência de sessão por simplicidade)
-app.post('/api/logout', authenticateToken, async (req, res) => {
+app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   try {
     // Em uma implementação completa, invalidaríamos o token no servidor
     res.json({
@@ -190,16 +196,16 @@ app.get('/api/categories', optionalAuth, async (req, res) => {
 });
 
 // Buscar itens por categoria
-app.get('/api/categories/:categoryName/items', optionalAuth, async (req, res) => {
+app.get('/api/categories/:categoryId/items', optionalAuth, async (req, res) => {
   try {
-    const { categoryName } = req.params;
-    const items = await priceService.getItemsByCategory(categoryName);
+    const { categoryId } = req.params;
+    const items = await priceService.getItemsByCategory(categoryId);
     
     res.json({
       success: true,
       data: items,
       count: items.length,
-      category: categoryName
+      category: categoryId
     });
   } catch (error) {
     console.error('❌ Error fetching items by category:', error);

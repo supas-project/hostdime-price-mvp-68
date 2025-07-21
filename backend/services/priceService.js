@@ -1,52 +1,17 @@
+const { query } = require('../database/connection');
+
 class PriceService {
-  constructor() {
-    this.connection = null;
-    this.dbType = 'postgresql'; // padrão
-  }
-
-  // Configurar conexão com banco
-  setConnection(connection, dbType) {
-    this.connection = connection;
-    this.dbType = dbType;
-    console.log('🔗 PriceService configurado para:', dbType);
-  }
-
-  // Executar query baseada no tipo de banco
-  async executeQuery(sql, params = []) {
-    if (!this.connection) {
-      throw new Error('Conexão com banco não configurada');
-    }
-
-    if (this.dbType === 'postgresql') {
-      const result = await this.connection.query(sql, params);
-      return result.rows;
-    } else if (this.dbType === 'sqlite') {
-      return new Promise((resolve, reject) => {
-        if (sql.toLowerCase().includes('select')) {
-          this.connection.all(sql, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        } else {
-          this.connection.run(sql, params, function(err) {
-            if (err) reject(err);
-            else resolve({ insertId: this.lastID, changes: this.changes });
-          });
-        }
-      });
-    }
-  }
   // Buscar todas as categorias ativas
   async getCategories() {
     try {
-      const result = await this.executeQuery(`
+      const result = await query(`
         SELECT id, name, display_name, description, sort_order
         FROM categories 
         WHERE is_active = true 
         ORDER BY sort_order ASC, display_name ASC
       `);
       
-      return result;
+      return result.rows;
     } catch (error) {
       console.error('❌ Error fetching categories:', error);
       throw new Error('Erro ao buscar categorias');
@@ -56,7 +21,7 @@ class PriceService {
   // Buscar todos os itens de preço ativos
   async getAllPriceItems() {
     try {
-      const result = await this.executeQuery(`
+      const result = await query(`
         SELECT 
           pi.id,
           pi.name,
@@ -71,7 +36,7 @@ class PriceService {
         ORDER BY c.sort_order ASC, pi.sort_order ASC, pi.name ASC
       `);
 
-      return result.map(item => ({
+      return result.rows.map(item => ({
         id: item.id,
         category: item.category,
         name: item.name,
@@ -86,9 +51,9 @@ class PriceService {
   }
 
   // Buscar itens por categoria
-  async getItemsByCategory(categoryName) {
+  async getItemsByCategory(categoryId) {
     try {
-      const result = await this.executeQuery(`
+      const result = await query(`
         SELECT 
           pi.id,
           pi.name,
@@ -100,9 +65,9 @@ class PriceService {
         JOIN categories c ON pi.category_id = c.id
         WHERE pi.is_active = true 
           AND c.is_active = true 
-          AND c.display_name = $1
+          AND pi.category_id = $1
         ORDER BY pi.sort_order ASC, pi.name ASC
-      `, [categoryName]);
+      `, [categoryId]);
 
       return result.rows.map(item => ({
         id: item.id,

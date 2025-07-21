@@ -29,7 +29,7 @@ export const buildApiUrl = (endpoint: string, params?: Record<string, string | n
 
 // Helper para fazer requisições autenticadas
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('auth_token');
   
   const headers = {
     'Content-Type': 'application/json',
