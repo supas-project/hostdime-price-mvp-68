@@ -1,73 +1,84 @@
-import { useAppStore } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, Shield, Database } from "lucide-react";
+import { LogIn, LogOut, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { authService } from "@/services/auth-service";
+
 export function LoginDialog() {
-  const {
-    isAuthenticated,
-    isAdmin,
-    user,
-    logout,
-    loading
-  } = useAuth();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Mock auth state for now
+  const isAuthenticated = false;
+  const user = null;
+  const isAdmin = false;
 
-  // Verificação explícita para acesso de administrador
-  const isAdminAccess = isAdmin || user?.email === "admin@hostdime.com.br";
-  if (loading) {
-    return <div className="flex items-center gap-2">
-        <span className="text-sm font-medium animate-pulse">
-          Carregando...
-        </span>
-      </div>;
-  }
   if (isAuthenticated && user) {
-    return <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+    return (
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-1">
             <span className="text-sm font-medium truncate max-w-[150px] sm:max-w-[200px]">
               {user.email}
             </span>
-            {isAdminAccess && <Shield className="w-3.5 h-3.5 text-primary" aria-label="Administrador" />}
+            {isAdmin && <Shield className="w-3.5 h-3.5 text-primary" aria-label="Administrador" />}
           </div>
           <span className="text-xs text-muted-foreground">
-            {isAdminAccess ? "Administrador" : "Usuário"}
+            {isAdmin ? "Administrador" : "Usuário"}
           </span>
         </div>
         
-        <div className="flex items-center gap-2">
-          {isAdminAccess}
-          
-          <Button variant="outline" size="sm" onClick={async () => {
-          try {
-            setIsLoggingOut(true);
-            await logout();
-            // Esta navegação só acontece se o logout for bem-sucedido
-            navigate("/login");
-          } catch (error) {
-            console.error("Erro ao fazer logout via botão:", error);
-          } finally {
-            setIsLoggingOut(false);
-          }
-        }} disabled={isLoggingOut} className={cn("transition-all font-medium", "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30", "focus-visible:ring-destructive/30")}>
-            {isLoggingOut ? <>
-                <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
-                <span className="truncate">Saindo...</span>
-              </> : <>
-                <LogOut className="w-4 h-4 mr-2 shrink-0" />
-                <span className="truncate">Sair</span>
-              </>}
-          </Button>
-        </div>
-      </div>;
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={async () => {
+            try {
+              setIsLoggingOut(true);
+              await authService.logout();
+              navigate("/login");
+            } catch (error) {
+              console.error("Erro ao fazer logout:", error);
+            } finally {
+              setIsLoggingOut(false);
+            }
+          }} 
+          disabled={isLoggingOut} 
+          className={cn(
+            "transition-all font-medium",
+            "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+          )}
+        >
+          {isLoggingOut ? (
+            <>
+              <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span className="truncate">Saindo...</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="w-4 h-4 mr-2 shrink-0" />
+              <span className="truncate">Sair</span>
+            </>
+          )}
+        </Button>
+      </div>
+    );
   }
-  return <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => navigate("/login")} className={cn("transition-all font-medium", "hover:bg-primary/10 hover:text-primary hover:border-primary/30", "focus-visible:ring-primary/30")}>
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => navigate("/login")} 
+        className={cn(
+          "transition-all font-medium",
+          "hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+        )}
+      >
         <LogIn className="w-4 h-4 mr-2 shrink-0" />
         <span className="truncate">Login</span>
       </Button>
-    </div>;
+    </div>
+  );
 }

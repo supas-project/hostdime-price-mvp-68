@@ -1,24 +1,24 @@
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
 export interface HelpTooltipProps {
   title?: string;
   description: string;
   icon?: React.ReactNode;
   iconOnly?: boolean;
   className?: string;
-  iconClassName?: string;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   children?: React.ReactNode;
 }
+
 export function HelpTooltip({
   title,
   description,
   icon,
   iconOnly = false,
   className,
-  iconClassName,
   side = "top",
   align = "center",
   children

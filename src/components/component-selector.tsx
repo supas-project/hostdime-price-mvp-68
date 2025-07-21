@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ComponentOption } from "@/types/component";
 import { formatCurrency } from "@/lib/utils";
