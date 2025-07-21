@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
-import { toast } from "sonner";
+// import { toast } from "sonner"; // Disabled for now
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

@@ -1,7 +1,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useMobile } from "@/hooks/use-mobile"
 import { useSidebar } from "./sidebar-context"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
@@ -11,7 +11,7 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
 
 export function Sidebar({ className, children, ...props }: SidebarProps) {
   const { isOpen, setIsOpen, isCollapsed } = useSidebar()
-  const isMobile = useIsMobile()
+  const isMobile = useMobile()
 
   // Mobile: use sheet component
   if (isMobile) {
