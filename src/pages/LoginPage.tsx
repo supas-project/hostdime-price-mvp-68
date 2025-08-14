@@ -87,9 +87,18 @@ export default function LoginPage() {
             <img src="https://www.hostdime.com.br/wp-content/themes/bones/library/images/logotipo.svg" alt="HostDime Logo" className="h-8 w-auto object-contain" />
           </div>
           
-          <CardDescription className="text-zinc-50">
+          <CardDescription className="text-muted-foreground">
             Entre com suas credenciais para acessar o painel
           </CardDescription>
+          
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
+            <p className="font-medium text-center mb-2">Credenciais de Teste:</p>
+            <div className="space-y-1 text-xs">
+              <p><strong>Admin:</strong> admin@hostdime.com.br / admin123</p>
+              <p><strong>Usuário:</strong> user@hostdime.com.br / user123</p>
+              <p><strong>Teste:</strong> teste@teste.com / 123456</p>
+            </div>
+          </div>
         </CardHeader>
         
         <form onSubmit={handleSubmit}>

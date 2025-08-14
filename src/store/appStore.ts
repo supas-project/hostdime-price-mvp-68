@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
 import { buildApiUrl, API_CONFIG } from '../config/api';
+import { authService } from '../services/auth-service';
 
 interface PriceItem {
   id: number;
@@ -112,40 +113,33 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // Login do usuário
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.token) {
-        set({
-          isAuthenticated: true,
+      console.log('Tentando fazer login via store:', email);
+      
+      const result = await authService.login(email, password);
+      
+      if (result.success && result.user) {
+        set({ 
+          isAuthenticated: true, 
           user: {
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.full_name || data.user.name,
-            isAdmin: data.user.role === 'admin'
+            id: result.user.email,
+            email: result.user.email,
+            name: result.user.name,
+            isAdmin: result.user.isAdmin
           },
-          token: data.token
+          token: result.token
         });
-
-        localStorage.setItem('auth_token', data.token);
-        toast.success('Login realizado com sucesso!');
+        
+        localStorage.setItem('auth_token', result.token);
+        toast.success(`Login realizado com sucesso! Bem-vindo, ${result.user.name}`);
         return true;
       } else {
-        toast.error(data.error || 'Erro no login');
-        return false;
+        throw new Error('Resposta inválida do serviço de autenticação');
       }
     } catch (error) {
-      console.error('❌ Erro no login:', error);
-      toast.error('Erro de conexão');
+      console.error('Erro no login:', error);
+      toast.error('Credenciais inválidas. Tente novamente.');
       return false;
     }
   },
